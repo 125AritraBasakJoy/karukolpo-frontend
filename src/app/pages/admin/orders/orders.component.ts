@@ -1,0 +1,121 @@
+import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { OrderService } from '../../../services/order.service';
+import { Order } from '../../../models/order.model';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+
+@Component({
+  selector: 'app-orders',
+  standalone: true,
+  imports: [CommonModule, TableModule, ButtonModule, TagModule, ToastModule, DialogModule, ProgressSpinnerModule],
+  providers: [MessageService],
+  templateUrl: './orders.component.html',
+  styleUrls: ['./orders.component.scss']
+})
+export class OrdersComponent implements OnInit {
+  orders = signal<Order[]>([]);
+  loading = signal<boolean>(false);
+  selectedOrder: Order | null = null;
+  displayOrderDialog = false;
+
+  constructor(
+    private orderService: OrderService,
+    private messageService: MessageService
+  ) { }
+
+  ngOnInit() {
+    this.loadOrders();
+    this.orderService.newOrderNotification$.subscribe(() => {
+      this.loadOrders();
+    });
+  }
+
+  loadOrders() {
+    this.loading.set(true);
+    this.orderService.getOrders().subscribe({
+      next: (orders) => {
+        this.orders.set(orders);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  viewOrder(order: Order) {
+    this.selectedOrder = order;
+    this.displayOrderDialog = true;
+  }
+
+  updateStatus(order: Order, status: 'Approved' | 'Delivered' | 'Completed' | 'Deleted') {
+    if (status === 'Deleted') {
+      // In a real app, you might want to confirm deletion
+    }
+
+    this.orderService.updateOrderStatus(order.id!, status).subscribe(() => {
+      this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
+      this.loadOrders();
+      if (this.selectedOrder && this.selectedOrder.id === order.id) {
+        this.selectedOrder.status = status;
+      }
+    });
+  }
+
+  getSeverity(status: string) {
+    switch (status) {
+      case 'Approved':
+        return 'success';
+      case 'Delivered':
+        return 'info';
+      case 'Pending':
+        return 'warning';
+      case 'Completed':
+        return 'info';
+      case 'Deleted':
+        return 'danger';
+      default:
+        return 'info'; // Changed from 'text' to 'info' as 'text' is not a valid severity for p-tag
+    }
+  }
+  downloadOrders() {
+    const orders = this.orders();
+    if (orders.length === 0) {
+      this.messageService.add({ severity: 'warn', summary: 'No Data', detail: 'No orders to export' });
+      return;
+    }
+
+    // CSV Header
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Order ID,Customer Name,Email,Phone,Date,Total Amount,Status\n";
+
+    // CSV Rows
+    orders.forEach(order => {
+      const row = [
+        order.id,
+        `"${order.fullName}"`, // Quote to handle commas in names
+        order.email,
+        order.phoneNumber,
+        new Date(order.orderDate).toLocaleDateString(),
+        order.totalAmount,
+        order.status
+      ].join(",");
+      csvContent += row + "\n";
+    });
+
+    // Download Logic
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "orders_sheet.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}

@@ -1,0 +1,15 @@
+.track-order-container {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.search-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.status-pending { color: orange; }
+.status-approved { color: blue; }
+.status-completed { color: green; }
+.status-deleted { color: red; }

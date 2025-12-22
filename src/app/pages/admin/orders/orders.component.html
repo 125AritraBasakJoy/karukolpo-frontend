@@ -1,0 +1,91 @@
+<div class="card">
+    <div class="flex justify-content-between align-items-center mb-4">
+        <h2>Order Management</h2>
+        <button pButton label="Download Sheet" icon="pi pi-download" (click)="downloadOrders()"
+            class="p-button-success"></button>
+    </div>
+    <div *ngIf="loading()" class="flex justify-content-center my-5">
+        <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
+    </div>
+    <p-table [value]="orders()" [tableStyle]="{ 'min-width': '50rem' }" *ngIf="!loading()">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-order>
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.fullName }}</td>
+                <td>{{ order.orderDate | date:'short' }}</td>
+                <td>{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</td>
+                <td><p-tag [value]="order.status" [severity]="getSeverity(order.status)"></p-tag></td>
+                <td>
+                    <p-button icon="pi pi-eye" [rounded]="true" [text]="true" (onClick)="viewOrder(order)"></p-button>
+                    <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
+                        (onClick)="updateStatus(order, 'Approved')" *ngIf="order.status === 'Pending'"></p-button>
+                    <p-button icon="pi pi-truck" [rounded]="true" [text]="true" severity="primary"
+                        (onClick)="updateStatus(order, 'Delivered')" *ngIf="order.status === 'Approved'"></p-button>
+                    <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="info"
+                        (onClick)="updateStatus(order, 'Completed')" *ngIf="order.status === 'Delivered'"></p-button>
+                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                        (onClick)="updateStatus(order, 'Deleted')" *ngIf="order.status !== 'Deleted'"></p-button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog header="Order Details" [(visible)]="displayOrderDialog" [modal]="true" [style]="{width: '50vw'}"
+    *ngIf="selectedOrder">
+    <div class="grid">
+        <div class="col-12 md:col-6">
+            <h3>Customer Info</h3>
+            <p><strong>Name:</strong> {{ selectedOrder.fullName }}</p>
+            <p><strong>Email:</strong> {{ selectedOrder.email }}</p>
+            <p><strong>Phone:</strong> {{ selectedOrder.phoneNumber }}</p>
+            <p><strong>Address:</strong> {{ selectedOrder.fullAddress }}, {{ selectedOrder.district }} - {{
+                selectedOrder.postalCode }}</p>
+        </div>
+        <div class="col-12 md:col-6">
+            <h3>Order Info</h3>
+            <p><strong>Order ID:</strong> {{ selectedOrder.id }}</p>
+            <p><strong>Date:</strong> {{ selectedOrder.orderDate | date:'medium' }}</p>
+            <p><strong>Status:</strong> <p-tag [value]="selectedOrder.status"
+                    [severity]="getSeverity(selectedOrder.status)"></p-tag></p>
+        </div>
+        <div class="col-12">
+            <h3>Items</h3>
+            <p-table [value]="selectedOrder.items">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-item>
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.product.price | currency:'BDT':'symbol-narrow' }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.product.price * item.quantity | currency:'BDT':'symbol-narrow' }}</td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                    <tr>
+                        <td colspan="3" class="text-right font-bold">Total Amount</td>
+                        <td class="font-bold">{{ selectedOrder.totalAmount | currency:'BDT':'symbol-narrow' }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</p-dialog>
+<p-toast></p-toast>

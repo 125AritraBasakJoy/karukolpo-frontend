@@ -1,0 +1,170 @@
+<div class="landing-page">
+  <header class="header">
+    <div class="logo">Karukolpo</div>
+    <nav>
+      <a href="#about">About Us</a>
+      <a href="#products">Products</a>
+      <a href="/track-order">Track Order</a>
+    </nav>
+    <div class="cart-icon" (click)="openCheckout()">
+      <i class="pi pi-shopping-cart"></i>
+      <span class="badge" *ngIf="cart().length > 0">{{ cart().length }}</span>
+    </div>
+  </header>
+
+  <section class="hero" [style.backgroundImage]="'url(' + landingPageImage() + ')'">
+    <div class="hero-content">
+      <h1>{{ landingPageTagline() }}</h1>
+      <p-button label="Shop Now" icon="pi pi-arrow-right" href="#products"></p-button>
+    </div>
+  </section>
+
+  <section id="products" class="products-section">
+    <h2>Our Products</h2>
+    <div *ngIf="loading()" class="flex justify-content-center my-5">
+      <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
+    </div>
+    <div class="grid" *ngIf="!loading()">
+      <div *ngFor="let product of products()" class="col-12 md:col-6 lg:col-3 p-2">
+        <div class="product-card p-3 border-1 surface-border border-round">
+          <div class="text-center mb-3">
+            <img [src]="product.imageUrl" [alt]="product.name" class="w-full shadow-2"
+              style="height: 200px; object-fit: cover;" />
+          </div>
+          <div class="text-xl font-bold mb-2">{{ product.name }}</div>
+          <div class="flex justify-content-between align-items-center">
+            <span class="text-xl font-semibold">{{ product.price | currency:'BDT':'symbol-narrow' }}</span>
+            <p-button icon="pi pi-eye" (onClick)="showProductDetails(product)" label="See More"></p-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="about-section">
+    <h2>About Us</h2>
+    <p>Karukolpo is a small online shop dedicated to bringing you the finest Bangladeshi handicrafts.</p>
+  </section>
+
+  <div class="footer p-4 bg-gray-900 text-white mt-5 text-center">
+    <h3>Contact Us</h3>
+    <p>{{ contactService.contactInfo().address }}</p>
+    <p>{{ contactService.contactInfo().phone }}</p>
+    <p>{{ contactService.contactInfo().email }}</p>
+    <p class="mt-4 text-gray-400 text-sm">&copy; 2024 Karukolpo. All rights reserved.</p>
+  </div>
+</div>
+
+<!-- Product Details Modal -->
+<p-dialog header="Product Details" [(visible)]="displayProductModal" [modal]="true" [style]="{width: '70vw'}"
+  [draggable]="false" [resizable]="false">
+  <div *ngIf="selectedProduct" class="grid">
+    <div class="col-12 md:col-6">
+      <p-galleria [value]="selectedProduct.images" [responsiveOptions]="responsiveOptions"
+        [containerStyle]="{'max-width': '100%'}" [numVisible]="4" [showItemNavigators]="true" [showThumbnails]="true"
+        [showIndicators]="true" [(activeIndex)]="activeIndex" [circular]="false" [autoPlay]="false">
+        <ng-template pTemplate="item" let-item>
+          <img [src]="item" style="width: 100%; display: block;" />
+        </ng-template>
+        <ng-template pTemplate="thumbnail" let-item>
+          <div class="grid grid-nogutter justify-content-center">
+            <img [src]="item" style="display: block; width: 50px;" />
+          </div>
+        </ng-template>
+      </p-galleria>
+    </div>
+    <div class="col-12 md:col-6">
+      <h2>{{ selectedProduct.name }}</h2>
+      <p>Code: {{ selectedProduct.code }}</p>
+      <p>{{ selectedProduct.description }}</p>
+      <h3>{{ selectedProduct.price | currency:'BDT':'symbol-narrow' }}</h3>
+      <p-button label="Add to Cart" icon="pi pi-shopping-cart" (onClick)="addToCart(selectedProduct)"></p-button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Checkout Modal -->
+<p-dialog header="Checkout" [(visible)]="displayCheckoutModal" [modal]="true" [style]="{width: '50vw'}"
+  [draggable]="false" [resizable]="false">
+  <div class="cart-items mb-4">
+    <div *ngFor="let item of cart()"
+      class="flex justify-content-between align-items-center mb-3 p-2 surface-border border-bottom-1">
+      <div class="flex align-items-center gap-3">
+        <img [src]="item.product.imageUrl" [alt]="item.product.name"
+          class="w-4rem h-4rem border-round shadow-1 object-cover">
+        <div class="flex flex-column">
+          <span class="font-bold">{{ item.product.name }}</span>
+          <span class="text-sm text-gray-600">{{ item.product.price | currency:'BDT':'symbol-narrow' }}</span>
+        </div>
+      </div>
+      <div class="flex align-items-center gap-2">
+        <p-button icon="pi pi-minus" [rounded]="true" [text]="true" size="small" styleClass="w-2rem h-2rem p-0"
+          (onClick)="updateQuantity(item, -1)"></p-button>
+        <span class="font-bold w-1rem text-center">{{ item.quantity }}</span>
+        <p-button icon="pi pi-plus" [rounded]="true" [text]="true" size="small" styleClass="w-2rem h-2rem p-0"
+          (onClick)="updateQuantity(item, 1)"></p-button>
+      </div>
+      <span class="font-bold">{{ item.product.price * item.quantity | currency:'BDT':'symbol-narrow' }}</span>
+    </div>
+    <div class="text-right font-bold text-xl mt-3">
+      Total: {{ getTotalPrice() | currency:'BDT':'symbol-narrow' }}
+    </div>
+  </div>
+
+  <div class="checkout-form grid">
+    <div class="col-12 md:col-6">
+      <span class="p-float-label">
+        <input pInputText id="fullName" [(ngModel)]="checkoutForm.fullName" class="w-full" />
+        <label htmlFor="fullName">Full Name</label>
+      </span>
+    </div>
+    <div class="col-12 md:col-6">
+      <span class="p-float-label">
+        <input pInputText id="email" [(ngModel)]="checkoutForm.email" class="w-full" />
+        <label htmlFor="email">Email</label>
+      </span>
+    </div>
+    <div class="col-12 md:col-6 mt-4">
+      <span class="p-float-label">
+        <input pInputText id="phone" [(ngModel)]="checkoutForm.phoneNumber" class="w-full" />
+        <label htmlFor="phone">Phone Number</label>
+      </span>
+    </div>
+    <div class="col-12 md:col-6 mt-4">
+      <span class="p-float-label">
+        <input pInputText id="district" [(ngModel)]="checkoutForm.district" class="w-full" />
+        <label htmlFor="district">District</label>
+      </span>
+    </div>
+    <div class="col-12 md:col-6 mt-4">
+      <span class="p-float-label">
+        <input pInputText id="postalCode" [(ngModel)]="checkoutForm.postalCode" class="w-full" />
+        <label htmlFor="postalCode">Postal Code</label>
+      </span>
+    </div>
+    <div class="col-12 mt-4">
+      <span class="p-float-label">
+        <textarea pInputTextarea id="address" [(ngModel)]="checkoutForm.fullAddress" class="w-full" rows="3"></textarea>
+        <label htmlFor="address">Full Address</label>
+      </span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Place Order" icon="pi pi-check" (onClick)="placeOrder()"
+      [disabled]="!checkoutForm.fullName || !checkoutForm.phoneNumber || !checkoutForm.fullAddress"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Order Success Modal -->
+<p-dialog header="Order Placed Successfully" [(visible)]="displayOrderSuccessModal" [modal]="true"
+  [style]="{width: '30vw'}">
+  <div class="text-center">
+    <i class="pi pi-check-circle text-green-500 text-5xl mb-3"></i>
+    <p>Thank you for your order!</p>
+    <p class="font-bold">Your Order ID: {{ placedOrderId }}</p>
+    <p class="text-sm text-gray-600">Please save this ID to track your order.</p>
+  </div>
+</p-dialog>
+
+<p-toast></p-toast>

@@ -1,0 +1,42 @@
+<div class="grid">
+    <div class="col-12">
+        <p-card header="Manage Landing Page" styleClass="h-full">
+            <div class="p-fluid">
+                <div class="field mb-4">
+                    <label for="tagline" class="font-bold">Tagline</label>
+                    <input pInputText id="tagline" [(ngModel)]="tagline" placeholder="Enter landing page tagline" />
+                </div>
+                <div class="field mb-4">
+                    <label class="font-bold block mb-2">Background Image</label>
+                    <div class="flex flex-column gap-3">
+                        <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*"
+                            class="hidden" />
+                        <div class="flex align-items-center gap-3">
+                            <p-button type="button" label="Choose Image" icon="pi pi-image" [outlined]="true"
+                                (click)="fileInput.click()"></p-button>
+                            <span *ngIf="imageUrl" class="text-green-500"><i class="pi pi-check mr-2"></i>Image
+                                Selected</span>
+                        </div>
+                        <small class="block mt-2 text-gray-600">Upload an image from your device.</small>
+                    </div>
+                </div>
+
+                <div class="flex justify-content-end mt-4">
+                    <p-button label="Save Configuration" icon="pi pi-save" (onClick)="saveConfig()"></p-button>
+                </div>
+            </div>
+
+            <div class="mt-5 border-top-1 surface-border pt-4" *ngIf="imageUrl">
+                <label class="font-bold block mb-2">Preview</label>
+                <div class="border-round overflow-hidden relative" style="height: 300px;">
+                    <img [src]="imageUrl" style="width: 100%; height: 100%; object-fit: cover;" alt="Preview">
+                    <div class="absolute top-0 left-0 w-full h-full flex align-items-center justify-content-center"
+                        style="background: rgba(0,0,0,0.4);">
+                        <h1 class="text-white text-4xl font-bold">{{ tagline }}</h1>
+                    </div>
+                </div>
+            </div>
+        </p-card>
+    </div>
+</div>
+<p-toast [baseZIndex]="5000"></p-toast>

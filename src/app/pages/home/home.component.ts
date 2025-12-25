@@ -16,6 +16,9 @@ import { CartItem } from '../../models/cart.model';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { GalleriaModule } from 'primeng/galleria';
 import { ContactService } from '../../services/contact.service';
+import { DropdownModule } from 'primeng/dropdown';
+import { districts, District } from '../../data/bangladesh-data';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-home',
@@ -31,7 +34,8 @@ import { ContactService } from '../../services/contact.service';
     InputTextareaModule,
     ToastModule,
     GalleriaModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    DropdownModule
   ],
   providers: [MessageService],
   templateUrl: './home.component.html',
@@ -52,9 +56,13 @@ export class HomeComponent implements OnInit {
     email: '',
     phoneNumber: '',
     district: '',
+    subDistrict: '',
     postalCode: '',
     fullAddress: ''
   };
+
+  districts: District[] = districts;
+  subDistricts: string[] = [];
 
   placedOrderId = '';
   landingPageImage = signal<string>('assets/landing-bg.jpg'); // Default, can be updated by admin
@@ -79,7 +87,8 @@ export class HomeComponent implements OnInit {
     private productService: ProductService,
     private orderService: OrderService,
     private messageService: MessageService,
-    public contactService: ContactService
+    public contactService: ContactService,
+    public themeService: ThemeService
   ) { }
 
   ngOnInit() {
@@ -101,13 +110,16 @@ export class HomeComponent implements OnInit {
   }
 
   loadLandingPageConfig() {
-    // In a real app, fetch this from a service
-    const config = localStorage.getItem('landingConfig');
-    if (config) {
-      const parsed = JSON.parse(config);
-      this.landingPageImage.set(parsed.image || 'assets/landing-bg.jpg');
-      this.landingPageTagline.set(parsed.tagline || 'Authentic Bangladeshi Handcrafts');
-    }
+    const load = () => {
+      const config = localStorage.getItem('landingConfig');
+      if (config) {
+        const parsed = JSON.parse(config);
+        this.landingPageImage.set(parsed.image || 'assets/landing-bg.jpg');
+        this.landingPageTagline.set(parsed.tagline || 'Authentic Bangladeshi Handcrafts');
+      }
+    };
+    load(); // Initial load
+    window.addEventListener('storage', load); // Listen for updates
   }
 
   showProductDetails(product: Product) {
@@ -137,6 +149,33 @@ export class HomeComponent implements OnInit {
 
   getTotalPrice(): number {
     return this.cart().reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  }
+
+  onDistrictChange(event: any) {
+    const selectedDistrict = this.districts.find(d => d.name === event.value);
+    this.subDistricts = selectedDistrict ? selectedDistrict.subDistricts : [];
+    this.checkoutForm.subDistrict = '';
+  }
+
+  // Regex Patterns for Template Binding
+  emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  phoneRegex = /^(?:\+88|88)?(01[3-9]\d{8})$/; // Bangladeshi Phone Number
+  postalCodeRegex = /^\d{4}$/; // Exact 4 digits
+
+  get isCheckoutFormValid(): boolean {
+    const { fullName, email, phoneNumber, district, postalCode, fullAddress, subDistrict } = this.checkoutForm;
+
+    // Basic existence check
+    const basicValidation = fullName && email && phoneNumber && district && postalCode && fullAddress;
+
+    // Sub-district check
+    const subDistrictValidation = this.subDistricts.length > 0 ? !!subDistrict : true; // Optional if no sub-districts
+
+    const isEmailValid = this.emailRegex.test(email);
+    const isPhoneValid = this.phoneRegex.test(phoneNumber);
+    const isPostalCodeValid = this.postalCodeRegex.test(postalCode);
+
+    return !!(basicValidation && subDistrictValidation && isEmailValid && isPhoneValid && isPostalCodeValid);
   }
 
   openCheckout() {
@@ -174,6 +213,7 @@ export class HomeComponent implements OnInit {
       email: '',
       phoneNumber: '',
       district: '',
+      subDistrict: '',
       postalCode: '',
       fullAddress: ''
     };

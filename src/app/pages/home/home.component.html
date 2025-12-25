@@ -6,6 +6,11 @@
       <a href="#products">Products</a>
       <a href="/track-order">Track Order</a>
     </nav>
+    <div class="mr-3">
+      <p-button [label]="themeService.currentTheme() === 'light' ? 'Dark Mode' : 'Light Mode'"
+        [icon]="themeService.currentTheme() === 'light' ? 'pi pi-moon' : 'pi pi-sun'"
+        styleClass="p-button-text p-button-secondary" (onClick)="themeService.toggleTheme()"></p-button>
+    </div>
     <div class="cart-icon" (click)="openCheckout()">
       <i class="pi pi-shopping-cart"></i>
       <span class="badge" *ngIf="cart().length > 0">{{ cart().length }}</span>
@@ -32,9 +37,12 @@
               style="height: 200px; object-fit: cover;" />
           </div>
           <div class="text-xl font-bold mb-2">{{ product.name }}</div>
-          <div class="flex justify-content-between align-items-center">
-            <span class="text-xl font-semibold">{{ product.price | currency:'BDT':'symbol-narrow' }}</span>
-            <p-button icon="pi pi-eye" (onClick)="showProductDetails(product)" label="See More"></p-button>
+          <div class="text-xl font-semibold mb-3">{{ product.price | currency:'BDT':'symbol-narrow' }}</div>
+          <div class="flex gap-2 w-full">
+            <p-button icon="pi pi-shopping-cart" (onClick)="addToCart(product)" label="Add" styleClass="w-full"
+              class="flex-1"></p-button>
+            <p-button icon="pi pi-eye" (onClick)="showProductDetails(product)" label="View" [outlined]="true"
+              styleClass="w-full" class="flex-1"></p-button>
           </div>
         </div>
       </div>
@@ -114,45 +122,79 @@
   <div class="checkout-form grid">
     <div class="col-12 md:col-6">
       <span class="p-float-label">
-        <input pInputText id="fullName" [(ngModel)]="checkoutForm.fullName" class="w-full" />
-        <label htmlFor="fullName">Full Name</label>
+        <input pInputText id="fullName" [(ngModel)]="checkoutForm.fullName" #fullName="ngModel" required
+          class="w-full" />
+        <label htmlFor="fullName">Full Name <span class="text-red-500">*</span></label>
       </span>
+      <small class="p-error block mt-1" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Name is
+        required.</small>
     </div>
     <div class="col-12 md:col-6">
       <span class="p-float-label">
-        <input pInputText id="email" [(ngModel)]="checkoutForm.email" class="w-full" />
-        <label htmlFor="email">Email</label>
+        <input pInputText id="email" [(ngModel)]="checkoutForm.email" #email="ngModel" required [pattern]="emailRegex"
+          class="w-full" />
+        <label htmlFor="email">Email <span class="text-red-500">*</span></label>
       </span>
+      <small class="p-error block mt-1" *ngIf="email.invalid && (email.dirty || email.touched)">
+        <span *ngIf="email.errors?.['required']">Email is required.</span>
+        <span *ngIf="email.errors?.['pattern']">Invalid email address.</span>
+      </small>
     </div>
     <div class="col-12 md:col-6 mt-4">
       <span class="p-float-label">
-        <input pInputText id="phone" [(ngModel)]="checkoutForm.phoneNumber" class="w-full" />
-        <label htmlFor="phone">Phone Number</label>
+        <input pInputText id="phone" [(ngModel)]="checkoutForm.phoneNumber" #phone="ngModel" required
+          [pattern]="phoneRegex" class="w-full" />
+        <label htmlFor="phone">Phone Number <span class="text-red-500">*</span></label>
       </span>
+      <small class="p-error block mt-1" *ngIf="phone.invalid && (phone.dirty || phone.touched)">
+        <span *ngIf="phone.errors?.['required']">Phone number is required.</span>
+        <span *ngIf="phone.errors?.['pattern']">Invalid Bangladeshi phone number (e.g., 017...).</span>
+      </small>
     </div>
     <div class="col-12 md:col-6 mt-4">
       <span class="p-float-label">
-        <input pInputText id="district" [(ngModel)]="checkoutForm.district" class="w-full" />
-        <label htmlFor="district">District</label>
+        <p-dropdown id="district" [options]="districts" optionLabel="name" optionValue="name"
+          [(ngModel)]="checkoutForm.district" (onChange)="onDistrictChange($event)" [style]="{'width':'100%'}"
+          class="w-full" #district="ngModel" required></p-dropdown>
+        <label htmlFor="district">District <span class="text-red-500">*</span></label>
       </span>
+      <small class="p-error block mt-1" *ngIf="district.invalid && (district.dirty || district.touched)">District is
+        required.</small>
+    </div>
+    <div class="col-12 md:col-6 mt-4" *ngIf="subDistricts.length > 0">
+      <span class="p-float-label">
+        <p-dropdown id="subDistrict" [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
+          [style]="{'width':'100%'}" class="w-full" #subDistrict="ngModel" required></p-dropdown>
+        <label htmlFor="subDistrict">Sub-District <span class="text-red-500">*</span></label>
+      </span>
+      <small class="p-error block mt-1"
+        *ngIf="subDistrict.invalid && (subDistrict.dirty || subDistrict.touched)">Sub-District is required.</small>
     </div>
     <div class="col-12 md:col-6 mt-4">
       <span class="p-float-label">
-        <input pInputText id="postalCode" [(ngModel)]="checkoutForm.postalCode" class="w-full" />
-        <label htmlFor="postalCode">Postal Code</label>
+        <input pInputText id="postalCode" [(ngModel)]="checkoutForm.postalCode" #postalCode="ngModel" required
+          [pattern]="postalCodeRegex" class="w-full" />
+        <label htmlFor="postalCode">Postal Code <span class="text-red-500">*</span></label>
       </span>
+      <small class="p-error block mt-1" *ngIf="postalCode.invalid && (postalCode.dirty || postalCode.touched)">
+        <span *ngIf="postalCode.errors?.['required']">Postal code is required.</span>
+        <span *ngIf="postalCode.errors?.['pattern']">Must be exactly 4 digits.</span>
+      </small>
     </div>
     <div class="col-12 mt-4">
       <span class="p-float-label">
-        <textarea pInputTextarea id="address" [(ngModel)]="checkoutForm.fullAddress" class="w-full" rows="3"></textarea>
-        <label htmlFor="address">Full Address</label>
+        <textarea pInputTextarea id="address" [(ngModel)]="checkoutForm.fullAddress" #address="ngModel" required
+          class="w-full" rows="3"></textarea>
+        <label htmlFor="address">Full Address <span class="text-red-500">*</span></label>
       </span>
+      <small class="p-error block mt-1" *ngIf="address.invalid && (address.dirty || address.touched)">Address is
+        required.</small>
     </div>
   </div>
 
   <ng-template pTemplate="footer">
     <p-button label="Place Order" icon="pi pi-check" (onClick)="placeOrder()"
-      [disabled]="!checkoutForm.fullName || !checkoutForm.phoneNumber || !checkoutForm.fullAddress"></p-button>
+      [disabled]="!isCheckoutFormValid"></p-button>
   </ng-template>
 </p-dialog>
 

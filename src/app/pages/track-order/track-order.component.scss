@@ -1,3 +1,10 @@
+.page-wrapper {
+  background-color: var(--surface-ground);
+  color: var(--text-color);
+  min-height: 100vh;
+  width: 100%;
+}
+
 .track-order-container {
   padding: 2rem;
   max-width: 800px;
@@ -9,7 +16,23 @@
   margin-bottom: 2rem;
 }
 
-.status-pending { color: orange; }
-.status-approved { color: blue; }
-.status-completed { color: green; }
-.status-deleted { color: red; }
+.status-pending {
+  color: orange;
+}
+
+.status-approved {
+  color: blue;
+}
+
+.status-completed {
+  color: green;
+}
+
+.status-deleted {
+  color: red;
+}
+
+::ng-deep .p-card {
+  background: var(--surface-card);
+  color: var(--text-color);
+}

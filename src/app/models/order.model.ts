@@ -6,6 +6,7 @@ export interface Order {
   email: string;
   phoneNumber: string;
   district: string;
+  subDistrict?: string;
   postalCode: string;
   fullAddress: string;
   items: CartItem[];

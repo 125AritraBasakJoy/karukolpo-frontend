@@ -6,7 +6,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 5%;
+  padding: 0 5%;
+  height: 80px;
   background: var(--surface-card);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   position: sticky;
@@ -18,6 +19,17 @@
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--text-color);
+    display: flex;
+    align-items: center;
+    height: 100%;
+
+    .site-logo {
+      height: 100%;
+      width: auto;
+      object-fit: contain;
+      padding: 5px 0;
+      /* Add slight padding to prevent touching edges directly */
+    }
   }
 
   nav a {

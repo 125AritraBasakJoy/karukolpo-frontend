@@ -1,19 +1,25 @@
 <div class="card">
     <div class="flex justify-content-between align-items-center mb-4">
-        <h2>Order Management</h2>
-        <button pButton label="Download Sheet" icon="pi pi-download" (click)="downloadOrders()"
-            class="p-button-success"></button>
+        <h1>Orders</h1>
+        <div class="flex gap-2">
+            <app-notification-button></app-notification-button>
+            <p-button icon="pi pi-file-excel" label="Export" (onClick)="downloadOrders()" styleClass="p-button-success"
+                pTooltip="Download Excel" tooltipPosition="bottom"></p-button>
+            <p-button icon="pi pi-refresh" (onClick)="refreshOrders()" styleClass="p-button-outlined p-button-secondary"
+                pTooltip="Refresh Orders" tooltipPosition="bottom"></p-button>
+        </div>
     </div>
     <div *ngIf="loading()" class="flex justify-content-center my-5">
         <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
     </div>
-    <p-table [value]="orders()" [tableStyle]="{ 'min-width': '50rem' }" *ngIf="!loading()">
+    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" *ngIf="!loading()">
         <ng-template pTemplate="header">
             <tr>
                 <th>Order ID</th>
                 <th>Customer</th>
                 <th>Date</th>
                 <th>Total</th>
+                <th>Payment</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -24,9 +30,20 @@
                 <td>{{ order.fullName }}</td>
                 <td>{{ order.orderDate | date:'short' }}</td>
                 <td>{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</td>
+                <td>
+                    <div class="flex flex-column gap-1">
+                        <span class="font-bold">{{ order.paymentMethod || 'N/A' }}</span>
+                        <p-tag [value]="order.paymentStatus || 'Pending'"
+                            [severity]="order.paymentStatus === 'Paid' ? 'success' : 'warning'"
+                            [rounded]="true"></p-tag>
+                    </div>
+                </td>
                 <td><p-tag [value]="order.status" [severity]="getSeverity(order.status)"></p-tag></td>
                 <td>
                     <p-button icon="pi pi-eye" [rounded]="true" [text]="true" (onClick)="viewOrder(order)"></p-button>
+                    <p-button icon="pi pi-wallet" [rounded]="true" [text]="true" severity="warning"
+                        pTooltip="Toggle Payment Status" tooltipPosition="top"
+                        (onClick)="togglePaymentStatus(order)"></p-button>
                     <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
                         (onClick)="updateStatus(order, 'Approved')" *ngIf="order.status === 'Pending'"></p-button>
                     <p-button icon="pi pi-truck" [rounded]="true" [text]="true" severity="primary"
@@ -58,6 +75,19 @@
             <p><strong>Date:</strong> {{ selectedOrder.orderDate | date:'medium' }}</p>
             <p><strong>Status:</strong> <p-tag [value]="selectedOrder.status"
                     [severity]="getSeverity(selectedOrder.status)"></p-tag></p>
+            <p><strong>Payment Method:</strong>
+                <span [ngClass]="{
+                        'text-primary font-bold': selectedOrder.paymentMethod === 'bKash', 
+                        'text-green-500 font-bold': selectedOrder.paymentMethod === 'COD'
+                    }">{{ selectedOrder.paymentMethod || 'N/A' }}</span>
+            </p>
+            <p><strong>Payment Status:</strong>
+                <span [ngClass]="{
+                        'text-green-500 font-bold': selectedOrder.paymentStatus === 'Paid', 
+                        'text-orange-500 font-bold': selectedOrder.paymentStatus === 'Pending'
+                    }">{{ selectedOrder.paymentStatus || 'Pending' }}</span>
+            </p>
+            <p *ngIf="selectedOrder.bkashNumber"><strong>bKash Number:</strong> {{ selectedOrder.bkashNumber }}</p>
         </div>
         <div class="col-12">
             <h3>Items</h3>

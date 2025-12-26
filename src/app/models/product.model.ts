@@ -5,5 +5,7 @@ export interface Product {
   description: string;
   price: number;
   imageUrl: string;
-  images: string[];
+  images?: string[];
+  stock?: number;
+  manualStockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO';
 }

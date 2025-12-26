@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -8,8 +8,8 @@ import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { OrderService } from '../../../services/order.service';
-import { Subscription } from 'rxjs';
+import { NotificationService } from '../../../services/notification.service';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -67,46 +67,36 @@ import { Subscription } from 'rxjs';
       color: var(--text-color);
     }
     .logout-button {
-        margin-top: auto;
+      margin-top: auto;
     }
   `]
 })
 export class DashboardComponent implements OnInit {
   menuItems: MenuItem[];
-  private orderSubscription!: Subscription;
+  private notificationService = inject(NotificationService);
+  private messageService = inject(MessageService);
 
   constructor(
     private authService: AuthService,
-    private orderService: OrderService,
-    private messageService: MessageService,
     public themeService: ThemeService
   ) {
     this.menuItems = [
       { label: 'Inventory', icon: 'pi pi-box', routerLink: 'inventory' },
       { label: 'Orders', icon: 'pi pi-shopping-cart', routerLink: 'orders' },
       { label: 'Manage Landing', icon: 'pi pi-image', routerLink: 'manage-landing' },
+      { label: 'Payment Mgmt', icon: 'pi pi-wallet', routerLink: '/admin/dashboard/payment-management' },
+      { label: 'Delivery Charges', icon: 'pi pi-truck', routerLink: '/admin/dashboard/delivery-management' },
       { label: 'Settings', icon: 'pi pi-cog', routerLink: 'settings' }
     ];
   }
 
   ngOnInit() {
-    this.orderSubscription = this.orderService.newOrderNotification$.subscribe(orderId => {
-      this.messageService.add({
-        severity: 'info',
-        summary: 'New Order Received',
-        detail: `Order #${orderId} has been placed.`,
-        life: 10000
-      });
-    });
-  }
-
-  ngOnDestroy() {
-    if (this.orderSubscription) {
-      this.orderSubscription.unsubscribe();
-    }
+    // Initialize Notification Service Global Listeners
+    this.notificationService.init(this.messageService); // Pass local MessageService
   }
 
   logout() {
     this.authService.logout();
   }
 }
+

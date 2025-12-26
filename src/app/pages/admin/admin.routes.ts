@@ -31,7 +31,15 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'inventory', loadComponent: () => import('./inventory/inventory.component').then(m => m.InventoryComponent) },
       { path: 'orders', loadComponent: () => import('./orders/orders.component').then(m => m.OrdersComponent) },
       { path: 'settings', loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent) },
-      { path: 'manage-landing', loadComponent: () => import('./landing-page-manager/landing-page-manager.component').then(m => m.LandingPageManagerComponent) }
+      { path: 'manage-landing', loadComponent: () => import('./landing-page-manager/landing-page-manager.component').then(m => m.LandingPageManagerComponent) },
+      {
+        path: 'payment-management',
+        loadComponent: () => import('./payment-management/payment-management.component').then(m => m.PaymentManagementComponent)
+      },
+      {
+        path: 'delivery-management',
+        loadComponent: () => import('./delivery-management/delivery-management.component').then(m => m.DeliveryManagementComponent)
+      }
     ]
   }
 ];

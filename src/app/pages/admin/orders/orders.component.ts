@@ -9,11 +9,14 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
+
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, TableModule, ButtonModule, TagModule, ToastModule, DialogModule, ProgressSpinnerModule],
+  imports: [CommonModule, TableModule, ButtonModule, TagModule, ToastModule, DialogModule, ProgressSpinnerModule, NotificationButtonComponent],
   providers: [MessageService],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss']
@@ -40,7 +43,25 @@ export class OrdersComponent implements OnInit {
     this.loading.set(true);
     this.orderService.getOrders().subscribe({
       next: (orders) => {
-        this.orders.set(orders);
+        // Sort by date descending
+        const sortedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        this.orders.set(sortedOrders);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  refreshOrders() {
+    this.loading.set(true);
+    this.orderService.reloadOrders().subscribe({
+      next: (orders) => {
+        // Sort by date descending
+        const sortedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        this.orders.set(sortedOrders);
+        this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Orders list updated' });
         this.loading.set(false);
       },
       error: () => {
@@ -52,6 +73,25 @@ export class OrdersComponent implements OnInit {
   viewOrder(order: Order) {
     this.selectedOrder = order;
     this.displayOrderDialog = true;
+  }
+
+  togglePaymentStatus(order: Order) {
+    const newStatus = order.paymentStatus === 'Paid' ? 'Pending' : 'Paid';
+    const method = order.paymentMethod || 'COD'; // Default to COD if not set
+
+    this.orderService.updateOrderPayment(order.id!, method, newStatus).subscribe(() => {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Updated',
+        detail: `Payment status set to ${newStatus}`
+      });
+      this.loadOrders();
+
+      // Update local state if dialog is open
+      if (this.selectedOrder && this.selectedOrder.id === order.id) {
+        this.selectedOrder.paymentStatus = newStatus;
+      }
+    });
   }
 
   updateStatus(order: Order, status: 'Approved' | 'Delivered' | 'Completed' | 'Deleted') {
@@ -84,6 +124,7 @@ export class OrdersComponent implements OnInit {
         return 'info'; // Changed from 'text' to 'info' as 'text' is not a valid severity for p-tag
     }
   }
+
   downloadOrders() {
     const orders = this.orders();
     if (orders.length === 0) {
@@ -91,31 +132,39 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
-    // CSV Header
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Order ID,Customer Name,Email,Phone,Date,Total Amount,Status\n";
+    // Format Data for Excel
+    const data = orders.map(order => ({
+      'Order ID': order.id,
+      'Customer Name': order.fullName,
+      'Phone': order.phoneNumber,
+      'District': order.district,
+      'Date': new Date(order.orderDate).toLocaleDateString(),
+      'Total Amount': order.totalAmount,
+      'Payment Status': order.paymentStatus || 'Pending',
+      'Order Status': order.status
+    }));
 
-    // CSV Rows
-    orders.forEach(order => {
-      const row = [
-        order.id,
-        `"${order.fullName}"`, // Quote to handle commas in names
-        order.email,
-        order.phoneNumber,
-        new Date(order.orderDate).toLocaleDateString(),
-        order.totalAmount,
-        order.status
-      ].join(",");
-      csvContent += row + "\n";
-    });
+    // Generate Worksheet
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
 
-    // Download Logic
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "orders_sheet.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Auto-width columns (basic check)
+    const wscols = [
+      { wch: 15 }, // ID
+      { wch: 20 }, // Name
+      { wch: 15 }, // Phone
+      { wch: 15 }, // District
+      { wch: 12 }, // Date
+      { wch: 12 }, // Total
+      { wch: 15 }, // Pay Status
+      { wch: 15 }  // Order Status
+    ];
+    ws['!cols'] = wscols;
+
+    // Generate Workbook
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+
+    // Save File
+    XLSX.writeFile(wb, 'orders_export.xlsx');
   }
 }

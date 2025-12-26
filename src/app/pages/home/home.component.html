@@ -1,6 +1,10 @@
 <div class="landing-page">
   <header class="header">
-    <div class="logo">Karukolpo</div>
+    <div class="logo">
+      <img *ngIf="siteConfigService.siteConfig().logoUrl" [src]="siteConfigService.siteConfig().logoUrl" alt="Karukolpo"
+        class="site-logo">
+      <span *ngIf="!siteConfigService.siteConfig().logoUrl">Karukolpo</span>
+    </div>
     <nav>
       <a href="#about">About Us</a>
       <a href="#products">Products</a>
@@ -32,15 +36,21 @@
     <div class="grid" *ngIf="!loading()">
       <div *ngFor="let product of products()" class="col-12 md:col-6 lg:col-3 p-2">
         <div class="product-card p-3 border-1 surface-border border-round">
-          <div class="text-center mb-3">
+          <div class="text-center mb-3 relative">
+            <div *ngIf="isOutOfStock(product)"
+              class="absolute top-0 right-0 m-2 px-3 py-1 bg-red-500 text-white font-bold border-round shadow-2 z-1"
+              style="font-size: 0.8rem;">
+              Out of Stock
+            </div>
             <img [src]="product.imageUrl" [alt]="product.name" class="w-full shadow-2"
-              style="height: 200px; object-fit: cover;" />
+              [class.grayscale]="isOutOfStock(product)" style="height: 200px; object-fit: cover;" />
           </div>
           <div class="text-xl font-bold mb-2">{{ product.name }}</div>
           <div class="text-xl font-semibold mb-3">{{ product.price | currency:'BDT':'symbol-narrow' }}</div>
           <div class="flex gap-2 w-full">
-            <p-button icon="pi pi-shopping-cart" (onClick)="addToCart(product)" label="Add" styleClass="w-full"
-              class="flex-1"></p-button>
+            <p-button icon="pi pi-shopping-cart" (onClick)="addToCart(product)"
+              [label]="isOutOfStock(product) ? 'Out of Stock' : 'Add'" [disabled]="isOutOfStock(product)"
+              styleClass="w-full" class="flex-1"></p-button>
             <p-button icon="pi pi-eye" (onClick)="showProductDetails(product)" label="View" [outlined]="true"
               styleClass="w-full" class="flex-1"></p-button>
           </div>
@@ -67,7 +77,12 @@
 <p-dialog header="Product Details" [(visible)]="displayProductModal" [modal]="true" [style]="{width: '70vw'}"
   [draggable]="false" [resizable]="false">
   <div *ngIf="selectedProduct" class="grid">
-    <div class="col-12 md:col-6">
+    <div class="col-12 md:col-6 relative">
+      <div *ngIf="isOutOfStock(selectedProduct)"
+        class="absolute top-0 left-0 m-3 px-3 py-2 bg-red-500 text-white font-bold border-round shadow-2 z-5"
+        style="font-size: 1rem;">
+        Out of Stock
+      </div>
       <p-galleria [value]="selectedProduct.images" [responsiveOptions]="responsiveOptions"
         [containerStyle]="{'max-width': '100%'}" [numVisible]="4" [showItemNavigators]="true" [showThumbnails]="true"
         [showIndicators]="true" [(activeIndex)]="activeIndex" [circular]="false" [autoPlay]="false">
@@ -84,9 +99,11 @@
     <div class="col-12 md:col-6">
       <h2>{{ selectedProduct.name }}</h2>
       <p>Code: {{ selectedProduct.code }}</p>
-      <p>{{ selectedProduct.description }}</p>
+      <p style="overflow-wrap: break-word; word-break: break-word;">{{ selectedProduct.description }}</p>
       <h3>{{ selectedProduct.price | currency:'BDT':'symbol-narrow' }}</h3>
-      <p-button label="Add to Cart" icon="pi pi-shopping-cart" (onClick)="addToCart(selectedProduct)"></p-button>
+      <p-button [label]="isOutOfStock(selectedProduct) ? 'Out of Stock' : 'Add to Cart'"
+        [icon]="isOutOfStock(selectedProduct) ? 'pi pi-times-circle' : 'pi pi-shopping-cart'"
+        [disabled]="isOutOfStock(selectedProduct)" (onClick)="addToCart(selectedProduct)"></p-button>
     </div>
   </div>
 </p-dialog>
@@ -114,7 +131,31 @@
       </div>
       <span class="font-bold">{{ item.product.price * item.quantity | currency:'BDT':'symbol-narrow' }}</span>
     </div>
-    <div class="text-right font-bold text-xl mt-3">
+
+    <!-- Delivery Location Selection -->
+    <div class="flex flex-column gap-2 mb-3 p-3 surface-ground border-round">
+      <div class="font-bold mb-2">Delivery Location</div>
+      <div class="flex align-items-center gap-3">
+        <div class="field-radiobutton mb-0">
+          <p-radioButton name="deliveryLocation" value="Inside Dhaka" [(ngModel)]="deliveryLocation"
+            (onClick)="updateDeliveryCharge()" inputId="insideDhaka"></p-radioButton>
+          <label for="insideDhaka" class="ml-2">Inside Dhaka</label>
+        </div>
+        <div class="field-radiobutton mb-0">
+          <p-radioButton name="deliveryLocation" value="Outside Dhaka" [(ngModel)]="deliveryLocation"
+            (onClick)="updateDeliveryCharge()" inputId="outsideDhaka"></p-radioButton>
+          <label for="outsideDhaka" class="ml-2">Outside Dhaka</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-right text-lg mb-2">
+      Subtotal: {{ getSubTotal() | currency:'BDT':'symbol-narrow' }}
+    </div>
+    <div class="text-right text-lg mb-2">
+      Delivery: {{ currentDeliveryCharge | currency:'BDT':'symbol-narrow' }}
+    </div>
+    <div class="text-right font-bold text-xl mt-3 border-top-1 border-gray-300 pt-2">
       Total: {{ getTotalPrice() | currency:'BDT':'symbol-narrow' }}
     </div>
   </div>
@@ -190,11 +231,54 @@
       <small class="p-error block mt-1" *ngIf="address.invalid && (address.dirty || address.touched)">Address is
         required.</small>
     </div>
+    <div class="col-12 mt-4">
+      <div class="text-xl font-bold mb-3">Payment Method</div>
+      <div class="flex flex-column gap-3">
+        <div class="flex justify-content-center gap-3">
+          <div (click)="selectPaymentMethod('bKash')" [class.surface-200]="selectedPaymentMethod === 'bKash'"
+            class="cursor-pointer p-3 border-1 border-round surface-border hover:surface-100 transition-colors w-6 text-center">
+            <i class="pi pi-wallet text-4xl text-primary mb-2"></i>
+            <div class="font-bold">bKash</div>
+          </div>
+          <div (click)="selectPaymentMethod('COD')" [class.surface-200]="selectedPaymentMethod === 'COD'"
+            class="cursor-pointer p-3 border-1 border-round surface-border hover:surface-100 transition-colors w-6 text-center">
+            <i class="pi pi-money-bill text-4xl text-green-500 mb-2"></i>
+            <div class="font-bold">Cash On Delivery</div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedPaymentMethod === 'bKash'" class="mt-2 text-center fadein animation-duration-300">
+          <div *ngIf="bkashQrCodeInModal; else noQr">
+            <p class="mb-2 font-bold">Scan to Pay</p>
+            <img [src]="bkashQrCodeInModal" alt="bKash QR"
+              style="max-width: 200px; border: 1px solid #ddd; padding: 5px;">
+          </div>
+          <ng-template #noQr>
+            <p class="text-red-500">QR Code not available. Please contact admin.</p>
+          </ng-template>
+
+          <div class="mt-3">
+            <span class="p-float-label">
+              <input pInputText id="bkashNumber" [(ngModel)]="bkashNumber" #bkashNum="ngModel" required
+                [pattern]="phoneRegex" class="w-full" />
+              <label htmlFor="bkashNumber">Your bKash Account Number <span class="text-red-500">*</span></label>
+            </span>
+            <small class="p-error block mt-1" *ngIf="bkashNum.invalid && (bkashNum.dirty || bkashNum.touched)">
+              <span *ngIf="bkashNum.errors?.['required']">bKash number is required.</span>
+              <span *ngIf="bkashNum.errors?.['pattern']">Invalid bKash number.</span>
+            </small>
+          </div>
+        </div>
+
+        <div *ngIf="selectedPaymentMethod === 'COD'" class="mt-2 text-center fadein animation-duration-300">
+          <p class="text-green-600 font-bold">You will pay when the product is delivered.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button label="Place Order" icon="pi pi-check" (onClick)="placeOrder()"
-      [disabled]="!isCheckoutFormValid"></p-button>
+    <p-button label="Place Order" icon="pi pi-check" (onClick)="placeOrder()"></p-button>
   </ng-template>
 </p-dialog>
 

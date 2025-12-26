@@ -1,0 +1,27 @@
+Method,Endpoint,Description,Request Body (JSON),Response (JSON)
+POST,/api/auth/login,Admin login,"{""username"": ""string"", ""password"": ""string""}","{""token"": ""string""}"
+POST,/api/auth/logout,Admin logout,-,-
+PUT,/api/auth/credentials,Update admin credentials,"{""username"": ""string"", ""password"": ""string""}",-
+GET,/api/products,Get all products,-,"[{""id"": ""string"", ""name"": ""string"", ...}]"
+GET,/api/products/:id,Get product by ID,-,"{""id"": ""string"", ...}"
+POST,/api/products,Add new product,"{""code"": ""string"", ""name"": ""string"", ""price"": number, ...}","{""id"": ""string""}"
+PUT,/api/products/:id,Update product,"{""name"": ""string"", ...}",-
+DELETE,/api/products/:id,Delete product,-,-
+PUT,/api/products/stock,Reduce product stock,"[{""productId"": ""string"", ""quantity"": number}]",-
+GET,/api/orders,Get all orders,-,"[{""id"": ""string"", ""status"": ""string"", ...}]"
+GET,/api/orders/:id,Get order by ID,-,"{""id"": ""string"", ...}"
+POST,/api/orders,Create new order,"{""fullName"": ""string"", ""items"": [...], ...}","{""orderId"": ""string""}"
+PUT,/api/orders/:id/status,Update order status,"{""status"": ""string""}",-
+PUT,/api/orders/:id/payment,Update payment info,"{""method"": ""string"", ""status"": ""string""}",-
+GET,/api/admin/content/contact,Get contact info,-,"{""address"": ""string"", ""phone"": ""string"", ""email"": ""string""}"
+PUT,/api/admin/content/contact,Update contact info,"{""address"": ""string"", ""phone"": ""string"", ""email"": ""string""}",-
+GET,/api/admin/content/site-config,Get site configuration,-,"{""siteName"": ""string"", ""logoUrl"": ""string""}"
+PUT,/api/admin/content/site-config,Update site configuration,"{""logoUrl"": ""string""}",-
+GET,/api/admin/config/payment/bkash-qr,Get bKash QR Code,-,"{""base64Image"": ""string""}"
+PUT,/api/admin/config/payment/bkash-qr,Update bKash QR Code,"{""base64Image"": ""string""}",-
+GET,/api/admin/config/delivery-charges,Get delivery charges,-,"{""insideDhaka"": number, ""outsideDhaka"": number}"
+PUT,/api/admin/config/delivery-charges,Update delivery charges,"{""insideDhaka"": number, ""outsideDhaka"": number}",-
+GET,/api/admin/config/landing-page,Get landing page config,-,"{""tagline"": ""string"", ""imageUrl"": ""string""}"
+PUT,/api/admin/config/landing-page,Update landing page config,"{""tagline"": ""string"", ""imageUrl"": ""string""}",-
+GET,/api/admin/notifications,Get admin notifications,-,"[{""title"": ""string"", ""message"": ""string"", ""type"": ""string""}]"
+DELETE,/api/admin/notifications,Clear all notifications,-,-

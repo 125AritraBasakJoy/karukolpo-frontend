@@ -19,6 +19,10 @@ import { ContactService } from '../../services/contact.service';
 import { DropdownModule } from 'primeng/dropdown';
 import { districts, District } from '../../data/bangladesh-data';
 import { ThemeService } from '../../services/theme.service';
+import { PaymentService } from '../../services/payment.service';
+import { DeliveryService } from '../../services/delivery.service';
+import { SiteConfigService } from '../../services/site-config.service';
+import { RadioButtonModule } from 'primeng/radiobutton';
 
 @Component({
   selector: 'app-home',
@@ -35,7 +39,8 @@ import { ThemeService } from '../../services/theme.service';
     ToastModule,
     GalleriaModule,
     ProgressSpinnerModule,
-    DropdownModule
+    DropdownModule,
+    RadioButtonModule
   ],
   providers: [MessageService],
   templateUrl: './home.component.html',
@@ -60,6 +65,11 @@ export class HomeComponent implements OnInit {
     postalCode: '',
     fullAddress: ''
   };
+
+  // Delivery Logic
+  deliveryLocation: 'Inside Dhaka' | 'Outside Dhaka' = 'Inside Dhaka';
+  currentDeliveryCharge = 0;
+  deliveryCharges = { insideDhaka: 60, outsideDhaka: 120 };
 
   districts: District[] = districts;
   subDistricts: string[] = [];
@@ -88,12 +98,62 @@ export class HomeComponent implements OnInit {
     private orderService: OrderService,
     private messageService: MessageService,
     public contactService: ContactService,
-    public themeService: ThemeService
+    public themeService: ThemeService,
+    public siteConfigService: SiteConfigService,
+    private paymentService: PaymentService,
+    private deliveryService: DeliveryService
   ) { }
+
+  openPaymentModal(orderId: string) {
+    // Deprecated: Payment flow integrated into checkout
+  }
+
+  displayPaymentModal = false; // Kept to avoid template errors during transition if any
+  selectedPaymentMethod: 'COD' | 'bKash' | null = null;
+  bkashQrCodeInModal: string | null = null;
+
+  // New combined state
+  isPaymentSelected = false;
+  bkashNumber = '';
+
+  selectPaymentMethod(method: 'COD' | 'bKash') {
+    this.selectedPaymentMethod = method;
+    this.isPaymentSelected = true;
+    if (method === 'bKash') {
+      this.bkashQrCodeInModal = this.paymentService.getQrCode();
+    } else {
+      this.bkashNumber = ''; // Reset if switched to COD
+    }
+  }
+
+  // Replaces confirmPayment and integration into placeOrder
+  get isFormAndPaymentValid(): boolean {
+    // Basic form valid AND payment selected
+    let valid = this.isCheckoutFormValid && this.isPaymentSelected;
+
+    // If bKash, also need valid bKash number
+    if (this.selectedPaymentMethod === 'bKash') {
+      valid = valid && !!this.bkashNumber && this.phoneRegex.test(this.bkashNumber);
+    }
+
+    return valid;
+  }
 
   ngOnInit() {
     this.loadProducts();
     this.loadLandingPageConfig();
+    this.loadDeliveryCharges();
+  }
+
+  loadDeliveryCharges() {
+    this.deliveryCharges = this.deliveryService.getCharges();
+    this.updateDeliveryCharge();
+  }
+
+  updateDeliveryCharge() {
+    this.currentDeliveryCharge = this.deliveryLocation === 'Inside Dhaka'
+      ? this.deliveryCharges.insideDhaka
+      : this.deliveryCharges.outsideDhaka;
   }
 
   loadProducts() {
@@ -147,8 +207,12 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  getTotalPrice(): number {
+  getSubTotal(): number {
     return this.cart().reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  }
+
+  getTotalPrice(): number {
+    return this.getSubTotal() + this.currentDeliveryCharge;
   }
 
   onDistrictChange(event: any) {
@@ -175,7 +239,9 @@ export class HomeComponent implements OnInit {
     const isPhoneValid = this.phoneRegex.test(phoneNumber);
     const isPostalCodeValid = this.postalCodeRegex.test(postalCode);
 
-    return !!(basicValidation && subDistrictValidation && isEmailValid && isPhoneValid && isPostalCodeValid);
+    const isValid = !!(basicValidation && subDistrictValidation && isEmailValid && isPhoneValid && isPostalCodeValid);
+
+    return isValid;
   }
 
   openCheckout() {
@@ -187,24 +253,84 @@ export class HomeComponent implements OnInit {
   }
 
   placeOrder() {
+    // 1. Check Payment Method
+    if (!this.selectedPaymentMethod) {
+      this.messageService.add({ severity: 'error', summary: 'Missing Payment Method', detail: 'Please select bKash or Cash On Delivery.' });
+      return;
+    }
+
+    // 2. Check bKash Number if bKash selected
+    if (this.selectedPaymentMethod === 'bKash') {
+      if (!this.bkashNumber) {
+        this.showError('bKash Account Number is required');
+        return;
+      }
+      if (!this.phoneRegex.test(this.bkashNumber)) {
+        this.showError('Invalid bKash Number');
+        return;
+      }
+    }
+
+    // 3. Check Form Validity manually for better feedback
+    const { fullName, email, phoneNumber, district, postalCode, fullAddress, subDistrict } = this.checkoutForm;
+
+    if (!fullName) return this.showError('Full Name is required');
+    if (!email) return this.showError('Email is required');
+    if (!this.emailRegex.test(email)) return this.showError('Invalid Email Address');
+    if (!phoneNumber) return this.showError('Phone Number is required');
+    if (!this.phoneRegex.test(phoneNumber)) return this.showError('Invalid Phone Number (e.g., 017...)');
+    if (!district) return this.showError('District is required');
+    if (this.subDistricts.length > 0 && !subDistrict) return this.showError('Sub-District is required');
+    if (!postalCode) return this.showError('Postal Code is required');
+    if (!this.postalCodeRegex.test(postalCode)) return this.showError('Invalid Postal Code (4 digits)');
+    if (!fullAddress) return this.showError('Full Address is required');
+
+    // Proceed if all valid
     const order = {
       ...this.checkoutForm,
       items: this.cart(),
       totalAmount: this.getTotalPrice(),
       status: 'Pending' as const,
+      paymentMethod: this.selectedPaymentMethod,
+      // Auto-update to Paid if bkash
+      paymentStatus: (this.selectedPaymentMethod === 'bKash' ? 'Paid' : 'Pending') as 'Pending' | 'Paid',
+      bkashNumber: this.selectedPaymentMethod === 'bKash' ? this.bkashNumber : undefined,
+      deliveryLocation: this.deliveryLocation,
+      deliveryCharge: this.currentDeliveryCharge,
       orderDate: new Date()
     };
 
-    this.orderService.createOrder(order).subscribe(orderId => {
-      this.placedOrderId = orderId;
-      this.displayCheckoutModal = false;
-      this.displayOrderSuccessModal = true;
-      this.cart.set([]);
-      this.resetCheckoutForm();
+    try {
+      this.orderService.createOrder(order as any).subscribe({
+        next: (orderId) => {
+          console.log('Order created successfully:', orderId);
+          this.placedOrderId = orderId;
+          this.displayCheckoutModal = false;
+          this.displayOrderSuccessModal = true;
+          this.cart.set([]);
+          this.resetCheckoutForm();
+          this.selectedPaymentMethod = null;
+          this.isPaymentSelected = false;
+          this.bkashNumber = '';
 
-      // Simulate push notification
-      this.orderService.notifyAdmin(orderId);
-    });
+          // Reduce stock
+          this.productService.reduceStock(this.cart());
+
+
+        },
+        error: (err) => {
+          console.error('Order creation failed:', err);
+          this.showError('Failed to place order. Please try again.');
+        }
+      });
+    } catch (e: any) {
+      console.error('Exception in placeOrder:', e);
+      this.showError('Error: ' + (e.message || e));
+    }
+  }
+
+  showError(msg: string) {
+    this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: msg });
   }
 
   resetCheckoutForm() {
@@ -217,5 +343,11 @@ export class HomeComponent implements OnInit {
       postalCode: '',
       fullAddress: ''
     };
+  }
+
+  isOutOfStock(product: Product): boolean {
+    if (product.manualStockStatus === 'OUT_OF_STOCK') return true;
+    if (product.manualStockStatus === 'IN_STOCK') return false;
+    return (product.stock || 0) <= 0;
   }
 }

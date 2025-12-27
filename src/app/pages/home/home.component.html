@@ -24,7 +24,7 @@
   <section class="hero" [style.backgroundImage]="'url(' + landingPageImage() + ')'">
     <div class="hero-content">
       <h1>{{ landingPageTagline() }}</h1>
-      <p-button label="Shop Now" icon="pi pi-arrow-right" href="#products"></p-button>
+      <p-button label="Shop Now" icon="pi pi-arrow-right" (onClick)="scrollToProducts()"></p-button>
     </div>
   </section>
 
@@ -288,6 +288,7 @@
   <div class="text-center">
     <i class="pi pi-check-circle text-green-500 text-5xl mb-3"></i>
     <p>Thank you for your order!</p>
+    <svg id="barcode"></svg>
     <p class="font-bold">Your Order ID: {{ placedOrderId }}</p>
     <p class="text-sm text-gray-600">Please save this ID to track your order.</p>
   </div>

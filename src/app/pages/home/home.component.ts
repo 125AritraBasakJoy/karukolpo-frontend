@@ -23,6 +23,7 @@ import { PaymentService } from '../../services/payment.service';
 import { DeliveryService } from '../../services/delivery.service';
 import { SiteConfigService } from '../../services/site-config.service';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import JsBarcode from 'jsbarcode';
 
 @Component({
   selector: 'app-home',
@@ -244,6 +245,13 @@ export class HomeComponent implements OnInit {
     return isValid;
   }
 
+  scrollToProducts() {
+    const productsSection = document.getElementById('products');
+    if (productsSection) {
+      productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   openCheckout() {
     if (this.cart().length === 0) {
       this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
@@ -307,6 +315,27 @@ export class HomeComponent implements OnInit {
           this.placedOrderId = orderId;
           this.displayCheckoutModal = false;
           this.displayOrderSuccessModal = true;
+
+          // Generate barcode after modal is visible
+          setTimeout(() => {
+            try {
+              const element = document.getElementById("barcode");
+              if (element) {
+                JsBarcode(element, this.placedOrderId, {
+                  format: "CODE128",
+                  lineColor: "#000",
+                  width: 2,
+                  height: 40,
+                  displayValue: true
+                });
+              } else {
+                console.error("Barcode SVG element not found");
+              }
+            } catch (e) {
+              console.error("Error generating barcode:", e);
+            }
+          }, 300);
+
           this.cart.set([]);
           this.resetCheckoutForm();
           this.selectedPaymentMethod = null;
@@ -315,8 +344,6 @@ export class HomeComponent implements OnInit {
 
           // Reduce stock
           this.productService.reduceStock(this.cart());
-
-
         },
         error: (err) => {
           console.error('Order creation failed:', err);

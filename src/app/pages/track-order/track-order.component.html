@@ -14,8 +14,28 @@
 
 
 
-    <div *ngIf="loading()" class="flex justify-content-center my-5">
-      <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
+    <div *ngIf="loading()" class="order-details mt-5">
+      <p-card>
+        <div class="grid">
+          <div class="col-12 md:col-6">
+            <p-skeleton width="10rem" height="1.5rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="8rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="6rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="8rem" styleClass="mb-2"></p-skeleton>
+          </div>
+          <div class="col-12 md:col-6">
+            <p-skeleton width="8rem" height="1.5rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="10rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="12rem" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="10rem" styleClass="mb-2"></p-skeleton>
+          </div>
+        </div>
+        <div class="mt-4">
+          <p-skeleton width="5rem" height="1.5rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton styleClass="mb-2"></p-skeleton>
+          <p-skeleton styleClass="mb-2"></p-skeleton>
+        </div>
+      </p-card>
     </div>
 
     <div *ngIf="order() && !loading()" class="order-details mt-5">

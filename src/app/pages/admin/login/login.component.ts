@@ -105,7 +105,8 @@ import { DialogModule } from 'primeng/dialog';
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #f4f4f4;
+      background: linear-gradient(-20deg, #2b5876 0%, #4e4376 100%);
+      background-size: cover;
     }
     p-card {
       width: 400px;

@@ -23,17 +23,38 @@
                     <p class="text-4xl font-bold text-primary">{{ products().length }}</p>
                 </div>
             </p-card>
-            <p-card header="Stock Distribution (Available)" [style]="{ 'margin-top': '1rem' }">
-                <div class="flex justify-content-center" style="position: relative; height: 350px; width: 100%;">
-                    <p-chart type="pie" [data]="stockChartData" [options]="stockChartOptions"
-                        style="width: 100%; height: 100%; min-height: 350px;"></p-chart>
-                </div>
-            </p-card>
+
         </div>
     </div>
 
-    <div *ngIf="loading()" class="flex justify-content-center my-5">
-        <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
+    <div *ngIf="loading()" class="mb-4">
+        <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '50rem' }">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Image</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body">
+                <tr>
+                    <td><p-skeleton></p-skeleton></td>
+                    <td><p-skeleton></p-skeleton></td>
+                    <td><p-skeleton width="50px" height="50px"></p-skeleton></td>
+                    <td><p-skeleton></p-skeleton></td>
+                    <td><p-skeleton width="5rem"></p-skeleton></td>
+                    <td>
+                        <div class="flex gap-2">
+                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
     </div>
 
     <p-table [value]="products()" [tableStyle]="{ 'min-width': '50rem' }" *ngIf="!loading()">

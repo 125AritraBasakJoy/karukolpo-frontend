@@ -22,6 +22,7 @@ import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-inventory',
@@ -44,7 +45,8 @@ import { TagModule } from 'primeng/tag';
     ProgressSpinnerModule,
     ValidationMessageComponent,
     DropdownModule,
-    TagModule
+    TagModule,
+    SkeletonModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './inventory.component.html',
@@ -62,8 +64,7 @@ export class InventoryComponent implements OnInit {
   chartData: any;
   chartOptions: any;
 
-  stockChartData: any;
-  stockChartOptions: any;
+
 
   manualStockOptions = [
     { label: 'Auto (Based on Quantity)', value: 'AUTO' },
@@ -163,65 +164,7 @@ export class InventoryComponent implements OnInit {
       }
     };
 
-    // --- Stock Chart Logic ---
-    // Calculate "Available" vs "Reserved" maybe? Or just Available stock distribution.
-    // "Which product has how much quantity left based on order status"
-    // Interpretation: Stock = product.stock - (Reserved in Pending/Approved orders).
 
-    const stockMap = new Map<string, number>();
-    products.forEach(p => stockMap.set(p.name, p.stock || 0));
-
-    // Deduct reserved stock
-    orders.forEach(order => {
-      if (order.status === 'Pending' || order.status === 'Approved') {
-        order.items.forEach(item => {
-          const current = stockMap.get(item.product.name) || 0;
-          stockMap.set(item.product.name, Math.max(0, current - item.quantity));
-        });
-      }
-    });
-
-    const stockLabels = Array.from(stockMap.keys());
-    const stockValues = Array.from(stockMap.values());
-
-    // Filter out zero stock for the pie chart to look nicer, or keep them?
-    // Let's keep top 10 products with stock to avoid clutter
-    const stockArray = Array.from(stockMap.entries())
-      .map(([name, val]) => ({ name, val }))
-      .sort((a, b) => b.val - a.val);
-
-    // Show all products now as per request "shows quantity for every single product not top 10 only"
-
-    this.stockChartData = {
-      labels: stockArray.map(i => i.name),
-      datasets: [
-        {
-          data: stockArray.map(i => i.val),
-          backgroundColor: [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-            '#2ECC71', '#E74C3C', '#3498DB', '#F1C40F'
-          ],
-          hoverBackgroundColor: [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-            '#2ECC71', '#E74C3C', '#3498DB', '#F1C40F'
-          ]
-        }
-      ]
-    };
-
-    this.stockChartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'right', // Pie legend on right
-        },
-        title: {
-          display: true,
-          text: 'Current Stock Distribution (All Products)'
-        }
-      }
-    };
   }
 
   openNew() {

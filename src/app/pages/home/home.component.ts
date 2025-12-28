@@ -23,6 +23,7 @@ import { PaymentService } from '../../services/payment.service';
 import { DeliveryService } from '../../services/delivery.service';
 import { SiteConfigService } from '../../services/site-config.service';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import { SkeletonModule } from 'primeng/skeleton';
 import JsBarcode from 'jsbarcode';
 
 @Component({
@@ -41,7 +42,8 @@ import JsBarcode from 'jsbarcode';
     GalleriaModule,
     ProgressSpinnerModule,
     DropdownModule,
-    RadioButtonModule
+    RadioButtonModule,
+    SkeletonModule
   ],
   providers: [MessageService],
   templateUrl: './home.component.html',

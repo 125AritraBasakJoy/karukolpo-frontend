@@ -30,8 +30,18 @@
 
   <section id="products" class="products-section">
     <h2>Our Products</h2>
-    <div *ngIf="loading()" class="flex justify-content-center my-5">
-      <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
+    <div *ngIf="loading()" class="grid">
+      <div *ngFor="let i of [1,2,3,4,5,6,7,8]" class="col-12 md:col-6 lg:col-3 p-2">
+        <div class="p-3 border-1 surface-border border-round">
+          <p-skeleton height="200px" styleClass="mb-3"></p-skeleton>
+          <p-skeleton width="10rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="5rem" styleClass="mb-3"></p-skeleton>
+          <div class="flex gap-2">
+            <p-skeleton height="2.5rem" styleClass="w-full"></p-skeleton>
+            <p-skeleton height="2.5rem" styleClass="w-full"></p-skeleton>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="grid" *ngIf="!loading()">
       <div *ngFor="let product of products()" class="col-12 md:col-6 lg:col-3 p-2">

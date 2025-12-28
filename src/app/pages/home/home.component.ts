@@ -189,12 +189,26 @@ export class HomeComponent implements OnInit {
   }
 
   addToCart(product: Product) {
+    // Check global stock first
+    if ((product.stock || 0) <= 0) {
+      this.messageService.add({ severity: 'error', summary: 'Out of Stock', detail: 'This product is out of stock' });
+      return;
+    }
+
     const currentCart = this.cart();
     const existingItem = currentCart.find(item => item.product.id === product.id);
 
     if (existingItem) {
+      if (existingItem.quantity + 1 > (product.stock || 0)) {
+        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${product.stock} items` });
+        return;
+      }
       existingItem.quantity++;
     } else {
+      if (1 > (product.stock || 0)) {
+        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${product.stock} items` });
+        return;
+      }
       this.cart.update(items => [...items, { product, quantity: 1 }]);
     }
     this.messageService.add({ severity: 'success', summary: 'Added to Cart', detail: `${product.name} added to cart` });
@@ -202,7 +216,15 @@ export class HomeComponent implements OnInit {
   }
 
   updateQuantity(item: CartItem, change: number) {
-    item.quantity += change;
+    const newQuantity = item.quantity + change;
+
+    // Check max stock when increasing
+    if (change > 0 && newQuantity > (item.product.stock || 0)) {
+      this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Only ${item.product.stock} items available` });
+      return;
+    }
+
+    item.quantity = newQuantity;
     if (item.quantity <= 0) {
       this.cart.update(items => items.filter(i => i !== item));
     }
@@ -336,14 +358,17 @@ export class HomeComponent implements OnInit {
             }
           }, 300);
 
+          // Capture cart items before clearing
+          const cartItemsToReduce = [...this.cart()];
+
           this.cart.set([]);
           this.resetCheckoutForm();
           this.selectedPaymentMethod = null;
           this.isPaymentSelected = false;
           this.bkashNumber = '';
 
-          // Reduce stock
-          this.productService.reduceStock(this.cart());
+          // Reduce stock using the captured items
+          this.productService.reduceStock(cartItemsToReduce);
         },
         error: (err) => {
           console.error('Order creation failed:', err);

@@ -39,6 +39,10 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'delivery-management',
         loadComponent: () => import('./delivery-management/delivery-management.component').then(m => m.DeliveryManagementComponent)
+      },
+      {
+        path: 'category-manager',
+        loadComponent: () => import('./category-manager/category-manager.component').then(m => m.CategoryManagerComponent)
       }
     ]
   }

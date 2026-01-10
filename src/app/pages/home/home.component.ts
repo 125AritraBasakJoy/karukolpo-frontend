@@ -22,6 +22,8 @@ import { ThemeService } from '../../services/theme.service';
 import { PaymentService } from '../../services/payment.service';
 import { DeliveryService } from '../../services/delivery.service';
 import { SiteConfigService } from '../../services/site-config.service';
+import { CategoryService } from '../../services/category.service';
+import { Category } from '../../models/category.model';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import JsBarcode from 'jsbarcode';
@@ -81,6 +83,11 @@ export class HomeComponent implements OnInit {
   landingPageImage = signal<string>('assets/landing-bg.jpg'); // Default, can be updated by admin
   landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
 
+  categories = signal<Category[]>([]);
+  selectedCategory: Category | null = null;
+  filteredProducts = signal<Product[]>([]);
+  dropdownOpen = false; // toggle for manual dropdown if needed, or simple hover CSS
+
   responsiveOptions: any[] = [
     {
       breakpoint: '1024px',
@@ -104,7 +111,8 @@ export class HomeComponent implements OnInit {
     public themeService: ThemeService,
     public siteConfigService: SiteConfigService,
     private paymentService: PaymentService,
-    private deliveryService: DeliveryService
+    private deliveryService: DeliveryService,
+    private categoryService: CategoryService
   ) { }
 
   openPaymentModal(orderId: string) {
@@ -146,6 +154,11 @@ export class HomeComponent implements OnInit {
     this.loadProducts();
     this.loadLandingPageConfig();
     this.loadDeliveryCharges();
+    this.loadCategories();
+  }
+
+  loadCategories() {
+    this.categoryService.getCategories().subscribe(cats => this.categories.set(cats));
   }
 
   loadDeliveryCharges() {
@@ -164,6 +177,7 @@ export class HomeComponent implements OnInit {
     this.productService.getProducts().subscribe({
       next: (products) => {
         this.products.set(products);
+        this.filterProducts();
         this.loading.set(false);
       },
       error: () => {
@@ -322,7 +336,7 @@ export class HomeComponent implements OnInit {
       ...this.checkoutForm,
       items: this.cart(),
       totalAmount: this.getTotalPrice(),
-      status: 'Pending' as const,
+      status: 'Pending' as 'Pending',
       paymentMethod: this.selectedPaymentMethod,
       // Auto-update to Paid if bkash
       paymentStatus: (this.selectedPaymentMethod === 'bKash' ? 'Paid' : 'Pending') as 'Pending' | 'Paid',
@@ -403,5 +417,19 @@ export class HomeComponent implements OnInit {
     if (product.manualStockStatus === 'OUT_OF_STOCK') return true;
     if (product.manualStockStatus === 'IN_STOCK') return false;
     return (product.stock || 0) <= 0;
+  }
+
+  filterProducts() {
+    if (this.selectedCategory) {
+      this.filteredProducts.set(this.products().filter(p => p.categoryId === this.selectedCategory!.id));
+    } else {
+      this.filteredProducts.set(this.products());
+    }
+  }
+
+  selectCategory(category: Category | null) {
+    this.selectedCategory = category;
+    this.filterProducts();
+    this.scrollToProducts();
   }
 }

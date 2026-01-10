@@ -9,8 +9,43 @@
                 pTooltip="Refresh Orders" tooltipPosition="bottom"></p-button>
         </div>
     </div>
-    <div *ngIf="loading()" class="flex justify-content-center my-5">
-        <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
+    <div *ngIf="loading()" class="mb-4">
+        <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '50rem' }">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body">
+                <tr>
+                    <td><p-skeleton width="8rem"></p-skeleton></td>
+                    <td><p-skeleton width="10rem"></p-skeleton></td>
+                    <td><p-skeleton width="8rem"></p-skeleton></td>
+                    <td><p-skeleton width="6rem"></p-skeleton></td>
+                    <td>
+                        <div class="flex flex-column gap-1">
+                            <p-skeleton width="4rem" styleClass="mb-1"></p-skeleton>
+                            <p-skeleton width="5rem" height="1.5rem" borderRadius="16px"></p-skeleton>
+                        </div>
+                    </td>
+                    <td><p-skeleton width="6rem" height="1.5rem" borderRadius="16px"></p-skeleton></td>
+                    <td>
+                        <div class="flex gap-2">
+                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
     </div>
     <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" *ngIf="!loading()">
         <ng-template pTemplate="header">
@@ -40,18 +75,32 @@
                 </td>
                 <td><p-tag [value]="order.status" [severity]="getSeverity(order.status)"></p-tag></td>
                 <td>
-                    <p-button icon="pi pi-eye" [rounded]="true" [text]="true" (onClick)="viewOrder(order)"></p-button>
-                    <p-button icon="pi pi-wallet" [rounded]="true" [text]="true" severity="warning"
-                        pTooltip="Toggle Payment Status" tooltipPosition="top"
-                        (onClick)="togglePaymentStatus(order)"></p-button>
-                    <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
-                        (onClick)="updateStatus(order, 'Approved')" *ngIf="order.status === 'Pending'"></p-button>
-                    <p-button icon="pi pi-truck" [rounded]="true" [text]="true" severity="primary"
-                        (onClick)="updateStatus(order, 'Delivered')" *ngIf="order.status === 'Approved'"></p-button>
-                    <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="info"
-                        (onClick)="updateStatus(order, 'Completed')" *ngIf="order.status === 'Delivered'"></p-button>
-                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                        (onClick)="updateStatus(order, 'Deleted')" *ngIf="order.status !== 'Deleted'"></p-button>
+                    <div class="flex gap-1">
+                        <p-button icon="pi pi-eye" [rounded]="true" [text]="true" (onClick)="viewOrder(order)"
+                            pTooltip="View Details" tooltipPosition="top"></p-button>
+
+                        <!-- Status Actions -->
+                        <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="updateStatus(order, 'Confirmed')" *ngIf="order.status === 'Pending'"
+                            pTooltip="Confirm Order" tooltipPosition="top"></p-button>
+
+                        <p-button icon="pi pi-truck" [rounded]="true" [text]="true" severity="info"
+                            (onClick)="updateStatus(order, 'Shipping')" *ngIf="order.status === 'Confirmed'"
+                            pTooltip="Ship Order" tooltipPosition="top"></p-button>
+
+                        <p-button icon="pi pi-box" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="updateStatus(order, 'Delivered')" *ngIf="order.status === 'Shipping'"
+                            pTooltip="Mark Delivered" tooltipPosition="top"></p-button>
+
+                        <p-button icon="pi pi-wallet" [rounded]="true" [text]="true" severity="warning"
+                            pTooltip="Toggle Payment" tooltipPosition="top"
+                            (onClick)="togglePaymentStatus(order)"></p-button>
+
+                        <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
+                            (onClick)="updateStatus(order, 'Cancelled')"
+                            *ngIf="order.status !== 'Cancelled' && order.status !== 'Delivered'" pTooltip="Cancel Order"
+                            tooltipPosition="top"></p-button>
+                    </div>
                 </td>
             </tr>
         </ng-template>

@@ -4,6 +4,8 @@ import { ValidationMessageComponent } from '../../../components/validation-messa
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { ProductService } from '../../../services/product.service';
 import { Product } from '../../../models/product.model';
+import { CategoryService } from '../../../services/category.service';
+import { Category } from '../../../models/category.model';
 import { OrderService } from '../../../services/order.service';
 import { Order } from '../../../models/order.model';
 import { TableModule } from 'primeng/table';
@@ -58,6 +60,7 @@ export class InventoryComponent implements OnInit {
   displayProductDialog = false;
   isNewProduct = true;
   selectedProduct: Product | null = null;
+  categories: Category[] = [];
 
   productForm: Partial<Product> = {};
 
@@ -75,12 +78,18 @@ export class InventoryComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private orderService: OrderService,
+    private categoryService: CategoryService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService
   ) { }
 
   ngOnInit() {
     this.loadProducts();
+    this.loadCategories();
+  }
+
+  loadCategories() {
+    this.categoryService.getCategories().subscribe(cats => this.categories = cats);
   }
 
   loadProducts() {
@@ -119,7 +128,7 @@ export class InventoryComponent implements OnInit {
 
     // Aggregate from orders
     orders.forEach(order => {
-      if (order.status !== 'Deleted') {
+      if (order.status !== 'Cancelled') {
         order.items.forEach(item => {
           const current = salesMap.get(item.product.name) || 0;
           salesMap.set(item.product.name, current + item.quantity);

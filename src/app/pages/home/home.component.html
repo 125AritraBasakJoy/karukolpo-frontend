@@ -5,10 +5,31 @@
         class="site-logo">
       <span *ngIf="!siteConfigService.siteConfig().logoUrl">Karukolpo</span>
     </div>
-    <nav>
-      <a href="#about">About Us</a>
-      <a href="#products">Products</a>
-      <a href="/track-order">Track Order</a>
+    <nav class="flex align-items-center gap-4">
+      <a href="#about" class="no-underline text-color hover:text-primary font-medium transition-colors">About Us</a>
+
+      <div class="relative" (mouseenter)="dropdownOpen = true" (mouseleave)="dropdownOpen = false">
+        <a class="no-underline text-color hover:text-primary font-medium transition-colors flex align-items-center cursor-pointer"
+          (click)="dropdownOpen = !dropdownOpen; $event.stopPropagation()">
+          Products <i class="pi pi-chevron-down ml-1" style="font-size: 0.8rem"></i>
+        </a>
+
+        <div *ngIf="dropdownOpen" class="absolute top-100 left-0 min-w-15rem z-5 pt-2 fadein animation-duration-200">
+          <div class="surface-overlay shadow-4 border-round-lg overflow-hidden">
+            <div (click)="selectCategory(null); dropdownOpen = false"
+              class="px-3 py-2 hover:surface-hover cursor-pointer text-color transition-colors border-bottom-1 surface-border">
+              All Products
+            </div>
+            <div *ngFor="let cat of categories()" (click)="selectCategory(cat); dropdownOpen = false"
+              class="px-3 py-2 hover:surface-hover cursor-pointer text-color-secondary hover:text-color transition-colors">
+              {{ cat.name }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <a href="/track-order" class="no-underline text-color hover:text-primary font-medium transition-colors">Track
+        Order</a>
     </nav>
     <div class="mr-3">
       <p-button [label]="themeService.currentTheme() === 'light' ? 'Dark Mode' : 'Light Mode'"
@@ -29,7 +50,7 @@
   </section>
 
   <section id="products" class="products-section">
-    <h2>Our Products</h2>
+    <h2 class="text-3xl font-bold mb-4 text-center">{{ selectedCategory ? selectedCategory.name : 'Our Products' }}</h2>
     <div *ngIf="loading()" class="grid">
       <div *ngFor="let i of [1,2,3,4,5,6,7,8]" class="col-12 md:col-6 lg:col-3 p-2">
         <div class="p-3 border-1 surface-border border-round">

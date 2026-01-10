@@ -43,8 +43,7 @@
         <div class="grid">
           <div class="col-12 md:col-6">
             <h3>Order Status:
-              <p-tag [value]="order()?.status"
-                [severity]="order()?.status === 'Pending' ? 'warning' : (order()?.status === 'Approved' ? 'info' : (order()?.status === 'Completed' ? 'success' : (order()?.status === 'Delivered' ? 'success' : 'danger')))"></p-tag>
+              <p-tag [value]="order()?.status" [severity]="getSeverity(order()?.status)"></p-tag>
             </h3>
             <p><strong>Order ID:</strong> {{ order()?.id }}</p>
             <p><strong>Date:</strong> {{ order()?.orderDate | date:'medium' }}</p>

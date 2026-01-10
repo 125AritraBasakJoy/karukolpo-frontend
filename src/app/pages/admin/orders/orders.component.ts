@@ -10,13 +10,15 @@ import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
+import { SkeletonModule } from 'primeng/skeleton';
+import { TooltipModule } from 'primeng/tooltip';
 
 import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, TableModule, ButtonModule, TagModule, ToastModule, DialogModule, ProgressSpinnerModule, NotificationButtonComponent],
+  imports: [CommonModule, TableModule, ButtonModule, TagModule, ToastModule, DialogModule, ProgressSpinnerModule, NotificationButtonComponent, SkeletonModule, TooltipModule],
   providers: [MessageService],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss']
@@ -94,8 +96,8 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  updateStatus(order: Order, status: 'Approved' | 'Delivered' | 'Completed' | 'Deleted') {
-    if (status === 'Deleted') {
+  updateStatus(order: Order, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled') {
+    if (status === 'Cancelled') {
       // In a real app, you might want to confirm deletion
     }
 
@@ -108,20 +110,20 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  getSeverity(status: string) {
+  getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
     switch (status) {
-      case 'Approved':
+      case 'Confirmed':
         return 'success';
-      case 'Delivered':
+      case 'Shipping':
         return 'info';
+      case 'Delivered':
+        return 'success'; // or another distinct color if available
       case 'Pending':
         return 'warning';
-      case 'Completed':
-        return 'info';
-      case 'Deleted':
+      case 'Cancelled':
         return 'danger';
       default:
-        return 'info'; // Changed from 'text' to 'info' as 'text' is not a valid severity for p-tag
+        return 'info';
     }
   }
 

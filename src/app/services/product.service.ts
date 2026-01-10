@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
 import { Product } from '../models/product.model';
+import { CategoryService } from './category.service';
 
 @Injectable({
   providedIn: 'root'
@@ -131,6 +132,30 @@ export class ProductService {
         const product = this.products[productIndex];
         if (product.stock !== undefined) {
           product.stock = Math.max(0, product.stock - item.quantity);
+          updated = true;
+        }
+      }
+    });
+
+    if (updated) {
+      if (!this.saveToStorage()) {
+        return throwError(() => new Error('Failed to update stock in storage.'));
+      }
+    }
+    return of(void 0);
+  }
+
+  restoreStock(items: { product: Product, quantity: number }[]): Observable<void> {
+    let updated = false;
+    items.forEach(item => {
+      const productIndex = this.products.findIndex(p => p.id === item.product.id);
+      if (productIndex !== -1) {
+        const product = this.products[productIndex];
+        // Only increase stock if it's not manually forced (or even if it is, the count should be right, but logic says manual overrides count)
+        // Actually, if it's AUTO, we update the number. If it's manual, the number might still track reality 'under the hood' or just stay.
+        // Let's assume we update the number regardless, so if they switch back to AUTO it's correct.
+        if (product.stock !== undefined) {
+          product.stock = (product.stock || 0) + item.quantity;
           updated = true;
         }
       }

@@ -11,7 +11,7 @@ export interface Order {
   fullAddress: string;
   items: CartItem[];
   totalAmount: number;
-  status: 'Pending' | 'Approved' | 'Delivered' | 'Completed' | 'Deleted';
+  status: 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled';
   paymentMethod?: 'COD' | 'bKash';
   paymentStatus?: 'Pending' | 'Paid';
   bkashNumber?: string;

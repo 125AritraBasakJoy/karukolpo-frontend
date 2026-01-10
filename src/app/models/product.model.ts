@@ -8,4 +8,5 @@ export interface Product {
   images?: string[];
   stock?: number;
   manualStockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO';
+  categoryId?: string;
 }

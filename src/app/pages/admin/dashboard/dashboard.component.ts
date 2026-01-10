@@ -83,6 +83,7 @@ export class DashboardComponent implements OnInit {
     this.menuItems = [
       { label: 'Inventory', icon: 'pi pi-box', routerLink: 'inventory' },
       { label: 'Orders', icon: 'pi pi-shopping-cart', routerLink: 'orders' },
+      { label: 'Categories', icon: 'pi pi-tags', routerLink: 'category-manager' },
       { label: 'Manage Landing', icon: 'pi pi-image', routerLink: 'manage-landing' },
       { label: 'Payment Mgmt', icon: 'pi pi-wallet', routerLink: '/admin/dashboard/payment-management' },
       { label: 'Delivery Charges', icon: 'pi pi-truck', routerLink: '/admin/dashboard/delivery-management' },

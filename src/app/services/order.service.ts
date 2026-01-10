@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, Subject } from 'rxjs';
 import { Order } from '../models/order.model';
+import { ProductService } from './product.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,9 +14,9 @@ export class OrderService {
 
   newOrderNotification$ = this.newOrderSubject.asObservable();
 
-  constructor() {
+  constructor(private productService: ProductService) {
     this.loadOrders();
-    
+
     // Listen for broadcast messages from other tabs
     this.channel.onmessage = (event) => {
       if (event.data && event.data.type === 'NEW_ORDER') {
@@ -85,7 +86,7 @@ export class OrderService {
     this.orders.push(newOrder);
     this.saveToStorage();
     this.notifyAdmin(newOrder.id!);
-    
+
     // Broadcast to other tabs
     this.channel.postMessage({ type: 'NEW_ORDER', orderId: newOrder.id });
 
@@ -113,9 +114,15 @@ export class OrderService {
     return of(matches.length > 0 ? matches[matches.length - 1] : undefined);
   }
 
-  updateOrderStatus(id: string, status: 'Approved' | 'Delivered' | 'Completed' | 'Deleted'): Observable<void> {
+  updateOrderStatus(id: string, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled'): Observable<void> {
     const index = this.orders.findIndex(o => o.id === id);
     if (index !== -1) {
+      // If status is changing to Cancelled
+      if (status === 'Cancelled' && this.orders[index].status !== 'Cancelled') {
+        this.productService.restoreStock(this.orders[index].items).subscribe({
+          error: (err) => console.error('Failed to restore stock', err)
+        });
+      }
       this.orders[index].status = status;
       this.saveToStorage();
     }

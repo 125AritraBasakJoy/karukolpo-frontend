@@ -35,10 +35,27 @@ export class TrackOrderComponent {
   ) {
     this.events = [
       { status: 'Pending', icon: 'pi pi-shopping-cart', color: '#9C27B0' },
-      { status: 'Approved', icon: 'pi pi-cog', color: '#673AB7' },
-      { status: 'Completed', icon: 'pi pi-check', color: '#FF9800' },
+      { status: 'Confirmed', icon: 'pi pi-cog', color: '#673AB7' },
+      { status: 'Shipping', icon: 'pi pi-truck', color: '#FF9800' },
       { status: 'Delivered', icon: 'pi pi-check', color: '#607D8B' }
     ];
+  }
+
+  getSeverity(status: string | undefined): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
+    switch (status) {
+      case 'Confirmed':
+        return 'success';
+      case 'Shipping':
+        return 'info';
+      case 'Delivered':
+        return 'success';
+      case 'Pending':
+        return 'warning';
+      case 'Cancelled':
+        return 'danger';
+      default:
+        return 'info';
+    }
   }
 
   trackOrder() {

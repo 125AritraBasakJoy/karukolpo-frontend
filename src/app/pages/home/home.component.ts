@@ -135,7 +135,7 @@ export class HomeComponent implements OnInit {
 
   // New combined state
   isPaymentSelected = false;
-  bkashNumber = '';
+  // bkashNumber = ''; // Removed as requested
 
   selectPaymentMethod(method: 'COD' | 'bKash') {
     // Reset payment ID if method changes to ensure new payment creation
@@ -147,8 +147,6 @@ export class HomeComponent implements OnInit {
     this.isPaymentSelected = true;
     if (method === 'bKash') {
       this.bkashQrCodeInModal = this.paymentService.getQrCode();
-    } else {
-      this.bkashNumber = ''; // Reset if switched to COD
     }
   }
 
@@ -157,11 +155,9 @@ export class HomeComponent implements OnInit {
     // Basic form valid AND payment selected
     let valid = this.isCheckoutFormValid && this.isPaymentSelected;
 
-    // If bKash, also need valid bKash number
-    if (this.selectedPaymentMethod === 'bKash') {
-      valid = valid && !!this.bkashNumber && this.phoneRegex.test(this.bkashNumber);
-    }
-
+    // If bKash, also need valid transaction ID (checked in processPayment, but good to have here if we want to disable button)
+    // But button disabled state is handled in template directly.
+    
     return valid;
   }
 
@@ -398,7 +394,7 @@ export class HomeComponent implements OnInit {
           
           // Reset payment selection state
           this.selectedPaymentMethod = null;
-          this.bkashNumber = '';
+          // this.bkashNumber = ''; // Removed
           this.transactionId = '';
         },
         error: (err) => {
@@ -419,8 +415,8 @@ export class HomeComponent implements OnInit {
     }
 
     if (this.selectedPaymentMethod === 'bKash') {
-        if (!this.bkashNumber || !this.transactionId) {
-            this.showError('bKash Number and Transaction ID are required');
+        if (!this.transactionId) {
+            this.showError('Transaction ID is required');
             return;
         }
     }
@@ -431,6 +427,12 @@ export class HomeComponent implements OnInit {
     const handleConfirmation = (paymentId: number) => {
         if (this.selectedPaymentMethod === 'bKash') {
             const trxId = this.transactionId.trim();
+            
+            if (!trxId) {
+                this.showError('Transaction ID is required');
+                return;
+            }
+
             this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
                 next: () => {
                     this.messageService.add({ severity: 'success', summary: 'Payment Confirmed', detail: 'Thank you for your payment!' });
@@ -475,8 +477,14 @@ export class HomeComponent implements OnInit {
     this.paymentService.createPayment(oid, methodToSend).subscribe({
         next: (payment) => {
             console.log('Payment created:', payment);
-            this.currentPaymentId = payment.id;
-            handleConfirmation(payment.id);
+            
+            if (payment && payment.id) {
+                this.currentPaymentId = payment.id;
+                handleConfirmation(payment.id);
+            } else {
+                console.error('Payment created but no ID returned', payment);
+                this.showError('Payment initialization failed. Please try again.');
+            }
         },
         error: (err) => {
             console.error('Payment creation failed', err);
@@ -516,7 +524,7 @@ export class HomeComponent implements OnInit {
     this.resetCheckoutForm();
     this.selectedPaymentMethod = null;
     this.isPaymentSelected = false;
-    this.bkashNumber = '';
+    // this.bkashNumber = ''; // Removed
     this.currentPaymentId = null;
     this.transactionId = '';
 

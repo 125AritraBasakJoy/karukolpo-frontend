@@ -2,7 +2,6 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrderService } from '../../../services/order.service';
 import { ProductService } from '../../../services/product.service';
-import { PaymentService } from '../../../services/payment.service';
 import { Order } from '../../../models/order.model';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -49,15 +48,9 @@ export class OrdersComponent implements OnInit {
   displayOrderDialog = false;
   loadingDetails = false;
 
-  // Payment Confirmation
-  displayPaymentConfirmDialog = false;
-  transactionId = '';
-  orderToConfirm: Order | null = null;
-
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
-    private paymentService: PaymentService,
     private messageService: MessageService
   ) { }
 
@@ -155,51 +148,6 @@ export class OrdersComponent implements OnInit {
         };
       }
       this.loadingDetails = false;
-    });
-  }
-
-  togglePaymentStatus(order: Order) {
-    if (order.paymentStatus === 'Paid') {
-      this.messageService.add({ severity: 'info', summary: 'Already Paid', detail: 'Payment is already confirmed.' });
-      return;
-    }
-
-    if (!order.paymentId) {
-      this.messageService.add({ severity: 'warn', summary: 'No Payment Record', detail: 'This order has no payment record to confirm.' });
-      return;
-    }
-
-    this.orderToConfirm = order;
-    this.transactionId = '';
-    this.displayPaymentConfirmDialog = true;
-  }
-
-  confirmPayment() {
-    if (!this.transactionId) {
-      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Transaction ID is required' });
-      return;
-    }
-
-    if (!this.orderToConfirm || !this.orderToConfirm.paymentId) return;
-
-    const orderId = parseInt(this.orderToConfirm.id!, 10);
-    const paymentId = this.orderToConfirm.paymentId;
-
-    this.paymentService.confirmPayment(orderId, paymentId, this.transactionId).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Payment Confirmed' });
-        this.displayPaymentConfirmDialog = false;
-        this.loadOrders(); // Refresh to see updated status
-        
-        // Update local state if dialog is open
-        if (this.selectedOrder && this.selectedOrder.id === this.orderToConfirm?.id) {
-          this.selectedOrder.paymentStatus = 'Paid';
-        }
-      },
-      error: (err) => {
-        console.error('Payment confirmation failed', err);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to confirm payment' });
-      }
     });
   }
 

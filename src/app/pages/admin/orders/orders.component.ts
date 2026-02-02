@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrderService } from '../../../services/order.service';
 import { ProductService } from '../../../services/product.service';
+import { PaymentService } from '../../../services/payment.service';
 import { Order } from '../../../models/order.model';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -51,6 +52,7 @@ export class OrdersComponent implements OnInit {
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
+    private paymentService: PaymentService,
     private messageService: MessageService
   ) { }
 
@@ -163,6 +165,40 @@ export class OrdersComponent implements OnInit {
     } else {
       this.messageService.add({ severity: 'warn', summary: 'Not Supported', detail: 'Only confirmation and cancellation are supported via API currently.' });
     }
+  }
+
+  adminConfirmPayment(order: Order) {
+    if (!order.paymentId) {
+      this.messageService.add({ severity: 'warn', summary: 'No Payment', detail: 'No payment record found for this order.' });
+      return;
+    }
+
+    const orderId = parseInt(order.id!, 10);
+    const paymentId = order.paymentId;
+    
+    // For admin confirmation, we might need a specific endpoint or just use the confirm endpoint with a dummy transaction ID if it's COD?
+    // Or if it's bKash, the transaction ID should already be there from the user.
+    
+    let transactionId = 'ADMIN_CONFIRMED';
+    if (order.paymentMethod === 'bKash' && order.transactionId) {
+        transactionId = order.transactionId;
+    } else if (order.paymentMethod === 'COD') {
+        transactionId = 'COD_VERIFIED';
+    }
+
+    this.paymentService.confirmPayment(orderId, paymentId, transactionId).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Payment Confirmed', detail: 'Payment status updated to Paid' });
+        this.loadOrders();
+        if (this.selectedOrder && this.selectedOrder.id === order.id) {
+          this.selectedOrder.paymentStatus = 'Paid';
+        }
+      },
+      error: (err) => {
+        console.error('Admin payment confirmation failed', err);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to confirm payment' });
+      }
+    });
   }
 
   getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {

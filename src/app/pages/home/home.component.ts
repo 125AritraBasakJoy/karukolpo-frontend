@@ -27,9 +27,11 @@ import { Category } from '../../models/category.model';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { BadgeModule } from 'primeng/badge';
+import { TagModule } from 'primeng/tag'; // Added TagModule
 import JsBarcode from 'jsbarcode';
 import { forkJoin, map, catchError, of } from 'rxjs';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
+import { Order } from '../../models/order.model';
 
 @Component({
   selector: 'app-home',
@@ -50,6 +52,7 @@ import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle
     RadioButtonModule,
     SkeletonModule,
     BadgeModule,
+    TagModule, // Added TagModule
     ThemeToggleComponent
   ],
   providers: [MessageService],
@@ -63,7 +66,9 @@ export class HomeComponent implements OnInit {
   displayProductModal = false;
   displayCheckoutModal = false;
   displayOrderSuccessModal = false;
-  displayPaymentMethodModal = false; // Renamed from displayPaymentConfirmModal
+  displayPaymentMethodModal = false; 
+  displayPaymentSuccessModal = false;
+  displayTrackOrderModal = false;
 
   selectedProduct: Product | null = null;
   activeIndex: number = 0;
@@ -78,6 +83,12 @@ export class HomeComponent implements OnInit {
     fullAddress: ''
   };
 
+  // Track Order
+  trackPhone = '';
+  trackedOrders: Order[] = [];
+  trackingLoading = false;
+  hasSearched = false;
+
   // Delivery Logic
   deliveryLocation: 'Inside Dhaka' | 'Outside Dhaka' = 'Inside Dhaka';
   currentDeliveryCharge = 0;
@@ -87,16 +98,16 @@ export class HomeComponent implements OnInit {
   subDistricts: string[] = [];
 
   placedOrderId = '';
-  currentPaymentId: number | null = null; // To store payment ID for confirmation
-  transactionId = ''; // For user input
+  currentPaymentId: number | null = null; 
+  transactionId = ''; 
 
-  landingPageImage = signal<string>('assets/landing-bg.jpg'); // Default, can be updated by admin
+  landingPageImage = signal<string>('assets/landing-bg.jpg'); 
   landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
 
   categories = signal<Category[]>([]);
   selectedCategory: Category | null = null;
   filteredProducts = signal<Product[]>([]);
-  dropdownOpen = false; // toggle for manual dropdown if needed, or simple hover CSS
+  dropdownOpen = false; 
 
   responsiveOptions: any[] = [
     {
@@ -129,13 +140,12 @@ export class HomeComponent implements OnInit {
     // Deprecated: Payment flow integrated into checkout
   }
 
-  displayPaymentModal = false; // Kept to avoid template errors during transition if any
+  displayPaymentModal = false; 
   selectedPaymentMethod: 'COD' | 'bKash' | null = null;
   bkashQrCodeInModal: string | null = null;
 
   // New combined state
   isPaymentSelected = false;
-  // bkashNumber = ''; // Removed as requested
 
   selectPaymentMethod(method: 'COD' | 'bKash') {
     // Reset payment ID if method changes to ensure new payment creation
@@ -154,10 +164,6 @@ export class HomeComponent implements OnInit {
   get isFormAndPaymentValid(): boolean {
     // Basic form valid AND payment selected
     let valid = this.isCheckoutFormValid && this.isPaymentSelected;
-
-    // If bKash, also need valid transaction ID (checked in processPayment, but good to have here if we want to disable button)
-    // But button disabled state is handled in template directly.
-    
     return valid;
   }
 
@@ -375,7 +381,7 @@ export class HomeComponent implements OnInit {
       items: this.cart(),
       totalAmount: this.getTotalPrice(),
       status: 'Pending' as 'Pending',
-      paymentMethod: 'COD' as 'COD', // Default for now, will be updated by payment creation
+      paymentMethod: null, // Default to null, will be updated by payment creation
       paymentStatus: 'Pending' as 'Pending',
       deliveryLocation: this.deliveryLocation,
       deliveryCharge: this.currentDeliveryCharge,
@@ -388,14 +394,33 @@ export class HomeComponent implements OnInit {
           console.log('Order created successfully:', orderId);
           this.placedOrderId = orderId;
           
-          // Close checkout modal and open payment method modal
+          // Close checkout modal and open success modal (Waiting for Approval)
           this.displayCheckoutModal = false;
-          this.displayPaymentMethodModal = true;
+          this.displayOrderSuccessModal = true;
           
-          // Reset payment selection state
-          this.selectedPaymentMethod = null;
-          // this.bkashNumber = ''; // Removed
-          this.transactionId = '';
+          // Generate barcode after modal is visible
+          setTimeout(() => {
+            try {
+              const element = document.getElementById("barcode");
+              if (element) {
+                JsBarcode(element, this.placedOrderId, {
+                  format: "CODE128",
+                  lineColor: "#000",
+                  width: 2,
+                  height: 40,
+                  displayValue: true
+                });
+              }
+            } catch (e) {
+              console.error("Error generating barcode:", e);
+            }
+          }, 300);
+
+          // Clear cart
+          const cartItemsToReduce = [...this.cart()];
+          this.cart.set([]);
+          this.resetCheckoutForm();
+          this.productService.reduceStock(cartItemsToReduce);
         },
         error: (err) => {
           console.error('Order creation failed:', err);
@@ -406,6 +431,41 @@ export class HomeComponent implements OnInit {
       console.error('Exception in placeOrder:', e);
       this.showError('Error: ' + (e.message || e));
     }
+  }
+
+  trackOrder() {
+    if (!this.trackPhone) {
+      this.showError('Please enter a phone number');
+      return;
+    }
+
+    this.trackingLoading = true;
+    this.hasSearched = true;
+    this.orderService.trackOrdersByPhone(this.trackPhone).subscribe({
+      next: (orders) => {
+        // Sort by date descending
+        this.trackedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        this.trackingLoading = false;
+      },
+      error: (err) => {
+        console.error('Tracking failed', err);
+        this.trackedOrders = [];
+        this.trackingLoading = false;
+      }
+    });
+  }
+
+  openPaymentForOrder(orderId: string | undefined) {
+    if (!orderId) {
+        this.showError('Invalid Order ID');
+        return;
+    }
+    this.placedOrderId = orderId;
+    this.displayTrackOrderModal = false;
+    this.displayPaymentMethodModal = true;
+    this.selectedPaymentMethod = null;
+    this.transactionId = '';
+    this.currentPaymentId = null;
   }
 
   processPayment() {
@@ -435,9 +495,9 @@ export class HomeComponent implements OnInit {
 
             this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
                 next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'Payment Confirmed', detail: 'Thank you for your payment!' });
+                    this.messageService.add({ severity: 'success', summary: 'Payment Submitted', detail: 'Waiting for admin verification.' });
                     this.displayPaymentMethodModal = false;
-                    this.finishOrder();
+                    this.displayPaymentSuccessModal = true;
                 },
                 error: (err) => {
                     console.error('Payment confirmation failed', err);
@@ -458,8 +518,9 @@ export class HomeComponent implements OnInit {
             });
         } else {
             // COD - Just finish
+            this.messageService.add({ severity: 'success', summary: 'COD Selected', detail: 'Waiting for admin verification.' });
             this.displayPaymentMethodModal = false;
-            this.finishOrder();
+            this.displayPaymentSuccessModal = true;
         }
     };
 
@@ -492,44 +553,6 @@ export class HomeComponent implements OnInit {
             this.showError('Failed to initiate payment. Please try again.');
         }
     });
-  }
-
-  finishOrder() {
-    this.displayOrderSuccessModal = true;
-
-    // Generate barcode after modal is visible
-    setTimeout(() => {
-      try {
-        const element = document.getElementById("barcode");
-        if (element) {
-          JsBarcode(element, this.placedOrderId, {
-            format: "CODE128",
-            lineColor: "#000",
-            width: 2,
-            height: 40,
-            displayValue: true
-          });
-        } else {
-          console.error("Barcode SVG element not found");
-        }
-      } catch (e) {
-        console.error("Error generating barcode:", e);
-      }
-    }, 300);
-
-    // Capture cart items before clearing
-    const cartItemsToReduce = [...this.cart()];
-
-    this.cart.set([]);
-    this.resetCheckoutForm();
-    this.selectedPaymentMethod = null;
-    this.isPaymentSelected = false;
-    // this.bkashNumber = ''; // Removed
-    this.currentPaymentId = null;
-    this.transactionId = '';
-
-    // Reduce stock using the captured items
-    this.productService.reduceStock(cartItemsToReduce);
   }
 
   showError(msg: string) {

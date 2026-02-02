@@ -103,7 +103,15 @@ export class ProductService {
    * PATCH /products/{id}/inventory (requires auth)
    */
   updateInventory(productId: number, quantity: number): Observable<any> {
-    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), { quantity });
+    const payload = { quantity: parseInt(quantity.toString(), 10) };
+    console.log(`Updating inventory for product ${productId}:`, payload);
+    
+    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload).pipe(
+      tap({
+        next: (res) => console.log('Inventory updated successfully:', res),
+        error: (err) => console.error('Inventory update failed:', err)
+      })
+    );
   }
 
   /**

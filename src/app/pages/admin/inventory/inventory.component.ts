@@ -358,14 +358,24 @@ export class InventoryComponent implements OnInit {
     const productId = parseInt(this.createdProduct.id, 10);
     const quantity = this.inventoryForm.stock;
 
+    console.log(`Saving inventory for product ${productId}:`, quantity);
+
     this.productService.updateInventory(productId, quantity).subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('Inventory update response:', response);
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Inventory Updated. Product Setup Complete.' });
         this.displayStep3 = false;
         this.loadProducts(); // Refresh list
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update inventory: ' + err.message });
+        console.error('Inventory update error:', err);
+        let errorDetail = 'Failed to update inventory';
+        if (err.error && err.error.detail) {
+            errorDetail += ': ' + (typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail));
+        } else if (err.message) {
+            errorDetail += ': ' + err.message;
+        }
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: errorDetail });
       }
     });
   }

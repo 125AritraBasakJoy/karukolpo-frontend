@@ -17,6 +17,7 @@
                     <th>Customer</th>
                     <th>Date</th>
                     <th>Total</th>
+                    <th>Payment</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -27,6 +28,12 @@
                     <td><p-skeleton width="10rem"></p-skeleton></td>
                     <td><p-skeleton width="8rem"></p-skeleton></td>
                     <td><p-skeleton width="6rem"></p-skeleton></td>
+                    <td>
+                        <div class="flex flex-column gap-1">
+                            <p-skeleton width="4rem" styleClass="mb-1"></p-skeleton>
+                            <p-skeleton width="5rem" height="1.5rem" borderRadius="16px"></p-skeleton>
+                        </div>
+                    </td>
                     <td><p-skeleton width="6rem" height="1.5rem" borderRadius="16px"></p-skeleton></td>
                     <td>
                         <div class="flex gap-2">
@@ -47,6 +54,7 @@
                 <th>Customer</th>
                 <th>Date</th>
                 <th>Total</th>
+                <th>Payment</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -57,6 +65,14 @@
                 <td>{{ order.fullName }}</td>
                 <td>{{ order.orderDate | date:'short' }}</td>
                 <td>{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</td>
+                <td>
+                    <div class="flex flex-column gap-1">
+                        <span class="font-bold">{{ order.paymentMethod || 'N/A' }}</span>
+                        <p-tag [value]="order.paymentStatus || 'Pending'"
+                            [severity]="order.paymentStatus === 'Paid' ? 'success' : 'warning'"
+                            [rounded]="true"></p-tag>
+                    </div>
+                </td>
                 <td><p-tag [value]="order.status" [severity]="getSeverity(order.status)"></p-tag></td>
                 <td>
                     <div class="flex gap-1">
@@ -110,7 +126,30 @@
                         'text-green-500 font-bold': selectedOrder.paymentMethod === 'COD'
                     }">{{ selectedOrder.paymentMethod || 'N/A' }}</span>
             </p>
-            <p *ngIf="selectedOrder.bkashNumber"><strong>bKash Number:</strong> {{ selectedOrder.bkashNumber }}</p>
+            <p><strong>Payment Status:</strong>
+                <span [ngClass]="{
+                        'text-green-500 font-bold': selectedOrder.paymentStatus === 'Paid', 
+                        'text-orange-500 font-bold': selectedOrder.paymentStatus === 'Pending'
+                    }">{{ selectedOrder.paymentStatus || 'Pending' }}</span>
+            </p>
+            <p *ngIf="selectedOrder.paymentMethod === 'bKash' && selectedOrder.transactionId">
+                <strong>Transaction ID:</strong> {{ selectedOrder.transactionId }}
+            </p>
+            
+            <!-- Admin Payment Actions -->
+            <div class="mt-3 border-top-1 surface-border pt-3" *ngIf="selectedOrder.paymentStatus !== 'Paid'">
+                <h4 class="mb-2">Payment Actions</h4>
+                
+                <!-- COD Confirmation -->
+                <button pButton label="COD Confirmed" icon="pi pi-money-bill" class="p-button-success w-full mb-2"
+                    *ngIf="selectedOrder.paymentMethod === 'COD' || selectedOrder.paymentMethod === 'cod'"
+                    (click)="adminConfirmPayment(selectedOrder)"></button>
+                
+                <!-- Online Payment Confirmation -->
+                <button pButton label="Online Payment Confirmed" icon="pi pi-check-circle" class="p-button-primary w-full"
+                    *ngIf="selectedOrder.paymentMethod === 'bKash' || selectedOrder.paymentMethod === 'bkash'"
+                    (click)="adminConfirmPayment(selectedOrder)"></button>
+            </div>
         </div>
         <div class="col-12">
             <h3>Items</h3>

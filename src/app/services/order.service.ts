@@ -230,7 +230,7 @@ export class OrderService {
    */
   private mapBackendToFrontend(backendOrder: any): Order {
     // Robust payment method extraction
-    let paymentMethod = 'COD';
+    let paymentMethod = null; // Default to null instead of 'COD'
     if (backendOrder.payment_method) {
         paymentMethod = backendOrder.payment_method;
     } else if (backendOrder.payment && backendOrder.payment.payment_method) {
@@ -247,6 +247,14 @@ export class OrderService {
         paymentStatus = backendOrder.payment.status;
     } else if (backendOrder.paymentStatus) {
         paymentStatus = backendOrder.paymentStatus;
+    }
+
+    // Extract transaction ID
+    let transactionId = undefined;
+    if (backendOrder.payment && backendOrder.payment.transaction_id) {
+        transactionId = backendOrder.payment.transaction_id;
+    } else if (backendOrder.transaction_id) {
+        transactionId = backendOrder.transaction_id;
     }
 
     return {
@@ -271,9 +279,10 @@ export class OrderService {
       })) || [],
       totalAmount: this.calculateTotal(backendOrder.items || []),
       status: this.mapBackendStatus(backendOrder.status),
-      paymentMethod: paymentMethod as 'COD' | 'bKash',
+      paymentMethod: paymentMethod as 'COD' | 'bKash' | null, // Allow null
       paymentStatus: paymentStatus as 'Pending' | 'Paid',
       paymentId: backendOrder.payment_id || (backendOrder.payment ? backendOrder.payment.id : undefined),
+      transactionId: transactionId,
       orderDate: new Date(backendOrder.created_at || Date.now())
     };
   }

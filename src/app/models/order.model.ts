@@ -12,9 +12,10 @@ export interface Order {
   items: CartItem[];
   totalAmount: number;
   status: 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled';
-  paymentMethod?: 'COD' | 'bKash';
-  paymentStatus?: 'Pending' | 'Paid';
-  paymentId?: number; // Added paymentId
+  paymentMethod?: 'COD' | 'bKash' | string | null; // Allow null
+  paymentStatus?: 'Pending' | 'Paid' | string;
+  paymentId?: number;
+  transactionId?: string;
   bkashNumber?: string;
   deliveryLocation?: string;
   deliveryCharge?: number;

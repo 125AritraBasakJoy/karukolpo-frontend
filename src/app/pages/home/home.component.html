@@ -7,8 +7,12 @@
         <div class="z-1">
             <h1 class="text-6xl font-bold mb-2">Karukolpo</h1>
             <p class="text-2xl">{{ landingPageTagline() }}</p>
-            <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg p-button-warning mt-4"
-                (click)="scrollToProducts()"></button>
+            <div class="flex gap-3 justify-content-center mt-4">
+                <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg p-button-warning"
+                    (click)="scrollToProducts()"></button>
+                <button pButton label="Track Order" icon="pi pi-search" class="p-button-lg p-button-outlined text-white"
+                    (click)="displayTrackOrderModal = true"></button>
+            </div>
         </div>
     </div>
 
@@ -217,10 +221,50 @@
     </div>
 </p-dialog>
 
-<!-- Payment Method Modal (Step 2) -->
-<p-dialog [(visible)]="displayPaymentMethodModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" header="Select Payment Method" [closable]="false">
+<!-- Track Order Modal -->
+<p-dialog [(visible)]="displayTrackOrderModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}" header="Track Order">
     <div class="p-fluid">
-        <p class="mb-4 text-center">Order #{{ placedOrderId }} Created! Please select a payment method to complete.</p>
+        <div class="field">
+            <label>Enter Phone Number</label>
+            <div class="p-inputgroup">
+                <input pInputText [(ngModel)]="trackPhone" placeholder="017..." (keyup.enter)="trackOrder()">
+                <button pButton icon="pi pi-search" (click)="trackOrder()" [loading]="trackingLoading"></button>
+            </div>
+        </div>
+
+        <div *ngIf="trackedOrders.length > 0" class="mt-4">
+            <div *ngFor="let order of trackedOrders" class="surface-card p-3 border-round shadow-1 mb-3">
+                <div class="flex justify-content-between align-items-center mb-2">
+                    <span class="font-bold">Order #{{ order.id }}</span>
+                    <p-tag [value]="order.status" [severity]="order.status === 'Confirmed' ? 'success' : 'warning'"></p-tag>
+                </div>
+                <div class="text-sm text-600 mb-2">
+                    {{ order.orderDate | date:'medium' }}
+                </div>
+                <div class="flex justify-content-between align-items-center">
+                    <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</span>
+                    
+                    <!-- Payment Button -->
+                    <button pButton label="Make Payment" icon="pi pi-wallet" class="p-button-sm"
+                        *ngIf="order.status === 'Confirmed' && order.paymentStatus !== 'Paid'"
+                        (click)="openPaymentForOrder(order.id)"></button>
+                    
+                    <p-tag *ngIf="order.paymentStatus === 'Paid'" value="Paid" severity="success"></p-tag>
+                    <p-tag *ngIf="order.status !== 'Confirmed' && order.paymentStatus !== 'Paid'" value="Waiting Approval" severity="info"></p-tag>
+                </div>
+            </div>
+        </div>
+        
+        <div *ngIf="trackPhone && trackedOrders.length === 0 && !trackingLoading && hasSearched" class="text-center mt-4 text-600">
+            No orders found for this phone number.
+        </div>
+    </div>
+</p-dialog>
+
+<!-- Payment Method Modal (Step 2) -->
+<p-dialog [(visible)]="displayPaymentMethodModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" header="Select Payment Method" [closable]="true">
+    <div class="p-fluid">
+        <p class="mb-4 text-center">Payment for Order #{{ placedOrderId }}</p>
         
         <div class="grid">
             <div class="col-6">
@@ -262,13 +306,13 @@
     </div>
 </p-dialog>
 
-<!-- Order Success Modal -->
+<!-- Order Success Modal (Waiting for Approval) -->
 <p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Order Placed!"
     [closable]="true">
     <div class="flex flex-column align-items-center text-center">
-        <i class="pi pi-check-circle text-6xl text-green-500 mb-3"></i>
-        <h2 class="m-0 mb-2">Thank You!</h2>
-        <p class="text-600 mb-4">Your order has been placed successfully.</p>
+        <i class="pi pi-clock text-6xl text-orange-500 mb-3"></i>
+        <h2 class="m-0 mb-2">Waiting for Approval</h2>
+        <p class="text-600 mb-4">Your order has been placed and is waiting for admin approval.</p>
 
         <div class="surface-ground p-3 border-round w-full mb-4">
             <div class="text-sm text-600 mb-1">Order ID</div>
@@ -278,8 +322,20 @@
             </div>
         </div>
 
-        <p class="text-sm text-600 mb-4">We will contact you shortly to confirm your order.</p>
+        <p class="text-sm text-600 mb-4">Once approved, you can track your order and make payment.</p>
         <button pButton label="Continue Shopping" (click)="displayOrderSuccessModal = false"></button>
+    </div>
+</p-dialog>
+
+<!-- Payment Submitted Modal -->
+<p-dialog [(visible)]="displayPaymentSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Payment Submitted"
+    [closable]="true">
+    <div class="flex flex-column align-items-center text-center">
+        <i class="pi pi-check-circle text-6xl text-green-500 mb-3"></i>
+        <h2 class="m-0 mb-2">Payment Submitted</h2>
+        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'bKash'">Your bKash payment is waiting for verification.</p>
+        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'COD'">Your Cash on Delivery request has been recorded.</p>
+        <button pButton label="Close" (click)="displayPaymentSuccessModal = false"></button>
     </div>
 </p-dialog>
 

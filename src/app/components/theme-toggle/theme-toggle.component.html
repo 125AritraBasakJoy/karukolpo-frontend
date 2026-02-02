@@ -1,0 +1,5 @@
+<button pButton type="button" [icon]="themeService.currentTheme() === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
+    class="p-button-rounded p-button-text theme-toggle-btn" (click)="toggleTheme()"
+    [pTooltip]="themeService.currentTheme() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+    tooltipPosition="left">
+</button>

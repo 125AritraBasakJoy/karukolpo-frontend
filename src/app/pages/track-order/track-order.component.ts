@@ -13,11 +13,12 @@ import { ToastModule } from 'primeng/toast';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-track-order',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule],
+  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, ThemeToggleComponent],
   providers: [MessageService],
   templateUrl: './track-order.component.html',
   styleUrls: ['./track-order.component.scss']
@@ -62,28 +63,79 @@ export class TrackOrderComponent {
     if (!this.orderId) return;
 
     this.loading.set(true);
-    this.order.set(null); // Clear previous result while loading
+    this.order.set(null);
 
-    // Simulate small delay for better UX if search is instantaneous
-    setTimeout(() => {
-      this.orderService.getOrderById(this.orderId).subscribe(order => {
-        if (order) {
-          this.order.set(order);
+    // Check if input looks like a phone number (contains only digits, possibly with +88 prefix)
+    const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
+    const isPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanPhone);
+
+    if (isPhone) {
+      // Normalize phone number to 11 digits (01XXXXXXXXX format)
+      let normalizedPhone = cleanPhone;
+
+      // Remove +88 or 88 prefix if present
+      normalizedPhone = normalizedPhone.replace(/^(\+?88)/, '');
+
+      // Ensure it starts with 0
+      if (!normalizedPhone.startsWith('0')) {
+        normalizedPhone = '0' + normalizedPhone;
+      }
+
+      console.log('Tracking by phone:', normalizedPhone);
+
+      this.orderService.trackOrdersByPhone(normalizedPhone).subscribe({
+        next: (orders) => {
+          if (orders && orders.length > 0) {
+            // Sort by date descending and get the most recent order
+            const sorted = orders.sort((a, b) =>
+              new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+            );
+            this.order.set(sorted[0]);
+          } else {
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Not Found',
+              detail: 'No orders found for this phone number'
+            });
+          }
           this.loading.set(false);
-        } else {
-          // Fallback: Try tracking by Phone Number
-          this.orderService.getOrderByPhone(this.orderId).subscribe(orderByPhone => {
-            if (orderByPhone) {
-              this.order.set(orderByPhone);
-            } else {
-              this.order.set(null);
-              this.messageService.add({ severity: 'error', summary: 'Not Found', detail: 'Order not found' });
-            }
-            this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Phone tracking error:', err);
+          this.loading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: err.error?.detail || 'Failed to track order by phone number'
           });
         }
       });
-    }, 500);
+    } else {
+      // Assume it's an Order ID
+      this.orderService.getOrderById(this.orderId).subscribe({
+        next: (order) => {
+          if (order) {
+            this.order.set(order);
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Not Found',
+              detail: 'Order not found'
+            });
+          }
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Order ID tracking error:', err);
+          this.loading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Not Found',
+            detail: 'Order not found'
+          });
+        }
+      });
+    }
   }
 
   goBack() {

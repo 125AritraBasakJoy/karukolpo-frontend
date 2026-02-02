@@ -24,8 +24,8 @@ import { DialogModule } from 'primeng/dialog';
         <div class="p-fluid pt-3">
           <div class="field mb-5">
             <span class="p-float-label">
-              <input type="text" pInputText id="username" [(ngModel)]="username" autocomplete="off">
-              <label for="username">Username</label>
+              <input type="email" pInputText id="email" [(ngModel)]="email" autocomplete="email">
+              <label for="email">Email</label>
             </span>
           </div>
           <div class="field mb-4">
@@ -114,7 +114,7 @@ import { DialogModule } from 'primeng/dialog';
   `]
 })
 export class LoginComponent {
-  username = '';
+  email = '';
   password = '';
   loading = signal<boolean>(false);
 
@@ -139,16 +139,28 @@ export class LoginComponent {
   ) { }
 
   login() {
+    if (!this.email || !this.password) {
+      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Email and password are required' });
+      return;
+    }
+
     this.loading.set(true);
-    // Simulate API delay
-    setTimeout(() => {
-      if (this.authService.login(this.username, this.password)) {
+    this.authService.login(this.email.trim(), this.password).subscribe({
+      next: (response) => {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Login successful' });
         this.router.navigate(['/admin/dashboard']);
-      } else {
-        this.messageService.add({ severity: 'error', summary: 'Login Failed', detail: 'Invalid credentials' });
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Login error:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Login Failed',
+          detail: error.error?.detail || 'Invalid credentials'
+        });
         this.loading.set(false);
       }
-    }, 1000);
+    });
   }
 
   showChangeCreds() {

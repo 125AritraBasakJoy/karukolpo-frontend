@@ -1,0 +1,27 @@
+.theme-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 3rem;
+    height: 3rem;
+    transition: all 0.3s ease;
+    background: rgba(var(--primary-500), 0.1) !important;
+    backdrop-filter: blur(10px);
+
+    &:hover {
+        transform: rotate(180deg);
+        background: rgba(var(--primary-500), 0.2) !important;
+    }
+
+    ::ng-deep .pi {
+        font-size: 1.5rem;
+    }
+}
+
+// Animation for theme transitions
+:host {
+    ::ng-deep * {
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+}

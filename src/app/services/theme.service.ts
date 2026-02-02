@@ -4,7 +4,7 @@ import { Injectable, signal } from '@angular/core';
     providedIn: 'root'
 })
 export class ThemeService {
-    currentTheme = signal<string>('light');
+    currentTheme = signal<string>('dark'); // Changed default to dark
 
     constructor() {
         // Check local storage or system preference
@@ -12,7 +12,7 @@ export class ThemeService {
         if (savedTheme) {
             this.setTheme(savedTheme);
         } else {
-            this.setTheme('light');
+            this.setTheme('dark'); // Default to dark theme
         }
     }
 

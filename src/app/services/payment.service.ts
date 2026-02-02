@@ -1,4 +1,8 @@
 import { Injectable, signal } from '@angular/core';
+import { ApiService } from './api.service';
+import { API_ENDPOINTS } from '../../core/api-endpoints';
+import { Observable } from 'rxjs';
+import { Payment } from '../models/payment.model';
 
 @Injectable({
     providedIn: 'root'
@@ -7,7 +11,7 @@ export class PaymentService {
     private readonly QR_STORAGE_KEY = 'bkash_qr_code';
     qrCodeSignal = signal<string | null>(null);
 
-    constructor() {
+    constructor(private apiService: ApiService) {
         this.loadQrCode();
     }
 
@@ -27,5 +31,29 @@ export class PaymentService {
 
     getQrCode(): string | null {
         return this.qrCodeSignal();
+    }
+
+    /**
+     * Create a payment for an order
+     * POST /orders/{orderId}/payments
+     */
+    createPayment(orderId: number | string, paymentMethod: string): Observable<Payment> {
+        const id = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
+        return this.apiService.post<Payment>(API_ENDPOINTS.PAYMENTS.CREATE(id), { 
+            payment_method: paymentMethod 
+        });
+    }
+
+    /**
+     * Confirm a payment
+     * PATCH /orders/{orderId}/payments/{paymentId}/confirm
+     */
+    confirmPayment(orderId: number | string, paymentId: number | string, transactionId: string): Observable<Payment> {
+        const oId = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
+        const pId = typeof paymentId === 'string' ? parseInt(paymentId, 10) : paymentId;
+        
+        return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.CONFIRM(oId, pId), { 
+            transaction_id: transactionId.trim()
+        });
     }
 }

@@ -93,7 +93,7 @@
                             pTooltip="Mark Delivered" tooltipPosition="top"></p-button>
 
                         <p-button icon="pi pi-wallet" [rounded]="true" [text]="true" severity="warning"
-                            pTooltip="Toggle Payment" tooltipPosition="top"
+                            pTooltip="Confirm Payment" tooltipPosition="top"
                             (onClick)="togglePaymentStatus(order)"></p-button>
 
                         <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
@@ -151,7 +151,12 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-item>
                     <tr>
-                        <td>{{ item.product.name }}</td>
+                        <td>
+                            <div class="flex align-items-center gap-2">
+                                <img *ngIf="item.product.imageUrl" [src]="item.product.imageUrl" [alt]="item.product.name" width="40" class="shadow-2 border-round" />
+                                <span>{{ item.product.name }}</span>
+                            </div>
+                        </td>
                         <td>{{ item.product.price | currency:'BDT':'symbol-narrow' }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>{{ item.product.price * item.quantity | currency:'BDT':'symbol-narrow' }}</td>
@@ -167,4 +172,20 @@
         </div>
     </div>
 </p-dialog>
+
+<!-- Payment Confirmation Dialog -->
+<p-dialog header="Confirm Payment" [(visible)]="displayPaymentConfirmDialog" [modal]="true" [style]="{width: '400px'}">
+    <div class="p-fluid">
+        <p class="mb-3">Enter the Transaction ID to confirm payment for Order #{{ orderToConfirm?.id }}</p>
+        <div class="field">
+            <label for="trxId">Transaction ID</label>
+            <input pInputText id="trxId" [(ngModel)]="transactionId" placeholder="e.g. 9G7..." autofocus />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="displayPaymentConfirmDialog = false"></p-button>
+        <p-button label="Confirm" icon="pi pi-check" (onClick)="confirmPayment()"></p-button>
+    </ng-template>
+</p-dialog>
+
 <p-toast></p-toast>

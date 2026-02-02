@@ -1,0 +1,117 @@
+<!-- Theme Toggle Button -->
+<app-theme-toggle></app-theme-toggle>
+
+<div class="about-page">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">About Karukolpo</h1>
+            <p class="hero-subtitle">Preserving Bangladesh's Rich Cultural Heritage Through Handcrafts</p>
+        </div>
+    </section>
+
+    <!-- Story Section -->
+    <section class="story-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Story</h2>
+                <div class="title-underline"></div>
+            </div>
+
+            <div class="grid align-items-center">
+                <div class="col-12 md:col-6">
+                    <div class="story-image">
+                        <img src="assets/about-image.jpg" alt="Karukolpo Story" />
+                    </div>
+                </div>
+                <div class="col-12 md:col-6">
+                    <div class="story-content">
+                        <p class="story-text">
+                            Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage and the
+                            incredible
+                            craftsmanship of our local artisans. We believe that every handcrafted item tells a story –
+                            a story
+                            of tradition, skill, and dedication passed down through generations.
+                        </p>
+                        <p class="story-text">
+                            Our mission is to connect these talented artisans with customers who appreciate authentic,
+                            handmade products while preserving traditional Bangladeshi art forms for future generations.
+                        </p>
+                        <p class="story-text">
+                            Every product you purchase from Karukolpo directly supports local craftspeople and their
+                            families,
+                            helping to sustain their livelihoods and keep ancient traditions alive.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Why Choose Karukolpo</h2>
+                <div class="title-underline"></div>
+            </div>
+
+            <div class="grid">
+                <div class="col-12 md:col-6 lg:col-3" *ngFor="let feature of features">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i [class]="feature.icon"></i>
+                        </div>
+                        <h3 class="feature-title">{{ feature.title }}</h3>
+                        <p class="feature-description">{{ feature.description }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="values-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Values</h2>
+                <div class="title-underline"></div>
+            </div>
+
+            <div class="grid">
+                <div class="col-12 md:col-4">
+                    <div class="value-card">
+                        <i class="pi pi-heart value-icon"></i>
+                        <h3>Authenticity</h3>
+                        <p>We only source genuine handcrafted products made using traditional methods.</p>
+                    </div>
+                </div>
+                <div class="col-12 md:col-4">
+                    <div class="value-card">
+                        <i class="pi pi-prime value-icon"></i>
+                        <h3>Quality</h3>
+                        <p>Each product is carefully inspected to meet our high standards of excellence.</p>
+                    </div>
+                </div>
+                <div class="col-12 md:col-4">
+                    <div class="value-card">
+                        <i class="pi pi-globe value-icon"></i>
+                        <h3>Sustainability</h3>
+                        <p>Supporting eco-friendly practices and empowering local communities.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container text-center">
+            <h2 class="cta-title">Start Shopping Today</h2>
+            <p class="cta-text">Discover unique handcrafted products and support local artisans</p>
+            <button pButton label="Browse Products" icon="pi pi-shopping-bag" class="p-button-lg p-button-warning"
+                routerLink="/"></button>
+        </div>
+    </section>
+</div>

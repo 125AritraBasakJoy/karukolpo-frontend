@@ -1,328 +1,288 @@
-<div class="landing-page">
-  <header class="header">
-    <div class="logo">
-      <img *ngIf="siteConfigService.siteConfig().logoUrl" [src]="siteConfigService.siteConfig().logoUrl" alt="Karukolpo"
-        class="site-logo">
-      <span *ngIf="!siteConfigService.siteConfig().logoUrl">Karukolpo</span>
-    </div>
-    <nav class="flex align-items-center gap-4">
-      <a href="#about" class="no-underline text-color hover:text-primary font-medium transition-colors">About Us</a>
-
-      <div class="relative" (mouseenter)="dropdownOpen = true" (mouseleave)="dropdownOpen = false">
-        <a class="no-underline text-color hover:text-primary font-medium transition-colors flex align-items-center cursor-pointer"
-          (click)="dropdownOpen = !dropdownOpen; $event.stopPropagation()">
-          Products <i class="pi pi-chevron-down ml-1" style="font-size: 0.8rem"></i>
-        </a>
-
-        <div *ngIf="dropdownOpen" class="absolute top-100 left-0 min-w-15rem z-5 pt-2 fadein animation-duration-200">
-          <div class="surface-overlay shadow-4 border-round-lg overflow-hidden">
-            <div (click)="selectCategory(null); dropdownOpen = false"
-              class="px-3 py-2 hover:surface-hover cursor-pointer text-color transition-colors border-bottom-1 surface-border">
-              All Products
-            </div>
-            <div *ngFor="let cat of categories()" (click)="selectCategory(cat); dropdownOpen = false"
-              class="px-3 py-2 hover:surface-hover cursor-pointer text-color-secondary hover:text-color transition-colors">
-              {{ cat.name }}
-            </div>
-          </div>
+<!-- ... existing content ... -->
+<div class="home-container">
+    <!-- Hero Section -->
+    <div class="hero-section relative h-30rem flex align-items-center justify-content-center text-center text-white mb-5"
+        [style.background-image]="'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(' + landingPageImage() + ')'"
+        style="background-size: cover; background-position: center;">
+        <div class="z-1">
+            <h1 class="text-6xl font-bold mb-2">Karukolpo</h1>
+            <p class="text-2xl">{{ landingPageTagline() }}</p>
+            <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg p-button-warning mt-4"
+                (click)="scrollToProducts()"></button>
         </div>
-      </div>
-
-      <a href="/track-order" class="no-underline text-color hover:text-primary font-medium transition-colors">Track
-        Order</a>
-    </nav>
-    <div class="mr-3">
-      <p-button [label]="themeService.currentTheme() === 'light' ? 'Dark Mode' : 'Light Mode'"
-        [icon]="themeService.currentTheme() === 'light' ? 'pi pi-moon' : 'pi pi-sun'"
-        styleClass="p-button-text p-button-secondary" (onClick)="themeService.toggleTheme()"></p-button>
     </div>
-    <div class="cart-icon" (click)="openCheckout()">
-      <i class="pi pi-shopping-cart"></i>
-      <span class="badge" *ngIf="cart().length > 0">{{ cart().length }}</span>
-    </div>
-  </header>
 
-  <section class="hero" [style.backgroundImage]="'url(' + landingPageImage() + ')'">
-    <div class="hero-content">
-      <h1>{{ landingPageTagline() }}</h1>
-      <p-button label="Shop Now" icon="pi pi-arrow-right" (onClick)="scrollToProducts()"></p-button>
-    </div>
-  </section>
-
-  <section id="products" class="products-section">
-    <h2 class="text-3xl font-bold mb-4 text-center">{{ selectedCategory ? selectedCategory.name : 'Our Products' }}</h2>
-    <div *ngIf="loading()" class="grid">
-      <div *ngFor="let i of [1,2,3,4,5,6,7,8]" class="col-12 md:col-6 lg:col-3 p-2">
-        <div class="p-3 border-1 surface-border border-round">
-          <p-skeleton height="200px" styleClass="mb-3"></p-skeleton>
-          <p-skeleton width="10rem" styleClass="mb-2"></p-skeleton>
-          <p-skeleton width="5rem" styleClass="mb-3"></p-skeleton>
-          <div class="flex gap-2">
-            <p-skeleton height="2.5rem" styleClass="w-full"></p-skeleton>
-            <p-skeleton height="2.5rem" styleClass="w-full"></p-skeleton>
-          </div>
+    <!-- Category Filter -->
+    <div class="container mb-4 px-4">
+        <div class="flex flex-wrap justify-content-center gap-2">
+            <button pButton [label]="'All'" [class.p-button-outlined]="selectedCategory !== null"
+                (click)="selectCategory(null)" class="p-button-rounded p-button-sm"></button>
+            <button *ngFor="let cat of categories()" pButton [label]="cat.name"
+                [class.p-button-outlined]="selectedCategory?.id !== cat.id" (click)="selectCategory(cat)"
+                class="p-button-rounded p-button-sm"></button>
         </div>
-      </div>
     </div>
-    <div class="grid" *ngIf="!loading()">
-      <div *ngFor="let product of products()" class="col-12 md:col-6 lg:col-3 p-2">
-        <div class="product-card p-3 border-1 surface-border border-round">
-          <div class="text-center mb-3 relative">
-            <div *ngIf="isOutOfStock(product)"
-              class="absolute top-0 right-0 m-2 px-3 py-1 bg-red-500 text-white font-bold border-round shadow-2 z-1"
-              style="font-size: 0.8rem;">
-              Out of Stock
+
+    <!-- Products Grid -->
+    <div id="products" class="container px-4 pb-8">
+        <div *ngIf="loading()" class="grid">
+            <div class="col-12 sm:col-6 md:col-4 lg:col-3" *ngFor="let i of [1,2,3,4]">
+                <div class="p-4 border-1 surface-border surface-card border-round">
+                    <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
+                    <p-skeleton width="50%" styleClass="mb-2"></p-skeleton>
+                    <p-skeleton width="25%" styleClass="mb-2"></p-skeleton>
+                </div>
             </div>
-            <img [src]="product.imageUrl" [alt]="product.name" class="w-full shadow-2"
-              [class.grayscale]="isOutOfStock(product)" style="height: 200px; object-fit: cover;" />
-          </div>
-          <div class="text-xl font-bold mb-2">{{ product.name }}</div>
-          <div class="text-xl font-semibold mb-3">{{ product.price | currency:'BDT':'symbol-narrow' }}</div>
-          <div class="flex gap-2 w-full">
-            <p-button icon="pi pi-shopping-cart" (onClick)="addToCart(product)"
-              [label]="isOutOfStock(product) ? 'Out of Stock' : 'Add'" [disabled]="isOutOfStock(product)"
-              styleClass="w-full" class="flex-1"></p-button>
-            <p-button icon="pi pi-eye" (onClick)="showProductDetails(product)" label="View" [outlined]="true"
-              styleClass="w-full" class="flex-1"></p-button>
-          </div>
         </div>
-      </div>
+
+        <div class="grid" *ngIf="!loading()">
+            <div class="col-12 sm:col-6 md:col-4 lg:col-3" *ngFor="let product of filteredProducts()">
+                <div class="product-card surface-card border-round shadow-2 p-3 h-full flex flex-column relative">
+                    <!-- Out of Stock Overlay -->
+                    <div *ngIf="isOutOfStock(product)"
+                        class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center border-round">
+                        <span class="bg-red-500 text-white px-3 py-1 border-round font-bold">Out of Stock</span>
+                    </div>
+
+                    <div class="relative mb-3 cursor-pointer" (click)="showProductDetails(product)">
+                        <img [src]="product.imageUrl" [alt]="product.name" class="w-full border-round"
+                            style="height: 200px; object-fit: cover;">
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="text-xl font-bold mb-2">{{ product.name }}</div>
+                        <div class="text-600 mb-3 line-clamp-2">{{ product.description }}</div>
+                        <div class="text-primary text-xl font-bold">{{ product.price | currency:'BDT':'symbol-narrow' }}
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="w-full"
+                            [disabled]="isOutOfStock(product)" (click)="addToCart(product)"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </section>
 
-  <section id="about" class="about-section">
-    <h2>About Us</h2>
-    <p>Karukolpo is a small online shop dedicated to bringing you the finest Bangladeshi handicrafts.</p>
-  </section>
-
-  <div class="footer p-4 bg-gray-900 text-white mt-5 text-center">
-    <h3>Contact Us</h3>
-    <p>{{ contactService.contactInfo().address }}</p>
-    <p>{{ contactService.contactInfo().phone }}</p>
-    <p>{{ contactService.contactInfo().email }}</p>
-    <p class="mt-4 text-gray-400 text-sm">&copy; 2024 Karukolpo. All rights reserved.</p>
-  </div>
+    <!-- Floating Cart Button -->
+    <button pButton class="fixed bottom-0 right-0 m-4 p-button-rounded p-button-lg shadow-4 z-5 overflow-visible" 
+        (click)="openCheckout()">
+        <i class="pi pi-shopping-cart text-xl" pBadge [value]="getTotalCartItems().toString()" severity="danger" [badgeDisabled]="getTotalCartItems() === 0"></i>
+    </button>
 </div>
 
 <!-- Product Details Modal -->
-<p-dialog header="Product Details" [(visible)]="displayProductModal" [modal]="true" [style]="{width: '70vw'}"
-  [draggable]="false" [resizable]="false">
-  <div *ngIf="selectedProduct" class="grid">
-    <div class="col-12 md:col-6 relative">
-      <div *ngIf="isOutOfStock(selectedProduct)"
-        class="absolute top-0 left-0 m-3 px-3 py-2 bg-red-500 text-white font-bold border-round shadow-2 z-5"
-        style="font-size: 1rem;">
-        Out of Stock
-      </div>
-      <p-galleria [value]="selectedProduct.images" [responsiveOptions]="responsiveOptions"
-        [containerStyle]="{'max-width': '100%'}" [numVisible]="4" [showItemNavigators]="true" [showThumbnails]="true"
-        [showIndicators]="true" [(activeIndex)]="activeIndex" [circular]="false" [autoPlay]="false">
-        <ng-template pTemplate="item" let-item>
-          <img [src]="item" style="width: 100%; display: block;" />
-        </ng-template>
-        <ng-template pTemplate="thumbnail" let-item>
-          <div class="grid grid-nogutter justify-content-center">
-            <img [src]="item" style="display: block; width: 50px;" />
-          </div>
-        </ng-template>
-      </p-galleria>
+<p-dialog [(visible)]="displayProductModal" [modal]="true" [style]="{width: '90vw', maxWidth: '800px'}"
+    [header]="selectedProduct?.name || 'Product Details'" [dismissableMask]="true">
+    <div class="grid" *ngIf="selectedProduct">
+        <div class="col-12 md:col-6">
+            <p-galleria
+                [value]="selectedProduct.images && selectedProduct.images.length > 0 ? selectedProduct.images : [selectedProduct.imageUrl]"
+                [numVisible]="5" [circular]="true" [showItemNavigators]="true"
+                [showThumbnails]="selectedProduct.images && selectedProduct.images.length > 1"
+                [responsiveOptions]="responsiveOptions" [containerStyle]="{'max-width': '100%'}">
+                <ng-template pTemplate="item" let-item>
+                    <img [src]="item" style="width: 100%; display: block; max-height: 400px; object-fit: contain;" />
+                </ng-template>
+                <ng-template pTemplate="thumbnail" let-item>
+                    <div class="grid grid-nogutter justify-content-center">
+                        <img [src]="item" style="display: block; width: 50px; height: 50px; object-fit: cover;" />
+                    </div>
+                </ng-template>
+            </p-galleria>
+        </div>
+        <div class="col-12 md:col-6">
+            <div class="text-3xl font-bold mb-3">{{ selectedProduct.name }}</div>
+            <div class="text-2xl text-primary font-bold mb-4">{{ selectedProduct.price |
+                currency:'BDT':'symbol-narrow' }}</div>
+            <p class="line-height-3 text-700 mb-4">{{ selectedProduct.description }}</p>
+
+            <div class="mb-4" *ngIf="selectedProduct.stock !== undefined">
+                <span [class]="isOutOfStock(selectedProduct) ? 'text-red-500' : 'text-green-500'">
+                    <i class="pi" [class]="isOutOfStock(selectedProduct) ? 'pi-times-circle' : 'pi-check-circle'"></i>
+                    {{ isOutOfStock(selectedProduct) ? 'Out of Stock' : (selectedProduct.stock + ' items in stock') }}
+                </span>
+            </div>
+
+            <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-lg w-full"
+                [disabled]="isOutOfStock(selectedProduct)" (click)="addToCart(selectedProduct)"></button>
+        </div>
     </div>
-    <div class="col-12 md:col-6">
-      <h2>{{ selectedProduct.name }}</h2>
-      <p>Code: {{ selectedProduct.code }}</p>
-      <p style="overflow-wrap: break-word; word-break: break-word;">{{ selectedProduct.description }}</p>
-      <h3>{{ selectedProduct.price | currency:'BDT':'symbol-narrow' }}</h3>
-      <p-button [label]="isOutOfStock(selectedProduct) ? 'Out of Stock' : 'Add to Cart'"
-        [icon]="isOutOfStock(selectedProduct) ? 'pi pi-times-circle' : 'pi pi-shopping-cart'"
-        [disabled]="isOutOfStock(selectedProduct)" (onClick)="addToCart(selectedProduct)"></p-button>
-    </div>
-  </div>
 </p-dialog>
 
-<!-- Checkout Modal -->
-<p-dialog header="Checkout" [(visible)]="displayCheckoutModal" [modal]="true" [style]="{width: '50vw'}"
-  [draggable]="false" [resizable]="false">
-  <div class="cart-items mb-4">
-    <div *ngFor="let item of cart()"
-      class="flex justify-content-between align-items-center mb-3 p-2 surface-border border-bottom-1">
-      <div class="flex align-items-center gap-3">
-        <img [src]="item.product.imageUrl" [alt]="item.product.name"
-          class="w-4rem h-4rem border-round shadow-1 object-cover">
-        <div class="flex flex-column">
-          <span class="font-bold">{{ item.product.name }}</span>
-          <span class="text-sm text-gray-600">{{ item.product.price | currency:'BDT':'symbol-narrow' }}</span>
-        </div>
-      </div>
-      <div class="flex align-items-center gap-2">
-        <p-button icon="pi pi-minus" [rounded]="true" [text]="true" size="small" styleClass="w-2rem h-2rem p-0"
-          (onClick)="updateQuantity(item, -1)"></p-button>
-        <span class="font-bold w-1rem text-center">{{ item.quantity }}</span>
-        <p-button icon="pi pi-plus" [rounded]="true" [text]="true" size="small" styleClass="w-2rem h-2rem p-0"
-          (onClick)="updateQuantity(item, 1)"></p-button>
-      </div>
-      <span class="font-bold">{{ item.product.price * item.quantity | currency:'BDT':'symbol-narrow' }}</span>
-    </div>
-
-    <!-- Delivery Location Selection -->
-    <div class="flex flex-column gap-2 mb-3 p-3 surface-ground border-round">
-      <div class="font-bold mb-2">Delivery Location</div>
-      <div class="flex align-items-center gap-3">
-        <div class="field-radiobutton mb-0">
-          <p-radioButton name="deliveryLocation" value="Inside Dhaka" [(ngModel)]="deliveryLocation"
-            (onClick)="updateDeliveryCharge()" inputId="insideDhaka"></p-radioButton>
-          <label for="insideDhaka" class="ml-2">Inside Dhaka</label>
-        </div>
-        <div class="field-radiobutton mb-0">
-          <p-radioButton name="deliveryLocation" value="Outside Dhaka" [(ngModel)]="deliveryLocation"
-            (onClick)="updateDeliveryCharge()" inputId="outsideDhaka"></p-radioButton>
-          <label for="outsideDhaka" class="ml-2">Outside Dhaka</label>
-        </div>
-      </div>
-    </div>
-
-    <div class="text-right text-lg mb-2">
-      Subtotal: {{ getSubTotal() | currency:'BDT':'symbol-narrow' }}
-    </div>
-    <div class="text-right text-lg mb-2">
-      Delivery: {{ currentDeliveryCharge | currency:'BDT':'symbol-narrow' }}
-    </div>
-    <div class="text-right font-bold text-xl mt-3 border-top-1 border-gray-300 pt-2">
-      Total: {{ getTotalPrice() | currency:'BDT':'symbol-narrow' }}
-    </div>
-  </div>
-
-  <div class="checkout-form grid">
-    <div class="col-12 md:col-6">
-      <span class="p-float-label">
-        <input pInputText id="fullName" [(ngModel)]="checkoutForm.fullName" #fullName="ngModel" required
-          class="w-full" />
-        <label htmlFor="fullName">Full Name <span class="text-red-500">*</span></label>
-      </span>
-      <small class="p-error block mt-1" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Name is
-        required.</small>
-    </div>
-    <div class="col-12 md:col-6">
-      <span class="p-float-label">
-        <input pInputText id="email" [(ngModel)]="checkoutForm.email" #email="ngModel" required [pattern]="emailRegex"
-          class="w-full" />
-        <label htmlFor="email">Email <span class="text-red-500">*</span></label>
-      </span>
-      <small class="p-error block mt-1" *ngIf="email.invalid && (email.dirty || email.touched)">
-        <span *ngIf="email.errors?.['required']">Email is required.</span>
-        <span *ngIf="email.errors?.['pattern']">Invalid email address.</span>
-      </small>
-    </div>
-    <div class="col-12 md:col-6 mt-4">
-      <span class="p-float-label">
-        <input pInputText id="phone" [(ngModel)]="checkoutForm.phoneNumber" #phone="ngModel" required
-          [pattern]="phoneRegex" class="w-full" />
-        <label htmlFor="phone">Phone Number <span class="text-red-500">*</span></label>
-      </span>
-      <small class="p-error block mt-1" *ngIf="phone.invalid && (phone.dirty || phone.touched)">
-        <span *ngIf="phone.errors?.['required']">Phone number is required.</span>
-        <span *ngIf="phone.errors?.['pattern']">Invalid Bangladeshi phone number (e.g., 017...).</span>
-      </small>
-    </div>
-    <div class="col-12 md:col-6 mt-4">
-      <span class="p-float-label">
-        <p-dropdown id="district" [options]="districts" optionLabel="name" optionValue="name"
-          [(ngModel)]="checkoutForm.district" (onChange)="onDistrictChange($event)" [style]="{'width':'100%'}"
-          class="w-full" #district="ngModel" required></p-dropdown>
-        <label htmlFor="district">District <span class="text-red-500">*</span></label>
-      </span>
-      <small class="p-error block mt-1" *ngIf="district.invalid && (district.dirty || district.touched)">District is
-        required.</small>
-    </div>
-    <div class="col-12 md:col-6 mt-4" *ngIf="subDistricts.length > 0">
-      <span class="p-float-label">
-        <p-dropdown id="subDistrict" [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
-          [style]="{'width':'100%'}" class="w-full" #subDistrict="ngModel" required></p-dropdown>
-        <label htmlFor="subDistrict">Sub-District <span class="text-red-500">*</span></label>
-      </span>
-      <small class="p-error block mt-1"
-        *ngIf="subDistrict.invalid && (subDistrict.dirty || subDistrict.touched)">Sub-District is required.</small>
-    </div>
-    <div class="col-12 md:col-6 mt-4">
-      <span class="p-float-label">
-        <input pInputText id="postalCode" [(ngModel)]="checkoutForm.postalCode" #postalCode="ngModel" required
-          [pattern]="postalCodeRegex" class="w-full" />
-        <label htmlFor="postalCode">Postal Code <span class="text-red-500">*</span></label>
-      </span>
-      <small class="p-error block mt-1" *ngIf="postalCode.invalid && (postalCode.dirty || postalCode.touched)">
-        <span *ngIf="postalCode.errors?.['required']">Postal code is required.</span>
-        <span *ngIf="postalCode.errors?.['pattern']">Must be exactly 4 digits.</span>
-      </small>
-    </div>
-    <div class="col-12 mt-4">
-      <span class="p-float-label">
-        <textarea pInputTextarea id="address" [(ngModel)]="checkoutForm.fullAddress" #address="ngModel" required
-          class="w-full" rows="3"></textarea>
-        <label htmlFor="address">Full Address <span class="text-red-500">*</span></label>
-      </span>
-      <small class="p-error block mt-1" *ngIf="address.invalid && (address.dirty || address.touched)">Address is
-        required.</small>
-    </div>
-    <div class="col-12 mt-4">
-      <div class="text-xl font-bold mb-3">Payment Method</div>
-      <div class="flex flex-column gap-3">
-        <div class="flex justify-content-center gap-3">
-          <div (click)="selectPaymentMethod('bKash')" [class.surface-200]="selectedPaymentMethod === 'bKash'"
-            class="cursor-pointer p-3 border-1 border-round surface-border hover:surface-100 transition-colors w-6 text-center">
-            <i class="pi pi-wallet text-4xl text-primary mb-2"></i>
-            <div class="font-bold">bKash</div>
-          </div>
-          <div (click)="selectPaymentMethod('COD')" [class.surface-200]="selectedPaymentMethod === 'COD'"
-            class="cursor-pointer p-3 border-1 border-round surface-border hover:surface-100 transition-colors w-6 text-center">
-            <i class="pi pi-money-bill text-4xl text-green-500 mb-2"></i>
-            <div class="font-bold">Cash On Delivery</div>
-          </div>
+<!-- Checkout Modal (Step 1: Shipping) -->
+<p-dialog [(visible)]="displayCheckoutModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
+    header="Checkout" [dismissableMask]="false">
+    <div class="grid">
+        <!-- Cart Summary -->
+        <div class="col-12 mb-4">
+            <div class="surface-card p-3 border-round shadow-1">
+                <div *ngFor="let item of cart()"
+                    class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                    <div class="flex align-items-center gap-3">
+                        <img [src]="item.product.imageUrl" class="w-3rem h-3rem border-round object-cover">
+                        <div>
+                            <div class="font-bold">{{ item.product.name }}</div>
+                            <div class="text-sm text-600">{{ item.product.price | currency:'BDT':'symbol-narrow' }} x {{
+                                item.quantity }}</div>
+                        </div>
+                    </div>
+                    <div class="flex align-items-center gap-2">
+                        <button pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
+                            (click)="updateQuantity(item, -1)"></button>
+                        <span class="font-bold w-2rem text-center">{{ item.quantity }}</span>
+                        <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
+                            (click)="updateQuantity(item, 1)"></button>
+                    </div>
+                </div>
+                <div class="flex justify-content-between mt-3">
+                    <span>Subtotal</span>
+                    <span class="font-bold">{{ getSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
+                </div>
+                <div class="flex justify-content-between mt-2">
+                    <span>Delivery Charge</span>
+                    <span class="font-bold">{{ currentDeliveryCharge | currency:'BDT':'symbol-narrow' }}</span>
+                </div>
+                <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl font-bold">
+                    <span>Total</span>
+                    <span class="text-primary">{{ getTotalPrice() | currency:'BDT':'symbol-narrow' }}</span>
+                </div>
+            </div>
         </div>
 
-        <div *ngIf="selectedPaymentMethod === 'bKash'" class="mt-2 text-center fadein animation-duration-300">
-          <div *ngIf="bkashQrCodeInModal; else noQr">
-            <p class="mb-2 font-bold">Scan to Pay</p>
-            <img [src]="bkashQrCodeInModal" alt="bKash QR"
-              style="max-width: 200px; border: 1px solid #ddd; padding: 5px;">
-          </div>
-          <ng-template #noQr>
-            <p class="text-red-500">QR Code not available. Please contact admin.</p>
-          </ng-template>
+        <!-- Shipping Form -->
+        <div class="col-12">
+            <div class="p-fluid">
+                <div class="field">
+                    <label>Full Name <span class="text-red-500">*</span></label>
+                    <input pInputText [(ngModel)]="checkoutForm.fullName" placeholder="Enter your name" required #fullName="ngModel">
+                    <small class="p-error" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full Name is required.</small>
+                </div>
+                <div class="field">
+                    <label>Phone Number <span class="text-red-500">*</span></label>
+                    <input pInputText [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..." maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$">
+                    <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid Phone Number is required.</small>
+                </div>
+                <div class="field">
+                    <label>Email <span class="text-red-500">*</span></label>
+                    <input pInputText [(ngModel)]="checkoutForm.email" placeholder="example@email.com" required email #email="ngModel">
+                    <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Valid Email is required.</small>
+                </div>
 
-          <div class="mt-3">
-            <span class="p-float-label">
-              <input pInputText id="bkashNumber" [(ngModel)]="bkashNumber" #bkashNum="ngModel" required
-                [pattern]="phoneRegex" class="w-full" />
-              <label htmlFor="bkashNumber">Your bKash Account Number <span class="text-red-500">*</span></label>
-            </span>
-            <small class="p-error block mt-1" *ngIf="bkashNum.invalid && (bkashNum.dirty || bkashNum.touched)">
-              <span *ngIf="bkashNum.errors?.['required']">bKash number is required.</span>
-              <span *ngIf="bkashNum.errors?.['pattern']">Invalid bKash number.</span>
-            </small>
-          </div>
-        </div>
+                <div class="field">
+                    <label>Delivery Location</label>
+                    <div class="flex gap-3">
+                        <div class="flex align-items-center">
+                            <p-radioButton name="delivery" value="Inside Dhaka" [(ngModel)]="deliveryLocation"
+                                (onClick)="updateDeliveryCharge()"></p-radioButton>
+                            <label class="ml-2">Inside Dhaka</label>
+                        </div>
+                        <div class="flex align-items-center">
+                            <p-radioButton name="delivery" value="Outside Dhaka" [(ngModel)]="deliveryLocation"
+                                (onClick)="updateDeliveryCharge()"></p-radioButton>
+                            <label class="ml-2">Outside Dhaka</label>
+                        </div>
+                    </div>
+                </div>
 
-        <div *ngIf="selectedPaymentMethod === 'COD'" class="mt-2 text-center fadein animation-duration-300">
-          <p class="text-green-600 font-bold">You will pay when the product is delivered.</p>
+                <div class="formgrid grid">
+                    <div class="field col-6">
+                        <label>District <span class="text-red-500">*</span></label>
+                        <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
+                            [(ngModel)]="checkoutForm.district" (onChange)="onDistrictChange($event)"
+                            placeholder="Select District" appendTo="body" required #district="ngModel"></p-dropdown>
+                        <small class="p-error" *ngIf="district.invalid && (district.dirty || district.touched)">District is required.</small>
+                    </div>
+                    <div class="field col-6">
+                        <label>Sub-District <span class="text-red-500" *ngIf="subDistricts.length > 0">*</span></label>
+                        <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
+                            placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body" [required]="subDistricts.length > 0"></p-dropdown>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Postal Code <span class="text-red-500">*</span></label>
+                    <input pInputText [(ngModel)]="checkoutForm.postalCode" placeholder="1234" maxlength="4" required pattern="\d{4}" #postal="ngModel">
+                    <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid Postal Code is required.</small>
+                </div>
+                <div class="field">
+                    <label>Full Address <span class="text-red-500">*</span></label>
+                    <textarea pInputTextarea [(ngModel)]="checkoutForm.fullAddress" rows="2"
+                        placeholder="House, Road, Area..." required #address="ngModel"></textarea>
+                    <small class="p-error" *ngIf="address.invalid && (address.dirty || address.touched)">Full Address is required.</small>
+                </div>
+
+                <button pButton label="Place Order" class="w-full p-button-lg mt-4" [disabled]="!isCheckoutFormValid"
+                    (click)="placeOrder()"></button>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
+</p-dialog>
 
-  <ng-template pTemplate="footer">
-    <p-button label="Place Order" icon="pi pi-check" (onClick)="placeOrder()"></p-button>
-  </ng-template>
+<!-- Payment Method Modal (Step 2) -->
+<p-dialog [(visible)]="displayPaymentMethodModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" header="Select Payment Method" [closable]="false">
+    <div class="p-fluid">
+        <p class="mb-4 text-center">Order #{{ placedOrderId }} Created! Please select a payment method to complete.</p>
+        
+        <div class="grid">
+            <div class="col-6">
+                <div class="p-3 border-1 border-round cursor-pointer transition-colors transition-duration-200 flex flex-column align-items-center gap-2 h-full"
+                    [class.border-primary]="selectedPaymentMethod === 'bKash'"
+                    [class.surface-50]="selectedPaymentMethod !== 'bKash'"
+                    [class.bg-blue-50]="selectedPaymentMethod === 'bKash'"
+                    (click)="selectPaymentMethod('bKash')">
+                    <img src="assets/bkash-logo.png" alt="bKash" height="40">
+                    <span class="font-bold">bKash Payment</span>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="p-3 border-1 border-round cursor-pointer transition-colors transition-duration-200 flex flex-column align-items-center gap-2 h-full"
+                    [class.border-primary]="selectedPaymentMethod === 'COD'"
+                    [class.surface-50]="selectedPaymentMethod !== 'COD'"
+                    [class.bg-blue-50]="selectedPaymentMethod === 'COD'"
+                    (click)="selectPaymentMethod('COD')">
+                    <i class="pi pi-money-bill text-4xl text-green-600"></i>
+                    <span class="font-bold">Cash On Delivery</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- bKash Details -->
+        <div *ngIf="selectedPaymentMethod === 'bKash'" class="field mt-4 surface-ground p-3 border-round">
+            <div class="text-center mb-3" *ngIf="bkashQrCodeInModal">
+                <p class="mb-2 font-bold">Scan to Pay</p>
+                <img [src]="bkashQrCodeInModal" alt="bKash QR" width="150" class="border-round shadow-2">
+            </div>
+            <label>Your bKash Number</label>
+            <input pInputText [(ngModel)]="bkashNumber" placeholder="017..." maxlength="11">
+            
+            <label class="mt-3 block">Transaction ID</label>
+            <input pInputText [(ngModel)]="transactionId" placeholder="e.g. 9G7...">
+        </div>
+
+        <button pButton label="Confirm Payment" class="w-full mt-4" 
+            [disabled]="!selectedPaymentMethod || (selectedPaymentMethod === 'bKash' && (!bkashNumber || !transactionId))"
+            (click)="processPayment()"></button>
+    </div>
 </p-dialog>
 
 <!-- Order Success Modal -->
-<p-dialog header="Order Placed Successfully" [(visible)]="displayOrderSuccessModal" [modal]="true"
-  [style]="{width: '30vw'}">
-  <div class="text-center">
-    <i class="pi pi-check-circle text-green-500 text-5xl mb-3"></i>
-    <p>Thank you for your order!</p>
-    <svg id="barcode"></svg>
-    <p class="font-bold">Your Order ID: {{ placedOrderId }}</p>
-    <p class="text-sm text-gray-600">Please save this ID to track your order.</p>
-  </div>
+<p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Order Placed!"
+    [closable]="true">
+    <div class="flex flex-column align-items-center text-center">
+        <i class="pi pi-check-circle text-6xl text-green-500 mb-3"></i>
+        <h2 class="m-0 mb-2">Thank You!</h2>
+        <p class="text-600 mb-4">Your order has been placed successfully.</p>
+
+        <div class="surface-ground p-3 border-round w-full mb-4">
+            <div class="text-sm text-600 mb-1">Order ID</div>
+            <div class="text-xl font-bold text-primary">{{ placedOrderId }}</div>
+            <div class="mt-3 bg-white p-2 border-round">
+                <svg id="barcode"></svg>
+            </div>
+        </div>
+
+        <p class="text-sm text-600 mb-4">We will contact you shortly to confirm your order.</p>
+        <button pButton label="Continue Shopping" (click)="displayOrderSuccessModal = false"></button>
+    </div>
 </p-dialog>
 
 <p-toast></p-toast>

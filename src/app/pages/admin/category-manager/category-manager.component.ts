@@ -153,41 +153,88 @@ export class CategoryManagerComponent implements OnInit {
     }
 
     saveCategory() {
+        console.log('saveCategory called');
         if (this.categoryForm.invalid) {
+            console.warn('Form is invalid', this.categoryForm.errors);
             this.categoryForm.markAllAsTouched();
             return;
         }
 
         const categoryData = this.categoryForm.value;
+        console.log('Category data:', categoryData);
 
         if (this.currentCategoryId) {
+            console.log('Updating category with ID:', this.currentCategoryId);
             const updatedCategory: Category = { ...categoryData, id: this.currentCategoryId };
             this.categoryService.updateCategory(updatedCategory).subscribe({
-                next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Category Updated', life: 3000 });
+                next: (updated) => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Successful',
+                        detail: `Category "${updated.name}" Updated`,
+                        life: 3000
+                    });
                     this.loadCategories();
                     this.hideDialog();
                 },
                 error: (err) => {
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message, life: 3000 });
+                    console.error('Category update error:', err);
+                    let errorMessage = 'Failed to update category';
+
+                    if (err.status === 401 || err.status === 403) {
+                        errorMessage = 'Authentication required. Please login as admin first.';
+                    } else if (err.status === 400 && err.error?.detail === 'Database constraint violated') {
+                        errorMessage = 'Category name already exists.';
+                    } else if (err.error?.detail) {
+                        errorMessage = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
+                    } else if (err.message) {
+                        errorMessage = err.message;
+                    }
+
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: errorMessage,
+                        life: 5000
+                    });
                 }
             });
         } else {
-            // We don't need to pass ID for new category, service handles it, but our type requires it. 
-            // Service ignores the ID passed here for creation or we can make ID optional in create method signature
-            // But for now, let's just pass a dummy one and let service overwrite it or just type cast.
-            // Actually, the Service's addCategory expects a Category object which needs an ID.
-            // Let's just mock it, the service is replacing it anyway.
+            // Create new category
+            console.log('Creating new category');
             const newCategory: Category = { ...categoryData, id: '', slug: '' };
 
             this.categoryService.addCategory(newCategory).subscribe({
-                next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Category Created', life: 3000 });
+                next: (createdCategory) => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Successful',
+                        detail: `Category "${createdCategory.name}" Created`,
+                        life: 3000
+                    });
                     this.loadCategories();
                     this.hideDialog();
                 },
                 error: (err) => {
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message, life: 3000 });
+                    console.error('Category creation error:', err);
+                    let errorMessage = 'Failed to create category';
+
+                    if (err.status === 401 || err.status === 403) {
+                        errorMessage = 'Authentication required. Please login as admin first.';
+                    } else if (err.status === 400 && err.error?.detail === 'Database constraint violated') {
+                        errorMessage = 'Category name already exists.';
+                    } else if (err.error?.detail) {
+                        errorMessage = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
+                    } else if (err.message) {
+                        errorMessage = err.message;
+                    }
+
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: errorMessage,
+                        life: 5000
+                    });
                 }
             });
         }

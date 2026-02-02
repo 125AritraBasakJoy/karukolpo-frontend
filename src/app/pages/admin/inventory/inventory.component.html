@@ -83,6 +83,8 @@
                                        (product.stock > 0 ? 'success' : 'danger'))"></p-tag>
                 </td>
                 <td>
+                    <p-button icon="pi pi-box" [rounded]="true" [text]="true" severity="info" pTooltip="Manage Inventory"
+                        (onClick)="manageInventory(product)"></p-button>
                     <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="success"
                         (onClick)="editProduct(product)"></p-button>
                     <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
@@ -93,7 +95,8 @@
     </p-table>
 </div>
 
-<p-dialog [(visible)]="displayProductDialog" [style]="{ width: '450px' }" header="Product Details" [modal]="true"
+<!-- Step 1: Basic Details Dialog -->
+<p-dialog [(visible)]="displayStep1" [style]="{ width: '450px' }" header="Step 1: Basic Details" [modal]="true"
     styleClass="p-fluid">
     <ng-template pTemplate="content">
         <div class="field">
@@ -102,42 +105,35 @@
             <app-validation-message [control]="name.control"></app-validation-message>
         </div>
         <div class="field">
-            <label for="code">Code (Auto-generated)</label>
-            <input type="text" pInputText id="code" [(ngModel)]="productForm.code" required [readonly]="true" />
-        </div>
-        <div class="field">
             <label for="description">Description</label>
             <textarea id="description" pInputTextarea [(ngModel)]="productForm.description" required rows="3"
                 cols="20"></textarea>
         </div>
+        <div class="field">
+            <label for="price">Price</label>
+            <p-inputNumber id="price" [(ngModel)]="productForm.price" #price="ngModel" required mode="currency"
+                currency="BDT" locale="en-US"></p-inputNumber>
+            <app-validation-message [control]="price.control"></app-validation-message>
+        </div>
+    </ng-template>
 
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="displayStep1 = false"></p-button>
+        <p-button label="Next" icon="pi pi-arrow-right" (onClick)="saveProductStep1()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Step 2: Media & Category Dialog -->
+<p-dialog [(visible)]="displayStep2" [style]="{ width: '450px' }" header="Step 2: Category & Images" [modal]="true"
+    styleClass="p-fluid">
+    <ng-template pTemplate="content">
         <div class="field">
             <label for="category">Category</label>
             <p-dropdown id="category" [options]="categories" optionLabel="name" optionValue="id"
                 [(ngModel)]="productForm.categoryId" placeholder="Select a Category" [showClear]="true"
                 appendTo="body"></p-dropdown>
         </div>
-        <div class="formgrid grid">
-            <div class="field col">
-                <label for="price">Price</label>
-                <p-inputNumber id="price" [(ngModel)]="productForm.price" #price="ngModel" required mode="currency"
-                    currency="BDT" locale="en-US"></p-inputNumber>
-                <app-validation-message [control]="price.control"></app-validation-message>
-            </div>
-            <div class="field col">
-                <label for="stock">Quantity</label>
-                <p-inputNumber id="stock" [(ngModel)]="productForm.stock" #stock="ngModel" [min]="0"
-                    mode="decimal"></p-inputNumber>
-            </div>
-        </div>
 
-        <div class="field">
-            <label for="manualStockStatus">Stock Availability Control</label>
-            <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
-                [(ngModel)]="productForm.manualStockStatus" placeholder="Select Stock Status"
-                appendTo="body"></p-dropdown>
-            <small class="block mt-1 text-500">Override the automatic stock calculation if needed.</small>
-        </div>
         <div class="field">
             <label class="block mb-2">Product Image</label>
             <div class="flex flex-column gap-3">
@@ -181,8 +177,30 @@
     </ng-template>
 
     <ng-template pTemplate="footer">
-        <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="displayProductDialog = false"></p-button>
-        <p-button label="Save" icon="pi pi-check" [text]="true" (onClick)="saveProduct()"></p-button>
+        <p-button label="Next" icon="pi pi-arrow-right" (onClick)="saveProductStep2()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Step 3: Inventory Management Dialog -->
+<p-dialog [(visible)]="displayStep3" [style]="{ width: '450px' }" header="Step 3: Inventory" [modal]="true"
+    styleClass="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field">
+            <label for="stock">Quantity</label>
+            <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal"></p-inputNumber>
+        </div>
+
+        <div class="field">
+            <label for="manualStockStatus">Stock Availability Control</label>
+            <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
+                [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
+                appendTo="body"></p-dropdown>
+            <small class="block mt-1 text-500">Override the automatic stock calculation if needed.</small>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Save & Finish" icon="pi pi-check" (onClick)="saveInventory()"></p-button>
     </ng-template>
 </p-dialog>
 

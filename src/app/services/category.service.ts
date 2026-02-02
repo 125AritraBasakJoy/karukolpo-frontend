@@ -1,112 +1,97 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Category } from '../models/category.model';
+import { ApiService } from './api.service';
+import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 
+/**
+ * CategoryService - Backend API Integration
+ * Connects to: https://karukolpo-backend.onrender.com/categories
+ */
 @Injectable({
     providedIn: 'root'
 })
 export class CategoryService {
-    private readonly STORAGE_KEY = 'categories';
-    private categories: Category[] = [];
 
-    constructor() {
-        this.loadCategories();
-        window.addEventListener('storage', (event) => {
-            if (event.key === this.STORAGE_KEY) {
-                this.loadCategories();
-            }
-        });
+    constructor(private apiService: ApiService) { }
+
+    /**
+     * Get all categories from backend
+     * GET /categories
+     */
+    getCategories(skip = 0, limit = 100): Observable<Category[]> {
+        const query = buildListQuery(skip, limit);
+        return this.apiService.get<any[]>(`${API_ENDPOINTS.CATEGORIES.LIST}${query}`).pipe(
+            map(categories => categories.map(cat => this.mapBackendToFrontend(cat)))
+        );
     }
 
-    private loadCategories() {
-        const saved = localStorage.getItem(this.STORAGE_KEY);
-        if (saved) {
-            try {
-                this.categories = JSON.parse(saved);
-            } catch (e) {
-                console.error('Error parsing categories from local storage', e);
-                this.categories = [];
-            }
-        } else {
-            // Initialize with some default categories if needed, or empty
-            this.categories = [];
-        }
+    /**
+     * Get category by ID
+     * GET /categories/{id}
+     */
+    getCategoryById(id: number | string): Observable<Category | undefined> {
+        const categoryId = typeof id === 'string' ? parseInt(id, 10) : id;
+        return this.apiService.get<any>(API_ENDPOINTS.CATEGORIES.GET_BY_ID(categoryId)).pipe(
+            map(cat => this.mapBackendToFrontend(cat)),
+            catchError(() => {
+                return new Observable<Category | undefined>(observer => {
+                    observer.next(undefined);
+                    observer.complete();
+                });
+            })
+        );
     }
 
-    private saveToStorage(): boolean {
-        try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.categories));
-            return true;
-        } catch (e) {
-            console.error('Error saving categories to local storage', e);
-            return false;
-        }
+    /**
+     * Create new category
+     * POST /categories (requires auth)
+     */
+    addCategory(category: Category): Observable<Category> {
+        const backendCategory = { name: category.name };
+        console.log('CategoryService: Adding category', backendCategory);
+        return this.apiService.post<any>(API_ENDPOINTS.CATEGORIES.CREATE, backendCategory).pipe(
+            map(cat => this.mapBackendToFrontend(cat))
+        );
     }
 
-    getCategories(): Observable<Category[]> {
-        this.loadCategories();
-        return of([...this.categories]);
+    /**
+     * Update existing category
+     * PATCH /categories/{id} (requires auth)
+     */
+    updateCategory(category: Category): Observable<Category> {
+        const categoryId = typeof category.id === 'string' ? parseInt(category.id, 10) : category.id;
+        const backendCategory = { name: category.name };
+        console.log('CategoryService: Updating category', categoryId, backendCategory);
+        return this.apiService.patch<any>(API_ENDPOINTS.CATEGORIES.UPDATE(categoryId), backendCategory).pipe(
+            map(cat => this.mapBackendToFrontend(cat))
+        );
     }
 
-    getCategoryById(id: string): Observable<Category | undefined> {
-        this.loadCategories();
-        return of(this.categories.find(c => c.id === id));
+    /**
+     * Delete category
+     * DELETE /categories/{id} (requires auth)
+     */
+    deleteCategory(id: number | string): Observable<void> {
+        const categoryId = typeof id === 'string' ? parseInt(id, 10) : id;
+        return this.apiService.delete<void>(API_ENDPOINTS.CATEGORIES.DELETE(categoryId));
     }
 
-    addCategory(category: Category): Observable<void> {
-        if (this.categories.some(c => c.name.toLowerCase() === category.name.toLowerCase())) {
-            return throwError(() => new Error('Category with this name already exists.'));
-        }
-
-        const newCategory = {
-            ...category,
-            id: Date.now().toString(),
-            slug: this.generateSlug(category.name)
+    /**
+     * Map backend category format to frontend format
+     */
+    private mapBackendToFrontend(backendCategory: any): Category {
+        return {
+            id: backendCategory.id?.toString() || '',
+            name: backendCategory.name,
+            slug: backendCategory.slug || this.generateSlug(backendCategory.name)
         };
-        this.categories.push(newCategory);
-
-        if (!this.saveToStorage()) {
-            this.categories.pop();
-            return throwError(() => new Error('Storage Full! Could not save category.'));
-        }
-
-        return of(void 0);
     }
 
-    updateCategory(category: Category): Observable<void> {
-        const index = this.categories.findIndex(c => c.id === category.id);
-        if (index !== -1) {
-            // Check for name duplicate excluding self
-            if (this.categories.some(c => c.name.toLowerCase() === category.name.toLowerCase() && c.id !== category.id)) {
-                return throwError(() => new Error('Category with this name already exists.'));
-            }
-
-            const originalCategory = this.categories[index];
-            this.categories[index] = {
-                ...category,
-                slug: this.generateSlug(category.name)
-            };
-
-            if (!this.saveToStorage()) {
-                this.categories[index] = originalCategory;
-                return throwError(() => new Error('Storage Full! Could not update category.'));
-            }
-        }
-        return of(void 0);
-    }
-
-    deleteCategory(id: string): Observable<void> {
-        const originalCategories = [...this.categories];
-        this.categories = this.categories.filter(c => c.id !== id);
-
-        if (!this.saveToStorage()) {
-            this.categories = originalCategories;
-            return throwError(() => new Error('Could not delete category. Storage error.'));
-        }
-
-        return of(void 0);
-    }
-
+    /**
+     * Generate URL-friendly slug from category name
+     */
     private generateSlug(name: string): string {
         return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
     }

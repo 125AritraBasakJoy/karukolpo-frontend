@@ -14,6 +14,7 @@ export interface Order {
   status: 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled';
   paymentMethod?: 'COD' | 'bKash';
   paymentStatus?: 'Pending' | 'Paid';
+  paymentId?: number; // Added paymentId
   bkashNumber?: string;
   deliveryLocation?: string;
   deliveryCharge?: number;

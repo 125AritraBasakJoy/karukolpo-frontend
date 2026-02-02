@@ -26,7 +26,10 @@ import { CategoryService } from '../../services/category.service';
 import { Category } from '../../models/category.model';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { SkeletonModule } from 'primeng/skeleton';
+import { BadgeModule } from 'primeng/badge';
 import JsBarcode from 'jsbarcode';
+import { forkJoin, map, catchError, of } from 'rxjs';
+import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-home',
@@ -45,7 +48,9 @@ import JsBarcode from 'jsbarcode';
     ProgressSpinnerModule,
     DropdownModule,
     RadioButtonModule,
-    SkeletonModule
+    SkeletonModule,
+    BadgeModule,
+    ThemeToggleComponent
   ],
   providers: [MessageService],
   templateUrl: './home.component.html',
@@ -58,6 +63,8 @@ export class HomeComponent implements OnInit {
   displayProductModal = false;
   displayCheckoutModal = false;
   displayOrderSuccessModal = false;
+  displayPaymentMethodModal = false; // Renamed from displayPaymentConfirmModal
+
   selectedProduct: Product | null = null;
   activeIndex: number = 0;
 
@@ -80,6 +87,9 @@ export class HomeComponent implements OnInit {
   subDistricts: string[] = [];
 
   placedOrderId = '';
+  currentPaymentId: number | null = null; // To store payment ID for confirmation
+  transactionId = ''; // For user input
+
   landingPageImage = signal<string>('assets/landing-bg.jpg'); // Default, can be updated by admin
   landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
 
@@ -128,6 +138,11 @@ export class HomeComponent implements OnInit {
   bkashNumber = '';
 
   selectPaymentMethod(method: 'COD' | 'bKash') {
+    // Reset payment ID if method changes to ensure new payment creation
+    if (this.selectedPaymentMethod !== method) {
+        this.currentPaymentId = null;
+    }
+    
     this.selectedPaymentMethod = method;
     this.isPaymentSelected = true;
     if (method === 'bKash') {
@@ -176,9 +191,61 @@ export class HomeComponent implements OnInit {
     this.loading.set(true);
     this.productService.getProducts().subscribe({
       next: (products) => {
-        this.products.set(products);
-        this.filterProducts();
-        this.loading.set(false);
+        if (products.length === 0) {
+          this.products.set([]);
+          this.filteredProducts.set([]);
+          this.loading.set(false);
+          return;
+        }
+
+        const inventoryRequests = products.map(p => {
+          const pid = parseInt(p.id, 10);
+          
+          // Fetch Inventory
+          const inventoryReq = this.productService.getInventory(pid).pipe(
+            catchError(() => of({ quantity: 0 }))
+          );
+
+          // Fetch Full Details
+          const detailsReq = this.productService.getProductById(pid).pipe(
+            catchError(() => of(p))
+          );
+
+          // Fetch Categories explicitly
+          const categoriesReq = this.productService.listProductCategories(pid).pipe(
+            catchError(() => of([]))
+          );
+
+          return forkJoin([inventoryReq, detailsReq, categoriesReq]).pipe(
+            map(([inv, details, cats]) => {
+                // Merge details, inventory, and category info
+                // Prioritize the explicitly fetched category list
+                const categoryId = (cats && cats.length > 0) ? cats[0].id.toString() : (details?.categoryId || p.categoryId);
+                return { ...details, stock: inv.quantity, categoryId };
+            })
+          );
+        });
+
+        forkJoin(inventoryRequests).subscribe({
+          next: (productsWithInventory: any[]) => {
+             console.log('Loaded products with details:', productsWithInventory);
+             // Log category IDs for debugging
+             productsWithInventory.forEach(p => {
+                 console.log(`Product: ${p.name}, CategoryID: ${p.categoryId}`);
+             });
+             
+             this.products.set(productsWithInventory);
+             this.filterProducts();
+             this.loading.set(false);
+          },
+          error: (err) => {
+            console.error('Error fetching inventory details', err);
+            // Fallback to products without inventory details
+            this.products.set(products);
+            this.filterProducts();
+            this.loading.set(false);
+          }
+        });
       },
       error: () => {
         this.loading.set(false);
@@ -254,6 +321,10 @@ export class HomeComponent implements OnInit {
     return this.getSubTotal() + this.currentDeliveryCharge;
   }
 
+  getTotalCartItems(): number {
+    return this.cart().reduce((total, item) => total + item.quantity, 0);
+  }
+
   onDistrictChange(event: any) {
     const selectedDistrict = this.districts.find(d => d.name === event.value);
     this.subDistricts = selectedDistrict ? selectedDistrict.subDistricts : [];
@@ -299,48 +370,17 @@ export class HomeComponent implements OnInit {
   }
 
   placeOrder() {
-    // 1. Check Payment Method
-    if (!this.selectedPaymentMethod) {
-      this.messageService.add({ severity: 'error', summary: 'Missing Payment Method', detail: 'Please select bKash or Cash On Delivery.' });
-      return;
-    }
-
-    // 2. Check bKash Number if bKash selected
-    if (this.selectedPaymentMethod === 'bKash') {
-      if (!this.bkashNumber) {
-        this.showError('bKash Account Number is required');
-        return;
-      }
-      if (!this.phoneRegex.test(this.bkashNumber)) {
-        this.showError('Invalid bKash Number');
-        return;
-      }
-    }
-
-    // 3. Check Form Validity manually for better feedback
-    const { fullName, email, phoneNumber, district, postalCode, fullAddress, subDistrict } = this.checkoutForm;
-
-    if (!fullName) return this.showError('Full Name is required');
-    if (!email) return this.showError('Email is required');
-    if (!this.emailRegex.test(email)) return this.showError('Invalid Email Address');
-    if (!phoneNumber) return this.showError('Phone Number is required');
-    if (!this.phoneRegex.test(phoneNumber)) return this.showError('Invalid Phone Number (e.g., 017...)');
-    if (!district) return this.showError('District is required');
-    if (this.subDistricts.length > 0 && !subDistrict) return this.showError('Sub-District is required');
-    if (!postalCode) return this.showError('Postal Code is required');
-    if (!this.postalCodeRegex.test(postalCode)) return this.showError('Invalid Postal Code (4 digits)');
-    if (!fullAddress) return this.showError('Full Address is required');
-
-    // Proceed if all valid
+    // Step 1: Create Order
+    // Payment method is not selected yet, so we send defaults or null if allowed.
+    // OrderService maps paymentMethod to 'COD' by default if missing, which is fine for initial creation.
+    
     const order = {
       ...this.checkoutForm,
       items: this.cart(),
       totalAmount: this.getTotalPrice(),
       status: 'Pending' as 'Pending',
-      paymentMethod: this.selectedPaymentMethod,
-      // Auto-update to Paid if bkash
-      paymentStatus: (this.selectedPaymentMethod === 'bKash' ? 'Paid' : 'Pending') as 'Pending' | 'Paid',
-      bkashNumber: this.selectedPaymentMethod === 'bKash' ? this.bkashNumber : undefined,
+      paymentMethod: 'COD' as 'COD', // Default for now, will be updated by payment creation
+      paymentStatus: 'Pending' as 'Pending',
       deliveryLocation: this.deliveryLocation,
       deliveryCharge: this.currentDeliveryCharge,
       orderDate: new Date()
@@ -351,40 +391,15 @@ export class HomeComponent implements OnInit {
         next: (orderId) => {
           console.log('Order created successfully:', orderId);
           this.placedOrderId = orderId;
+          
+          // Close checkout modal and open payment method modal
           this.displayCheckoutModal = false;
-          this.displayOrderSuccessModal = true;
-
-          // Generate barcode after modal is visible
-          setTimeout(() => {
-            try {
-              const element = document.getElementById("barcode");
-              if (element) {
-                JsBarcode(element, this.placedOrderId, {
-                  format: "CODE128",
-                  lineColor: "#000",
-                  width: 2,
-                  height: 40,
-                  displayValue: true
-                });
-              } else {
-                console.error("Barcode SVG element not found");
-              }
-            } catch (e) {
-              console.error("Error generating barcode:", e);
-            }
-          }, 300);
-
-          // Capture cart items before clearing
-          const cartItemsToReduce = [...this.cart()];
-
-          this.cart.set([]);
-          this.resetCheckoutForm();
+          this.displayPaymentMethodModal = true;
+          
+          // Reset payment selection state
           this.selectedPaymentMethod = null;
-          this.isPaymentSelected = false;
           this.bkashNumber = '';
-
-          // Reduce stock using the captured items
-          this.productService.reduceStock(cartItemsToReduce);
+          this.transactionId = '';
         },
         error: (err) => {
           console.error('Order creation failed:', err);
@@ -395,6 +410,118 @@ export class HomeComponent implements OnInit {
       console.error('Exception in placeOrder:', e);
       this.showError('Error: ' + (e.message || e));
     }
+  }
+
+  processPayment() {
+    if (!this.selectedPaymentMethod) {
+        this.showError('Please select a payment method');
+        return;
+    }
+
+    if (this.selectedPaymentMethod === 'bKash') {
+        if (!this.bkashNumber || !this.transactionId) {
+            this.showError('bKash Number and Transaction ID are required');
+            return;
+        }
+    }
+
+    const oid = parseInt(this.placedOrderId, 10);
+    
+    // Helper to handle confirmation
+    const handleConfirmation = (paymentId: number) => {
+        if (this.selectedPaymentMethod === 'bKash') {
+            const trxId = this.transactionId.trim();
+            this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
+                next: () => {
+                    this.messageService.add({ severity: 'success', summary: 'Payment Confirmed', detail: 'Thank you for your payment!' });
+                    this.displayPaymentMethodModal = false;
+                    this.finishOrder();
+                },
+                error: (err) => {
+                    console.error('Payment confirmation failed', err);
+                    
+                    // Extract error message from backend response if available
+                    let errorMsg = 'Failed to confirm payment. Please check Transaction ID.';
+                    if (err.error && err.error.detail) {
+                        if (typeof err.error.detail === 'string') {
+                            errorMsg = err.error.detail;
+                        } else if (Array.isArray(err.error.detail)) {
+                            // Handle Pydantic validation errors
+                            errorMsg = err.error.detail.map((e: any) => e.msg).join(', ');
+                        }
+                    }
+                    
+                    this.showError(errorMsg);
+                }
+            });
+        } else {
+            // COD - Just finish
+            this.displayPaymentMethodModal = false;
+            this.finishOrder();
+        }
+    };
+
+    // If we already have a payment ID for this session, skip creation
+    if (this.currentPaymentId) {
+        console.log('Using existing payment ID:', this.currentPaymentId);
+        handleConfirmation(this.currentPaymentId);
+        return;
+    }
+    
+    // 1. Create Payment
+    // Try lowercase payment method if backend expects it
+    const methodToSend = this.selectedPaymentMethod === 'bKash' ? 'bkash' : 'cod';
+    
+    this.paymentService.createPayment(oid, methodToSend).subscribe({
+        next: (payment) => {
+            console.log('Payment created:', payment);
+            this.currentPaymentId = payment.id;
+            handleConfirmation(payment.id);
+        },
+        error: (err) => {
+            console.error('Payment creation failed', err);
+            console.log('Error details:', JSON.stringify(err.error));
+            this.showError('Failed to initiate payment. Please try again.');
+        }
+    });
+  }
+
+  finishOrder() {
+    this.displayOrderSuccessModal = true;
+
+    // Generate barcode after modal is visible
+    setTimeout(() => {
+      try {
+        const element = document.getElementById("barcode");
+        if (element) {
+          JsBarcode(element, this.placedOrderId, {
+            format: "CODE128",
+            lineColor: "#000",
+            width: 2,
+            height: 40,
+            displayValue: true
+          });
+        } else {
+          console.error("Barcode SVG element not found");
+        }
+      } catch (e) {
+        console.error("Error generating barcode:", e);
+      }
+    }, 300);
+
+    // Capture cart items before clearing
+    const cartItemsToReduce = [...this.cart()];
+
+    this.cart.set([]);
+    this.resetCheckoutForm();
+    this.selectedPaymentMethod = null;
+    this.isPaymentSelected = false;
+    this.bkashNumber = '';
+    this.currentPaymentId = null;
+    this.transactionId = '';
+
+    // Reduce stock using the captured items
+    this.productService.reduceStock(cartItemsToReduce);
   }
 
   showError(msg: string) {
@@ -420,8 +547,16 @@ export class HomeComponent implements OnInit {
   }
 
   filterProducts() {
+    console.log('Filtering products. Selected Category:', this.selectedCategory);
     if (this.selectedCategory) {
-      this.filteredProducts.set(this.products().filter(p => p.categoryId === this.selectedCategory!.id));
+      const selectedId = this.selectedCategory.id.toString();
+      const filtered = this.products().filter(p => {
+        const prodCatId = p.categoryId ? p.categoryId.toString() : null;
+        console.log(`Product ${p.name} (ID: ${p.id}) Category ID: ${prodCatId} vs Selected: ${selectedId}`);
+        return prodCatId === selectedId;
+      });
+      console.log('Filtered count:', filtered.length);
+      this.filteredProducts.set(filtered);
     } else {
       this.filteredProducts.set(this.products());
     }

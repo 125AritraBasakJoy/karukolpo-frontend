@@ -39,9 +39,9 @@ export class PaymentService {
      */
     createPayment(orderId: number | string, paymentMethod: string): Observable<Payment> {
         const id = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
-        return this.apiService.post<Payment>(API_ENDPOINTS.PAYMENTS.CREATE(id), { 
-            payment_method: paymentMethod 
-        });
+        const payload = { payment_method: paymentMethod };
+        console.log('Creating payment:', payload);
+        return this.apiService.post<Payment>(API_ENDPOINTS.PAYMENTS.CREATE(id), payload);
     }
 
     /**
@@ -52,8 +52,9 @@ export class PaymentService {
         const oId = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
         const pId = typeof paymentId === 'string' ? parseInt(paymentId, 10) : paymentId;
         
-        return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.CONFIRM(oId, pId), { 
-            transaction_id: transactionId.trim()
-        });
+        const payload = { transaction_id: transactionId.trim() };
+        console.log('Confirming payment:', payload);
+        
+        return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.CONFIRM(oId, pId), payload);
     }
 }

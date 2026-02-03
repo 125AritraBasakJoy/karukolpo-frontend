@@ -17,21 +17,20 @@ export class ThemeService {
     }
 
     setTheme(theme: string) {
-        this.currentTheme.set(theme);
-        localStorage.setItem('theme', theme);
+        // Force dark theme regardless of input
+        const enforcedTheme = 'dark';
+        this.currentTheme.set(enforcedTheme);
+        localStorage.setItem('theme', enforcedTheme);
 
-        const themeLink = document.getElementById('theme-css') as HTMLLinkElement;
-        if (themeLink) {
-            const themeFile = theme === 'dark' ? 'lara-dark-blue.css' : 'lara-light-blue.css';
-            themeLink.href = `assets/themes/${themeFile}`;
+        const element = document.querySelector('html');
+        if (element) {
+            // Always add dark-mode class, or simply rely on global styles now
+            element.classList.add('dark-mode');
         }
     }
 
     toggleTheme() {
-        if (this.currentTheme() === 'light') {
-            this.setTheme('dark');
-        } else {
-            this.setTheme('light');
-        }
+        console.warn('Light mode is disabled. Staying in dark mode.');
+        this.setTheme('dark');
     }
 }

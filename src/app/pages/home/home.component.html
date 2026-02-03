@@ -8,7 +8,7 @@
             <h1 class="text-6xl font-bold mb-2">Karukolpo</h1>
             <p class="text-2xl">{{ landingPageTagline() }}</p>
             <div class="flex gap-3 justify-content-center mt-4">
-                <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg p-button-warning"
+                <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg"
                     (click)="scrollToProducts()"></button>
                 <button pButton label="Track Order" icon="pi pi-search" class="p-button-lg p-button-outlined text-white"
                     (click)="displayTrackOrderModal = true"></button>
@@ -68,9 +68,10 @@
     </div>
 
     <!-- Floating Cart Button -->
-    <button pButton class="fixed bottom-0 right-0 m-4 p-button-rounded p-button-lg shadow-4 z-5 overflow-visible" 
+    <button pButton class="fixed bottom-0 right-0 m-4 p-button-rounded p-button-lg shadow-4 z-5 overflow-visible"
         (click)="openCheckout()">
-        <i class="pi pi-shopping-cart text-xl" pBadge [value]="getTotalCartItems().toString()" severity="danger" [badgeDisabled]="getTotalCartItems() === 0"></i>
+        <i class="pi pi-shopping-cart text-xl" pBadge [value]="getTotalCartItems().toString()" severity="danger"
+            [badgeDisabled]="getTotalCartItems() === 0"></i>
     </button>
 </div>
 
@@ -158,18 +159,24 @@
             <div class="p-fluid">
                 <div class="field">
                     <label>Full Name <span class="text-red-500">*</span></label>
-                    <input pInputText [(ngModel)]="checkoutForm.fullName" placeholder="Enter your name" required #fullName="ngModel">
-                    <small class="p-error" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full Name is required.</small>
+                    <input pInputText [(ngModel)]="checkoutForm.fullName" placeholder="Enter your name" required
+                        class="w-full" #fullName="ngModel">
+                    <small class="p-error" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full Name is
+                        required.</small>
                 </div>
                 <div class="field">
                     <label>Phone Number <span class="text-red-500">*</span></label>
-                    <input pInputText [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..." maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$">
-                    <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid Phone Number is required.</small>
+                    <input pInputText [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..." maxlength="11"
+                        required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$" class="w-full">
+                    <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid Phone Number is
+                        required.</small>
                 </div>
                 <div class="field">
                     <label>Email <span class="text-red-500">*</span></label>
-                    <input pInputText [(ngModel)]="checkoutForm.email" placeholder="example@email.com" required email #email="ngModel">
-                    <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Valid Email is required.</small>
+                    <input pInputText [(ngModel)]="checkoutForm.email" placeholder="example@email.com" required email
+                        class="w-full" #email="ngModel">
+                    <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Valid Email is
+                        required.</small>
                 </div>
 
                 <div class="field">
@@ -193,25 +200,32 @@
                         <label>District <span class="text-red-500">*</span></label>
                         <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
                             [(ngModel)]="checkoutForm.district" (onChange)="onDistrictChange($event)"
-                            placeholder="Select District" appendTo="body" required #district="ngModel"></p-dropdown>
-                        <small class="p-error" *ngIf="district.invalid && (district.dirty || district.touched)">District is required.</small>
+                            placeholder="Select District" appendTo="body" required #district="ngModel"
+                            styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
+                        <small class="p-error" *ngIf="district.invalid && (district.dirty || district.touched)">District
+                            is required.</small>
                     </div>
                     <div class="field col-6">
                         <label>Sub-District <span class="text-red-500" *ngIf="subDistricts.length > 0">*</span></label>
                         <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
-                            placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body" [required]="subDistricts.length > 0"></p-dropdown>
+                            placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
+                            [required]="subDistricts.length > 0" styleClass="w-full"
+                            [style]="{'width':'100%'}"></p-dropdown>
                     </div>
                 </div>
                 <div class="field">
                     <label>Postal Code <span class="text-red-500">*</span></label>
-                    <input pInputText [(ngModel)]="checkoutForm.postalCode" placeholder="1234" maxlength="4" required pattern="\d{4}" #postal="ngModel">
-                    <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid Postal Code is required.</small>
+                    <input pInputText [(ngModel)]="checkoutForm.postalCode" placeholder="1234" maxlength="4" required
+                        pattern="\d{4}" #postal="ngModel" class="w-full">
+                    <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid Postal Code
+                        is required.</small>
                 </div>
                 <div class="field">
                     <label>Full Address <span class="text-red-500">*</span></label>
                     <textarea pInputTextarea [(ngModel)]="checkoutForm.fullAddress" rows="2"
-                        placeholder="House, Road, Area..." required #address="ngModel"></textarea>
-                    <small class="p-error" *ngIf="address.invalid && (address.dirty || address.touched)">Full Address is required.</small>
+                        placeholder="House, Road, Area..." required #address="ngModel" class="w-full"></textarea>
+                    <small class="p-error" *ngIf="address.invalid && (address.dirty || address.touched)">Full Address is
+                        required.</small>
                 </div>
 
                 <button pButton label="Place Order" class="w-full p-button-lg mt-4" [disabled]="!isCheckoutFormValid"
@@ -222,12 +236,14 @@
 </p-dialog>
 
 <!-- Track Order Modal -->
-<p-dialog [(visible)]="displayTrackOrderModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}" header="Track Order">
+<p-dialog [(visible)]="displayTrackOrderModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
+    header="Track Order">
     <div class="p-fluid">
         <div class="field">
             <label>Enter Phone Number</label>
-            <div class="p-inputgroup">
-                <input pInputText [(ngModel)]="trackPhone" placeholder="017..." (keyup.enter)="trackOrder()">
+            <div class="flex gap-3 w-full">
+                <input pInputText [(ngModel)]="trackPhone" placeholder="017..." (keyup.enter)="trackOrder()"
+                    class="flex-1">
                 <button pButton icon="pi pi-search" (click)="trackOrder()" [loading]="trackingLoading"></button>
             </div>
         </div>
@@ -236,43 +252,46 @@
             <div *ngFor="let order of trackedOrders" class="surface-card p-3 border-round shadow-1 mb-3">
                 <div class="flex justify-content-between align-items-center mb-2">
                     <span class="font-bold">Order #{{ order.id }}</span>
-                    <p-tag [value]="order.status" [severity]="order.status === 'Confirmed' ? 'success' : 'warning'"></p-tag>
+                    <p-tag [value]="order.status"
+                        [severity]="order.status === 'Confirmed' ? 'success' : 'warning'"></p-tag>
                 </div>
                 <div class="text-sm text-600 mb-2">
                     {{ order.orderDate | date:'medium' }}
                 </div>
                 <div class="flex justify-content-between align-items-center">
                     <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</span>
-                    
+
                     <!-- Payment Button -->
                     <button pButton label="Make Payment" icon="pi pi-wallet" class="p-button-sm"
                         *ngIf="order.status === 'Confirmed' && order.paymentStatus !== 'Paid'"
                         (click)="openPaymentForOrder(order.id)"></button>
-                    
+
                     <p-tag *ngIf="order.paymentStatus === 'Paid'" value="Paid" severity="success"></p-tag>
-                    <p-tag *ngIf="order.status !== 'Confirmed' && order.paymentStatus !== 'Paid'" value="Waiting Approval" severity="info"></p-tag>
+                    <p-tag *ngIf="order.status !== 'Confirmed' && order.paymentStatus !== 'Paid'"
+                        value="Waiting Approval" severity="info"></p-tag>
                 </div>
             </div>
         </div>
-        
-        <div *ngIf="trackPhone && trackedOrders.length === 0 && !trackingLoading && hasSearched" class="text-center mt-4 text-600">
+
+        <div *ngIf="trackPhone && trackedOrders.length === 0 && !trackingLoading && hasSearched"
+            class="text-center mt-4 text-600">
             No orders found for this phone number.
         </div>
     </div>
 </p-dialog>
 
 <!-- Payment Method Modal (Step 2) -->
-<p-dialog [(visible)]="displayPaymentMethodModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}" header="Select Payment Method" [closable]="true">
+<p-dialog [(visible)]="displayPaymentMethodModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}"
+    header="Select Payment Method" [closable]="true">
     <div class="p-fluid">
         <p class="mb-4 text-center">Payment for Order #{{ placedOrderId }}</p>
-        
+
         <div class="grid">
             <div class="col-6">
                 <div class="p-3 border-1 border-round cursor-pointer transition-colors transition-duration-200 flex flex-column align-items-center gap-2 h-full"
                     [class.border-primary]="selectedPaymentMethod === 'bKash'"
                     [class.surface-50]="selectedPaymentMethod !== 'bKash'"
-                    [class.bg-blue-50]="selectedPaymentMethod === 'bKash'"
-                    (click)="selectPaymentMethod('bKash')">
+                    [class.bg-blue-50]="selectedPaymentMethod === 'bKash'" (click)="selectPaymentMethod('bKash')">
                     <img src="assets/bkash-logo.png" alt="bKash" height="40">
                     <span class="font-bold">bKash Payment</span>
                 </div>
@@ -281,8 +300,7 @@
                 <div class="p-3 border-1 border-round cursor-pointer transition-colors transition-duration-200 flex flex-column align-items-center gap-2 h-full"
                     [class.border-primary]="selectedPaymentMethod === 'COD'"
                     [class.surface-50]="selectedPaymentMethod !== 'COD'"
-                    [class.bg-blue-50]="selectedPaymentMethod === 'COD'"
-                    (click)="selectPaymentMethod('COD')">
+                    [class.bg-blue-50]="selectedPaymentMethod === 'COD'" (click)="selectPaymentMethod('COD')">
                     <i class="pi pi-money-bill text-4xl text-green-600"></i>
                     <span class="font-bold">Cash On Delivery</span>
                 </div>
@@ -295,12 +313,12 @@
                 <p class="mb-2 font-bold">Scan to Pay</p>
                 <img [src]="bkashQrCodeInModal" alt="bKash QR" width="150" class="border-round shadow-2">
             </div>
-            
+
             <label class="mt-3 block">Transaction ID</label>
             <input pInputText [(ngModel)]="transactionId" placeholder="e.g. 9G7...">
         </div>
 
-        <button pButton label="Confirm Payment" class="w-full mt-4" 
+        <button pButton label="Confirm Payment" class="w-full mt-4"
             [disabled]="!selectedPaymentMethod || (selectedPaymentMethod === 'bKash' && !transactionId)"
             (click)="processPayment()"></button>
     </div>
@@ -333,8 +351,10 @@
     <div class="flex flex-column align-items-center text-center">
         <i class="pi pi-check-circle text-6xl text-green-500 mb-3"></i>
         <h2 class="m-0 mb-2">Payment Submitted</h2>
-        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'bKash'">Your bKash payment is waiting for verification.</p>
-        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'COD'">Your Cash on Delivery request has been recorded.</p>
+        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'bKash'">Your bKash payment is waiting for
+            verification.</p>
+        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'COD'">Your Cash on Delivery request has been
+            recorded.</p>
         <button pButton label="Close" (click)="displayPaymentSuccessModal = false"></button>
     </div>
 </p-dialog>

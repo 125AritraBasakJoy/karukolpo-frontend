@@ -7,7 +7,7 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
+import { InputTextarea } from 'primeng/inputtextarea';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ToastModule } from 'primeng/toast';
 import { MessageService, ConfirmationService } from 'primeng/api';
@@ -24,7 +24,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         ButtonModule,
         DialogModule,
         InputTextModule,
-        InputTextareaModule,
+        InputTextarea,
         ToolbarModule,
         ToastModule,
         ConfirmDialogModule
@@ -39,7 +39,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         </p-toolbar>
 
         <p-table [value]="categories" [rows]="10" [paginator]="true" [globalFilterFields]="['name']"
-            [tableStyle]="{'min-width': '75rem'}" selectionMode="single" dataKey="id">
+            [tableStyle]="{'min-width': '50rem'}" selectionMode="single" dataKey="id">
             <ng-template pTemplate="caption">
                 <div class="flex align-items-center justify-content-between">
                     <h5 class="m-0">Manage Categories</h5>
@@ -74,16 +74,16 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         <ng-template pTemplate="content">
             <form [formGroup]="categoryForm">
                 <div class="field">
-                    <label for="name">Name</label>
-                    <input type="text" pInputText id="name" formControlName="name" required autofocus />
-                    <small class="p-error" *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched">Name is required.</small>
+                    <label for="name" class="block mb-2 font-bold">Name</label>
+                    <input type="text" pInputText id="name" formControlName="name" required autofocus class="w-full" />
+                    <small class="p-error block mt-1" *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched">Name is required.</small>
                 </div>
             </form>
         </ng-template>
 
         <ng-template pTemplate="footer">
             <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="hideDialog()"></button>
-            <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text" (click)="saveCategory()"></button>
+            <button pButton pRipple label="Save" icon="pi pi-check" (click)="saveCategory()"></button>
         </ng-template>
     </p-dialog>
 

@@ -4,7 +4,6 @@ import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'app-footer',
-    standalone: true,
     imports: [CommonModule, RouterModule],
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.component.scss']
@@ -30,4 +29,9 @@ export class FooterComponent {
         phone: '+880 1XXX-XXXXXX',
         address: 'Dhaka, Bangladesh'
     };
+
+    navigateAndScroll(route: string) {
+        // Scroll to top of the page when footer link is clicked
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }

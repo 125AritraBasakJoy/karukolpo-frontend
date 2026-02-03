@@ -15,7 +15,7 @@
     .section-title {
         font-size: 2.5rem;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--text-color);
         margin-bottom: 1rem;
     }
 
@@ -78,19 +78,39 @@
     // Story Section
     .story-section {
         padding: 5rem 0;
-        background: #f8fafc;
+        background: var(--surface-ground);
     }
 
     .story-image {
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        animation: floating 6s ease-in-out infinite;
 
         img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
+            transition: transform 0.5s ease;
+        }
+
+        &:hover img {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes floating {
+        0% {
+            transform: translate(0px, 0px);
+        }
+
+        50% {
+            transform: translate(0px, -15px);
+        }
+
+        100% {
+            transform: translate(0px, 0px);
         }
     }
 
@@ -101,7 +121,7 @@
     .story-text {
         font-size: 1.1rem;
         line-height: 1.8;
-        color: #475569;
+        color: var(--text-color-secondary);
         margin-bottom: 1.5rem;
 
         &:last-child {
@@ -112,7 +132,7 @@
     // Features Section
     .features-section {
         padding: 5rem 0;
-        background: white;
+        background: var(--surface-card);
     }
 
     .feature-card {
@@ -121,16 +141,16 @@
         border-radius: 12px;
         transition: all 0.3s ease;
         height: 100%;
-        background: #f8fafc;
+        background: var(--surface-ground);
 
         &:hover {
             transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
-            background: white;
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);
+            background: var(--surface-card);
 
             .feature-icon {
                 transform: scale(1.1);
-                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                background: linear-gradient(135deg, #2563eb, #3b82f6);
                 color: white;
             }
         }
@@ -143,36 +163,37 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: white;
+        background: var(--surface-card);
         border-radius: 50%;
-        color: #3b82f6;
+        color: var(--primary-color);
         font-size: 2rem;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        animation: floating 4s ease-in-out infinite;
     }
 
     .feature-title {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--text-color);
         margin-bottom: 1rem;
     }
 
     .feature-description {
-        color: #64748b;
+        color: var(--text-color-secondary);
         line-height: 1.6;
     }
 
     // Values Section
     .values-section {
         padding: 5rem 0;
-        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        background: var(--surface-section);
     }
 
     .value-card {
         text-align: center;
         padding: 2.5rem 2rem;
-        background: white;
+        background: var(--surface-card);
         border-radius: 12px;
         height: 100%;
         transition: all 0.3s ease;
@@ -186,19 +207,20 @@
         h3 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1e293b;
+            color: var(--text-color);
             margin: 1.5rem 0 1rem;
         }
 
         p {
-            color: #64748b;
+            color: var(--text-color-secondary);
             line-height: 1.6;
         }
     }
 
     .value-icon {
         font-size: 3rem;
-        color: #3b82f6;
+        color: var(--primary-color);
+        animation: floating 5s ease-in-out infinite reverse;
     }
 
     // CTA Section

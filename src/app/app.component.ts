@@ -10,7 +10,6 @@ import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [RouterOutlet, ToastModule, FooterComponent, CommonModule],
   providers: [MessageService],
   template: `

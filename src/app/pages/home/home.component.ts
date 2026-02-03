@@ -6,7 +6,7 @@ import { DataViewModule } from 'primeng/dataview';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
+import { InputTextarea } from 'primeng/inputtextarea';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { ProductService } from '../../services/product.service';
@@ -34,30 +34,29 @@ import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle
 import { Order } from '../../models/order.model';
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [
-    CommonModule,
-    ButtonModule,
-    DialogModule,
-    DataViewModule,
-    InputNumberModule,
-    FormsModule,
-    InputTextModule,
-    InputTextareaModule,
-    ToastModule,
-    GalleriaModule,
-    ProgressSpinnerModule,
-    DropdownModule,
-    RadioButtonModule,
-    SkeletonModule,
-    BadgeModule,
-    TagModule, // Added TagModule
-    ThemeToggleComponent
-  ],
-  providers: [MessageService],
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+    selector: 'app-home',
+    imports: [
+        CommonModule,
+        ButtonModule,
+        DialogModule,
+        DataViewModule,
+        InputNumberModule,
+        FormsModule,
+        InputTextModule,
+        InputTextarea,
+        ToastModule,
+        GalleriaModule,
+        ProgressSpinnerModule,
+        DropdownModule,
+        RadioButtonModule,
+        SkeletonModule,
+        BadgeModule,
+        TagModule, // Added TagModule
+        ThemeToggleComponent
+    ],
+    providers: [MessageService],
+    templateUrl: './home.component.html',
+    styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
   products = signal<Product[]>([]);

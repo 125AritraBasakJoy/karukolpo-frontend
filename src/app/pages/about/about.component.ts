@@ -7,7 +7,6 @@ import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle
 
 @Component({
     selector: 'app-about',
-    standalone: true,
     imports: [CommonModule, RouterModule, CardModule, ButtonModule, ThemeToggleComponent],
     templateUrl: './about.component.html',
     styleUrls: ['./about.component.scss']

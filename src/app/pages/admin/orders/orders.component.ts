@@ -22,25 +22,25 @@ import { catchError, map } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 
 @Component({
-  selector: 'app-orders',
-  standalone: true,
-  imports: [
-    CommonModule, 
-    TableModule, 
-    ButtonModule, 
-    TagModule, 
-    ToastModule, 
-    DialogModule, 
-    ProgressSpinnerModule, 
-    NotificationButtonComponent, 
-    SkeletonModule, 
-    TooltipModule,
-    InputTextModule,
-    FormsModule
-  ],
-  providers: [MessageService],
-  templateUrl: './orders.component.html',
-  styleUrls: ['./orders.component.scss']
+    selector: 'app-orders',
+    imports: [
+        CommonModule,
+        TableModule,
+        ButtonModule,
+        TagModule,
+        ToastModule,
+        DialogModule,
+        ProgressSpinnerModule,
+        NotificationButtonComponent,
+        SkeletonModule,
+        TooltipModule,
+        InputTextModule,
+        FormsModule
+    ],
+    providers: [MessageService],
+    templateUrl: './orders.component.html',
+    standalone: true,
+    styleUrls: ['./orders.component.scss']
 })
 export class OrdersComponent implements OnInit {
   orders = signal<Order[]>([]);

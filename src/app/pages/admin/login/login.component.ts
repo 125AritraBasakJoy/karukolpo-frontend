@@ -12,27 +12,28 @@ import { ToastModule } from 'primeng/toast';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { DialogModule } from 'primeng/dialog';
+import { FloatLabelModule } from 'primeng/floatlabel';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, PasswordModule, CardModule, ToastModule, ProgressSpinnerModule, DialogModule],
+  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, PasswordModule, CardModule, ToastModule, ProgressSpinnerModule, DialogModule, FloatLabelModule],
   providers: [MessageService],
   template: `
     <div class="login-container">
-      <p-card header="Admin Login" styleClass="shadow-4">
-        <div class="p-fluid pt-3">
+      <p-card header="Admin Login" styleClass="shadow-4 max-w-26rem mx-auto">
+        <div class="p-fluid pt-4">
           <div class="field mb-5">
-            <span class="p-float-label">
-              <input type="email" pInputText id="email" [(ngModel)]="email" autocomplete="email">
+            <p-floatlabel>
+              <input type="email" pInputText id="email" [(ngModel)]="email" autocomplete="email" class="w-full">
               <label for="email">Email</label>
-            </span>
+            </p-floatlabel>
           </div>
-          <div class="field mb-4">
-            <span class="p-float-label">
-              <p-password id="password" [(ngModel)]="password" [feedback]="false" autocomplete="new-password" [toggleMask]="true"></p-password>
+          <div class="field mb-5">
+            <p-floatlabel>
+              <p-password id="password" [(ngModel)]="password" [feedback]="false" autocomplete="new-password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" [style]="{'width': '100%'}"></p-password>
               <label for="password">Password</label>
-            </span>
+            </p-floatlabel>
           </div>
         </div>
         <ng-template pTemplate="footer">
@@ -105,11 +106,15 @@ import { DialogModule } from 'primeng/dialog';
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: linear-gradient(-20deg, #2b5876 0%, #4e4376 100%);
+      background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%);
       background-size: cover;
     }
     p-card {
-      width: 400px;
+      width: 420px;
+    }
+    ::ng-deep .login-container .p-card {
+        background: var(--surface-card) !important;
+        border: 1px solid var(--surface-border) !important;
     }
   `]
 })

@@ -22,7 +22,7 @@
                     <h3 class="footer-title">Quick Links</h3>
                     <ul class="footer-links">
                         <li *ngFor="let link of quickLinks">
-                            <a [routerLink]="link.route" class="footer-link">
+                            <a [routerLink]="link.route" class="footer-link" (click)="navigateAndScroll(link.route)">
                                 <i class="pi pi-chevron-right"></i>
                                 {{ link.label }}
                             </a>

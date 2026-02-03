@@ -27,20 +27,40 @@ import { DeliveryService } from '../../../services/delivery.service';
         <div class="grid p-fluid">
             <div class="col-12 md:col-6">
                 <div class="field">
-                    <label for="insideDhaka" class="font-bold">Inside Dhaka (BDT)</label>
-                    <p-inputNumber id="insideDhaka" [(ngModel)]="insideDhaka" mode="currency" currency="BDT" locale="en-BD"></p-inputNumber>
+                    <label for="insideDhaka" class="font-bold mb-2 block">Inside Dhaka (BDT)</label>
+                    <p-inputNumber 
+                        id="insideDhaka" 
+                        [(ngModel)]="insideDhaka" 
+                        mode="currency" 
+                        currency="BDT" 
+                        locale="en-BD"
+                        styleClass="w-full" 
+                        inputStyleClass="w-full" 
+                        [style]="{'width':'100%'}"
+                        placeholder="Enter amount">
+                    </p-inputNumber>
                 </div>
             </div>
             
             <div class="col-12 md:col-6">
                 <div class="field">
-                    <label for="outsideDhaka" class="font-bold">Outside Dhaka (BDT)</label>
-                    <p-inputNumber id="outsideDhaka" [(ngModel)]="outsideDhaka" mode="currency" currency="BDT" locale="en-BD"></p-inputNumber>
+                    <label for="outsideDhaka" class="font-bold mb-2 block">Outside Dhaka (BDT)</label>
+                    <p-inputNumber 
+                        id="outsideDhaka" 
+                        [(ngModel)]="outsideDhaka" 
+                        mode="currency" 
+                        currency="BDT" 
+                        locale="en-BD"
+                        styleClass="w-full" 
+                        inputStyleClass="w-full" 
+                        [style]="{'width':'100%'}"
+                        placeholder="Enter amount">
+                    </p-inputNumber>
                 </div>
             </div>
             
-            <div class="col-12">
-                <p-button label="Update Charges" icon="pi pi-save" (onClick)="saveCharges()"></p-button>
+            <div class="col-12 mt-3">
+                <p-button label="Update Charges" icon="pi pi-save" (onClick)="saveCharges()" styleClass="w-full"></p-button>
             </div>
         </div>
     </div>
@@ -67,8 +87,6 @@ export class DeliveryManagementComponent implements OnInit {
     }
 
     refreshCharges() {
-        // Force reload from storage if needed, though getCharges uses signal which is already synced.
-        // But to be safe and give feedback:
         this.loadCharges();
         this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Delivery charges updated' });
     }

@@ -1,10 +1,12 @@
-.card {
-    padding: 1rem;
-    background: var(--surface-card);
-    border-radius: 6px;
-    box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+.inventory-container {
+    h2 {
+        color: var(--text-color);
+    }
 }
 
-.field {
-    margin-bottom: 1rem;
+.card {
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 1.5rem;
 }

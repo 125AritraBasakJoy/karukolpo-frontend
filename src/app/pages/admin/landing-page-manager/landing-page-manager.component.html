@@ -3,8 +3,8 @@
         <p-card header="Manage Landing Page" styleClass="h-full">
             <div class="p-fluid">
                 <div class="field mb-4">
-                    <label for="tagline" class="font-bold">Tagline</label>
-                    <input pInputText id="tagline" [(ngModel)]="tagline" placeholder="Enter landing page tagline" />
+                    <label for="tagline" class="font-bold block mb-2">Tagline</label>
+                    <input pInputText id="tagline" [(ngModel)]="tagline" placeholder="Enter landing page tagline" class="w-full" />
                 </div>
                 <div class="field mb-4">
                     <label class="font-bold block mb-2">Background Image</label>
@@ -13,8 +13,8 @@
                             class="hidden" />
                         <div class="flex align-items-center gap-3">
                             <p-button type="button" label="Choose Image" icon="pi pi-image" [outlined]="true"
-                                (click)="fileInput.click()"></p-button>
-                            <span *ngIf="imageUrl" class="text-green-500"><i class="pi pi-check mr-2"></i>Image
+                                (click)="fileInput.click()" styleClass="w-full"></p-button>
+                            <span *ngIf="imageUrl" class="text-green-500 white-space-nowrap"><i class="pi pi-check mr-2"></i>Image
                                 Selected</span>
                         </div>
                         <small class="block mt-2 text-gray-600">Upload an image from your device.</small>

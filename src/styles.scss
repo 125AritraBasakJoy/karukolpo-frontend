@@ -1,13 +1,199 @@
 /* You can add global styles to this file, and also import other style files */
 /* Theme is loaded dynamically via index.html and ThemeService */
 // @import "primeng/resources/themes/lara-light-blue/theme.css";
-@import "primeng/resources/primeng.css";
 @import "primeicons/primeicons.css";
 @import "primeflex/primeflex.css";
 
+/* AG-Grid Styles */
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-quartz.css';
+
 body {
     margin: 0;
-    font-family: var(--font-family);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--surface-ground);
     color: var(--text-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* AG-Grid Theme Customization for Dark/Light Mode */
+.ag-theme-quartz {
+    --ag-background-color: var(--p-content-background);
+    --ag-header-background-color: var(--p-content-background);
+    --ag-odd-row-background-color: var(--p-content-background);
+    --ag-row-hover-color: var(--p-content-hover-background);
+    --ag-foreground-color: var(--p-text-color);
+    --ag-border-color: var(--p-content-border-color);
+    --ag-header-foreground-color: var(--p-text-color);
+    --ag-border-radius: 12px;
+}
+
+/* Global Premium Styling */
+:root {
+    --primary-color: #1e293b;
+    /* Slate 800 - Matching Footer */
+    --primary-hover: #334155;
+    /* Slate 700 - Lighter for hover */
+    --accent-color: #3b82f6;
+    /* Blue 500 */
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --card-shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* Enforced Dark Mode Variables */
+    --surface-ground: #0f172a;
+    /* Slate 900 */
+    --surface-card: rgba(30, 41, 59, 0.7);
+    /* Slate 800 with transparency */
+    --surface-section: #1e293b;
+    --surface-border: rgba(255, 255, 255, 0.08);
+    /* Lightened for cleaner look */
+    --surface-hover: rgba(255, 255, 255, 0.04);
+    --text-color: #f1f5f9;
+    --text-color-secondary: #94a3b8;
+
+    /* PrimeNG mapping */
+    --p-content-background: #1e293b;
+    --p-content-border-color: rgba(255, 255, 255, 0.08);
+    --p-text-color: #f1f5f9;
+    --p-primary-color: var(--primary-color);
+    --p-focus-ring-color: rgba(37, 99, 235, 0.3);
+    /* Themed focus ring */
+}
+
+/* Global Form & Input Refinements */
+.p-inputtext,
+.p-inputnumber-input,
+.p-dropdown,
+.p-password-input {
+    background: rgba(0, 0, 0, 0.4) !important;
+    /* Dark translucent background */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    /* Subtle light border */
+    border-radius: 12px !important;
+    padding: 0.95rem 1.25rem !important;
+    /* Professional thickness */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-size: 1rem !important;
+    color: #e2e8f0 !important;
+    /* Slate 200 - Light text for readability */
+
+    &:focus {
+        background: rgba(0, 0, 0, 0.6) !important;
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px var(--p-focus-ring-color) !important;
+    }
+}
+
+/* Premium Button Styling */
+.p-button {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+    padding: 0.95rem 1.5rem !important;
+    /* Perfect match for input height */
+    font-weight: 600 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    justify-content: center;
+
+    &:hover {
+        background-color: var(--primary-hover) !important;
+        border-color: var(--primary-hover) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3) !important;
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+
+    &.p-button-secondary {
+        background-color: var(--surface-section) !important;
+        border-color: var(--surface-border) !important;
+        color: var(--text-color) !important;
+    }
+
+    &.p-button-text {
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-color) !important;
+
+        &:hover {
+            background: var(--surface-hover) !important;
+        }
+    }
+}
+
+/* Input Group Fixes */
+.p-inputgroup {
+    background: transparent !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+
+    &>* {
+        border-radius: 0 !important;
+        margin: 0 !important;
+        border: 1px solid var(--surface-border) !important;
+    }
+
+    &>*:not(:last-child) {
+        border-right: none !important;
+    }
+
+    &>*:first-child {
+        border-top-left-radius: 12px !important;
+        border-bottom-left-radius: 12px !important;
+    }
+
+    &>*:last-child {
+        border-top-right-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
+    }
+}
+
+/* Clean Solid Cards (Apple Style) */
+.p-card,
+.card-custom {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--surface-card) !important;
+    border: none !important;
+    /* Remove visible borders for cleaner look */
+    box-shadow: var(--card-shadow) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 18px !important;
+    /* Slightly more rounded */
+    overflow: hidden;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover) !important;
+    }
+}
+
+/* Premium Button Transitions */
+.p-button {
+    border-radius: 10px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 500 !important;
+
+    &:hover {
+        transform: scale(1.02);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Dropdown Panel Width Fix */
+.p-dropdown-panel {
+    min-width: 100% !important;
+}
+
+/* Visibility Fix for Text Primary */
+.text-primary {
+    color: var(--accent-color) !important;
+    /* Blue 500 */
 }

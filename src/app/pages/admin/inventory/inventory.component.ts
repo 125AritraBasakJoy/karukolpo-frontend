@@ -13,7 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextareaModule } from 'primeng/inputtextarea';
+import { InputTextarea } from 'primeng/inputtextarea';
 import { FormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -25,6 +25,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FileUploadModule } from 'primeng/fileupload';
 import { forkJoin, map, catchError, of } from 'rxjs';
 
 @Component({
@@ -38,7 +39,7 @@ import { forkJoin, map, catchError, of } from 'rxjs';
     DialogModule,
     InputTextModule,
     InputNumberModule,
-    InputTextareaModule,
+    InputTextarea,
     FormsModule,
     ToastModule,
     ConfirmDialogModule,
@@ -49,7 +50,8 @@ import { forkJoin, map, catchError, of } from 'rxjs';
     ValidationMessageComponent,
     DropdownModule,
     TagModule,
-    SkeletonModule
+    SkeletonModule,
+    FileUploadModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './inventory.component.html',
@@ -58,12 +60,12 @@ import { forkJoin, map, catchError, of } from 'rxjs';
 export class InventoryComponent implements OnInit {
   products = signal<Product[]>([]);
   loading = signal<boolean>(false);
-  
+
   // Dialog States for 3-Step Wizard
   displayStep1 = false; // Basic Details
   displayStep2 = false; // Media & Category
   displayStep3 = false; // Inventory
-  
+
   isNewProduct = true;
   selectedProduct: Product | null = null;
   createdProduct: Product | null = null; // Store product created in step 1
@@ -125,11 +127,11 @@ export class InventoryComponent implements OnInit {
 
         forkJoin(inventoryRequests).subscribe({
           next: (productsWithInventory: Product[]) => {
-             this.products.set(productsWithInventory);
-             this.orderService.getOrders().subscribe(orders => {
-               this.updateChart(productsWithInventory, orders);
-               this.loading.set(false);
-             });
+            this.products.set(productsWithInventory);
+            this.orderService.getOrders().subscribe(orders => {
+              this.updateChart(productsWithInventory, orders);
+              this.loading.set(false);
+            });
           },
           error: (err) => {
             console.error('Error fetching inventory details', err);
@@ -202,7 +204,7 @@ export class InventoryComponent implements OnInit {
     this.inventoryForm.manualStockStatus = 'AUTO';
     this.selectedMainImage = null;
     this.selectedAdditionalImages = [];
-    
+
     // Start Step 1
     this.displayStep1 = true;
     this.displayStep2 = false;
@@ -223,7 +225,7 @@ export class InventoryComponent implements OnInit {
     this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
     this.selectedMainImage = null;
     this.selectedAdditionalImages = [];
-    
+
     if (!this.productForm.images) {
       this.productForm.images = [];
     }
@@ -255,7 +257,7 @@ export class InventoryComponent implements OnInit {
         next: (createdProduct) => {
           this.createdProduct = createdProduct;
           this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product Created. Proceed to Category & Images.' });
-          
+
           // Move to Step 2
           this.displayStep1 = false;
           this.displayStep2 = true;
@@ -269,7 +271,7 @@ export class InventoryComponent implements OnInit {
         next: (updatedProduct) => {
           this.createdProduct = updatedProduct;
           this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product Updated.' });
-          
+
           // Move to Step 2
           this.displayStep1 = false;
           this.displayStep2 = true;
@@ -287,26 +289,26 @@ export class InventoryComponent implements OnInit {
     const productId = parseInt(this.createdProduct.id, 10);
 
     // 1. Handle Category Linking
-    const categoryObservable = this.productForm.categoryId 
+    const categoryObservable = this.productForm.categoryId
       ? this.productService.addCategoryToProduct(productId, parseInt(this.productForm.categoryId, 10)).pipe(
-          catchError(err => {
-            console.error('Category linking failed:', err);
-            return of({ error: 'category', details: err });
-          })
-        )
+        catchError(err => {
+          console.error('Category linking failed:', err);
+          return of({ error: 'category', details: err });
+        })
+      )
       : of(null);
 
     // 2. Handle Image Uploads
     const imageUploads: any[] = [];
-    
+
     if (this.selectedMainImage) {
       imageUploads.push(
         this.productService.addImage(productId, this.selectedMainImage).pipe(
           map(image => {
-             if (image && image.id) {
-               return this.productService.setPrimaryImage(productId, image.id);
-             }
-             return of(null);
+            if (image && image.id) {
+              return this.productService.setPrimaryImage(productId, image.id);
+            }
+            return of(null);
           }),
           catchError(err => {
             console.error('Main image upload failed:', err);
@@ -332,14 +334,14 @@ export class InventoryComponent implements OnInit {
       next: (results) => {
         // Check if any result has an error
         const errors = results.filter(r => r && r.error);
-        
+
         if (errors.length > 0) {
           console.warn('Some operations failed:', errors);
           this.messageService.add({ severity: 'warn', summary: 'Partial Success', detail: 'Product saved but some images/category failed. Check console for details.' });
         } else {
           this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Category & Images Saved. Proceed to Inventory.' });
         }
-        
+
         this.displayStep2 = false;
         this.displayStep3 = true;
       },
@@ -371,9 +373,9 @@ export class InventoryComponent implements OnInit {
         console.error('Inventory update error:', err);
         let errorDetail = 'Failed to update inventory';
         if (err.error && err.error.detail) {
-            errorDetail += ': ' + (typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail));
+          errorDetail += ': ' + (typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail));
         } else if (err.message) {
-            errorDetail += ': ' + err.message;
+          errorDetail += ': ' + err.message;
         }
         this.messageService.add({ severity: 'error', summary: 'Error', detail: errorDetail });
       }
@@ -400,7 +402,7 @@ export class InventoryComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    const file = event.target.files[0];
+    const file = event.files[0];
     if (file) {
       this.selectedMainImage = file;
       // Preview
@@ -413,7 +415,7 @@ export class InventoryComponent implements OnInit {
   }
 
   onAdditionalFilesSelected(event: any) {
-    const files = event.target.files;
+    const files = event.files;
     if (files && files.length > 0) {
       if (!this.productForm.images) {
         this.productForm.images = [];
@@ -437,7 +439,7 @@ export class InventoryComponent implements OnInit {
     // Note: This logic is imperfect if we are editing existing images mixed with new ones.
     // For simplicity in this wizard flow (new product), index matches.
     if (index < this.selectedAdditionalImages.length) {
-        this.selectedAdditionalImages.splice(index, 1);
+      this.selectedAdditionalImages.splice(index, 1);
     }
   }
 }

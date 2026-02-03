@@ -6,14 +6,21 @@
             <p-button icon="pi pi-refresh" (onClick)="refreshProducts()"
                 styleClass="p-button-outlined p-button-secondary" pTooltip="Refresh Inventory"
                 tooltipPosition="bottom"></p-button>
-            <p-button label="New Product" icon="pi pi-plus" (onClick)="openNew()"></p-button>
+            <!-- New Product button removed as per request -->
         </div>
     </div>
 
     <div class="grid mb-4">
         <div class="col-12 lg:col-6">
             <p-card header="Product Sales Overview">
-                <p-chart type="bar" [data]="chartData" [options]="chartOptions"></p-chart>
+                <div *ngIf="chartData; else loadingChart" class="flex justify-content-center">
+                    <p-chart type="bar" [data]="chartData" [options]="chartOptions" styleClass="w-full"></p-chart>
+                </div>
+                <ng-template #loadingChart>
+                    <div class="flex align-items-center justify-content-center h-20rem">
+                        <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
+                    </div>
+                </ng-template>
             </p-card>
         </div>
         <div class="col-12 lg:col-6">
@@ -101,18 +108,18 @@
     <ng-template pTemplate="content">
         <div class="field">
             <label for="name">Name</label>
-            <input type="text" pInputText id="name" [(ngModel)]="productForm.name" #name="ngModel" required autofocus />
+            <input type="text" pInputText id="name" [(ngModel)]="productForm.name" #name="ngModel" required autofocus class="w-full" />
             <app-validation-message [control]="name.control"></app-validation-message>
         </div>
         <div class="field">
             <label for="description">Description</label>
             <textarea id="description" pInputTextarea [(ngModel)]="productForm.description" required rows="3"
-                cols="20"></textarea>
+                cols="20" class="w-full"></textarea>
         </div>
         <div class="field">
             <label for="price">Price</label>
             <p-inputNumber id="price" [(ngModel)]="productForm.price" #price="ngModel" required mode="currency"
-                currency="BDT" locale="en-US"></p-inputNumber>
+                currency="BDT" locale="en-US" styleClass="w-full" inputStyleClass="w-full" [style]="{'width':'100%'}"></p-inputNumber>
             <app-validation-message [control]="price.control"></app-validation-message>
         </div>
     </ng-template>
@@ -131,22 +138,18 @@
             <label for="category">Category</label>
             <p-dropdown id="category" [options]="categories" optionLabel="name" optionValue="id"
                 [(ngModel)]="productForm.categoryId" placeholder="Select a Category" [showClear]="true"
-                appendTo="body"></p-dropdown>
+                appendTo="body" styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
         </div>
 
         <div class="field">
             <label class="block mb-2">Product Image</label>
-            <div class="flex flex-column gap-3">
+            <div class="flex flex-column gap-2">
                 <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="hidden" />
 
-                <div class="flex align-items-center gap-3">
-                    <button pButton type="button" label="Choose Image" icon="pi pi-image" class="p-button-outlined"
-                        (click)="fileInput.click()"></button>
-                    <span *ngIf="productForm.imageUrl" class="text-green-500 font-bold"><i class="pi pi-check ml-2"></i>
-                        Selected</span>
-                </div>
-
-                <div *ngIf="productForm.imageUrl" class="surface-card p-3 border-round shadow-2 w-full text-center">
+                <button pButton type="button" label="Choose Main Image" icon="pi pi-image" class="p-button-outlined w-full"
+                    (click)="fileInput.click()"></button>
+                
+                <div *ngIf="productForm.imageUrl" class="surface-card p-3 border-round shadow-2 w-full text-center mt-2">
                     <img [src]="productForm.imageUrl" alt="Preview"
                         style="max-height: 200px; max-width: 100%; object-fit: contain;">
                 </div>
@@ -155,14 +158,12 @@
 
         <div class="field">
             <label class="block mb-2">Additional Images (Gallery)</label>
-            <div class="flex flex-column gap-3">
+            <div class="flex flex-column gap-2">
                 <input type="file" #additionalFilesInput (change)="onAdditionalFilesSelected($event)" accept="image/*"
                     multiple class="hidden" />
 
-                <div class="flex align-items-center gap-3">
-                    <button pButton type="button" label="Add More Images" icon="pi pi-images"
-                        class="p-button-outlined p-button-secondary" (click)="additionalFilesInput.click()"></button>
-                </div>
+                <button pButton type="button" label="Add Additional Images" icon="pi pi-images"
+                    class="p-button-outlined p-button-secondary w-full" (click)="additionalFilesInput.click()"></button>
 
                 <div *ngIf="productForm.images && productForm.images.length > 0" class="flex flex-wrap gap-2 mt-2">
                     <div *ngFor="let img of productForm.images; let i = index" class="relative">
@@ -187,14 +188,15 @@
     <ng-template pTemplate="content">
         <div class="field">
             <label for="stock">Quantity</label>
-            <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal"></p-inputNumber>
+            <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal"
+                styleClass="w-full" inputStyleClass="w-full" [style]="{'width':'100%'}"></p-inputNumber>
         </div>
 
         <div class="field">
             <label for="manualStockStatus">Stock Availability Control</label>
             <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
                 [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
-                appendTo="body"></p-dropdown>
+                appendTo="body" styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
             <small class="block mt-1 text-500">Override the automatic stock calculation if needed.</small>
         </div>
     </ng-template>

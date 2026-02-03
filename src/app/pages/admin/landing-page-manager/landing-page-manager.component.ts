@@ -9,7 +9,6 @@ import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-landing-page-manager',
-    standalone: true,
     imports: [
         CommonModule,
         FormsModule,

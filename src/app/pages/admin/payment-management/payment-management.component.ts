@@ -32,8 +32,8 @@ import { CardModule } from 'primeng/card';
                             <p class="mt-2 text-gray-600">Current QR Code</p>
                         </div>
                         
-                        <p-fileUpload #fileUpload mode="basic" chooseLabel="Upload New QR Code" accept="image/*"
-                            (onSelect)="onFileSelect($event)" [auto]="true"></p-fileUpload>
+                        <p-fileUpload #fileUpload mode="basic" chooseLabel="Browse" accept="image/*"
+                            (onSelect)="onFileSelect($event)" [auto]="true" styleClass="p-button-outlined w-full"></p-fileUpload>
                     </div>
                 </p-card>
             </div>

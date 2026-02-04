@@ -18,11 +18,11 @@ interface MenuItem {
 }
 
 @Component({
-    selector: 'app-dashboard',
-    imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule],
-    providers: [MessageService],
-    templateUrl: './dashboard.component.html',
-    styleUrls: ['./dashboard.component.scss']
+  selector: 'app-dashboard',
+  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule],
+  providers: [MessageService],
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
   sidebarCollapsed = signal<boolean>(false);
@@ -39,10 +39,7 @@ export class DashboardComponent implements OnInit {
     { label: 'Orders', icon: 'pi pi-shopping-cart', route: 'orders', section: 'Main' },
     { label: 'Categories', icon: 'pi pi-tags', route: 'category-manager', section: 'Main' },
     { label: 'Add Product', icon: 'pi pi-plus-circle', route: 'products/add', section: 'Products' },
-    { label: 'Landing Page', icon: 'pi pi-image', route: 'manage-landing', section: 'Settings' },
-    { label: 'Payment', icon: 'pi pi-wallet', route: 'payment-management', section: 'Settings' },
-    { label: 'Delivery', icon: 'pi pi-truck', route: 'delivery-management', section: 'Settings' },
-    { label: 'Settings', icon: 'pi pi-cog', route: 'settings', section: 'Settings' }
+    { label: 'Landing Page', icon: 'pi pi-image', route: 'manage-landing', section: 'Settings' }
   ];
 
   constructor(

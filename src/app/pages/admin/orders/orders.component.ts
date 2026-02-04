@@ -202,6 +202,11 @@ export class OrdersComponent implements OnInit {
           this.orders.update(currentOrders => currentOrders.map(o => 
             o.id === order.id ? { ...o, paymentStatus: newPaymentStatus } : o
           ));
+
+          // Also confirm the order status if it's still pending
+          if (order.status === 'Pending') {
+             this.updateStatus(order, 'Confirmed');
+          }
         },
         error: (err) => {
           console.error('Admin payment verification failed', err);
@@ -226,6 +231,11 @@ export class OrdersComponent implements OnInit {
           this.orders.update(currentOrders => currentOrders.map(o => 
             o.id === order.id ? { ...o, paymentStatus: newStatus } : o
           ));
+
+          // Also confirm the order status if it's still pending
+          if (order.status === 'Pending') {
+             this.updateStatus(order, 'Confirmed');
+          }
         },
         error: (err) => {
           console.error('Admin payment verification failed', err);

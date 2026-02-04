@@ -228,6 +228,12 @@
                         required.</small>
                 </div>
 
+                <div class="field">
+                    <label for="field_info">Additional Info (Optional)</label>
+                    <textarea pInputTextarea id="field_info" [(ngModel)]="checkoutForm.additionalInfo" rows="2"
+                        placeholder="Landmarks, special instructions..." class="w-full"></textarea>
+                </div>
+
                 <button pButton label="Place Order" class="w-full p-button-lg mt-4" (click)="placeOrder()"></button>
             </div>
         </div>
@@ -279,82 +285,95 @@
     </div>
 </p-dialog>
 
-<!-- Payment Method Modal (Step 2) -->
-<p-dialog [(visible)]="displayPaymentMethodModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}"
-    header="Select Payment Method" [closable]="true">
+<!-- Order Success & Payment Selection Modal -->
+<p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}"
+    header="Order Created!" [closable]="false" styleClass="premium-dialog">
     <div class="p-fluid">
-        <p class="mb-4 text-center">Payment for Order #{{ placedOrderId }}</p>
-
-        <div class="grid">
-            <div class="col-6">
-                <div class="p-3 border-1 border-round cursor-pointer transition-colors transition-duration-200 flex flex-column align-items-center gap-2 h-full"
-                    [class.border-primary]="selectedPaymentMethod === 'bKash'"
-                    [class.surface-50]="selectedPaymentMethod !== 'bKash'"
-                    [class.bg-blue-50]="selectedPaymentMethod === 'bKash'" (click)="selectPaymentMethod('bKash')">
-                    <img src="assets/bkash-logo.png" alt="bKash" height="40">
-                    <span class="font-bold">bKash Payment</span>
+        <div class="text-center mb-4">
+            <div class="flex justify-content-center mb-3">
+                <div class="bg-green-100 border-circle flex align-items-center justify-content-center"
+                    style="width: 80px; height: 80px;">
+                    <i class="pi pi-check text-4xl text-green-600"></i>
                 </div>
             </div>
-            <div class="col-6">
-                <div class="p-3 border-1 border-round cursor-pointer transition-colors transition-duration-200 flex flex-column align-items-center gap-2 h-full"
-                    [class.border-primary]="selectedPaymentMethod === 'COD'"
-                    [class.surface-50]="selectedPaymentMethod !== 'COD'"
-                    [class.bg-blue-50]="selectedPaymentMethod === 'COD'" (click)="selectPaymentMethod('COD')">
-                    <i class="pi pi-money-bill text-4xl text-green-600"></i>
-                    <span class="font-bold">Cash On Delivery</span>
+            <h2 class="m-0 text-900 font-bold">Excellent choice!</h2>
+            <p class="text-600 mt-2">One more step to complete your purchase. Please select your preferred payment
+                method.</p>
+        </div>
+
+        <div class="surface-ground p-4 border-round-xl">
+            <h3 class="mt-0 mb-4 text-center font-bold text-900">Choose Payment Method</h3>
+            <div class="grid">
+                <div class="col-6">
+                    <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                        [class.active]="selectedPaymentMethod === 'COD'" (click)="selectedPaymentMethod = 'COD'">
+                        <div class="bg-green-100 p-3 border-circle">
+                            <i class="pi pi-money-bill text-3xl text-green-600"></i>
+                        </div>
+                        <div class="font-bold text-900">Cash on Delivery</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                        [class.active]="selectedPaymentMethod === 'bKash'" (click)="selectedPaymentMethod = 'bKash'">
+                        <div class="bg-pink-100 p-3 border-circle">
+                            <img src="assets/bkash-logo.png" alt="bKash" height="30">
+                        </div>
+                        <div class="font-bold text-900">bKash Payment</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- bKash Details -->
-        <div *ngIf="selectedPaymentMethod === 'bKash'" class="field mt-4 surface-ground p-3 border-round">
-            <div class="text-center mb-3" *ngIf="bkashQrCodeInModal">
-                <p class="mb-2 font-bold">Scan to Pay</p>
-                <img [src]="bkashQrCodeInModal" alt="bKash QR" width="150" class="border-round shadow-2">
+            <!-- bKash Details Area -->
+            <div *ngIf="selectedPaymentMethod === 'bKash'"
+                class="bkash-details-area mt-4 p-4 border-round-xl bg-white shadow-1 border-1 surface-border">
+                <div class="text-center mb-4">
+                    <div
+                        class="inline-flex align-items-center justify-content-center bg-pink-50 px-3 py-1 border-round-pill mb-3">
+                        <span class="text-pink-600 font-bold text-sm">Scan to Pay</span>
+                    </div>
+                    <img src="assets/bkash-qr.png" alt="bKash QR" width="160"
+                        class="border-round shadow-2 block mx-auto">
+                </div>
+
+                <div class="field mb-4">
+                    <label class="font-bold text-900 block mb-2">Your bKash Number</label>
+                    <input pInputText [(ngModel)]="bkashPhone" placeholder="017XXXXXXXX" maxlength="11"
+                        class="w-full py-3">
+                </div>
+                <div class="field mb-4">
+                    <label class="font-bold text-900 block mb-2">Transaction ID</label>
+                    <input pInputText [(ngModel)]="bkashTrxId" placeholder="Enter 10-digit ID" class="w-full py-3">
+                </div>
+                <button pButton label="Complete Payment" icon="pi pi-shield"
+                    class="p-button-danger p-button-lg w-full mt-2" (click)="submitBkashPayment()"
+                    [disabled]="!bkashPhone || !bkashTrxId"></button>
             </div>
 
-            <label class="mt-3 block">Transaction ID</label>
-            <input pInputText [(ngModel)]="transactionId" placeholder="e.g. 9G7...">
+            <!-- COD Action Area -->
+            <div *ngIf="selectedPaymentMethod === 'COD'" class="mt-4 bkash-details-area">
+                <div class="surface-50 p-3 border-round-lg mb-4 text-center border-1 surface-border">
+                    <p class="text-700 m-0">You will pay the total amount to the delivery person when your package
+                        arrives.</p>
+                </div>
+                <button pButton label="Confirm COD Order" icon="pi pi-check" class="p-button-lg w-full"
+                    (click)="confirmCOD()"></button>
+            </div>
         </div>
-
-        <button pButton label="Confirm Payment" class="w-full mt-4"
-            [disabled]="!selectedPaymentMethod || (selectedPaymentMethod === 'bKash' && !transactionId)"
-            (click)="processPayment()"></button>
     </div>
 </p-dialog>
 
-<!-- Order Success Modal (Waiting for Approval) -->
-<p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Order Placed!"
+<!-- Final Global Success Modal -->
+<p-dialog [(visible)]="displayFinalSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Order Confirmed"
     [closable]="true">
-    <div class="flex flex-column align-items-center text-center">
-        <i class="pi pi-clock text-6xl text-orange-500 mb-3"></i>
-        <h2 class="m-0 mb-2">Waiting for Approval</h2>
-        <p class="text-600 mb-4">Your order has been placed and is waiting for admin approval.</p>
-
-        <div class="surface-ground p-3 border-round w-full mb-4">
-            <div class="text-sm text-600 mb-1">Order ID</div>
-            <div class="text-xl font-bold text-primary">{{ placedOrderId }}</div>
-            <div class="mt-3 bg-white p-2 border-round">
-                <svg id="barcode"></svg>
-            </div>
-        </div>
-
-        <p class="text-sm text-600 mb-4">Once approved, you can track your order and make payment.</p>
-        <button pButton label="Continue Shopping" (click)="displayOrderSuccessModal = false"></button>
-    </div>
-</p-dialog>
-
-<!-- Payment Submitted Modal -->
-<p-dialog [(visible)]="displayPaymentSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Payment Submitted"
-    [closable]="true">
-    <div class="flex flex-column align-items-center text-center">
-        <i class="pi pi-check-circle text-6xl text-green-500 mb-3"></i>
-        <h2 class="m-0 mb-2">Payment Submitted</h2>
-        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'bKash'">Your bKash payment is waiting for
-            verification.</p>
-        <p class="text-600 mb-4" *ngIf="selectedPaymentMethod === 'COD'">Your Cash on Delivery request has been
-            recorded.</p>
-        <button pButton label="Close" (click)="displayPaymentSuccessModal = false"></button>
+    <div class="flex flex-column align-items-center text-center p-4">
+        <i class="pi pi-thumbs-up text-6xl text-primary mb-3"></i>
+        <h2 class="m-0 mb-2">Thank You!</h2>
+        <p class="text-600 mb-4">Your order <span class="font-bold text-primary">#{{ placedOrderId }}</span> and payment
+            information have been received. Our team will verify and process
+            your order soon.</p>
+        <button pButton label="Continue Shopping" styleClass="p-button-outlined"
+            (click)="displayFinalSuccessModal = false"></button>
     </div>
 </p-dialog>
 

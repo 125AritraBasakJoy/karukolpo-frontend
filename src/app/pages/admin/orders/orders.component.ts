@@ -22,25 +22,25 @@ import { catchError, map } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 
 @Component({
-    selector: 'app-orders',
-    imports: [
-        CommonModule,
-        TableModule,
-        ButtonModule,
-        TagModule,
-        ToastModule,
-        DialogModule,
-        ProgressSpinnerModule,
-        NotificationButtonComponent,
-        SkeletonModule,
-        TooltipModule,
-        InputTextModule,
-        FormsModule
-    ],
-    providers: [MessageService],
-    templateUrl: './orders.component.html',
-    standalone: true,
-    styleUrls: ['./orders.component.scss']
+  selector: 'app-orders',
+  imports: [
+    CommonModule,
+    TableModule,
+    ButtonModule,
+    TagModule,
+    ToastModule,
+    DialogModule,
+    ProgressSpinnerModule,
+    NotificationButtonComponent,
+    SkeletonModule,
+    TooltipModule,
+    InputTextModule,
+    FormsModule
+  ],
+  providers: [MessageService],
+  templateUrl: './orders.component.html',
+  standalone: true,
+  styleUrls: ['./orders.component.scss']
 })
 export class OrdersComponent implements OnInit {
   orders = signal<Order[]>([]);
@@ -133,7 +133,7 @@ export class OrdersComponent implements OnInit {
               }
             };
           } else if (result) {
-             return {
+            return {
               ...currentItem,
               product: {
                 ...currentItem.product,
@@ -155,11 +155,18 @@ export class OrdersComponent implements OnInit {
 
   updateStatus(order: Order, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled') {
     if (status === 'Cancelled' || status === 'Confirmed') {
-      this.orderService.updateOrderStatus(order.id!, status).subscribe(() => {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
-        this.loadOrders();
-        if (this.selectedOrder && this.selectedOrder.id === order.id) {
-          this.selectedOrder.status = status;
+      this.orderService.updateOrderStatus(order.id!, status).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
+          this.loadOrders();
+          if (this.selectedOrder && this.selectedOrder.id === order.id) {
+            this.selectedOrder.status = status;
+          }
+        },
+        error: (err) => {
+          console.error(`Failed to update order status to ${status}`, err);
+          const errorMsg = err.error?.detail || 'Failed to update order status.';
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: errorMsg });
         }
       });
     } else {
@@ -168,37 +175,49 @@ export class OrdersComponent implements OnInit {
   }
 
   adminConfirmPayment(order: Order) {
-    if (!order.paymentId) {
-      this.messageService.add({ severity: 'warn', summary: 'No Payment', detail: 'No payment record found for this order.' });
-      return;
-    }
+    console.log('adminConfirmPayment called for order:', order);
+    // window.alert('Debugging: adminConfirmPayment called'); 
 
     const orderId = parseInt(order.id!, 10);
-    const paymentId = order.paymentId;
-    
-    // For admin confirmation, we might need a specific endpoint or just use the confirm endpoint with a dummy transaction ID if it's COD?
-    // Or if it's bKash, the transaction ID should already be there from the user.
-    
-    let transactionId = 'ADMIN_CONFIRMED';
-    if (order.paymentMethod === 'bKash' && order.transactionId) {
-        transactionId = order.transactionId;
-    } else if (order.paymentMethod === 'COD') {
-        transactionId = 'COD_VERIFIED';
-    }
+    console.log('Payment Method:', order.paymentMethod);
 
-    this.paymentService.confirmPayment(orderId, paymentId, transactionId).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Payment Confirmed', detail: 'Payment status updated to Paid' });
-        this.loadOrders();
-        if (this.selectedOrder && this.selectedOrder.id === order.id) {
-          this.selectedOrder.paymentStatus = 'Paid';
+    // Use specific verify endpoint for bKash (or general admin verification if applicable to all)
+    // The user specifically mentioned this for bKash
+    if (order.paymentMethod?.toLowerCase() === 'bkash') {
+      console.log('Calling verifyPayment...');
+      this.paymentService.verifyPayment(orderId).subscribe({
+        next: (res) => {
+          console.log('Verify Success:', res);
+          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated to Paid' });
+          this.loadOrders();
+          if (this.selectedOrder && this.selectedOrder.id === order.id) {
+            this.selectedOrder.paymentStatus = 'Paid';
+          }
+        },
+        error: (err) => {
+          console.error('Admin payment verification failed', err);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to verify payment' });
         }
-      },
-      error: (err) => {
-        console.error('Admin payment confirmation failed', err);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to confirm payment' });
-      }
-    });
+      });
+    } else {
+      console.log('Else block (not bkash or mismatched case):', order.paymentMethod);
+      // Fallback for COD or others if needed, though COD is auto-confirmed usually.
+      // If we want to mark COD as "Paid" (money collected), we might need a different flow or same verify endpoint?
+      // Assuming verify works for upgrading status to Paid generally.
+      this.paymentService.verifyPayment(orderId).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated to Paid' });
+          this.loadOrders();
+          if (this.selectedOrder && this.selectedOrder.id === order.id) {
+            this.selectedOrder.paymentStatus = 'Paid';
+          }
+        },
+        error: (err) => {
+          console.error('Admin payment verification failed', err);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to verify payment' });
+        }
+      });
+    }
   }
 
   getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {

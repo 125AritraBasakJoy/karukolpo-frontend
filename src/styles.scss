@@ -192,8 +192,146 @@ body {
     min-width: 100% !important;
 }
 
+
 /* Visibility Fix for Text Primary */
 .text-primary {
     color: var(--accent-color) !important;
     /* Blue 500 */
+}
+
+/* ADMIN LOGIN SPECIFIC OVERRIDES - FIXING VISIBILITY & THEME */
+.login-container {
+    background: linear-gradient(rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.7)), url('assets/admin-login-bg.png') no-repeat center center;
+    background-size: cover;
+
+    /* Force Input Backgrounds to be Dark and Visible */
+    .p-inputtext,
+    .p-password-input {
+        background-color: rgba(15, 23, 42, 0.95) !important;
+        /* Dark Slate */
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        color: #f8fafc !important;
+        /* Slate 50 */
+        opacity: 1 !important;
+    }
+
+    .p-inputtext:focus {
+        border-color: #10b981 !important;
+        /* Emerald 500 */
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+    }
+
+    /* Floating Labels - Green */
+    .p-float-label label {
+        color: #10b981 !important;
+        opacity: 1 !important;
+    }
+
+    /* Buttons - Green and Visible (Force Override) */
+    .p-button {
+        background-color: #10b981 !important;
+        /* emerald-500 */
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+        box-shadow: none !important;
+
+        &:hover {
+            background-color: #059669 !important;
+            /* emerald-600 */
+            border-color: #059669 !important;
+        }
+    }
+
+    /* Change Credentials Button - Text Mode specific */
+    .p-button.p-button-text {
+        background-color: transparent !important;
+        border-color: transparent !important;
+        color: #10b981 !important;
+        /* Green Text */
+
+        &:hover {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+        }
+    }
+
+    /* Force Card Background */
+    .p-card {
+        background: rgba(15, 23, 42, 0.95) !important;
+        /* Dark Slate */
+    }
+}
+
+/* Fix Tag Visibility in Dark Mode */
+.p-tag {
+    font-weight: 600;
+
+    &.p-tag-warning {
+        background-color: rgba(245, 158, 11, 0.15) !important;
+        color: #fbbf24 !important;
+        /* Amber 400 */
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    &.p-tag-info {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+        color: #60a5fa !important;
+        /* Blue 400 */
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    &.p-tag-success {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        color: #34d399 !important;
+        /* Emerald 400 */
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    &.p-tag-danger {
+        background-color: rgba(239, 68, 68, 0.15) !important;
+        color: #f87171 !important;
+        /* Red 400 */
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+}
+
+/* Glass Effect Button */
+.glass-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    /* Ensure icon color matches text */
+    .p-button-icon {
+        color: white !important;
+    }
+}
+
+/* Global Validation Error Styling */
+.ng-dirty.ng-invalid,
+.p-inputtext.ng-dirty.ng-invalid,
+.p-dropdown.ng-dirty.ng-invalid,
+.p-inputtextarea.ng-dirty.ng-invalid {
+    border-color: #ef4444 !important;
+    /* Red 500 */
+    box-shadow: 0 0 0 1px #ef4444 !important;
+}
+
+.p-error {
+    color: #ef4444 !important;
 }

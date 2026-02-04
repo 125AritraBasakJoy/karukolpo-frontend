@@ -1,10 +1,10 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DataViewModule } from 'primeng/dataview';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextarea } from 'primeng/inputtextarea';
 import { ToastModule } from 'primeng/toast';
@@ -34,29 +34,29 @@ import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle
 import { Order } from '../../models/order.model';
 
 @Component({
-    selector: 'app-home',
-    imports: [
-        CommonModule,
-        ButtonModule,
-        DialogModule,
-        DataViewModule,
-        InputNumberModule,
-        FormsModule,
-        InputTextModule,
-        InputTextarea,
-        ToastModule,
-        GalleriaModule,
-        ProgressSpinnerModule,
-        DropdownModule,
-        RadioButtonModule,
-        SkeletonModule,
-        BadgeModule,
-        TagModule, // Added TagModule
-        ThemeToggleComponent
-    ],
-    providers: [MessageService],
-    templateUrl: './home.component.html',
-    styleUrls: ['./home.component.scss']
+  selector: 'app-home',
+  imports: [
+    CommonModule,
+    ButtonModule,
+    DialogModule,
+    DataViewModule,
+    InputNumberModule,
+    FormsModule,
+    InputTextModule,
+    InputTextarea,
+    ToastModule,
+    GalleriaModule,
+    ProgressSpinnerModule,
+    DropdownModule,
+    RadioButtonModule,
+    SkeletonModule,
+    BadgeModule,
+    TagModule, // Added TagModule
+    ThemeToggleComponent
+  ],
+  providers: [MessageService],
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
   products = signal<Product[]>([]);
@@ -65,12 +65,14 @@ export class HomeComponent implements OnInit {
   displayProductModal = false;
   displayCheckoutModal = false;
   displayOrderSuccessModal = false;
-  displayPaymentMethodModal = false; 
+  displayPaymentMethodModal = false;
   displayPaymentSuccessModal = false;
   displayTrackOrderModal = false;
 
   selectedProduct: Product | null = null;
   activeIndex: number = 0;
+
+  @ViewChildren(NgModel) formControls!: QueryList<NgModel>;
 
   checkoutForm = {
     fullName: '',
@@ -97,16 +99,16 @@ export class HomeComponent implements OnInit {
   subDistricts: string[] = [];
 
   placedOrderId = '';
-  currentPaymentId: number | null = null; 
-  transactionId = ''; 
+  currentPaymentId: number | null = null;
+  transactionId = '';
 
-  landingPageImage = signal<string>('assets/landing-bg.jpg'); 
+  landingPageImage = signal<string>('assets/landing-bg.jpg');
   landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
 
   categories = signal<Category[]>([]);
   selectedCategory: Category | null = null;
   filteredProducts = signal<Product[]>([]);
-  dropdownOpen = false; 
+  dropdownOpen = false;
 
   responsiveOptions: any[] = [
     {
@@ -139,7 +141,7 @@ export class HomeComponent implements OnInit {
     // Deprecated: Payment flow integrated into checkout
   }
 
-  displayPaymentModal = false; 
+  displayPaymentModal = false;
   selectedPaymentMethod: 'COD' | 'bKash' | null = null;
   bkashQrCodeInModal: string | null = null;
 
@@ -149,9 +151,9 @@ export class HomeComponent implements OnInit {
   selectPaymentMethod(method: 'COD' | 'bKash') {
     // Reset payment ID if method changes to ensure new payment creation
     if (this.selectedPaymentMethod !== method) {
-        this.currentPaymentId = null;
+      this.currentPaymentId = null;
     }
-    
+
     this.selectedPaymentMethod = method;
     this.isPaymentSelected = true;
     if (method === 'bKash') {
@@ -201,7 +203,7 @@ export class HomeComponent implements OnInit {
 
         const inventoryRequests = products.map(p => {
           const pid = parseInt(p.id, 10);
-          
+
           // Fetch Inventory
           const inventoryReq = this.productService.getInventory(pid).pipe(
             catchError(() => of({ quantity: 0 }))
@@ -219,25 +221,25 @@ export class HomeComponent implements OnInit {
 
           return forkJoin([inventoryReq, detailsReq, categoriesReq]).pipe(
             map(([inv, details, cats]) => {
-                // Merge details, inventory, and category info
-                // Prioritize the explicitly fetched category list
-                const categoryId = (cats && cats.length > 0) ? cats[0].id.toString() : (details?.categoryId || p.categoryId);
-                return { ...details, stock: inv.quantity, categoryId };
+              // Merge details, inventory, and category info
+              // Prioritize the explicitly fetched category list
+              const categoryId = (cats && cats.length > 0) ? cats[0].id.toString() : (details?.categoryId || p.categoryId);
+              return { ...details, stock: inv.quantity, categoryId };
             })
           );
         });
 
         forkJoin(inventoryRequests).subscribe({
           next: (productsWithInventory: any[]) => {
-             console.log('Loaded products with details:', productsWithInventory);
-             // Log category IDs for debugging
-             productsWithInventory.forEach(p => {
-                 console.log(`Product: ${p.name}, CategoryID: ${p.categoryId}`);
-             });
-             
-             this.products.set(productsWithInventory);
-             this.filterProducts();
-             this.loading.set(false);
+            console.log('Loaded products with details:', productsWithInventory);
+            // Log category IDs for debugging
+            productsWithInventory.forEach(p => {
+              console.log(`Product: ${p.name}, CategoryID: ${p.categoryId}`);
+            });
+
+            this.products.set(productsWithInventory);
+            this.filterProducts();
+            this.loading.set(false);
           },
           error: (err) => {
             console.error('Error fetching inventory details', err);
@@ -340,15 +342,16 @@ export class HomeComponent implements OnInit {
   get isCheckoutFormValid(): boolean {
     const { fullName, email, phoneNumber, district, postalCode, fullAddress, subDistrict } = this.checkoutForm;
 
-    // Basic existence check
-    const basicValidation = fullName && email && phoneNumber && district && postalCode && fullAddress;
+    // Basic existence check (Removed postalCode form strict requirements)
+    const basicValidation = fullName && email && phoneNumber && district && fullAddress;
 
     // Sub-district check
     const subDistrictValidation = this.subDistricts.length > 0 ? !!subDistrict : true; // Optional if no sub-districts
 
     const isEmailValid = this.emailRegex.test(email);
     const isPhoneValid = this.phoneRegex.test(phoneNumber);
-    const isPostalCodeValid = this.postalCodeRegex.test(postalCode);
+    // Postal code is optional, but if present must be valid
+    const isPostalCodeValid = !postalCode || this.postalCodeRegex.test(postalCode);
 
     const isValid = !!(basicValidation && subDistrictValidation && isEmailValid && isPhoneValid && isPostalCodeValid);
 
@@ -371,10 +374,46 @@ export class HomeComponent implements OnInit {
   }
 
   placeOrder() {
+    // Validation Check
+    if (!this.isCheckoutFormValid) {
+      this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Please fill all required fields correctly.' });
+
+      // Mark all fields as touched to trigger UI validation messages
+      if (this.formControls) {
+        this.formControls.forEach(control => {
+          control.control.markAsTouched();
+        });
+      }
+
+      // Focus Logic
+      const { fullName, email, phoneNumber, district, postalCode, fullAddress } = this.checkoutForm;
+
+      // Determine first invalid field and focus
+      let focusId = '';
+      if (!fullName) focusId = 'field_fullname';
+      else if (!phoneNumber || !this.phoneRegex.test(phoneNumber)) focusId = 'field_phone';
+      else if (!email || !this.emailRegex.test(email)) focusId = 'field_email';
+      else if (!district) focusId = 'field_district';
+      // Postal code optional: focus only if partially filled and invalid
+      else if (postalCode && !this.postalCodeRegex.test(postalCode)) focusId = 'field_postal';
+      else if (!fullAddress) focusId = 'field_address';
+
+      if (focusId) {
+        setTimeout(() => {
+          const element = document.getElementById(focusId);
+          if (element) {
+            element.focus();
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+      return;
+    }
+
     // Step 1: Create Order
     // Payment method is not selected yet, so we send defaults or null if allowed.
     // OrderService maps paymentMethod to 'COD' by default if missing, which is fine for initial creation.
-    
+
     const order = {
       ...this.checkoutForm,
       items: this.cart(),
@@ -392,11 +431,11 @@ export class HomeComponent implements OnInit {
         next: (orderId) => {
           console.log('Order created successfully:', orderId);
           this.placedOrderId = orderId;
-          
+
           // Close checkout modal and open success modal (Waiting for Approval)
           this.displayCheckoutModal = false;
           this.displayOrderSuccessModal = true;
-          
+
           // Generate barcode after modal is visible
           setTimeout(() => {
             try {
@@ -456,8 +495,8 @@ export class HomeComponent implements OnInit {
 
   openPaymentForOrder(orderId: string | undefined) {
     if (!orderId) {
-        this.showError('Invalid Order ID');
-        return;
+      this.showError('Invalid Order ID');
+      return;
     }
     this.placedOrderId = orderId;
     this.displayTrackOrderModal = false;
@@ -469,88 +508,88 @@ export class HomeComponent implements OnInit {
 
   processPayment() {
     if (!this.selectedPaymentMethod) {
-        this.showError('Please select a payment method');
-        return;
+      this.showError('Please select a payment method');
+      return;
     }
 
     if (this.selectedPaymentMethod === 'bKash') {
-        if (!this.transactionId) {
-            this.showError('Transaction ID is required');
-            return;
-        }
+      if (!this.transactionId) {
+        this.showError('Transaction ID is required');
+        return;
+      }
     }
 
     const oid = parseInt(this.placedOrderId, 10);
-    
+
     // Helper to handle confirmation
     const handleConfirmation = (paymentId: number) => {
-        if (this.selectedPaymentMethod === 'bKash') {
-            const trxId = this.transactionId.trim();
-            
-            if (!trxId) {
-                this.showError('Transaction ID is required');
-                return;
-            }
+      if (this.selectedPaymentMethod === 'bKash') {
+        const trxId = this.transactionId.trim();
 
-            this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
-                next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'Payment Submitted', detail: 'Waiting for admin verification.' });
-                    this.displayPaymentMethodModal = false;
-                    this.displayPaymentSuccessModal = true;
-                },
-                error: (err) => {
-                    console.error('Payment confirmation failed', err);
-                    
-                    // Extract error message from backend response if available
-                    let errorMsg = 'Failed to confirm payment. Please check Transaction ID.';
-                    if (err.error && err.error.detail) {
-                        if (typeof err.error.detail === 'string') {
-                            errorMsg = err.error.detail;
-                        } else if (Array.isArray(err.error.detail)) {
-                            // Handle Pydantic validation errors
-                            errorMsg = err.error.detail.map((e: any) => e.msg).join(', ');
-                        }
-                    }
-                    
-                    this.showError(errorMsg);
-                }
-            });
-        } else {
-            // COD - Just finish
-            this.messageService.add({ severity: 'success', summary: 'COD Selected', detail: 'Waiting for admin verification.' });
+        if (!trxId) {
+          this.showError('Transaction ID is required');
+          return;
+        }
+
+        this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Payment Submitted', detail: 'Waiting for admin verification.' });
             this.displayPaymentMethodModal = false;
             this.displayPaymentSuccessModal = true;
-        }
+          },
+          error: (err) => {
+            console.error('Payment confirmation failed', err);
+
+            // Extract error message from backend response if available
+            let errorMsg = 'Failed to confirm payment. Please check Transaction ID.';
+            if (err.error && err.error.detail) {
+              if (typeof err.error.detail === 'string') {
+                errorMsg = err.error.detail;
+              } else if (Array.isArray(err.error.detail)) {
+                // Handle Pydantic validation errors
+                errorMsg = err.error.detail.map((e: any) => e.msg).join(', ');
+              }
+            }
+
+            this.showError(errorMsg);
+          }
+        });
+      } else {
+        // COD - Just finish
+        this.messageService.add({ severity: 'success', summary: 'COD Selected', detail: 'Waiting for admin verification.' });
+        this.displayPaymentMethodModal = false;
+        this.displayPaymentSuccessModal = true;
+      }
     };
 
     // If we already have a payment ID for this session, skip creation
     if (this.currentPaymentId) {
-        console.log('Using existing payment ID:', this.currentPaymentId);
-        handleConfirmation(this.currentPaymentId);
-        return;
+      console.log('Using existing payment ID:', this.currentPaymentId);
+      handleConfirmation(this.currentPaymentId);
+      return;
     }
-    
+
     // 1. Create Payment
     // Try lowercase payment method if backend expects it
     const methodToSend = this.selectedPaymentMethod === 'bKash' ? 'bkash' : 'cod';
-    
+
     this.paymentService.createPayment(oid, methodToSend).subscribe({
-        next: (payment) => {
-            console.log('Payment created:', payment);
-            
-            if (payment && payment.id) {
-                this.currentPaymentId = payment.id;
-                handleConfirmation(payment.id);
-            } else {
-                console.error('Payment created but no ID returned', payment);
-                this.showError('Payment initialization failed. Please try again.');
-            }
-        },
-        error: (err) => {
-            console.error('Payment creation failed', err);
-            console.log('Error details:', JSON.stringify(err.error));
-            this.showError('Failed to initiate payment. Please try again.');
+      next: (payment) => {
+        console.log('Payment created:', payment);
+
+        if (payment && payment.id) {
+          this.currentPaymentId = payment.id;
+          handleConfirmation(payment.id);
+        } else {
+          console.error('Payment created but no ID returned', payment);
+          this.showError('Payment initialization failed. Please try again.');
         }
+      },
+      error: (err) => {
+        console.error('Payment creation failed', err);
+        console.log('Error details:', JSON.stringify(err.error));
+        this.showError('Failed to initiate payment. Please try again.');
+      }
     });
   }
 

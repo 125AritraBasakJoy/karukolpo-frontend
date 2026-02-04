@@ -106,15 +106,9 @@ import { FloatLabelModule } from 'primeng/floatlabel';
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%);
-      background-size: cover;
     }
     p-card {
       width: 420px;
-    }
-    ::ng-deep .login-container .p-card {
-        background: var(--surface-card) !important;
-        border: 1px solid var(--surface-border) !important;
     }
   `]
 })

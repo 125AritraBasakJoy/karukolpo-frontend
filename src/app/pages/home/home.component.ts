@@ -365,6 +365,8 @@ export class HomeComponent implements OnInit {
       this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
       return;
     }
+    // Reset payment method to default to ensure modal logic works
+    this.selectedPaymentMethod = 'bKash';
     this.displayCheckoutModal = true;
   }
 
@@ -407,12 +409,18 @@ export class HomeComponent implements OnInit {
 
     // Create Order Immediately
     this.loading.set(true);
+    
+    // Ensure payment method is set (default to bKash if null)
+    if (!this.selectedPaymentMethod) {
+        this.selectedPaymentMethod = 'bKash';
+    }
+
     const order = {
       ...this.checkoutForm,
       items: this.cart(),
       totalAmount: this.getTotalPrice(),
       status: 'Pending' as 'Pending',
-      paymentMethod: this.selectedPaymentMethod || 'bKash', // Default to bKash if null to ensure 422 pass, or handle UI selection
+      paymentMethod: this.selectedPaymentMethod,
       paymentStatus: 'Pending' as 'Pending',
       deliveryLocation: this.deliveryLocation,
       deliveryCharge: this.currentDeliveryCharge,
@@ -426,21 +434,10 @@ export class HomeComponent implements OnInit {
         this.loading.set(false);
         this.displayCheckoutModal = false;
 
-        if (this.selectedPaymentMethod === 'bKash') {
-          // Open Payment Success Modal which contains bKash inputs (based on previous flow)
-          // Or ensure we show the bKash input UI
-          this.bkashPhone = this.checkoutForm.phoneNumber;
-          this.displayOrderSuccessModal = true;
-        } else {
-          // COD Success
-          this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your order has been placed successfully.' });
-          this.displayFinalSuccessModal = true;
-          // Clear cart and reset
-          const cartItemsToReduce = [...this.cart()];
-          this.cart.set([]);
-          this.productService.reduceStock(cartItemsToReduce);
-          this.resetCheckoutForm();
-        }
+        // Always open the success/payment modal
+        // Pre-fill phone number for bKash convenience
+        this.bkashPhone = this.checkoutForm.phoneNumber;
+        this.displayOrderSuccessModal = true;
       },
       error: (err) => {
         console.error('Order creation failed', err);
@@ -448,11 +445,6 @@ export class HomeComponent implements OnInit {
         this.loading.set(false);
       }
     });
-
-    // Old flow removal
-    // this.displayCheckoutModal = false;
-    // this.selectedPaymentMethod = null;
-    // ...
   }
 
   trackOrder() {
@@ -610,41 +602,37 @@ export class HomeComponent implements OnInit {
 
   confirmCOD() {
     this.loading.set(true);
-    const order = {
-      ...this.checkoutForm,
-      items: this.cart(),
-      totalAmount: this.getTotalPrice(),
-      status: 'Pending' as 'Pending',
-      paymentMethod: 'COD',
-      paymentStatus: 'Pending' as 'Pending',
-      deliveryLocation: this.deliveryLocation,
-      deliveryCharge: this.currentDeliveryCharge,
-      orderDate: new Date()
-    };
+    const oid = parseInt(this.placedOrderId, 10);
 
-    this.orderService.createOrder(order as any).subscribe({
-      next: (orderId) => {
-        const oid = parseInt(orderId, 10);
-        this.placedOrderId = orderId;
+    // Create COD payment record to finalize the order payment method
+    this.paymentService.createPayment(oid, 'cod').subscribe({
+        next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed successfully.' });
+            this.displayOrderSuccessModal = false;
+            this.displayFinalSuccessModal = true;
 
-        // COD: No extra API call needed as per requirement.
-        // Just show success.
-        this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed successfully.' });
-        this.displayOrderSuccessModal = false;
-        this.displayFinalSuccessModal = true;
+            // Clear cart and reset
+            const cartItemsToReduce = [...this.cart()];
+            this.cart.set([]);
+            this.productService.reduceStock(cartItemsToReduce);
+            this.resetCheckoutForm();
+            this.loading.set(false);
+        },
+        error: (err) => {
+            console.error('COD payment creation failed', err);
+            // Fallback: If payment creation fails (e.g. backend issue), we still treat order as placed
+            // but warn the user or just proceed since the order exists.
+            // For now, let's proceed but log it.
+            this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed.' });
+            this.displayOrderSuccessModal = false;
+            this.displayFinalSuccessModal = true;
 
-        // Clear cart and reset
-        const cartItemsToReduce = [...this.cart()];
-        this.cart.set([]);
-        this.productService.reduceStock(cartItemsToReduce);
-        this.resetCheckoutForm();
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Order creation failed for COD', err);
-        this.showError('Failed to place order. Please try again.');
-        this.loading.set(false);
-      }
+            const cartItemsToReduce = [...this.cart()];
+            this.cart.set([]);
+            this.productService.reduceStock(cartItemsToReduce);
+            this.resetCheckoutForm();
+            this.loading.set(false);
+        }
     });
   }
 
@@ -658,10 +646,22 @@ export class HomeComponent implements OnInit {
     const oid = parseInt(this.placedOrderId, 10);
 
     // Sanitize phone number: remove +88 or 88, keep last 11 digits
-    let cleanPhone = this.bkashPhone.replace(/\D/g, '');
+    let cleanPhone = this.bkashPhone.replace(/\D/g, ''); // Remove all non-digits
+    if (cleanPhone.startsWith('880')) { // If it starts with 880, remove 88
+        cleanPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.startsWith('0')) { // If it starts with 0, keep it as is
+        // No change needed
+    } else if (cleanPhone.length === 10) { // If it's 10 digits, prepend 0
+        cleanPhone = '0' + cleanPhone;
+    }
+    // Ensure it's 11 digits, taking the last 11 if longer (e.g., if +8801... was passed)
     if (cleanPhone.length > 11) {
         cleanPhone = cleanPhone.slice(-11);
+    } else if (cleanPhone.length < 11) {
+        // This case should ideally be caught by frontend validation, but as a safeguard
+        console.warn('Phone number is less than 11 digits after sanitization:', cleanPhone);
     }
+
 
     const payload = {
         transaction_id: this.bkashTrxId.trim(),

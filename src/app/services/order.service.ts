@@ -193,7 +193,7 @@ export class OrderService {
   /**
    * Update order status
    */
-  updateOrderStatus(id: string, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled'): Observable<void> {
+  updateOrderStatus(id: string, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed'): Observable<void> {
     const orderId = parseInt(id, 10);
 
     if (status === 'Cancelled') {
@@ -202,6 +202,12 @@ export class OrderService {
     } else if (status === 'Confirmed') {
       // Use Admin Confirm endpoint
       return this.adminConfirmOrder(orderId).pipe(map(() => void 0));
+    } else if (status === 'Completed') {
+      console.warn(`Status update to ${status} not supported by backend yet`);
+      return new Observable<void>(observer => {
+        observer.next();
+        observer.complete();
+      });
     }
 
     // For other statuses, we'd need additional backend endpoints
@@ -249,7 +255,8 @@ export class OrderService {
         quantity: item.quantity
       })),
       // strictly use lowercase 'bkash'
-      payment_method: order.paymentMethod ? (order.paymentMethod.toLowerCase() === 'bkash' ? 'bkash' : order.paymentMethod) : null
+      payment_method: order.paymentMethod ? (order.paymentMethod.toLowerCase() === 'bkash' ? 'bkash' : order.paymentMethod) : null,
+      payment_status: order.paymentStatus ? order.paymentStatus : 'Pending'
     };
 
     console.log('Final Order Payload:', JSON.stringify(payload, null, 2));
@@ -293,12 +300,37 @@ export class OrderService {
       }
     }
 
+    // Force COD Confirmed if method is COD and status is Pending (Backend doesn't handle COD auto-confirm)
+    if (paymentMethod && paymentMethod.toLowerCase() === 'cod' && paymentStatus === 'Pending') {
+        paymentStatus = 'COD Confirmed';
+    }
+
+    // bKash specific mapping
+    if (paymentMethod && paymentMethod.toLowerCase() === 'bkash') {
+        if (paymentStatus === 'Pending') {
+            paymentStatus = 'Bkash Pending';
+        } else if (paymentStatus === 'Paid') {
+            paymentStatus = 'Bkash Confirmed';
+        }
+    }
+
     // Extract transaction ID
     let transactionId = undefined;
     if (backendOrder.payment && backendOrder.payment.transaction_id) {
       transactionId = backendOrder.payment.transaction_id;
     } else if (backendOrder.transaction_id) {
       transactionId = backendOrder.transaction_id;
+    }
+
+    // Handle created_at timestamp
+    let orderDate = new Date();
+    if (backendOrder.created_at) {
+        let dateStr = backendOrder.created_at;
+        // If the string doesn't end with Z and doesn't have an offset, append Z to treat as UTC
+        if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateStr)) {
+            dateStr += 'Z';
+        }
+        orderDate = new Date(dateStr);
     }
 
     return {
@@ -328,7 +360,7 @@ export class OrderService {
       paymentStatus: paymentStatus as 'Pending' | 'Paid',
       paymentId: backendOrder.payment_id || (backendOrder.payment ? backendOrder.payment.id : undefined),
       transactionId: transactionId,
-      orderDate: new Date(backendOrder.created_at || Date.now())
+      orderDate: orderDate
     };
   }
 
@@ -342,13 +374,14 @@ export class OrderService {
   /**
    * Map backend status to frontend status
    */
-  private mapBackendStatus(status: string): 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' {
+  private mapBackendStatus(status: string): 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed' {
     const statusMap: Record<string, any> = {
       'pending': 'Pending',
       'confirmed': 'Confirmed',
       'shipping': 'Shipping',
       'delivered': 'Delivered',
-      'cancelled': 'Cancelled'
+      'cancelled': 'Cancelled',
+      'completed': 'Completed'
     };
     return statusMap[status?.toLowerCase()] || 'Pending';
   }

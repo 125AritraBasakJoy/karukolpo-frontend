@@ -17,7 +17,7 @@
                 <tr>
                     <th>Order ID</th>
                     <th>Customer</th>
-                    <th>Date</th>
+                    <th>Date and Time</th>
                     <th>Total</th>
                     <th>Payment</th>
                     <th>Status</th>
@@ -57,7 +57,7 @@
             <tr>
                 <th>Order ID</th>
                 <th>Customer</th>
-                <th>Date</th>
+                <th>Date and Time</th>
                 <th>Total</th>
                 <th>Payment</th>
                 <th>Status</th>
@@ -68,18 +68,13 @@
             <tr>
                 <td>{{ order.id }}</td>
                 <td>{{ order.fullName }}</td>
-                <td>{{ order.orderDate | date:'short' }}</td>
+                <td>{{ order.orderDate | date:'medium':'+0600' }}</td>
                 <td>{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</td>
                 <td>
                     <div class="flex flex-column gap-1">
-                        @if (order.paymentMethod) {
-                        <span class="font-bold">{{ order.paymentMethod }}</span>
-                        } @else {
-                        <span class="text-500">Pending Selection</span>
-                        }
                         <!-- Robust Status Display -->
                         <p-tag [value]="order.paymentStatus || 'Pending'"
-                            [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified'].includes(order.paymentStatus || '') ? 'success' : 'warning'"
+                            [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified', 'Bkash Confirmed'].includes(order.paymentStatus || '') ? 'success' : 'warning'"
                             [rounded]="true"></p-tag>
                     </div>
                 </td>
@@ -94,17 +89,13 @@
                             (onClick)="updateStatus(order, 'Confirmed')" *ngIf="order.status === 'Pending'"
                             pTooltip="Confirm Order" tooltipPosition="top"></p-button>
 
-                        <p-button icon="pi pi-truck" [rounded]="true" [text]="true" severity="info"
-                            (onClick)="updateStatus(order, 'Shipping')" *ngIf="order.status === 'Confirmed'"
-                            pTooltip="Ship Order" tooltipPosition="top"></p-button>
-
-                        <p-button icon="pi pi-box" [rounded]="true" [text]="true" severity="success"
-                            (onClick)="updateStatus(order, 'Delivered')" *ngIf="order.status === 'Shipping'"
-                            pTooltip="Mark Delivered" tooltipPosition="top"></p-button>
+                        <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="updateStatus(order, 'Completed')" *ngIf="order.status === 'Confirmed'"
+                            pTooltip="Mark Complete" tooltipPosition="top"></p-button>
 
                         <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
                             (onClick)="updateStatus(order, 'Cancelled')"
-                            *ngIf="order.status !== 'Cancelled' && order.status !== 'Delivered'" pTooltip="Cancel Order"
+                            *ngIf="order.status !== 'Cancelled' && order.status !== 'Completed'" pTooltip="Cancel Order"
                             tooltipPosition="top"></p-button>
                     </div>
                 </td>
@@ -128,7 +119,7 @@
         <div class="col-12 md:col-6">
             <h3>Order Info</h3>
             <p><strong>Order ID:</strong> {{ selectedOrder.id }}</p>
-            <p><strong>Date:</strong> {{ selectedOrder.orderDate | date:'medium' }}</p>
+            <p><strong>Date:</strong> {{ selectedOrder.orderDate | date:'medium':'+0600' }}</p>
             <p><strong>Status:</strong> <p-tag [value]="selectedOrder.status"
                     [severity]="getSeverity(selectedOrder.status)"></p-tag></p>
 
@@ -141,7 +132,7 @@
 
             <p><strong>Payment Status:</strong>
                 <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
-                    [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified'].includes(selectedOrder.paymentStatus || '') ? 'success' : 'warning'"
+                    [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified', 'Bkash Confirmed'].includes(selectedOrder.paymentStatus || '') ? 'success' : 'warning'"
                     [rounded]="true"></p-tag>
             </p>
 
@@ -152,7 +143,7 @@
             }
 
             <!-- Admin Payment Actions -->
-            @if (selectedOrder.paymentStatus !== 'Paid') {
+            @if (selectedOrder.paymentStatus !== 'Paid' && selectedOrder.paymentStatus !== 'Bkash Confirmed' && selectedOrder.paymentStatus !== 'COD Confirmed') {
             <div class="mt-3 border-top-1 surface-border pt-3">
                 <h4 class="mb-2">Payment Actions</h4>
 

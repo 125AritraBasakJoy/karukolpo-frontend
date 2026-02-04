@@ -153,25 +153,26 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  updateStatus(order: Order, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled') {
-    if (status === 'Cancelled' || status === 'Confirmed') {
-      this.orderService.updateOrderStatus(order.id!, status).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
-          this.loadOrders();
-          if (this.selectedOrder && this.selectedOrder.id === order.id) {
-            this.selectedOrder.status = status;
-          }
-        },
-        error: (err) => {
-          console.error(`Failed to update order status to ${status}`, err);
-          const errorMsg = err.error?.detail || 'Failed to update order status.';
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: errorMsg });
+  updateStatus(order: Order, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed') {
+    this.orderService.updateOrderStatus(order.id!, status as any).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
+        
+        // Update local state
+        this.orders.update(currentOrders => currentOrders.map(o => 
+          o.id === order.id ? { ...o, status: status } : o
+        ));
+        
+        if (this.selectedOrder && this.selectedOrder.id === order.id) {
+          this.selectedOrder.status = status;
         }
-      });
-    } else {
-      this.messageService.add({ severity: 'warn', summary: 'Not Supported', detail: 'Only confirmation and cancellation are supported via API currently.' });
-    }
+      },
+      error: (err) => {
+        console.error(`Failed to update order status to ${status}`, err);
+        const errorMsg = err.error?.detail || 'Failed to update order status.';
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: errorMsg });
+      }
+    });
   }
 
   adminConfirmPayment(order: Order) {
@@ -188,11 +189,19 @@ export class OrdersComponent implements OnInit {
       this.paymentService.verifyPayment(orderId).subscribe({
         next: (res) => {
           console.log('Verify Success:', res);
-          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated to Paid' });
-          this.loadOrders();
+          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated to Bkash Confirmed' });
+          
+          const newPaymentStatus = 'Bkash Confirmed';
+          
+          // Update modal
           if (this.selectedOrder && this.selectedOrder.id === order.id) {
-            this.selectedOrder.paymentStatus = 'Paid';
+            this.selectedOrder.paymentStatus = newPaymentStatus;
           }
+          
+          // Update list locally to avoid stale data from immediate reload
+          this.orders.update(currentOrders => currentOrders.map(o => 
+            o.id === order.id ? { ...o, paymentStatus: newPaymentStatus } : o
+          ));
         },
         error: (err) => {
           console.error('Admin payment verification failed', err);
@@ -201,16 +210,22 @@ export class OrdersComponent implements OnInit {
       });
     } else {
       console.log('Else block (not bkash or mismatched case):', order.paymentMethod);
-      // Fallback for COD or others if needed, though COD is auto-confirmed usually.
-      // If we want to mark COD as "Paid" (money collected), we might need a different flow or same verify endpoint?
-      // Assuming verify works for upgrading status to Paid generally.
+      // Fallback for COD or others if needed
       this.paymentService.verifyPayment(orderId).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated to Paid' });
-          this.loadOrders();
+          
+          const newStatus = 'Paid';
+
+          // Update modal
           if (this.selectedOrder && this.selectedOrder.id === order.id) {
-            this.selectedOrder.paymentStatus = 'Paid';
+            this.selectedOrder.paymentStatus = newStatus;
           }
+
+          // Update list locally
+          this.orders.update(currentOrders => currentOrders.map(o => 
+            o.id === order.id ? { ...o, paymentStatus: newStatus } : o
+          ));
         },
         error: (err) => {
           console.error('Admin payment verification failed', err);
@@ -223,7 +238,9 @@ export class OrdersComponent implements OnInit {
   getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
     switch (status) {
       case 'Confirmed':
-        return 'success';
+        return 'info'; // Changed to info to distinguish from Completed
+      case 'Completed':
+        return 'success'; // Completed is green
       case 'Shipping':
         return 'info';
       case 'Delivered':

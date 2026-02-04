@@ -371,7 +371,8 @@ export class HomeComponent implements OnInit {
   }
 
   placeOrder() {
-    // Validation Check
+    // This method now only validates the form and opens the payment modal.
+    // Order creation is handled by submitBkashPayment() or confirmCOD().
     if (!this.isCheckoutFormValid) {
       this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Please fill all required fields correctly.' });
 
@@ -381,70 +382,15 @@ export class HomeComponent implements OnInit {
           control.control.markAsTouched();
         });
       }
-
-      // Focus Logic
-      const { fullName, email, phoneNumber, district, postalCode, fullAddress } = this.checkoutForm;
-
-      // Determine first invalid field and focus
-      let focusId = '';
-      if (!fullName) focusId = 'field_fullname';
-      else if (!phoneNumber || !this.phoneRegex.test(phoneNumber)) focusId = 'field_phone';
-      else if (!email || !this.emailRegex.test(email)) focusId = 'field_email';
-      else if (!district) focusId = 'field_district';
-      // Postal code optional: focus only if partially filled and invalid
-      else if (postalCode && !this.postalCodeRegex.test(postalCode)) focusId = 'field_postal';
-      else if (!fullAddress) focusId = 'field_address';
-
-      if (focusId) {
-        setTimeout(() => {
-          const element = document.getElementById(focusId);
-          if (element) {
-            element.focus();
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 100);
-      }
       return;
     }
 
-    // Create Order Immediately
-    this.loading.set(true);
-    
-    // Ensure payment method is set (default to bKash if null)
-    if (!this.selectedPaymentMethod) {
-        this.selectedPaymentMethod = 'bKash';
-    }
-
-    const order = {
-      ...this.checkoutForm,
-      items: this.cart(),
-      totalAmount: this.getTotalPrice(),
-      status: 'Pending' as 'Pending',
-      paymentMethod: this.selectedPaymentMethod,
-      paymentStatus: 'Pending' as 'Pending',
-      deliveryLocation: this.deliveryLocation,
-      deliveryCharge: this.currentDeliveryCharge,
-      orderDate: new Date()
-    };
-
-    this.orderService.createOrder(order as any).subscribe({
-      next: (orderId) => {
-        const oid = parseInt(orderId, 10);
-        this.placedOrderId = orderId;
-        this.loading.set(false);
-        this.displayCheckoutModal = false;
-
-        // Always open the success/payment modal
-        // Pre-fill phone number for bKash convenience
-        this.bkashPhone = this.checkoutForm.phoneNumber;
-        this.displayOrderSuccessModal = true;
-      },
-      error: (err) => {
-        console.error('Order creation failed', err);
-        this.showError('Failed to place order. Please try again.');
-        this.loading.set(false);
-      }
-    });
+    // Close the checkout modal and open the payment selection modal
+    this.displayCheckoutModal = false;
+    this.displayOrderSuccessModal = true;
+    this.bkashPhone = this.checkoutForm.phoneNumber;
+    // Reset placedOrderId to ensure a new order is created
+    this.placedOrderId = '';
   }
 
   trackOrder() {
@@ -600,40 +546,44 @@ export class HomeComponent implements OnInit {
     this.bkashPhone = '';
   }
 
-  confirmCOD() {
+  private prepareOrderData(paymentMethod: 'COD' | 'bKash'): any {
+    return {
+      ...this.checkoutForm,
+      items: this.cart(),
+      totalAmount: this.getTotalPrice(),
+      status: 'Pending' as 'Pending',
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentMethod === 'COD' ? 'Confirmed' : 'Pending',
+      deliveryLocation: this.deliveryLocation,
+      deliveryCharge: this.currentDeliveryCharge,
+      orderDate: new Date()
+    };
+  }
+
+  async confirmCOD() {
     this.loading.set(true);
-    const oid = parseInt(this.placedOrderId, 10);
+    const orderData = this.prepareOrderData('COD');
 
-    // Create COD payment record to finalize the order payment method
-    this.paymentService.createPayment(oid, 'cod').subscribe({
-        next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed successfully.' });
-            this.displayOrderSuccessModal = false;
-            this.displayFinalSuccessModal = true;
+    try {
+      const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
+      this.placedOrderId = orderId;
 
-            // Clear cart and reset
-            const cartItemsToReduce = [...this.cart()];
-            this.cart.set([]);
-            this.productService.reduceStock(cartItemsToReduce);
-            this.resetCheckoutForm();
-            this.loading.set(false);
-        },
-        error: (err) => {
-            console.error('COD payment creation failed', err);
-            // Fallback: If payment creation fails (e.g. backend issue), we still treat order as placed
-            // but warn the user or just proceed since the order exists.
-            // For now, let's proceed but log it.
-            this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed.' });
-            this.displayOrderSuccessModal = false;
-            this.displayFinalSuccessModal = true;
+      // Since it's COD, we can directly show success
+      this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed successfully.' });
+      this.displayOrderSuccessModal = false;
+      this.displayFinalSuccessModal = true;
 
-            const cartItemsToReduce = [...this.cart()];
-            this.cart.set([]);
-            this.productService.reduceStock(cartItemsToReduce);
-            this.resetCheckoutForm();
-            this.loading.set(false);
-        }
-    });
+      // Clear cart and reset
+      const cartItemsToReduce = [...this.cart()];
+      this.cart.set([]);
+      this.productService.reduceStock(cartItemsToReduce);
+      this.resetCheckoutForm();
+    } catch (err) {
+      console.error('COD Order creation failed', err);
+      this.showError('Failed to place order. Please try again.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   async submitBkashPayment() {
@@ -643,34 +593,37 @@ export class HomeComponent implements OnInit {
     }
 
     this.loading.set(true);
+
+    // Step 1: Create the order if it doesn't exist yet
+    if (!this.placedOrderId) {
+      const orderData = this.prepareOrderData('bKash');
+      try {
+        const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
+        this.placedOrderId = orderId;
+      } catch (err) {
+        console.error('bKash Order creation failed', err);
+        this.showError('Failed to create order before payment. Please try again.');
+        this.loading.set(false);
+        return;
+      }
+    }
+
     const oid = parseInt(this.placedOrderId, 10);
 
-    // Sanitize phone number: remove +88 or 88, keep last 11 digits
-    let cleanPhone = this.bkashPhone.replace(/\D/g, ''); // Remove all non-digits
-    if (cleanPhone.startsWith('880')) { // If it starts with 880, remove 88
-        cleanPhone = cleanPhone.substring(2);
-    } else if (cleanPhone.startsWith('0')) { // If it starts with 0, keep it as is
-        // No change needed
-    } else if (cleanPhone.length === 10) { // If it's 10 digits, prepend 0
-        cleanPhone = '0' + cleanPhone;
-    }
-    // Ensure it's 11 digits, taking the last 11 if longer (e.g., if +8801... was passed)
+    // Sanitize phone number
+    let cleanPhone = this.bkashPhone.replace(/\D/g, '');
     if (cleanPhone.length > 11) {
         cleanPhone = cleanPhone.slice(-11);
-    } else if (cleanPhone.length < 11) {
-        // This case should ideally be caught by frontend validation, but as a safeguard
-        console.warn('Phone number is less than 11 digits after sanitization:', cleanPhone);
     }
-
 
     const payload = {
         transaction_id: this.bkashTrxId.trim(),
         sender_phone: cleanPhone
     };
 
+    // Step 2: Submit the transaction details
     try {
       console.log('Submitting payment details via submitTrx...', payload);
-      // Reverting to submitTrx as per user instruction that this creates the payment
       await lastValueFrom(this.orderService.submitTrx(oid, payload));
 
       // Success Logic
@@ -683,20 +636,15 @@ export class HomeComponent implements OnInit {
       this.cart.set([]);
       this.productService.reduceStock(cartItemsToReduce);
       this.resetCheckoutForm();
-      this.loading.set(false);
-
     } catch (err: any) {
-      console.error('Payment sequence failed:', err);
-      // Try to extract more details from 400 error
-      let detailedError = 'Failed to complete payment.';
-      if (err.error) {
-          if (err.error.detail) {
-              detailedError = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
-          } else if (err.error.message) {
-              detailedError = err.error.message;
-          }
+      console.error('Payment submission failed:', err);
+      let detailedError = 'Failed to submit payment. Please check your Transaction ID and try again.';
+      if (err.error?.detail) {
+          detailedError = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
       }
       this.showError(detailedError, err.status);
+      // Note: We leave placedOrderId so the user can retry submitting the transaction
+    } finally {
       this.loading.set(false);
     }
   }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+import { Observable, Subject, forkJoin, of } from 'rxjs';
+import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { Order } from '../models/order.model';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
@@ -54,11 +54,31 @@ export class OrderService {
   /**
    * Get all orders
    * GET /orders
+   * Note: Fetches details for each order to ensure accurate status
    */
   getOrders(skip = 0, limit = 100): Observable<Order[]> {
     const query = buildListQuery(skip, limit);
     return this.apiService.get<any[]>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
       tap(orders => console.log('Raw orders from backend:', orders)),
+      switchMap(orders => {
+        if (!orders || orders.length === 0) {
+            return of([]);
+        }
+        
+        // Fetch full details for each order to ensure accurate status
+        // This addresses the issue where the list endpoint returns stale status
+        const detailRequests = orders.map(order => {
+            const id = typeof order.id === 'string' ? parseInt(order.id, 10) : order.id;
+            return this.apiService.get<any>(API_ENDPOINTS.ORDERS.GET_BY_ID(id)).pipe(
+                catchError(err => {
+                    console.error(`Failed to fetch details for order ${id}`, err);
+                    return of(order); // Fallback to list data
+                })
+            );
+        });
+        
+        return forkJoin(detailRequests);
+      }),
       map(orders => orders.map(order => this.mapBackendToFrontend(order)))
     );
   }
@@ -129,7 +149,8 @@ export class OrderService {
    */
   adminConfirmOrder(id: number | string): Observable<Order> {
     const orderId = typeof id === 'string' ? parseInt(id, 10) : id;
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(orderId), {}).pipe(
+    // Send status in body as requested
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(orderId), { status: 'confirmed' }).pipe(
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.error('Admin Confirm Order Failed. Status:', err.status);
@@ -145,8 +166,27 @@ export class OrderService {
    */
   adminCancelOrder(id: number | string): Observable<Order> {
     const orderId = typeof id === 'string' ? parseInt(id, 10) : id;
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(orderId), {}).pipe(
+    // Send status in body as requested
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(orderId), { status: 'cancelled' }).pipe(
       map(order => this.mapBackendToFrontend(order))
+    );
+  }
+
+  /**
+   * Admin: Complete Order
+   * Uses PATCH /admin/orders/{id} with status: 'completed'
+   * Since /confirm endpoint only accepts pending orders
+   */
+  adminCompleteOrder(id: number | string): Observable<Order> {
+    const orderId = typeof id === 'string' ? parseInt(id, 10) : id;
+    // Send status in body as requested
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_UPDATE(orderId), { status: 'completed' }).pipe(
+      map(order => this.mapBackendToFrontend(order)),
+      catchError((err: any) => {
+        console.error('Admin Complete Order Failed. Status:', err.status);
+        console.error('Error Body:', err.error);
+        throw err;
+      })
     );
   }
 
@@ -192,25 +232,20 @@ export class OrderService {
 
   /**
    * Update order status
+   * Uses specific endpoints for Confirmed/Cancelled/Completed
    */
-  updateOrderStatus(id: string, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed'): Observable<void> {
+  updateOrderStatus(id: string, status: 'Confirmed' | 'Cancelled' | 'Completed'): Observable<void> {
     const orderId = parseInt(id, 10);
 
-    if (status === 'Cancelled') {
-      // Use Admin Cancel endpoint
-      return this.adminCancelOrder(orderId).pipe(map(() => void 0));
-    } else if (status === 'Confirmed') {
-      // Use Admin Confirm endpoint
-      return this.adminConfirmOrder(orderId).pipe(map(() => void 0));
+    if (status === 'Confirmed') {
+        return this.adminConfirmOrder(orderId).pipe(map(() => void 0));
+    } else if (status === 'Cancelled') {
+        return this.adminCancelOrder(orderId).pipe(map(() => void 0));
     } else if (status === 'Completed') {
-      console.warn(`Status update to ${status} not supported by backend yet`);
-      return new Observable<void>(observer => {
-        observer.next();
-        observer.complete();
-      });
+        return this.adminCompleteOrder(orderId).pipe(map(() => void 0));
     }
 
-    // For other statuses, we'd need additional backend endpoints
+    // Fallback for unexpected statuses
     console.warn(`Status update to ${status} not supported by backend yet`);
     return new Observable<void>(observer => {
       observer.next();
@@ -279,10 +314,10 @@ export class OrderService {
 
     // Robust payment status extraction
     let rawPaymentStatus: string | undefined;
-    if (backendOrder.payment_status) {
-      rawPaymentStatus = backendOrder.payment_status;
-    } else if (backendOrder.payment && backendOrder.payment.status) {
+    if (backendOrder.payment && backendOrder.payment.status) { // Prioritize nested payment object status
       rawPaymentStatus = backendOrder.payment.status;
+    } else if (backendOrder.payment_status) {
+      rawPaymentStatus = backendOrder.payment_status;
     } else if (backendOrder.paymentStatus) {
       rawPaymentStatus = backendOrder.paymentStatus;
     }
@@ -305,11 +340,20 @@ export class OrderService {
         paymentStatus = 'COD Confirmed';
     }
 
+    // Map backend status first
+    const orderStatus = this.mapBackendStatus(backendOrder.status);
+
     // bKash specific mapping
     if (paymentMethod && paymentMethod.toLowerCase() === 'bkash') {
         if (paymentStatus === 'Pending') {
             paymentStatus = 'Bkash Pending';
         } else if (paymentStatus === 'Paid') {
+            paymentStatus = 'Bkash Confirmed';
+        }
+        
+        // Infer payment status from order status if payment status is missing/pending
+        // This handles the case where the API returns Order Status 'Confirmed' but no Payment Status
+        if (orderStatus === 'Confirmed' && (paymentStatus === 'Pending' || paymentStatus === 'Bkash Pending')) {
             paymentStatus = 'Bkash Confirmed';
         }
     }
@@ -355,7 +399,7 @@ export class OrderService {
         quantity: item.quantity
       })) || [],
       totalAmount: this.calculateTotal(backendOrder.items || []),
-      status: this.mapBackendStatus(backendOrder.status),
+      status: orderStatus,
       paymentMethod: paymentMethod as 'COD' | 'bKash' | null, // Allow null
       paymentStatus: paymentStatus as 'Pending' | 'Paid',
       paymentId: backendOrder.payment_id || (backendOrder.payment ? backendOrder.payment.id : undefined),
@@ -378,6 +422,9 @@ export class OrderService {
     const statusMap: Record<string, any> = {
       'pending': 'Pending',
       'confirmed': 'Confirmed',
+      'cod_confirmed': 'Confirmed', // Map cod_confirmed to Confirmed
+      'cod_processing': 'Confirmed', // Map cod_processing to Confirmed
+      'paid': 'Confirmed', // Map paid to Confirmed (if order status is paid, it's confirmed)
       'shipping': 'Shipping',
       'delivered': 'Delivered',
       'cancelled': 'Cancelled',

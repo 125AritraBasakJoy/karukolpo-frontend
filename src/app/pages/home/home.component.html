@@ -179,21 +179,7 @@
                         required.</small>
                 </div>
 
-                <div class="field">
-                    <label>Delivery Location</label>
-                    <div class="flex gap-3">
-                        <div class="flex align-items-center">
-                            <p-radioButton name="delivery" value="Inside Dhaka" [(ngModel)]="deliveryLocation"
-                                (onClick)="updateDeliveryCharge()"></p-radioButton>
-                            <label class="ml-2">Inside Dhaka</label>
-                        </div>
-                        <div class="flex align-items-center">
-                            <p-radioButton name="delivery" value="Outside Dhaka" [(ngModel)]="deliveryLocation"
-                                (onClick)="updateDeliveryCharge()"></p-radioButton>
-                            <label class="ml-2">Outside Dhaka</label>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div class="formgrid grid">
                     <div class="field col-6">
@@ -201,7 +187,7 @@
                         <p-dropdown inputId="field_district" [options]="districts" optionLabel="name" optionValue="name"
                             [(ngModel)]="checkoutForm.district" (onChange)="onDistrictChange($event)"
                             placeholder="Select District" appendTo="body" required #district="ngModel"
-                            styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
+                            styleClass="w-full" [style]="{'width':'100%'}" [filter]="true" filterBy="name"></p-dropdown>
                         <small class="p-error" *ngIf="district.invalid && (district.dirty || district.touched)">District
                             is required.</small>
                     </div>
@@ -209,8 +195,8 @@
                         <label>Sub-District <span class="text-red-500" *ngIf="subDistricts.length > 0">*</span></label>
                         <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
                             placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
-                            [required]="subDistricts.length > 0" styleClass="w-full"
-                            [style]="{'width':'100%'}"></p-dropdown>
+                            [required]="subDistricts.length > 0" styleClass="w-full" [style]="{'width':'100%'}"
+                            [filter]="true"></p-dropdown>
                     </div>
                 </div>
                 <div class="field">
@@ -287,7 +273,7 @@
 
 <!-- Order Success & Payment Selection Modal -->
 <p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}"
-    header="Order Created!" [closable]="false" styleClass="premium-dialog">
+    header="Order Created!" [closable]="false" styleClass="premium-dialog" (onShow)="selectedPaymentMethod = null">
     <div class="p-fluid">
         <div class="text-center mb-4">
             <div class="flex justify-content-center mb-3">
@@ -307,42 +293,42 @@
                 <div class="col-6">
                     <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
                         [class.active]="selectedPaymentMethod === 'COD'" (click)="selectedPaymentMethod = 'COD'">
-                        <div class="bg-green-100 p-3 border-circle">
-                            <i class="pi pi-money-bill text-3xl text-green-600"></i>
+                        <div class="bg-primary-reverse-100 p-3 border-circle">
+                            <i class="pi pi-money-bill text-3xl text-primary"></i>
                         </div>
-                        <div class="font-bold text-900">Cash on Delivery</div>
+                        <div class="font-bold text-color">Cash on Delivery</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
                         [class.active]="selectedPaymentMethod === 'bKash'" (click)="selectedPaymentMethod = 'bKash'">
-                        <div class="bg-pink-100 p-3 border-circle">
+                        <div class="bg-pink-900/20 p-3 border-circle">
                             <img src="assets/bkash-logo.png" alt="bKash" height="30">
                         </div>
-                        <div class="font-bold text-900">bKash Payment</div>
+                        <div class="font-bold text-color">bKash Payment</div>
                     </div>
                 </div>
             </div>
 
             <!-- bKash Details Area -->
             <div *ngIf="selectedPaymentMethod === 'bKash'"
-                class="bkash-details-area mt-4 p-4 border-round-xl bg-white shadow-1 border-1 surface-border">
+                class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
                 <div class="text-center mb-4">
                     <div
-                        class="inline-flex align-items-center justify-content-center bg-pink-50 px-3 py-1 border-round-pill mb-3">
-                        <span class="text-pink-600 font-bold text-sm">Scan to Pay</span>
+                        class="inline-flex align-items-center justify-content-center surface-100 px-3 py-1 border-round-pill mb-3">
+                        <span class="text-pink-400 font-bold text-sm">Scan to Pay</span>
                     </div>
                     <img src="assets/bkash-qr.png" alt="bKash QR" width="160"
-                        class="border-round shadow-2 block mx-auto">
+                        class="border-round shadow-2 block mx-auto bg-white p-2">
                 </div>
 
                 <div class="field mb-4">
-                    <label class="font-bold text-900 block mb-2">Your bKash Number</label>
+                    <label class="font-bold text-color block mb-2">Your bKash Number</label>
                     <input pInputText [(ngModel)]="bkashPhone" placeholder="017XXXXXXXX" maxlength="11"
                         class="w-full py-3">
                 </div>
                 <div class="field mb-4">
-                    <label class="font-bold text-900 block mb-2">Transaction ID</label>
+                    <label class="font-bold text-color block mb-2">Transaction ID</label>
                     <input pInputText [(ngModel)]="bkashTrxId" placeholder="Enter 10-digit ID" class="w-full py-3">
                 </div>
                 <button pButton label="Complete Payment" icon="pi pi-shield"
@@ -352,8 +338,9 @@
 
             <!-- COD Action Area -->
             <div *ngIf="selectedPaymentMethod === 'COD'" class="mt-4 bkash-details-area">
-                <div class="surface-50 p-3 border-round-lg mb-4 text-center border-1 surface-border">
-                    <p class="text-700 m-0">You will pay the total amount to the delivery person when your package
+                <div class="surface-section p-3 border-round-lg mb-4 text-center border-1 surface-border">
+                    <p class="text-color-secondary m-0">You will pay the total amount to the delivery person when your
+                        package
                         arrives.</p>
                 </div>
                 <button pButton label="Confirm COD Order" icon="pi pi-check" class="p-button-lg w-full"

@@ -53,12 +53,15 @@ export const ORDERS_API = {
     LIST: 'orders',
     CREATE: 'orders',
     GET_BY_ID: (orderId: number) => `orders/${orderId}`,
+    UPDATE: (orderId: number) => `orders/${orderId}`, // Generic update endpoint
     CANCEL: (orderId: number) => `orders/${orderId}/cancel`,
     TRACK_BY_PHONE: (phone: string) => `orders/track?phone=${encodeURIComponent(phone)}`,
 
     // Admin Order Actions
+    ADMIN_UPDATE: (orderId: number) => `admin/orders/${orderId}`, // Generic Admin Update
     ADMIN_CONFIRM: (orderId: number) => `admin/orders/${orderId}/confirm`,
     ADMIN_CANCEL: (orderId: number) => `admin/orders/${orderId}/cancel`,
+    ADMIN_COMPLETE: (orderId: number) => `admin/orders/${orderId}/complete`,
 } as const;
 
 /**
@@ -106,22 +109,3 @@ export const API_ENDPOINTS = {
     PAYMENTS: PAYMENTS_API,
     ADMIN: ADMIN_API,
 } as const;
-
-/**
- * Example usage:
- * 
- * // In a service:
- * import { API_ENDPOINTS } from '@core/api-endpoints';
- * 
- * // List products
- * this.http.get(API_ENDPOINTS.PRODUCTS.LIST);
- * 
- * // Get product by ID
- * this.http.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(123));
- * 
- * // Create order
- * this.http.post(API_ENDPOINTS.ORDERS.CREATE, orderData);
- * 
- * // Admin login
- * this.http.post(API_ENDPOINTS.ADMIN.LOGIN, { email, password });
- */

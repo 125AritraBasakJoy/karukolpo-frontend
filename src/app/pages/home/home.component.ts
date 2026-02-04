@@ -87,7 +87,7 @@ export class HomeComponent implements OnInit {
 
   // Payment Flow State
   displayPaymentModal = false;
-  selectedPaymentMethod: 'COD' | 'bKash' | null = 'bKash';
+  selectedPaymentMethod: 'COD' | 'bKash' | null = null;
   bkashTrxId = '';
   bkashPhone = '';
   displayFinalSuccessModal = false;
@@ -101,7 +101,6 @@ export class HomeComponent implements OnInit {
   // Delivery Logic
   deliveryLocation: 'Inside Dhaka' | 'Outside Dhaka' = 'Inside Dhaka';
   currentDeliveryCharge = 0;
-  deliveryCharges = { insideDhaka: 60, outsideDhaka: 120 };
 
   districts: District[] = districts;
   subDistricts: string[] = [];
@@ -175,14 +174,24 @@ export class HomeComponent implements OnInit {
   }
 
   loadDeliveryCharges() {
-    this.deliveryCharges = this.deliveryService.getCharges();
-    this.updateDeliveryCharge();
+    // Initial default or based on current district if any
+    this.currentDeliveryCharge = 130;
   }
 
-  updateDeliveryCharge() {
-    this.currentDeliveryCharge = this.deliveryLocation === 'Inside Dhaka'
-      ? this.deliveryCharges.insideDhaka
-      : this.deliveryCharges.outsideDhaka;
+  onDistrictChange(event: any) {
+    const districtName = event.value;
+    const selectedDistrict = this.districts.find(d => d.name === districtName);
+    this.subDistricts = selectedDistrict ? selectedDistrict.subDistricts : [];
+    this.checkoutForm.subDistrict = '';
+
+    // Automated Delivery Charge Calculation
+    if (districtName === 'Tangail') {
+      this.currentDeliveryCharge = 70;
+      this.deliveryLocation = 'Inside Dhaka'; // Mapping Tangail to 'Inside Dhaka' logic or just updating charge
+    } else {
+      this.currentDeliveryCharge = 130;
+      this.deliveryLocation = 'Outside Dhaka';
+    }
   }
 
   loadProducts() {
@@ -323,11 +332,7 @@ export class HomeComponent implements OnInit {
     return this.cart().reduce((total, item) => total + item.quantity, 0);
   }
 
-  onDistrictChange(event: any) {
-    const selectedDistrict = this.districts.find(d => d.name === event.value);
-    this.subDistricts = selectedDistrict ? selectedDistrict.subDistricts : [];
-    this.checkoutForm.subDistrict = '';
-  }
+
 
   // Regex Patterns for Template Binding
   emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -366,7 +371,7 @@ export class HomeComponent implements OnInit {
       return;
     }
     // Reset payment method to default to ensure modal logic works
-    this.selectedPaymentMethod = 'bKash';
+    this.selectedPaymentMethod = null;
     this.displayCheckoutModal = true;
   }
 
@@ -388,6 +393,7 @@ export class HomeComponent implements OnInit {
     // Close the checkout modal and open the payment selection modal
     this.displayCheckoutModal = false;
     this.displayOrderSuccessModal = true;
+    this.selectedPaymentMethod = null; // Reset payment method
     this.bkashPhone = this.checkoutForm.phoneNumber;
     // Reset placedOrderId to ensure a new order is created
     this.placedOrderId = '';
@@ -613,12 +619,12 @@ export class HomeComponent implements OnInit {
     // Sanitize phone number
     let cleanPhone = this.bkashPhone.replace(/\D/g, '');
     if (cleanPhone.length > 11) {
-        cleanPhone = cleanPhone.slice(-11);
+      cleanPhone = cleanPhone.slice(-11);
     }
 
     const payload = {
-        transaction_id: this.bkashTrxId.trim(),
-        sender_phone: cleanPhone
+      transaction_id: this.bkashTrxId.trim(),
+      sender_phone: cleanPhone
     };
 
     // Step 2: Submit the transaction details
@@ -640,7 +646,7 @@ export class HomeComponent implements OnInit {
       console.error('Payment submission failed:', err);
       let detailedError = 'Failed to submit payment. Please check your Transaction ID and try again.';
       if (err.error?.detail) {
-          detailedError = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
+        detailedError = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
       }
       this.showError(detailedError, err.status);
       // Note: We leave placedOrderId so the user can retry submitting the transaction

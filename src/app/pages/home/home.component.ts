@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+import { forkJoin, map, catchError, of, lastValueFrom } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DataViewModule } from 'primeng/dataview';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -29,7 +30,6 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag'; // Added TagModule
 import JsBarcode from 'jsbarcode';
-import { forkJoin, map, catchError, of } from 'rxjs';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 import { Order } from '../../models/order.model';
 
@@ -52,7 +52,7 @@ import { Order } from '../../models/order.model';
     SkeletonModule,
     BadgeModule,
     TagModule, // Added TagModule
-    ThemeToggleComponent
+
   ],
   providers: [MessageService],
   templateUrl: './home.component.html',
@@ -81,8 +81,16 @@ export class HomeComponent implements OnInit {
     district: '',
     subDistrict: '',
     postalCode: '',
-    fullAddress: ''
+    fullAddress: '',
+    additionalInfo: ''
   };
+
+  // Payment Flow State
+  displayPaymentModal = false;
+  selectedPaymentMethod: 'COD' | 'bKash' | null = 'bKash';
+  bkashTrxId = '';
+  bkashPhone = '';
+  displayFinalSuccessModal = false;
 
   // Track Order
   trackPhone = '';
@@ -138,27 +146,14 @@ export class HomeComponent implements OnInit {
   ) { }
 
   openPaymentModal(orderId: string) {
-    // Deprecated: Payment flow integrated into checkout
+    // Deprecated
   }
 
-  displayPaymentModal = false;
-  selectedPaymentMethod: 'COD' | 'bKash' | null = null;
-  bkashQrCodeInModal: string | null = null;
-
-  // New combined state
   isPaymentSelected = false;
 
   selectPaymentMethod(method: 'COD' | 'bKash') {
-    // Reset payment ID if method changes to ensure new payment creation
-    if (this.selectedPaymentMethod !== method) {
-      this.currentPaymentId = null;
-    }
-
     this.selectedPaymentMethod = method;
     this.isPaymentSelected = true;
-    if (method === 'bKash') {
-      this.bkashQrCodeInModal = this.paymentService.getQrCode();
-    }
   }
 
   // Replaces confirmPayment and integration into placeOrder
@@ -410,65 +405,54 @@ export class HomeComponent implements OnInit {
       return;
     }
 
-    // Step 1: Create Order
-    // Payment method is not selected yet, so we send defaults or null if allowed.
-    // OrderService maps paymentMethod to 'COD' by default if missing, which is fine for initial creation.
-
+    // Create Order Immediately
+    this.loading.set(true);
     const order = {
       ...this.checkoutForm,
       items: this.cart(),
       totalAmount: this.getTotalPrice(),
       status: 'Pending' as 'Pending',
-      paymentMethod: null, // Default to null, will be updated by payment creation
+      paymentMethod: this.selectedPaymentMethod || 'bKash', // Default to bKash if null to ensure 422 pass, or handle UI selection
       paymentStatus: 'Pending' as 'Pending',
       deliveryLocation: this.deliveryLocation,
       deliveryCharge: this.currentDeliveryCharge,
       orderDate: new Date()
     };
 
-    try {
-      this.orderService.createOrder(order as any).subscribe({
-        next: (orderId) => {
-          console.log('Order created successfully:', orderId);
-          this.placedOrderId = orderId;
+    this.orderService.createOrder(order as any).subscribe({
+      next: (orderId) => {
+        const oid = parseInt(orderId, 10);
+        this.placedOrderId = orderId;
+        this.loading.set(false);
+        this.displayCheckoutModal = false;
 
-          // Close checkout modal and open success modal (Waiting for Approval)
-          this.displayCheckoutModal = false;
+        if (this.selectedPaymentMethod === 'bKash') {
+          // Open Payment Success Modal which contains bKash inputs (based on previous flow)
+          // Or ensure we show the bKash input UI
+          this.bkashPhone = this.checkoutForm.phoneNumber;
           this.displayOrderSuccessModal = true;
-
-          // Generate barcode after modal is visible
-          setTimeout(() => {
-            try {
-              const element = document.getElementById("barcode");
-              if (element) {
-                JsBarcode(element, this.placedOrderId, {
-                  format: "CODE128",
-                  lineColor: "#000",
-                  width: 2,
-                  height: 40,
-                  displayValue: true
-                });
-              }
-            } catch (e) {
-              console.error("Error generating barcode:", e);
-            }
-          }, 300);
-
-          // Clear cart
+        } else {
+          // COD Success
+          this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your order has been placed successfully.' });
+          this.displayFinalSuccessModal = true;
+          // Clear cart and reset
           const cartItemsToReduce = [...this.cart()];
           this.cart.set([]);
-          this.resetCheckoutForm();
           this.productService.reduceStock(cartItemsToReduce);
-        },
-        error: (err) => {
-          console.error('Order creation failed:', err);
-          this.showError('Failed to place order. Please try again.');
+          this.resetCheckoutForm();
         }
-      });
-    } catch (e: any) {
-      console.error('Exception in placeOrder:', e);
-      this.showError('Error: ' + (e.message || e));
-    }
+      },
+      error: (err) => {
+        console.error('Order creation failed', err);
+        this.showError('Failed to place order. Please try again.');
+        this.loading.set(false);
+      }
+    });
+
+    // Old flow removal
+    // this.displayCheckoutModal = false;
+    // this.selectedPaymentMethod = null;
+    // ...
   }
 
   trackOrder() {
@@ -593,8 +577,17 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  showError(msg: string) {
-    this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: msg });
+  showError(msg: any, status?: number) {
+    let detail = msg;
+    if (typeof msg === 'object' && msg !== null) {
+      try {
+        detail = JSON.stringify(msg);
+      } catch (e) {
+        detail = String(msg);
+      }
+    }
+    const summary = status ? `Error (${status})` : 'Validation Error';
+    this.messageService.add({ severity: 'error', summary: summary, detail: detail });
   }
 
   resetCheckoutForm() {
@@ -605,8 +598,107 @@ export class HomeComponent implements OnInit {
       district: '',
       subDistrict: '',
       postalCode: '',
-      fullAddress: ''
+      fullAddress: '',
+      additionalInfo: ''
     };
+    this.subDistricts = [];
+    this.isPaymentSelected = false;
+    this.selectedPaymentMethod = null;
+    this.bkashTrxId = '';
+    this.bkashPhone = '';
+  }
+
+  confirmCOD() {
+    this.loading.set(true);
+    const order = {
+      ...this.checkoutForm,
+      items: this.cart(),
+      totalAmount: this.getTotalPrice(),
+      status: 'Pending' as 'Pending',
+      paymentMethod: 'COD',
+      paymentStatus: 'Pending' as 'Pending',
+      deliveryLocation: this.deliveryLocation,
+      deliveryCharge: this.currentDeliveryCharge,
+      orderDate: new Date()
+    };
+
+    this.orderService.createOrder(order as any).subscribe({
+      next: (orderId) => {
+        const oid = parseInt(orderId, 10);
+        this.placedOrderId = orderId;
+
+        // COD: No extra API call needed as per requirement.
+        // Just show success.
+        this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed successfully.' });
+        this.displayOrderSuccessModal = false;
+        this.displayFinalSuccessModal = true;
+
+        // Clear cart and reset
+        const cartItemsToReduce = [...this.cart()];
+        this.cart.set([]);
+        this.productService.reduceStock(cartItemsToReduce);
+        this.resetCheckoutForm();
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Order creation failed for COD', err);
+        this.showError('Failed to place order. Please try again.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  async submitBkashPayment() {
+    if (!this.bkashTrxId || !this.bkashPhone) {
+      this.showError('Transaction ID and Phone Number are required');
+      return;
+    }
+
+    this.loading.set(true);
+    const oid = parseInt(this.placedOrderId, 10);
+
+    // Sanitize phone number: remove +88 or 88, keep last 11 digits
+    let cleanPhone = this.bkashPhone.replace(/\D/g, '');
+    if (cleanPhone.length > 11) {
+        cleanPhone = cleanPhone.slice(-11);
+    }
+
+    const payload = {
+        transaction_id: this.bkashTrxId.trim(),
+        sender_phone: cleanPhone
+    };
+
+    try {
+      console.log('Submitting payment details via submitTrx...', payload);
+      // Reverting to submitTrx as per user instruction that this creates the payment
+      await lastValueFrom(this.orderService.submitTrx(oid, payload));
+
+      // Success Logic
+      this.messageService.add({ severity: 'success', summary: 'Payment Submitted', detail: 'Your payment has been submitted for verification.' });
+      this.displayOrderSuccessModal = false;
+      this.displayFinalSuccessModal = true;
+
+      // Clear cart and reset
+      const cartItemsToReduce = [...this.cart()];
+      this.cart.set([]);
+      this.productService.reduceStock(cartItemsToReduce);
+      this.resetCheckoutForm();
+      this.loading.set(false);
+
+    } catch (err: any) {
+      console.error('Payment sequence failed:', err);
+      // Try to extract more details from 400 error
+      let detailedError = 'Failed to complete payment.';
+      if (err.error) {
+          if (err.error.detail) {
+              detailedError = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
+          } else if (err.error.message) {
+              detailedError = err.error.message;
+          }
+      }
+      this.showError(detailedError, err.status);
+      this.loading.set(false);
+    }
   }
 
   isOutOfStock(product: Product): boolean {

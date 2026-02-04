@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
 import { Order } from '../models/order.model';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
@@ -130,7 +130,12 @@ export class OrderService {
   adminConfirmOrder(id: number | string): Observable<Order> {
     const orderId = typeof id === 'string' ? parseInt(id, 10) : id;
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(orderId), {}).pipe(
-      map(order => this.mapBackendToFrontend(order))
+      map(order => this.mapBackendToFrontend(order)),
+      catchError((err: any) => {
+        console.error('Admin Confirm Order Failed. Status:', err.status);
+        console.error('Error Body:', err.error);
+        throw err;
+      })
     );
   }
 
@@ -162,6 +167,27 @@ export class OrderService {
     const oId = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
     const pId = typeof paymentId === 'string' ? parseInt(paymentId, 10) : paymentId;
     return this.apiService.patch<any>(API_ENDPOINTS.PAYMENTS.CONFIRM(oId, pId), confirmData);
+  }
+
+  /**
+   * Submit Transaction ID (bKash flow)
+   * POST /orders/{order_id}/payment/submit
+   */
+  submitTrx(orderId: number | string, data: any): Observable<any> {
+    const id = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
+    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(id), data);
+  }
+
+  /**
+   * Submit COD Selection (Auto-confirm flow)
+   * POST /orders/{order_id}/payment/submit
+   */
+  submitCOD(orderId: number | string): Observable<any> {
+    const id = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
+    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(id), {
+      transaction_id: 'COD_AUTO_CONFIRMED',
+      sender_phone: 'COD'
+    });
   }
 
   /**
@@ -209,20 +235,25 @@ export class OrderService {
    * Map frontend order format to backend format
    */
   private mapFrontendToBackend(order: Omit<Order, 'id'>): any {
-    return {
+    const payload = {
       address: {
         full_name: order.fullName,
         phone: order.phoneNumber,
         district: order.district,
         subdistrict: order.subDistrict || '',
         address_line: order.fullAddress,
-        additional_info: order.postalCode || null
+        additional_info: order.additionalInfo || '' // Schema requires string, null causes 422
       },
       items: order.items.map(item => ({
         product_id: typeof item.product.id === 'string' ? parseInt(item.product.id, 10) : item.product.id,
         quantity: item.quantity
-      }))
+      })),
+      // strictly use lowercase 'bkash'
+      payment_method: order.paymentMethod ? (order.paymentMethod.toLowerCase() === 'bkash' ? 'bkash' : order.paymentMethod) : null
     };
+
+    console.log('Final Order Payload:', JSON.stringify(payload, null, 2));
+    return payload;
   }
 
   /**
@@ -232,40 +263,54 @@ export class OrderService {
     // Robust payment method extraction
     let paymentMethod = null; // Default to null instead of 'COD'
     if (backendOrder.payment_method) {
-        paymentMethod = backendOrder.payment_method;
+      paymentMethod = backendOrder.payment_method;
     } else if (backendOrder.payment && backendOrder.payment.payment_method) {
-        paymentMethod = backendOrder.payment.payment_method;
+      paymentMethod = backendOrder.payment.payment_method;
     } else if (backendOrder.paymentMethod) {
-        paymentMethod = backendOrder.paymentMethod;
+      paymentMethod = backendOrder.paymentMethod;
     }
 
     // Robust payment status extraction
-    let paymentStatus = 'Pending';
+    let rawPaymentStatus: string | undefined;
     if (backendOrder.payment_status) {
-        paymentStatus = backendOrder.payment_status;
+      rawPaymentStatus = backendOrder.payment_status;
     } else if (backendOrder.payment && backendOrder.payment.status) {
-        paymentStatus = backendOrder.payment.status;
+      rawPaymentStatus = backendOrder.payment.status;
     } else if (backendOrder.paymentStatus) {
-        paymentStatus = backendOrder.paymentStatus;
+      rawPaymentStatus = backendOrder.paymentStatus;
+    }
+
+    let paymentStatus = 'Pending'; // Default
+    if (rawPaymentStatus) {
+      const statusLower = rawPaymentStatus.toLowerCase().trim();
+      if (['paid', 'completed', 'complete', 'verified', 'success', 'confirmed'].includes(statusLower)) {
+        paymentStatus = 'Paid';
+      } else {
+        // Capitalize first letter for others (e.g., 'cod confirmed' -> 'Cod confirmed', later fixed in UI?)
+        // Actually, let's preserve 'COD Confirmed' casing if possible or Title Case it.
+        // Simple capitalization:
+        paymentStatus = rawPaymentStatus.charAt(0).toUpperCase() + rawPaymentStatus.slice(1);
+      }
     }
 
     // Extract transaction ID
     let transactionId = undefined;
     if (backendOrder.payment && backendOrder.payment.transaction_id) {
-        transactionId = backendOrder.payment.transaction_id;
+      transactionId = backendOrder.payment.transaction_id;
     } else if (backendOrder.transaction_id) {
-        transactionId = backendOrder.transaction_id;
+      transactionId = backendOrder.transaction_id;
     }
 
     return {
       id: backendOrder.id?.toString() || '',
       fullName: backendOrder.address?.full_name || '',
-      email: '', // Backend doesn't store email
+      email: backendOrder.address?.email || '',
       phoneNumber: backendOrder.address?.phone || '',
       district: backendOrder.address?.district || '',
       subDistrict: backendOrder.address?.subdistrict || '',
-      postalCode: backendOrder.address?.additional_info || '',
+      postalCode: backendOrder.address?.postal_code || backendOrder.address?.additional_info || '',
       fullAddress: backendOrder.address?.address_line || '',
+      additionalInfo: backendOrder.address?.additional_info || '',
       items: backendOrder.items?.map((item: any) => ({
         product: {
           id: item.product_id?.toString() || '',

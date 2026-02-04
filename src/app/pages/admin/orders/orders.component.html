@@ -9,7 +9,9 @@
                 pTooltip="Refresh Orders" tooltipPosition="bottom"></p-button>
         </div>
     </div>
-    <div *ngIf="loading()" class="mb-4">
+
+    @if (loading()) {
+    <div class="mb-4">
         <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '50rem' }">
             <ng-template pTemplate="header">
                 <tr>
@@ -47,7 +49,10 @@
             </ng-template>
         </p-table>
     </div>
-    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" *ngIf="!loading()">
+    }
+
+    @if (!loading()) {
+    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}">
         <ng-template pTemplate="header">
             <tr>
                 <th>Order ID</th>
@@ -67,10 +72,14 @@
                 <td>{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</td>
                 <td>
                     <div class="flex flex-column gap-1">
-                        <span class="font-bold" *ngIf="order.paymentMethod">{{ order.paymentMethod }}</span>
-                        <span class="text-500" *ngIf="!order.paymentMethod">Pending Selection</span>
+                        @if (order.paymentMethod) {
+                        <span class="font-bold">{{ order.paymentMethod }}</span>
+                        } @else {
+                        <span class="text-500">Pending Selection</span>
+                        }
+                        <!-- Robust Status Display -->
                         <p-tag [value]="order.paymentStatus || 'Pending'"
-                            [severity]="order.paymentStatus === 'Paid' ? 'success' : 'warning'"
+                            [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified'].includes(order.paymentStatus || '') ? 'success' : 'warning'"
                             [rounded]="true"></p-tag>
                     </div>
                 </td>
@@ -102,10 +111,11 @@
             </tr>
         </ng-template>
     </p-table>
+    }
 </div>
 
-<p-dialog header="Order Details" [(visible)]="displayOrderDialog" [modal]="true" [style]="{width: '50vw'}"
-    *ngIf="selectedOrder">
+<p-dialog header="Order Details" [(visible)]="displayOrderDialog" [modal]="true" [style]="{width: '50vw'}">
+    @if (selectedOrder) {
     <div class="grid">
         <div class="col-12 md:col-6">
             <h3>Customer Info</h3>
@@ -121,40 +131,51 @@
             <p><strong>Date:</strong> {{ selectedOrder.orderDate | date:'medium' }}</p>
             <p><strong>Status:</strong> <p-tag [value]="selectedOrder.status"
                     [severity]="getSeverity(selectedOrder.status)"></p-tag></p>
-            
-            <p *ngIf="selectedOrder.paymentMethod"><strong>Payment Method:</strong>
+
+            @if (selectedOrder.paymentMethod) {
+            <p><strong>Payment Method:</strong>
                 <p-tag [value]="selectedOrder.paymentMethod"
-                    [severity]="selectedOrder.paymentMethod === 'bKash' ? 'info' : (selectedOrder.paymentMethod === 'COD' ? 'success' : 'danger')"></p-tag>
+                    [severity]="selectedOrder.paymentMethod.toLowerCase() === 'bkash' ? 'info' : (selectedOrder.paymentMethod.toLowerCase() === 'cod' ? 'success' : 'danger')"></p-tag>
             </p>
-            
+            }
+
             <p><strong>Payment Status:</strong>
                 <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
-                    [severity]="selectedOrder.paymentStatus === 'Paid' ? 'success' : 'warning'"
+                    [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified'].includes(selectedOrder.paymentStatus || '') ? 'success' : 'warning'"
                     [rounded]="true"></p-tag>
             </p>
-            <p *ngIf="selectedOrder.paymentMethod === 'bKash' && selectedOrder.transactionId">
+
+            @if (selectedOrder.paymentMethod?.toLowerCase() === 'bkash' && selectedOrder.transactionId) {
+            <p>
                 <strong>Transaction ID:</strong> {{ selectedOrder.transactionId }}
             </p>
+            }
 
             <!-- Admin Payment Actions -->
-            <div class="mt-3 border-top-1 surface-border pt-3" *ngIf="selectedOrder.paymentStatus !== 'Paid'">
+            @if (selectedOrder.paymentStatus !== 'Paid') {
+            <div class="mt-3 border-top-1 surface-border pt-3">
                 <h4 class="mb-2">Payment Actions</h4>
 
-                <!-- COD Confirmation -->
-                <button pButton label="COD Confirmed" icon="pi pi-money-bill" class="p-button-success w-full mb-2"
-                    *ngIf="selectedOrder.paymentMethod === 'COD' || selectedOrder.paymentMethod === 'cod'"
+                <!-- bKash Manual Confirmation -->
+                @if (selectedOrder.paymentMethod?.toLowerCase() === 'bkash') {
+                <button pButton label="Confirm bKash Payment" icon="pi pi-check-circle" class="p-button-primary w-full"
                     (click)="adminConfirmPayment(selectedOrder)"></button>
+                }
 
-                <!-- Online Payment Confirmation -->
-                <button pButton label="Online Payment Confirmed" icon="pi pi-check-circle"
-                    class="p-button-primary w-full"
-                    *ngIf="selectedOrder.paymentMethod === 'bKash' || selectedOrder.paymentMethod === 'bkash'"
-                    (click)="adminConfirmPayment(selectedOrder)"></button>
-                
-                <div *ngIf="!selectedOrder.paymentMethod" class="text-500 font-italic">
+                <!-- COD Info (No action needed as per requirement) -->
+                @if (selectedOrder.paymentMethod?.toLowerCase() === 'cod') {
+                <div class="text-green-600 font-bold p-2 surface-100 border-round text-center">
+                    <i class="pi pi-check mr-2"></i>COD Auto-Confirmed
+                </div>
+                }
+
+                @if (!selectedOrder.paymentMethod) {
+                <div class="text-500 font-italic">
                     Waiting for customer to select payment method.
                 </div>
+                }
             </div>
+            }
         </div>
         <div class="col-12">
             <h3>Items</h3>
@@ -190,6 +211,7 @@
             </p-table>
         </div>
     </div>
+    }
 </p-dialog>
 
 <p-toast></p-toast>

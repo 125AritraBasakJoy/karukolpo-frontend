@@ -55,7 +55,7 @@ export const ORDERS_API = {
     GET_BY_ID: (orderId: number) => `orders/${orderId}`,
     CANCEL: (orderId: number) => `orders/${orderId}/cancel`,
     TRACK_BY_PHONE: (phone: string) => `orders/track?phone=${encodeURIComponent(phone)}`,
-    
+
     // Admin Order Actions
     ADMIN_CONFIRM: (orderId: number) => `admin/orders/${orderId}/confirm`,
     ADMIN_CANCEL: (orderId: number) => `admin/orders/${orderId}/cancel`,
@@ -67,6 +67,8 @@ export const ORDERS_API = {
 export const PAYMENTS_API = {
     CREATE: (orderId: number) => `orders/${orderId}/payments`,
     CONFIRM: (orderId: number, paymentId: number) => `orders/${orderId}/payments/${paymentId}/confirm`,
+    SUBMIT_TRX: (orderId: number) => `orders/${orderId}/payment/submit`,
+    VERIFY: (orderId: number) => `orders/${orderId}/payment/verify`,
     WEBHOOK: (orderId: number) => `orders/${orderId}/payments/payments/webhook`,
 } as const;
 

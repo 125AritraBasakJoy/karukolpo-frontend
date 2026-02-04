@@ -51,10 +51,20 @@ export class PaymentService {
     confirmPayment(orderId: number | string, paymentId: number | string, transactionId: string): Observable<Payment> {
         const oId = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
         const pId = typeof paymentId === 'string' ? parseInt(paymentId, 10) : paymentId;
-        
+
         const payload = { transaction_id: transactionId.trim() };
         console.log('Confirming payment:', payload);
-        
+
         return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.CONFIRM(oId, pId), payload);
+    }
+
+    /**
+     * Verify a payment (Admin)
+     * PATCH /orders/{order_id}/payment/verify
+     */
+    verifyPayment(orderId: number | string, payload: any = {}): Observable<Payment> {
+        const oId = typeof orderId === 'string' ? parseInt(orderId, 10) : orderId;
+        console.log('Verifying payment for order:', oId, 'Payload:', payload);
+        return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.VERIFY(oId), payload);
     }
 }

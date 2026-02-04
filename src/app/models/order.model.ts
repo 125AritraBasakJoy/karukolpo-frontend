@@ -19,5 +19,6 @@ export interface Order {
   bkashNumber?: string;
   deliveryLocation?: string;
   deliveryCharge?: number;
+  additionalInfo?: string;
   orderDate: Date;
 }

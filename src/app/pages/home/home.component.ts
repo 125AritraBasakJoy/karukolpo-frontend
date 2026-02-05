@@ -28,10 +28,12 @@ import { Category } from '../../models/category.model';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { BadgeModule } from 'primeng/badge';
-import { TagModule } from 'primeng/tag'; // Added TagModule
+import { TagModule } from 'primeng/tag';
 import JsBarcode from 'jsbarcode';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 import { Order } from '../../models/order.model';
+import { CartService } from '../../services/cart.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -51,16 +53,14 @@ import { Order } from '../../models/order.model';
     RadioButtonModule,
     SkeletonModule,
     BadgeModule,
-    TagModule, // Added TagModule
-
+    TagModule,
   ],
-  providers: [MessageService],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
   products = signal<Product[]>([]);
-  cart = signal<CartItem[]>([]);
+  // cart = signal<CartItem[]>([]); // Removed, using CartService
   loading = signal<boolean>(false);
   displayProductModal = false;
   displayCheckoutModal = false;
@@ -141,7 +141,10 @@ export class HomeComponent implements OnInit {
     public siteConfigService: SiteConfigService,
     private paymentService: PaymentService,
     private deliveryService: DeliveryService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    public cartService: CartService, // Public to access in template
+    private route: ActivatedRoute,
+    private router: Router
   ) { }
 
   openPaymentModal(orderId: string) {
@@ -167,6 +170,23 @@ export class HomeComponent implements OnInit {
     this.loadLandingPageConfig();
     this.loadDeliveryCharges();
     this.loadCategories();
+
+    // Check for checkout query param
+    this.route.queryParams.subscribe(params => {
+      if (params['checkout'] === 'true') {
+        // Wait a bit for products/cart to load if needed, but cart is local storage so it's fast
+        setTimeout(() => {
+            this.openCheckout();
+            // Clear query param so refresh doesn't reopen
+            this.router.navigate([], {
+                queryParams: {
+                    'checkout': null
+                },
+                queryParamsHandling: 'merge'
+            });
+        }, 100);
+      }
+    });
   }
 
   loadCategories() {
@@ -174,8 +194,8 @@ export class HomeComponent implements OnInit {
   }
 
   loadDeliveryCharges() {
-    // Initial default or based on current district if any
-    this.currentDeliveryCharge = 130;
+    // Initial default set to 0 as requested
+    this.currentDeliveryCharge = 0;
   }
 
   onDistrictChange(event: any) {
@@ -274,54 +294,20 @@ export class HomeComponent implements OnInit {
   }
 
   showProductDetails(product: Product) {
-    this.selectedProduct = product;
-    this.displayProductModal = true;
+    // Navigate to product details page instead of modal
+    this.router.navigate(['/products', product.id]);
   }
 
   addToCart(product: Product) {
-    // Check global stock first
-    if ((product.stock || 0) <= 0) {
-      this.messageService.add({ severity: 'error', summary: 'Out of Stock', detail: 'This product is out of stock' });
-      return;
-    }
-
-    const currentCart = this.cart();
-    const existingItem = currentCart.find(item => item.product.id === product.id);
-
-    if (existingItem) {
-      if (existingItem.quantity + 1 > (product.stock || 0)) {
-        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${product.stock} items` });
-        return;
-      }
-      existingItem.quantity++;
-    } else {
-      if (1 > (product.stock || 0)) {
-        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${product.stock} items` });
-        return;
-      }
-      this.cart.update(items => [...items, { product, quantity: 1 }]);
-    }
-    this.messageService.add({ severity: 'success', summary: 'Added to Cart', detail: `${product.name} added to cart` });
-    this.displayProductModal = false;
+    this.cartService.addToCart(product);
   }
 
   updateQuantity(item: CartItem, change: number) {
-    const newQuantity = item.quantity + change;
-
-    // Check max stock when increasing
-    if (change > 0 && newQuantity > (item.product.stock || 0)) {
-      this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Only ${item.product.stock} items available` });
-      return;
-    }
-
-    item.quantity = newQuantity;
-    if (item.quantity <= 0) {
-      this.cart.update(items => items.filter(i => i !== item));
-    }
+    this.cartService.updateQuantity(item, change);
   }
 
   getSubTotal(): number {
-    return this.cart().reduce((total, item) => total + (item.product.price * item.quantity), 0);
+    return this.cartService.subTotal();
   }
 
   getTotalPrice(): number {
@@ -329,7 +315,7 @@ export class HomeComponent implements OnInit {
   }
 
   getTotalCartItems(): number {
-    return this.cart().reduce((total, item) => total + item.quantity, 0);
+    return this.cartService.totalItems();
   }
 
 
@@ -366,7 +352,7 @@ export class HomeComponent implements OnInit {
   }
 
   openCheckout() {
-    if (this.cart().length === 0) {
+    if (this.cartService.cart().length === 0) {
       this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
       return;
     }
@@ -555,7 +541,7 @@ export class HomeComponent implements OnInit {
   private prepareOrderData(paymentMethod: 'COD' | 'bKash'): any {
     return {
       ...this.checkoutForm,
-      items: this.cart(),
+      items: this.cartService.cart(), // Use CartService
       totalAmount: this.getTotalPrice(),
       status: 'Pending' as 'Pending',
       paymentMethod: paymentMethod,
@@ -580,8 +566,8 @@ export class HomeComponent implements OnInit {
       this.displayFinalSuccessModal = true;
 
       // Clear cart and reset
-      const cartItemsToReduce = [...this.cart()];
-      this.cart.set([]);
+      const cartItemsToReduce = [...this.cartService.cart()];
+      this.cartService.clearCart(); // Use CartService
       this.productService.reduceStock(cartItemsToReduce);
       this.resetCheckoutForm();
     } catch (err) {
@@ -638,8 +624,8 @@ export class HomeComponent implements OnInit {
       this.displayFinalSuccessModal = true;
 
       // Clear cart and reset
-      const cartItemsToReduce = [...this.cart()];
-      this.cart.set([]);
+      const cartItemsToReduce = [...this.cartService.cart()];
+      this.cartService.clearCart(); // Use CartService
       this.productService.reduceStock(cartItemsToReduce);
       this.resetCheckoutForm();
     } catch (err: any) {

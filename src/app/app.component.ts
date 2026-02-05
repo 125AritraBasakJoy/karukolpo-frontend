@@ -5,16 +5,19 @@ import { MessageService } from 'primeng/api';
 import { OrderService } from './services/order.service';
 import { NotificationService } from './services/notification.service';
 import { FooterComponent } from './components/footer/footer.component';
+import { HeaderComponent } from './components/header/header.component';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastModule, FooterComponent, CommonModule],
-  providers: [MessageService],
+  imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, CommonModule],
   template: `
     <div class="app-layout">
-      <router-outlet></router-outlet>
+      <app-header *ngIf="!isAdminRoute"></app-header>
+      <div class="main-content">
+        <router-outlet></router-outlet>
+      </div>
       <app-footer *ngIf="!isAdminRoute"></app-footer>
       <p-toast position="top-right"></p-toast>
     </div>
@@ -24,6 +27,11 @@ import { filter } from 'rxjs/operators';
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
   `]
 })
@@ -60,7 +68,7 @@ export class AppComponent implements OnInit {
   }
 
   private checkRoute(url: string): void {
-    // Hide footer on admin routes
+    // Hide footer/header on admin routes
     this.isAdminRoute = url.startsWith('/admin');
   }
 }

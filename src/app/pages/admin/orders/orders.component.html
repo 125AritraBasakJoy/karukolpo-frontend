@@ -52,7 +52,7 @@
     }
 
     @if (!loading()) {
-    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}">
+    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" [paginator]="true" [rows]="100" [rowsPerPageOptions]="[10, 25, 50, 100]">
         <ng-template pTemplate="header">
             <tr>
                 <th>Order ID</th>
@@ -74,7 +74,7 @@
                     <div class="flex flex-column gap-1">
                         <!-- Robust Status Display -->
                         <p-tag [value]="order.paymentStatus || 'Pending'"
-                            [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified', 'Bkash Confirmed'].includes(order.paymentStatus || '') ? 'success' : 'warning'"
+                            [severity]="(order.paymentStatus?.toLowerCase()?.includes('paid') || order.paymentStatus?.toLowerCase()?.includes('confirmed') || order.paymentStatus?.toLowerCase()?.includes('complete') || order.paymentStatus?.toLowerCase()?.includes('verified')) ? 'success' : 'warning'"
                             [rounded]="true"></p-tag>
                     </div>
                 </td>
@@ -90,7 +90,8 @@
                             pTooltip="Confirm Order" tooltipPosition="top"></p-button>
 
                         <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="success"
-                            (onClick)="updateStatus(order, 'Completed')" *ngIf="order.status === 'Confirmed'"
+                            (onClick)="updateStatus(order, 'Completed')" 
+                            *ngIf="order.status === 'Confirmed' && order.paymentMethod?.toLowerCase() !== 'bkash'"
                             pTooltip="Mark Complete" tooltipPosition="top"></p-button>
 
                         <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
@@ -132,7 +133,7 @@
 
             <p><strong>Payment Status:</strong>
                 <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
-                    [severity]="['Paid', 'COD Confirmed', 'Complete', 'Verified', 'Bkash Confirmed'].includes(selectedOrder.paymentStatus || '') ? 'success' : 'warning'"
+                    [severity]="(selectedOrder.paymentStatus?.toLowerCase()?.includes('paid') || selectedOrder.paymentStatus?.toLowerCase()?.includes('confirmed') || selectedOrder.paymentStatus?.toLowerCase()?.includes('complete') || selectedOrder.paymentStatus?.toLowerCase()?.includes('verified')) ? 'success' : 'warning'"
                     [rounded]="true"></p-tag>
             </p>
 
@@ -143,7 +144,7 @@
             }
 
             <!-- Admin Payment Actions -->
-            @if (selectedOrder.paymentStatus !== 'Paid' && selectedOrder.paymentStatus !== 'Bkash Confirmed' && selectedOrder.paymentStatus !== 'COD Confirmed') {
+            @if (!selectedOrder.paymentStatus?.toLowerCase()?.includes('paid') && !selectedOrder.paymentStatus?.toLowerCase()?.includes('confirmed')) {
             <div class="mt-3 border-top-1 surface-border pt-3">
                 <h4 class="mb-2">Payment Actions</h4>
 

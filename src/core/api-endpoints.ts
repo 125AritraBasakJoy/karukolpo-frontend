@@ -16,23 +16,23 @@ export const API_CONFIG = {
 export const PRODUCTS_API = {
     LIST: 'products',
     CREATE: 'products',
-    GET_BY_ID: (productId: number) => `products/${productId}`,
-    UPDATE: (productId: number) => `products/${productId}`,
-    DELETE: (productId: number) => `products/${productId}`,
+    GET_BY_ID: (productId: number | string) => `products/${productId}`,
+    UPDATE: (productId: number | string) => `products/${productId}`,
+    DELETE: (productId: number | string) => `products/${productId}`,
 
     // Product Categories
-    LIST_CATEGORIES: (productId: number) => `products/${productId}/categories`,
-    ADD_CATEGORY: (productId: number, categoryId: number) => `products/${productId}/categories/${categoryId}`,
-    REMOVE_CATEGORY: (productId: number, categoryId: number) => `products/${productId}/categories/${categoryId}`,
+    LIST_CATEGORIES: (productId: number | string) => `products/${productId}/categories`,
+    ADD_CATEGORY: (productId: number | string, categoryId: number | string) => `products/${productId}/categories/${categoryId}`,
+    REMOVE_CATEGORY: (productId: number | string, categoryId: number | string) => `products/${productId}/categories/${categoryId}`,
 
     // Product Inventory
-    GET_INVENTORY: (productId: number) => `products/${productId}/inventory`,
-    UPDATE_INVENTORY: (productId: number) => `products/${productId}/inventory`,
+    GET_INVENTORY: (productId: number | string) => `products/${productId}/inventory`,
+    UPDATE_INVENTORY: (productId: number | string) => `products/${productId}/inventory`,
 
     // Product Images
-    ADD_IMAGE: (productId: number) => `products/${productId}/images`,
-    REMOVE_IMAGE: (productId: number, imageId: number) => `products/${productId}/images/${imageId}`,
-    SET_PRIMARY_IMAGE: (productId: number, imageId: number) => `products/${productId}/images/${imageId}/set-primary`,
+    ADD_IMAGE: (productId: number | string) => `products/${productId}/images`,
+    REMOVE_IMAGE: (productId: number | string, imageId: number | string) => `products/${productId}/images/${imageId}`,
+    SET_PRIMARY_IMAGE: (productId: number | string, imageId: number | string) => `products/${productId}/images/${imageId}/set-primary`,
 } as const;
 
 /**
@@ -41,9 +41,9 @@ export const PRODUCTS_API = {
 export const CATEGORIES_API = {
     LIST: 'categories',
     CREATE: 'categories',
-    GET_BY_ID: (categoryId: number) => `categories/${categoryId}`,
-    UPDATE: (categoryId: number) => `categories/${categoryId}`,
-    DELETE: (categoryId: number) => `categories/${categoryId}`,
+    GET_BY_ID: (categoryId: number | string) => `categories/${categoryId}`,
+    UPDATE: (categoryId: number | string) => `categories/${categoryId}`,
+    DELETE: (categoryId: number | string) => `categories/${categoryId}`,
 } as const;
 
 /**
@@ -52,27 +52,27 @@ export const CATEGORIES_API = {
 export const ORDERS_API = {
     LIST: 'orders',
     CREATE: 'orders',
-    GET_BY_ID: (orderId: number) => `orders/${orderId}`,
-    UPDATE: (orderId: number) => `orders/${orderId}`, // Generic update endpoint
-    CANCEL: (orderId: number) => `orders/${orderId}/cancel`,
+    GET_BY_ID: (orderId: number | string) => `orders/${orderId}`,
+    UPDATE: (orderId: number | string) => `orders/${orderId}`, // Generic update endpoint
+    CANCEL: (orderId: number | string) => `orders/${orderId}/cancel`,
     TRACK_BY_PHONE: (phone: string) => `orders/track?phone=${encodeURIComponent(phone)}`,
 
     // Admin Order Actions
-    ADMIN_UPDATE: (orderId: number) => `admin/orders/${orderId}`, // Generic Admin Update
-    ADMIN_CONFIRM: (orderId: number) => `admin/orders/${orderId}/confirm`,
-    ADMIN_CANCEL: (orderId: number) => `admin/orders/${orderId}/cancel`,
-    ADMIN_COMPLETE: (orderId: number) => `admin/orders/${orderId}/complete`,
+    ADMIN_UPDATE: (orderId: number | string) => `admin/orders/${orderId}`, // Generic Admin Update
+    ADMIN_CONFIRM: (orderId: number | string) => `admin/orders/${orderId}/confirm`,
+    ADMIN_CANCEL: (orderId: number | string) => `admin/orders/${orderId}/cancel`,
+    ADMIN_COMPLETE: (orderId: number | string) => `admin/orders/${orderId}/complete`,
 } as const;
 
 /**
  * Payment-related endpoints
  */
 export const PAYMENTS_API = {
-    CREATE: (orderId: number) => `orders/${orderId}/payments`,
-    CONFIRM: (orderId: number, paymentId: number) => `orders/${orderId}/payments/${paymentId}/confirm`,
-    SUBMIT_TRX: (orderId: number) => `orders/${orderId}/payment/submit`,
-    VERIFY: (orderId: number) => `orders/${orderId}/payment/verify`,
-    WEBHOOK: (orderId: number) => `orders/${orderId}/payments/payments/webhook`,
+    CREATE: (orderId: number | string) => `orders/${orderId}/payments`,
+    CONFIRM: (orderId: number | string, paymentId: number | string) => `orders/${orderId}/payments/${paymentId}/confirm`,
+    SUBMIT_TRX: (orderId: number | string) => `orders/${orderId}/payment/submit`,
+    VERIFY: (orderId: number | string) => `orders/${orderId}/payment/verify`,
+    WEBHOOK: (orderId: number | string) => `orders/${orderId}/payments/payments/webhook`,
 } as const;
 
 /**

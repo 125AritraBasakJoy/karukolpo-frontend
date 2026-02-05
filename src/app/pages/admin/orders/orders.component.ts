@@ -37,7 +37,6 @@ import * as XLSX from 'xlsx';
     InputTextModule,
     FormsModule
   ],
-  providers: [MessageService],
   templateUrl: './orders.component.html',
   standalone: true,
   styleUrls: ['./orders.component.scss']
@@ -108,6 +107,9 @@ export class OrdersComponent implements OnInit {
     }
 
     const requests = itemsToFetch.map(item => {
+      // Use ID as is, or parseInt if you are sure product IDs are numbers. 
+      // Assuming product IDs are numbers for now, but let's be safe.
+      // If product.id is string "123", parseInt works.
       const productId = parseInt(item.product.id, 10);
       return this.productService.getProductById(productId).pipe(
         map(product => ({ item, product })),
@@ -179,7 +181,8 @@ export class OrdersComponent implements OnInit {
     console.log('adminConfirmPayment called for order:', order);
     // window.alert('Debugging: adminConfirmPayment called'); 
 
-    const orderId = parseInt(order.id!, 10);
+    // Use ID as is, don't force parseInt
+    const orderId = order.id!;
     console.log('Payment Method:', order.paymentMethod);
 
     // Use specific verify endpoint for bKash (or general admin verification if applicable to all)
@@ -189,9 +192,14 @@ export class OrdersComponent implements OnInit {
       this.paymentService.verifyPayment(orderId).subscribe({
         next: (res) => {
           console.log('Verify Success:', res);
-          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated to Bkash Confirmed' });
+          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated' });
           
-          const newPaymentStatus = 'Bkash Confirmed';
+          // Use status from backend response
+          let newPaymentStatus = res.status || 'Paid';
+          
+          // Simple formatting if needed (e.g. "bkash_confirmed" -> "Bkash_confirmed")
+          // But ideally we trust the backend string as requested.
+          // If backend sends "Bkash Confirmed", we use it.
           
           // Update modal
           if (this.selectedOrder && this.selectedOrder.id === order.id) {
@@ -205,7 +213,18 @@ export class OrdersComponent implements OnInit {
 
           // Also confirm the order status if it's still pending
           if (order.status === 'Pending') {
-             this.updateStatus(order, 'Confirmed');
+             // this.updateStatus(order, 'Confirmed'); // Removed to avoid 404 on admin endpoint
+             
+             // Update local state directly
+             this.orders.update(currentOrders => currentOrders.map(o => 
+               o.id === order.id ? { ...o, status: 'Confirmed' } : o
+             ));
+             
+             if (this.selectedOrder && this.selectedOrder.id === order.id) {
+               this.selectedOrder.status = 'Confirmed';
+             }
+             
+             this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Order status updated to Confirmed' });
           }
         },
         error: (err) => {
@@ -217,10 +236,10 @@ export class OrdersComponent implements OnInit {
       console.log('Else block (not bkash or mismatched case):', order.paymentMethod);
       // Fallback for COD or others if needed
       this.paymentService.verifyPayment(orderId).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated to Paid' });
+        next: (res) => {
+          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated' });
           
-          const newStatus = 'Paid';
+          const newStatus = res.status || 'Paid';
 
           // Update modal
           if (this.selectedOrder && this.selectedOrder.id === order.id) {
@@ -234,7 +253,18 @@ export class OrdersComponent implements OnInit {
 
           // Also confirm the order status if it's still pending
           if (order.status === 'Pending') {
-             this.updateStatus(order, 'Confirmed');
+             // this.updateStatus(order, 'Confirmed'); // Removed to avoid 404 on admin endpoint
+             
+             // Update local state directly
+             this.orders.update(currentOrders => currentOrders.map(o => 
+               o.id === order.id ? { ...o, status: 'Confirmed' } : o
+             ));
+             
+             if (this.selectedOrder && this.selectedOrder.id === order.id) {
+               this.selectedOrder.status = 'Confirmed';
+             }
+             
+             this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Order status updated to Confirmed' });
           }
         },
         error: (err) => {

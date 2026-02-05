@@ -1,0 +1,62 @@
+<div class="container py-5 px-4">
+    <p-toast></p-toast>
+    
+    <div *ngIf="loading()" class="flex justify-content-center align-items-center h-30rem">
+        <p-progressSpinner></p-progressSpinner>
+    </div>
+
+    <div *ngIf="!loading() && product()" class="grid">
+        <!-- Image Carousel -->
+        <div class="col-12 md:col-6">
+            <div class="surface-card p-4 border-round shadow-2">
+                <p-carousel [value]="images" [numVisible]="1" [numScroll]="1" [circular]="true" 
+                    [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
+                    <ng-template let-image pTemplate="item">
+                        <div class="flex justify-content-center">
+                            <img [src]="image" [alt]="product()?.name" class="w-full border-round" 
+                                style="max-height: 500px; object-fit: contain;">
+                        </div>
+                    </ng-template>
+                </p-carousel>
+            </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="col-12 md:col-6 pl-md-5">
+            <h1 class="text-4xl font-bold mb-3">{{ product()?.name }}</h1>
+            
+            <div class="flex align-items-center gap-3 mb-4">
+                <span class="text-3xl font-bold text-primary">{{ product()?.price | currency:'BDT':'symbol-narrow' }}</span>
+                <p-tag [value]="isOutOfStock() ? 'Out of Stock' : 'In Stock'" 
+                    [severity]="isOutOfStock() ? 'danger' : 'success'"></p-tag>
+            </div>
+
+            <div class="mb-5">
+                <h3 class="text-xl font-semibold mb-2">Description</h3>
+                <p class="line-height-3 text-700">{{ product()?.description }}</p>
+            </div>
+
+            <div class="flex flex-column sm:flex-row gap-3 mt-5">
+                <button pButton label="Add to Cart" icon="pi pi-shopping-cart" 
+                    class="p-button-lg flex-1" 
+                    [disabled]="isOutOfStock()" 
+                    (click)="addToCart()"></button>
+                
+                <button pButton label="Buy Now" icon="pi pi-check-circle" 
+                    class="p-button-lg p-button-warning flex-1" 
+                    [disabled]="isOutOfStock()" 
+                    (click)="buyNow()"></button>
+            </div>
+            
+            <div class="mt-4 text-500 text-sm">
+                <i class="pi pi-info-circle mr-1"></i>
+                Delivery charges are calculated at checkout.
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="!loading() && !product()" class="text-center py-8">
+        <h2>Product not found</h2>
+        <button pButton label="Back to Home" icon="pi pi-home" routerLink="/"></button>
+    </div>
+</div>

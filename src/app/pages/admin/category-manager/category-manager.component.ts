@@ -24,7 +24,6 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         ButtonModule,
         DialogModule,
         InputTextModule,
-        InputTextarea,
         ToolbarModule,
         ToastModule,
         ConfirmDialogModule

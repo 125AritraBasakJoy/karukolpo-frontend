@@ -52,7 +52,8 @@
     }
 
     @if (!loading()) {
-    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" [paginator]="true" [rows]="100" [rowsPerPageOptions]="[10, 25, 50, 100]">
+    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" [paginator]="true" [rows]="100"
+        [rowsPerPageOptions]="[10, 25, 50, 100]">
         <ng-template pTemplate="header">
             <tr>
                 <th>Order ID</th>
@@ -74,7 +75,7 @@
                     <div class="flex flex-column gap-1">
                         <!-- Robust Status Display -->
                         <p-tag [value]="order.paymentStatus || 'Pending'"
-                            [severity]="(order.paymentStatus?.toLowerCase()?.includes('paid') || order.paymentStatus?.toLowerCase()?.includes('confirmed') || order.paymentStatus?.toLowerCase()?.includes('complete') || order.paymentStatus?.toLowerCase()?.includes('verified')) ? 'success' : 'warning'"
+                            [severity]="getPaymentSeverity(order.paymentStatus)"
                             [rounded]="true"></p-tag>
                     </div>
                 </td>
@@ -85,19 +86,24 @@
                             pTooltip="View Details" tooltipPosition="top"></p-button>
 
                         <!-- Status Actions -->
-                        <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
-                            (onClick)="updateStatus(order, 'Confirmed')" *ngIf="order.status === 'Pending'"
+                        @if (order.status === 'Pending') {
+                            <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="updateStatus(order, 'Confirmed')"
                             pTooltip="Confirm Order" tooltipPosition="top"></p-button>
+                        }
 
-                        <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="success"
-                            (onClick)="updateStatus(order, 'Completed')" 
-                            *ngIf="order.status === 'Confirmed' && order.paymentMethod?.toLowerCase() !== 'bkash'"
+                        @if (order.status === 'Confirmed' && order.paymentMethod?.toLowerCase() !== 'bkash') {
+                            <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="updateStatus(order, 'Completed')"
                             pTooltip="Mark Complete" tooltipPosition="top"></p-button>
+                        }
 
-                        <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
+                        @if (order.status !== 'Cancelled' && order.status !== 'Completed') {
+                            <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
                             (onClick)="updateStatus(order, 'Cancelled')"
-                            *ngIf="order.status !== 'Cancelled' && order.status !== 'Completed'" pTooltip="Cancel Order"
+                            pTooltip="Cancel Order"
                             tooltipPosition="top"></p-button>
+                        }
                     </div>
                 </td>
             </tr>
@@ -111,18 +117,32 @@
     <div class="grid">
         <div class="col-12 md:col-6">
             <h3>Customer Info</h3>
-            <p><strong>Name:</strong> {{ selectedOrder.fullName }}</p>
-            <p><strong>Email:</strong> {{ selectedOrder.email }}</p>
-            <p><strong>Phone:</strong> {{ selectedOrder.phoneNumber }}</p>
-            <p><strong>Address:</strong> {{ selectedOrder.fullAddress }}, {{ selectedOrder.district }} - {{
-                selectedOrder.postalCode }}</p>
+            <!-- Prefer address object if available -->
+            @if (selectedOrder.address) {
+                <p><strong>Name:</strong> {{ selectedOrder.address.full_name }}</p>
+                <p><strong>Phone:</strong> {{ selectedOrder.address.phone }}</p>
+                <p><strong>Address:</strong> {{ selectedOrder.address.address_line }}, {{ selectedOrder.address.subdistrict }}, {{ selectedOrder.address.district }}</p>
+                @if (selectedOrder.address.additional_info) {
+                    <p><strong>Additional Info:</strong> {{ selectedOrder.address.additional_info }}</p>
+                }
+            } @else {
+                <p><strong>Name:</strong> {{ selectedOrder.fullName }}</p>
+                <p><strong>Phone:</strong> {{ selectedOrder.phoneNumber }}</p>
+                @if (selectedOrder.bkashNumber) {
+                <p><strong>bKash Number:</strong> {{ selectedOrder.bkashNumber }}</p>
+                }
+                <p><strong>Address:</strong> {{ selectedOrder.fullAddress }}, {{ selectedOrder.subDistrict }} {{
+                    selectedOrder.district }} - {{ selectedOrder.postalCode }}</p>
+            }
         </div>
         <div class="col-12 md:col-6">
             <h3>Order Info</h3>
             <p><strong>Order ID:</strong> {{ selectedOrder.id }}</p>
-            <p><strong>Date:</strong> {{ selectedOrder.orderDate | date:'medium':'+0600' }}</p>
-            <p><strong>Status:</strong> <p-tag [value]="selectedOrder.status"
-                    [severity]="getSeverity(selectedOrder.status)"></p-tag></p>
+            <p><strong>Date:</strong> {{ (selectedOrder.created_at || selectedOrder.orderDate) | date:'medium' }}</p>
+            <p><strong>Status:</strong>
+                <p-tag [value]="selectedOrder.status"
+                    [severity]="selectedOrder.status === 'Pending' ? 'warning' : (selectedOrder.status === 'Cancelled' ? 'danger' : 'success')"></p-tag>
+            </p>
 
             @if (selectedOrder.paymentMethod) {
             <p><strong>Payment Method:</strong>
@@ -132,19 +152,31 @@
             }
 
             <p><strong>Payment Status:</strong>
-                <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
-                    [severity]="(selectedOrder.paymentStatus?.toLowerCase()?.includes('paid') || selectedOrder.paymentStatus?.toLowerCase()?.includes('confirmed') || selectedOrder.paymentStatus?.toLowerCase()?.includes('complete') || selectedOrder.paymentStatus?.toLowerCase()?.includes('verified')) ? 'success' : 'warning'"
+                @if (selectedOrder.payments) {
+                    <p-tag [value]="selectedOrder.payments.status || 'Pending'"
+                    [severity]="getPaymentSeverity(selectedOrder.payments.status)"
                     [rounded]="true"></p-tag>
+                } @else {
+                    <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
+                    [severity]="getPaymentSeverity(selectedOrder.paymentStatus)"
+                    [rounded]="true"></p-tag>
+                }
             </p>
 
-            @if (selectedOrder.paymentMethod?.toLowerCase() === 'bkash' && selectedOrder.transactionId) {
+            @if (selectedOrder.payments && selectedOrder.payments.transaction_id) {
+                <p><strong>Transaction ID:</strong> {{ selectedOrder.payments.transaction_id }}</p>
+            } @else if (selectedOrder.transactionId != null && selectedOrder.transactionId !== '') {
+                <p><strong>Transaction ID:</strong> {{ selectedOrder.transactionId }}</p>
+            }
+
+            @if (selectedOrder.paymentId != null) {
             <p>
-                <strong>Transaction ID:</strong> {{ selectedOrder.transactionId }}
+                <strong>Payment ID:</strong> {{ selectedOrder.paymentId }}
             </p>
             }
 
             <!-- Admin Payment Actions -->
-            @if (!selectedOrder.paymentStatus?.toLowerCase()?.includes('paid') && !selectedOrder.paymentStatus?.toLowerCase()?.includes('confirmed')) {
+            @if (!isPaymentConfirmed(selectedOrder.paymentStatus)) {
             <div class="mt-3 border-top-1 surface-border pt-3">
                 <h4 class="mb-2">Payment Actions</h4>
 
@@ -184,8 +216,10 @@
                     <tr>
                         <td>
                             <div class="flex align-items-center gap-2">
-                                <img *ngIf="item.product.imageUrl" [src]="item.product.imageUrl"
+                                @if (item.product.imageUrl) {
+                                    <img [src]="item.product.imageUrl"
                                     [alt]="item.product.name" width="40" class="shadow-2 border-round" />
+                                }
                                 <span>{{ item.product.name }}</span>
                             </div>
                         </td>

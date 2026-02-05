@@ -128,9 +128,17 @@ export class InventoryComponent implements OnInit {
         forkJoin(inventoryRequests).subscribe({
           next: (productsWithInventory: Product[]) => {
             this.products.set(productsWithInventory);
-            this.orderService.getOrders().subscribe(orders => {
-              this.updateChart(productsWithInventory, orders);
-              this.loading.set(false);
+            // Fetch orders for chart, but handle error so loading stops
+            this.orderService.getOrders().subscribe({
+              next: (orders) => {
+                this.updateChart(productsWithInventory, orders);
+                this.loading.set(false);
+              },
+              error: (err) => {
+                console.error('Failed to load orders for chart:', err);
+                // Still stop loading even if orders fail
+                this.loading.set(false);
+              }
             });
           },
           error: (err) => {

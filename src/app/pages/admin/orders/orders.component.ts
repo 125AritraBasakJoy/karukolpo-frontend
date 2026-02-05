@@ -67,11 +67,21 @@ export class OrdersComponent implements OnInit {
     this.orderService.getOrders().subscribe({
       next: (orders) => {
         // Sort by date descending
-        const sortedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        const sortedOrders = orders.sort((a, b) => {
+          const dateA = new Date(a.orderDate);
+          const dateB = new Date(b.orderDate);
+          return (isNaN(dateB.getTime()) ? 0 : dateB.getTime()) - (isNaN(dateA.getTime()) ? 0 : dateA.getTime());
+        });
         this.orders.set(sortedOrders);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error loading orders in component:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load orders. Please check your connection or try again.'
+        });
         this.loading.set(false);
       }
     });
@@ -99,7 +109,30 @@ export class OrdersComponent implements OnInit {
     this.displayOrderDialog = true;
     this.loadingDetails = true;
 
-    const itemsToFetch = this.selectedOrder!.items.filter(item => !item.product.name || item.product.name === '');
+    // Fetch fresh order details from backend to get latest payment info
+    this.orderService.getOrderById(order.id!).subscribe({
+      next: (fullOrder) => {
+        if (fullOrder) {
+          console.log('Fetched full order details:', fullOrder);
+          this.selectedOrder = fullOrder;
+        }
+        this.fetchMissingProductDetails();
+      },
+      error: (err) => {
+        console.error('Failed to fetch full order details', err);
+        // Fallback to existing data if fetch fails, but still try loading product names
+        this.fetchMissingProductDetails();
+      }
+    });
+  }
+
+  fetchMissingProductDetails() {
+    if (!this.selectedOrder) {
+      this.loadingDetails = false;
+      return;
+    }
+
+    const itemsToFetch = this.selectedOrder.items.filter(item => !item.product.name || item.product.name === '');
 
     if (itemsToFetch.length === 0) {
       this.loadingDetails = false;
@@ -121,7 +154,7 @@ export class OrdersComponent implements OnInit {
     });
 
     forkJoin(requests).subscribe(results => {
-      if (this.selectedOrder && this.selectedOrder.id === order.id) {
+      if (this.selectedOrder) {
         const updatedItems = this.selectedOrder.items.map(currentItem => {
           const result = results.find(r => r.item.product.id === currentItem.product.id);
           if (result && result.product) {
@@ -159,12 +192,12 @@ export class OrdersComponent implements OnInit {
     this.orderService.updateOrderStatus(order.id!, status as any).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
-        
+
         // Update local state
-        this.orders.update(currentOrders => currentOrders.map(o => 
+        this.orders.update(currentOrders => currentOrders.map(o =>
           o.id === order.id ? { ...o, status: status } : o
         ));
-        
+
         if (this.selectedOrder && this.selectedOrder.id === order.id) {
           this.selectedOrder.status = status;
         }
@@ -185,46 +218,44 @@ export class OrdersComponent implements OnInit {
     const orderId = order.id!;
     console.log('Payment Method:', order.paymentMethod);
 
+    // Construct payload for verification
+    const verifyPayload = {
+      id: order.paymentId || 0,
+      order_id: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId,
+      status: 'paid', // Explicitly set status to paid
+      transaction_id: order.transactionId || '',
+      payment_method: order.paymentMethod ? order.paymentMethod.toLowerCase() : 'bkash'
+    };
+
     // Use specific verify endpoint for bKash (or general admin verification if applicable to all)
     // The user specifically mentioned this for bKash
     if (order.paymentMethod?.toLowerCase() === 'bkash') {
-      console.log('Calling verifyPayment...');
-      this.paymentService.verifyPayment(orderId).subscribe({
+      console.log('Calling verifyPayment with payload:', verifyPayload);
+      this.paymentService.verifyPayment(orderId, verifyPayload).subscribe({
         next: (res) => {
           console.log('Verify Success:', res);
           this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated' });
-          
-          // Use status from backend response
+
+          // Use status from backend response or default to Paid
           let newPaymentStatus = res.status || 'Paid';
-          
+
           // Simple formatting if needed (e.g. "bkash_confirmed" -> "Bkash_confirmed")
           // But ideally we trust the backend string as requested.
           // If backend sends "Bkash Confirmed", we use it.
-          
+
           // Update modal
           if (this.selectedOrder && this.selectedOrder.id === order.id) {
             this.selectedOrder.paymentStatus = newPaymentStatus;
           }
-          
+
           // Update list locally to avoid stale data from immediate reload
-          this.orders.update(currentOrders => currentOrders.map(o => 
+          this.orders.update(currentOrders => currentOrders.map(o =>
             o.id === order.id ? { ...o, paymentStatus: newPaymentStatus } : o
           ));
 
           // Also confirm the order status if it's still pending
           if (order.status === 'Pending') {
-             // this.updateStatus(order, 'Confirmed'); // Removed to avoid 404 on admin endpoint
-             
-             // Update local state directly
-             this.orders.update(currentOrders => currentOrders.map(o => 
-               o.id === order.id ? { ...o, status: 'Confirmed' } : o
-             ));
-             
-             if (this.selectedOrder && this.selectedOrder.id === order.id) {
-               this.selectedOrder.status = 'Confirmed';
-             }
-             
-             this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Order status updated to Confirmed' });
+            this.updateStatus(order, 'Confirmed');
           }
         },
         error: (err) => {
@@ -235,10 +266,10 @@ export class OrdersComponent implements OnInit {
     } else {
       console.log('Else block (not bkash or mismatched case):', order.paymentMethod);
       // Fallback for COD or others if needed
-      this.paymentService.verifyPayment(orderId).subscribe({
+      this.paymentService.verifyPayment(orderId, verifyPayload).subscribe({
         next: (res) => {
           this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated' });
-          
+
           const newStatus = res.status || 'Paid';
 
           // Update modal
@@ -247,24 +278,13 @@ export class OrdersComponent implements OnInit {
           }
 
           // Update list locally
-          this.orders.update(currentOrders => currentOrders.map(o => 
+          this.orders.update(currentOrders => currentOrders.map(o =>
             o.id === order.id ? { ...o, paymentStatus: newStatus } : o
           ));
 
           // Also confirm the order status if it's still pending
           if (order.status === 'Pending') {
-             // this.updateStatus(order, 'Confirmed'); // Removed to avoid 404 on admin endpoint
-             
-             // Update local state directly
-             this.orders.update(currentOrders => currentOrders.map(o => 
-               o.id === order.id ? { ...o, status: 'Confirmed' } : o
-             ));
-             
-             if (this.selectedOrder && this.selectedOrder.id === order.id) {
-               this.selectedOrder.status = 'Confirmed';
-             }
-             
-             this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Order status updated to Confirmed' });
+            this.updateStatus(order, 'Confirmed');
           }
         },
         error: (err) => {
@@ -292,6 +312,23 @@ export class OrdersComponent implements OnInit {
       default:
         return 'info';
     }
+  }
+
+  getPaymentSeverity(status: string | undefined): 'success' | 'warning' | 'danger' | 'info' {
+    if (!status) return 'warning';
+    const s = status.toLowerCase();
+    // Removed 'submitted' from success list so it defaults to warning
+    if (s.includes('paid') || s.includes('confirmed') || s.includes('complete') || s.includes('verified')) {
+      return 'success';
+    }
+    return 'warning';
+  }
+
+  isPaymentConfirmed(status: string | undefined): boolean {
+    if (!status) return false;
+    const s = status.toLowerCase();
+    // Removed 'submitted' from confirmed list so the button appears
+    return s.includes('paid') || s.includes('confirmed') || s.includes('complete') || s.includes('verified');
   }
 
   downloadOrders() {

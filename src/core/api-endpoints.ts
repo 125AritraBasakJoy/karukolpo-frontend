@@ -55,6 +55,8 @@ export const ORDERS_API = {
     GET_BY_ID: (orderId: number | string) => `orders/${orderId}`,
     UPDATE: (orderId: number | string) => `orders/${orderId}`, // Generic update endpoint
     CANCEL: (orderId: number | string) => `orders/${orderId}/cancel`,
+    CONFIRM: (orderId: number | string) => `orders/${orderId}/confirm`, // Added based on pattern
+    COMPLETE: (orderId: number | string) => `orders/${orderId}/complete`, // Added based on pattern
     TRACK_BY_PHONE: (phone: string) => `orders/track?phone=${encodeURIComponent(phone)}`,
 
     // Admin Order Actions

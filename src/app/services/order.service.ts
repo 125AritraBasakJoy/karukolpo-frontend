@@ -58,16 +58,25 @@ export class OrderService {
    */
   getOrders(skip = 0, limit = 1000): Observable<Order[]> {
     const query = buildListQuery(skip, limit);
-    return this.apiService.get<any[]>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
-      tap(orders => console.log('Raw orders from backend:', orders)),
-      // Removed the N+1 detail fetching loop to improve performance and reliability.
-      // The list endpoint should provide sufficient data for the table view.
-      // If detailed status is needed, it will be fetched when viewing the order.
-      map(orders => {
-        if (!orders || orders.length === 0) {
-            return [];
+    return this.apiService.get<any>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
+      tap(response => console.log('Raw response from backend:', response)),
+      map(response => {
+        // Handle direct array or wrapped object { data: [], orders: [], etc }
+        let rawOrders: any[] = [];
+        if (Array.isArray(response)) {
+          rawOrders = response;
+        } else if (response && typeof response === 'object') {
+          rawOrders = response.data || response.orders || response.results || [];
         }
-        return orders.map(order => this.mapBackendToFrontend(order));
+
+        if (!rawOrders || rawOrders.length === 0) {
+          return [];
+        }
+        return rawOrders.map(order => this.mapBackendToFrontend(order));
+      }),
+      catchError(err => {
+        console.error('Failed to fetch orders:', err);
+        throw err;
       })
     );
   }
@@ -129,8 +138,8 @@ export class OrderService {
    * PATCH /admin/orders/{id}/confirm
    */
   adminConfirmOrder(id: number | string): Observable<Order> {
-    // Use ADMIN_UPDATE to be consistent and avoid potential issues with specific confirm endpoint
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_UPDATE(id), { status: 'confirmed' }).pipe(
+    // Use the specific admin confirm endpoint as requested
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(id), { status: 'confirmed' }).pipe(
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.error('Admin Confirm Order Failed. Status:', err.status);
@@ -142,13 +151,18 @@ export class OrderService {
 
   /**
    * Admin: Cancel Order
-   * Uses PATCH /orders/{id}/cancel
-   * Reverted to use the customer cancel endpoint as ADMIN_UPDATE (admin/orders/{id}) returns 404
-   * and ADMIN_CANCEL (admin/orders/{id}/cancel) returns 500.
+   * Uses PATCH /admin/orders/{id}/cancel
+   * Using admin endpoint to allow cancelling confirmed orders (which customer endpoint rejects with 400)
    */
   adminCancelOrder(id: number | string): Observable<Order> {
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.CANCEL(id), {}).pipe(
-      map(order => this.mapBackendToFrontend(order))
+    // Try admin cancel endpoint first
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(id), {}).pipe(
+      map(order => this.mapBackendToFrontend(order)),
+      catchError((err: any) => {
+        console.warn('Admin Cancel Order Failed. Trying Customer Cancel Endpoint as fallback.', err);
+        // Fallback to customer cancel endpoint
+        return this.cancelOrder(id);
+      })
     );
   }
 
@@ -158,8 +172,8 @@ export class OrderService {
    * Since /confirm endpoint only accepts pending orders
    */
   adminCompleteOrder(id: number | string): Observable<Order> {
-    // Send status in body as requested
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_UPDATE(id), { status: 'completed' }).pipe(
+    // Use the specific admin complete endpoint
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_COMPLETE(id), { status: 'completed' }).pipe(
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.error('Admin Complete Order Failed. Status:', err.status);
@@ -211,11 +225,11 @@ export class OrderService {
   updateOrderStatus(id: string, status: 'Confirmed' | 'Cancelled' | 'Completed'): Observable<void> {
     // Pass ID directly, do not parse
     if (status === 'Confirmed') {
-        return this.adminConfirmOrder(id).pipe(map(() => void 0));
+      return this.adminConfirmOrder(id).pipe(map(() => void 0));
     } else if (status === 'Cancelled') {
-        return this.adminCancelOrder(id).pipe(map(() => void 0));
+      return this.adminCancelOrder(id).pipe(map(() => void 0));
     } else if (status === 'Completed') {
-        return this.adminCompleteOrder(id).pipe(map(() => void 0));
+      return this.adminCompleteOrder(id).pipe(map(() => void 0));
     }
 
     // Fallback for unexpected statuses
@@ -287,7 +301,11 @@ export class OrderService {
 
     // Robust payment status extraction
     let rawPaymentStatus: string | undefined;
-    if (backendOrder.payment && backendOrder.payment.status) { // Prioritize nested payment object status
+    
+    // Check payments (plural) first as it seems to be the new structure
+    if (backendOrder.payments && backendOrder.payments.status) {
+      rawPaymentStatus = backendOrder.payments.status;
+    } else if (backendOrder.payment && backendOrder.payment.status) { // Prioritize nested payment object status
       rawPaymentStatus = backendOrder.payment.status;
     } else if (backendOrder.payment_status) {
       rawPaymentStatus = backendOrder.payment_status;
@@ -297,20 +315,15 @@ export class OrderService {
 
     let paymentStatus = 'Pending'; // Default
     if (rawPaymentStatus) {
+      // Do not hardcode "Paid" mapping. Use the backend status directly.
+      // Just capitalize the first letter for display.
       const statusLower = rawPaymentStatus.toLowerCase().trim();
-      if (['paid', 'completed', 'complete', 'verified', 'success', 'confirmed'].includes(statusLower)) {
-        paymentStatus = 'Paid';
-      } else {
-        // Capitalize first letter for others (e.g., 'cod confirmed' -> 'Cod confirmed', later fixed in UI?)
-        // Actually, let's preserve 'COD Confirmed' casing if possible or Title Case it.
-        // Simple capitalization:
-        paymentStatus = rawPaymentStatus.charAt(0).toUpperCase() + rawPaymentStatus.slice(1);
-      }
+      paymentStatus = rawPaymentStatus.charAt(0).toUpperCase() + rawPaymentStatus.slice(1);
     }
 
     // Force COD Confirmed if method is COD and status is Pending (Backend doesn't handle COD auto-confirm)
     if (paymentMethod && paymentMethod.toLowerCase() === 'cod' && paymentStatus === 'Pending') {
-        paymentStatus = 'COD Confirmed';
+      paymentStatus = 'COD Confirmed';
     }
 
     // Map backend status first
@@ -321,68 +334,77 @@ export class OrderService {
 
     // Extract transaction ID with robust checks
     let transactionId = undefined;
-    
+
     // Check nested payment object first
     if (backendOrder.payment) {
-        if (backendOrder.payment.transaction_id) {
-            transactionId = backendOrder.payment.transaction_id;
-        } else if (backendOrder.payment.trx_id) {
-            transactionId = backendOrder.payment.trx_id;
-        } else if (backendOrder.payment.bkash_trx_id) {
-            transactionId = backendOrder.payment.bkash_trx_id;
-        }
+      if (backendOrder.payment.transaction_id) {
+        transactionId = backendOrder.payment.transaction_id;
+      } else if (backendOrder.payment.trx_id) {
+        transactionId = backendOrder.payment.trx_id;
+      } else if (backendOrder.payment.bkash_trx_id) {
+        transactionId = backendOrder.payment.bkash_trx_id;
+      }
     }
-    
+
     // Fallback to root object if not found in payment object
     if (!transactionId) {
-        if (backendOrder.transaction_id) {
-            transactionId = backendOrder.transaction_id;
-        } else if (backendOrder.trx_id) {
-            transactionId = backendOrder.trx_id;
-        } else if (backendOrder.bkash_trx_id) {
-            transactionId = backendOrder.bkash_trx_id;
-        }
+      if (backendOrder.transaction_id) {
+        transactionId = backendOrder.transaction_id;
+      } else if (backendOrder.trx_id) {
+        transactionId = backendOrder.trx_id;
+      } else if (backendOrder.bkash_trx_id) {
+        transactionId = backendOrder.bkash_trx_id;
+      }
     }
 
     // Handle created_at timestamp
     let orderDate = new Date();
     if (backendOrder.created_at) {
-        let dateStr = backendOrder.created_at;
-        // If the string doesn't end with Z and doesn't have an offset, append Z to treat as UTC
-        if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateStr)) {
-            dateStr += 'Z';
-        }
-        orderDate = new Date(dateStr);
+      let dateStr = backendOrder.created_at;
+      // If the string doesn't end with Z and doesn't have an offset, append Z to treat as UTC
+      if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateStr)) {
+        dateStr += 'Z';
+      }
+      orderDate = new Date(dateStr);
     }
 
     return {
-      id: backendOrder.id?.toString() || '',
-      fullName: backendOrder.address?.full_name || '',
-      email: backendOrder.address?.email || '',
-      phoneNumber: backendOrder.address?.phone || '',
-      district: backendOrder.address?.district || '',
-      subDistrict: backendOrder.address?.subdistrict || '',
-      postalCode: backendOrder.address?.postal_code || backendOrder.address?.additional_info || '',
-      fullAddress: backendOrder.address?.address_line || '',
-      additionalInfo: backendOrder.address?.additional_info || '',
-      items: backendOrder.items?.map((item: any) => ({
+      id: (backendOrder.id !== undefined && backendOrder.id !== null) ? backendOrder.id.toString() : '',
+      fullName: backendOrder.address?.full_name || backendOrder.fullName || '',
+      email: backendOrder.address?.email || backendOrder.email || '',
+      phoneNumber: backendOrder.address?.phone || backendOrder.phoneNumber || backendOrder.phone || '',
+      district: backendOrder.address?.district || backendOrder.district || '',
+      subDistrict: backendOrder.address?.subdistrict || backendOrder.subDistrict || '',
+      postalCode: backendOrder.address?.postal_code || backendOrder.address?.additional_info || backendOrder.postalCode || '',
+      fullAddress: backendOrder.address?.address_line || backendOrder.fullAddress || backendOrder.address || '',
+      additionalInfo: backendOrder.address?.additional_info || backendOrder.additionalInfo || '',
+      items: (backendOrder.items || []).map((item: any) => ({
         product: {
-          id: item.product_id?.toString() || '',
-          name: '', // We'd need to fetch product details separately
-          price: item.price_at_purchase || 0,
-          code: '',
-          description: '',
-          imageUrl: ''
+          id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (item.product?.id?.toString() || ''),
+          name: item.product?.name || item.name || '',
+          price: (item.price_at_purchase !== undefined && item.price_at_purchase !== null) ? item.price_at_purchase : (item.price || 0),
+          code: item.product?.code || item.code || '',
+          description: item.product?.description || '',
+          imageUrl: item.product?.imageUrl || item.product?.image_url || item.imageUrl || ''
         },
-        quantity: item.quantity
-      })) || [],
-      totalAmount: this.calculateTotal(backendOrder.items || []),
+        quantity: item.quantity || 0
+      })),
+      totalAmount: (backendOrder.total_amount !== undefined && backendOrder.total_amount !== null) ? backendOrder.total_amount :
+        (backendOrder.totalAmount !== undefined && backendOrder.totalAmount !== null) ? backendOrder.totalAmount :
+          this.calculateTotal(backendOrder.items || []),
       status: orderStatus,
-      paymentMethod: paymentMethod as 'COD' | 'bKash' | null, // Allow null
+      paymentMethod: paymentMethod as 'COD' | 'bKash' | null,
       paymentStatus: paymentStatus as 'Pending' | 'Paid',
-      paymentId: backendOrder.payment_id || (backendOrder.payment ? backendOrder.payment.id : undefined),
+      paymentId: (backendOrder.payment_id !== undefined && backendOrder.payment_id !== null) ? backendOrder.payment_id :
+        (backendOrder.payment?.id !== undefined && backendOrder.payment?.id !== null) ? backendOrder.payment.id : undefined,
       transactionId: transactionId,
-      orderDate: orderDate
+      bkashNumber: backendOrder.sender_phone || backendOrder.payment?.sender_phone || backendOrder.bkashNumber,
+      orderDate: orderDate,
+      
+      // Pass through raw objects for detailed display
+      address: backendOrder.address,
+      payments: backendOrder.payments || backendOrder.payment,
+      created_at: backendOrder.created_at
     };
   }
 
@@ -390,7 +412,12 @@ export class OrderService {
    * Calculate total from order items
    */
   private calculateTotal(items: any[]): number {
-    return items.reduce((sum, item) => sum + (item.price_at_purchase * item.quantity), 0);
+    if (!items || !Array.isArray(items)) return 0;
+    return items.reduce((sum, item) => {
+      const price = (item.price_at_purchase !== undefined && item.price_at_purchase !== null) ? item.price_at_purchase : (item.price || 0);
+      const quantity = item.quantity || 0;
+      return sum + (price * quantity);
+    }, 0);
   }
 
   /**

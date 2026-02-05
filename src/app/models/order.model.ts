@@ -21,4 +21,23 @@ export interface Order {
   deliveryCharge?: number;
   additionalInfo?: string;
   orderDate: Date;
+  
+  // New fields to match backend response structure
+  address?: {
+    id: number;
+    full_name: string;
+    phone: string;
+    district: string;
+    subdistrict: string;
+    address_line: string;
+    additional_info: string;
+  };
+  payments?: {
+    id: number;
+    order_id: number;
+    status: string;
+    payment_method: string;
+    transaction_id: string;
+  };
+  created_at?: string;
 }

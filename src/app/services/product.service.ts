@@ -86,7 +86,7 @@ export class ProductService {
    * DELETE /products/{id} (requires auth)
    */
   deleteProduct(id: number | string): Observable<void> {
-    const productId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const productId = typeof id === 'string' ? Number(id) : id;
     return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.DELETE(productId));
   }
 
@@ -103,7 +103,7 @@ export class ProductService {
    * PATCH /products/{id}/inventory (requires auth)
    */
   updateInventory(productId: number, quantity: number): Observable<any> {
-    const payload = { quantity: parseInt(quantity.toString(), 10) };
+    const payload = { quantity: parseInt(String(quantity)) };
     console.log(`Updating inventory for product ${productId}:`, payload);
     
     return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload).pipe(

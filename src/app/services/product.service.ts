@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { Product } from '../models/product.model';
 import { ApiService } from './api.service';
@@ -13,17 +13,38 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
   providedIn: 'root'
 })
 export class ProductService {
+  private productsCache: Product[] | null = null;
+  private productCategoriesCache = new Map<number, any[]>();
 
   constructor(private apiService: ApiService) { }
+
+  /**
+   * Clear all in-memory caches
+   */
+  clearCache() {
+    this.productsCache = null;
+    this.productCategoriesCache.clear();
+  }
 
   /**
    * Get all products from backend
    * GET /products
    */
-  getProducts(skip = 0, limit = 100): Observable<Product[]> {
-    const query = buildListQuery(skip, limit);
+  getProducts(skip = 0, limit = 100, categoryId?: string | number, forceRefresh = false): Observable<Product[]> {
+    if (!forceRefresh && !categoryId && this.productsCache) {
+      return of(this.productsCache);
+    }
+
+    let query = buildListQuery(skip, limit);
+    if (categoryId) {
+      query += `&category_id=${categoryId}`;
+    }
     return this.apiService.get<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${query}`).pipe(
-      tap(products => console.log('Raw products from backend:', products)),
+      tap(products => {
+        if (!categoryId && skip === 0) {
+          this.productsCache = products.map(p => this.mapBackendToFrontend(p));
+        }
+      }),
       map(backendProducts => backendProducts.map(this.mapBackendToFrontend))
     );
   }
@@ -57,7 +78,7 @@ export class ProductService {
       price: product.price,
       description: product.description || null
     };
-    
+
     return this.apiService.post<any>(API_ENDPOINTS.PRODUCTS.CREATE, backendProduct).pipe(
       map(this.mapBackendToFrontend)
     );
@@ -105,7 +126,7 @@ export class ProductService {
   updateInventory(productId: number, quantity: number): Observable<any> {
     const payload = { quantity: parseInt(String(quantity)) };
     console.log(`Updating inventory for product ${productId}:`, payload);
-    
+
     return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload).pipe(
       tap({
         next: (res) => console.log('Inventory updated successfully:', res),
@@ -123,11 +144,24 @@ export class ProductService {
   }
 
   /**
+   * Remove category from product
+   * DELETE /products/{productId}/categories/{categoryId}
+   */
+  removeCategoryFromProduct(productId: number, categoryId: number): Observable<any> {
+    return this.apiService.delete(API_ENDPOINTS.PRODUCTS.REMOVE_CATEGORY(productId, categoryId));
+  }
+
+  /**
    * List categories for a product
    * GET /products/{productId}/categories
    */
-  listProductCategories(productId: number): Observable<any[]> {
-    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.LIST_CATEGORIES(productId));
+  listProductCategories(productId: number, forceRefresh = false): Observable<any[]> {
+    if (!forceRefresh && this.productCategoriesCache.has(productId)) {
+      return of(this.productCategoriesCache.get(productId)!);
+    }
+    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.LIST_CATEGORIES(productId)).pipe(
+      tap(categories => this.productCategoriesCache.set(productId, categories))
+    );
   }
 
   /**
@@ -212,7 +246,7 @@ export class ProductService {
   /**
    * Map backend product format to frontend format
    */
-  private mapBackendToFrontend(backendProduct: any): Product {
+  public mapBackendToFrontend(backendProduct: any): Product {
     return {
       id: backendProduct.id?.toString() || '',
       code: backendProduct.code || `P${backendProduct.id}`,
@@ -223,10 +257,14 @@ export class ProductService {
       images: backendProduct.images || [],
       stock: backendProduct.stock || 0,
       manualStockStatus: backendProduct.manualStockStatus || 'AUTO',
-      categoryId: backendProduct.categoryId?.toString() || 
-                  backendProduct.category_id?.toString() || 
-                  (backendProduct.categories && backendProduct.categories.length > 0 ? backendProduct.categories[0].id.toString() : undefined) ||
-                  (backendProduct.category ? backendProduct.category.id.toString() : undefined)
+      categoryId: backendProduct.categoryId?.toString() ||
+        backendProduct.category_id?.toString() ||
+        (backendProduct.categories && backendProduct.categories.length > 0
+          ? backendProduct.categories.map((c: any) => typeof c === 'object' ? c.id : c).join(',')
+          : undefined) ||
+        (backendProduct.category
+          ? (typeof backendProduct.category === 'object' ? backendProduct.category.id?.toString() : backendProduct.category.toString())
+          : undefined)
     };
   }
 

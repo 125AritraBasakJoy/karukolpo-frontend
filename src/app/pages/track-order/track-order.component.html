@@ -44,35 +44,93 @@
     </p-card>
   </div>
 
-  <div *ngIf="order() && !loading()" class="order-details mt-5">
-    <p-card>
-      <div class="grid">
-        <div class="col-12 md:col-6">
-          <h3>Order Status:
-            <p-tag [value]="order()?.status" [severity]="getSeverity(order()?.status)"></p-tag>
-          </h3>
-          <p><strong>Order ID:</strong> {{ order()?.id }}</p>
-          <p><strong>Date:</strong> {{ order()?.orderDate | date:'medium' }}</p>
-          <p><strong>Total Amount:</strong> {{ order()?.totalAmount | currency:'BDT':'symbol-narrow' }}</p>
+  <div *ngIf="order() && !loading()" class="order-details-container mt-6">
+    <p-card styleClass="premium-card">
+      <div class="card-header flex justify-content-between align-items-center mb-5 pb-3 border-bottom-1 border-200">
+        <div>
+          <span class="text-color-secondary text-sm block mb-1">Order Status</span>
+          <p-tag [value]="order()?.status" [severity]="getSeverity(order()?.status)" styleClass="text-sm px-3"></p-tag>
         </div>
-        <div class="col-12 md:col-6">
-          <h3>Shipping Details</h3>
-          <p>{{ order()?.fullName }}</p>
-          <p>{{ order()?.fullAddress }}</p>
-          <p>{{ order()?.district }} - {{ order()?.postalCode }}</p>
-          <p>{{ order()?.phoneNumber }}</p>
+        <div class="text-right">
+          <span class="text-color-secondary text-sm block mb-1">Order #{{ order()?.id }}</span>
+          <span class="font-bold text-xl">{{ order()?.orderDate | date:'medium' }}</span>
         </div>
       </div>
 
-      <div class="mt-4">
-        <h3>Items</h3>
-        <ul>
-          <li *ngFor="let item of order()?.items">
-            {{ item.quantity }}x {{ item.product.name }} - {{ item.product.price | currency:'BDT':'symbol-narrow' }}
-          </li>
-        </ul>
+      <div class="grid">
+        <!-- Customer Info -->
+        <div class="col-12 md:col-6 lg:col-4 mb-4 md:mb-0">
+          <div class="info-group">
+            <h4 class="text-primary-500 font-semibold mb-3 flex align-items-center gap-2">
+              <i class="pi pi-user"></i> Shipping Details
+            </h4>
+            <div class="info-content border-left-2 border-primary-500 pl-3">
+              <p class="font-bold m-0 mb-1">{{ order()?.fullName }}</p>
+              <p class="m-0 text-color-secondary">{{ order()?.phoneNumber }}</p>
+              <p class="m-0 text-color-secondary mt-2">{{ order()?.fullAddress }}</p>
+              <p class="m-0 text-color-secondary">{{ order()?.district }} - {{ order()?.postalCode }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-12 md:col-6 lg:col-4 mb-4 md:mb-0">
+          <div class="info-group">
+            <h4 class="text-primary-500 font-semibold mb-3 flex align-items-center gap-2">
+              <i class="pi pi-box"></i> Order Summary
+            </h4>
+            <div class="info-content border-left-2 border-primary-500 pl-3">
+              <div class="flex justify-content-between mb-2">
+                <span>Total Items:</span>
+                <span class="font-semibold">{{ order()?.items?.length }}</span>
+              </div>
+              <div class="flex justify-content-between mb-2">
+                <span>Payment Method:</span>
+                <p-tag [value]="order()?.paymentMethod || 'N/A'" severity="info" styleClass="text-xs"></p-tag>
+              </div>
+              <div class="flex justify-content-between align-items-center mt-3 pt-2 border-top-1 border-100">
+                <span class="font-bold text-lg">Total Amount:</span>
+                <span class="font-bold text-2xl text-emerald-500">{{ order()?.totalAmount |
+                  currency:'BDT':'symbol-narrow' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="col-12 lg:col-4">
+          <div class="info-group">
+            <h4 class="text-primary-500 font-semibold mb-3 flex align-items-center gap-2">
+              <i class="pi pi-list"></i> Items
+            </h4>
+            <div class="items-list surface-50 p-3 border-round-lg overflow-y-auto" style="max-height: 200px;">
+              <div *ngFor="let item of order()?.items"
+                class="item-row flex justify-content-between align-items-center py-2 border-bottom-1 border-100 last:border-none">
+                <div class="flex align-items-center gap-3">
+                  <div class="item-badge bg-primary text-white text-xs px-2 py-1 border-round">{{ item.quantity }}x
+                  </div>
+                  <span class="text-sm font-medium">{{ item.product.name }}</span>
+                </div>
+                <span class="text-sm font-semibold">{{ (item.product.price * item.quantity) |
+                  currency:'BDT':'symbol-narrow' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-column md:flex-row gap-3 mt-6 pt-4 border-top-1 border-200 justify-content-end">
+        <p-button *ngIf="order()?.status === 'Pending'" label="Cancel Order" icon="pi pi-times" severity="danger"
+          [outlined]="true" (onClick)="cancelOrder()" styleClass="w-full md:w-auto">
+        </p-button>
+        <p-button label="Back to Shop" icon="pi pi-shopping-bag" severity="primary" (onClick)="goBack()"
+          styleClass="w-full md:w-auto">
+        </p-button>
       </div>
     </p-card>
   </div>
 </div>
+
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 <p-toast></p-toast>

@@ -14,12 +14,14 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-track-order',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, ThemeToggleComponent],
-  providers: [MessageService],
+  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, ThemeToggleComponent, ConfirmDialogModule],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './track-order.component.html',
   styleUrls: ['./track-order.component.scss']
 })
@@ -32,6 +34,7 @@ export class TrackOrderComponent {
   constructor(
     private orderService: OrderService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private router: Router
   ) {
     this.events = [
@@ -136,6 +139,40 @@ export class TrackOrderComponent {
         }
       });
     }
+  }
+
+  cancelOrder() {
+    const currentOrder = this.order();
+    if (!currentOrder || !currentOrder.id) return;
+
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to cancel this order?',
+      header: 'Confirm Cancellation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.loading.set(true);
+        this.orderService.cancelOrder(currentOrder.id!).subscribe({
+          next: (updatedOrder) => {
+            this.order.set(updatedOrder);
+            this.loading.set(false);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Cancelled',
+              detail: 'Your order has been cancelled successfully'
+            });
+          },
+          error: (err) => {
+            console.error('Cancellation error:', err);
+            this.loading.set(false);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: err.error?.detail || 'Failed to cancel order'
+            });
+          }
+        });
+      }
+    });
   }
 
   goBack() {

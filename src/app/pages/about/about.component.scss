@@ -163,12 +163,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--surface-card);
+        background: rgba(16, 185, 129, 0.1); // Subtle emerald background
         border-radius: 50%;
-        color: var(--primary-color);
+        color: #10b981; // emerald-500
         font-size: 2rem;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); // Matching shadow
         animation: floating 4s ease-in-out infinite;
     }
 
@@ -219,7 +219,7 @@
 
     .value-icon {
         font-size: 3rem;
-        color: var(--primary-color);
+        color: #10b981; // Using emerald color for visibility
         animation: floating 5s ease-in-out infinite reverse;
     }
 

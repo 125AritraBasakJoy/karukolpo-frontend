@@ -176,14 +176,14 @@ export class HomeComponent implements OnInit {
       if (params['checkout'] === 'true') {
         // Wait a bit for products/cart to load if needed, but cart is local storage so it's fast
         setTimeout(() => {
-            this.openCheckout();
-            // Clear query param so refresh doesn't reopen
-            this.router.navigate([], {
-                queryParams: {
-                    'checkout': null
-                },
-                queryParamsHandling: 'merge'
-            });
+          this.openCheckout();
+          // Clear query param so refresh doesn't reopen
+          this.router.navigate([], {
+            queryParams: {
+              'checkout': null
+            },
+            queryParamsHandling: 'merge'
+          });
         }, 100);
       }
     });
@@ -349,6 +349,10 @@ export class HomeComponent implements OnInit {
     if (productsSection) {
       productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  goToAboutUs() {
+    this.router.navigate(['/about']);
   }
 
   openCheckout() {

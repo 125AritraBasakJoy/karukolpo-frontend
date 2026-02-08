@@ -129,6 +129,7 @@ export class OrderService {
    */
   cancelOrder(id: number | string): Observable<Order> {
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.CANCEL(id), {}).pipe(
+      tap(() => this.notifyAdmin(id.toString())),
       map(order => this.mapBackendToFrontend(order))
     );
   }
@@ -301,7 +302,7 @@ export class OrderService {
 
     // Robust payment status extraction
     let rawPaymentStatus: string | undefined;
-    
+
     // Check payments (plural) first as it seems to be the new structure
     if (backendOrder.payments && backendOrder.payments.status) {
       rawPaymentStatus = backendOrder.payments.status;
@@ -400,7 +401,7 @@ export class OrderService {
       transactionId: transactionId,
       bkashNumber: backendOrder.sender_phone || backendOrder.payment?.sender_phone || backendOrder.bkashNumber,
       orderDate: orderDate,
-      
+
       // Pass through raw objects for detailed display
       address: backendOrder.address,
       payments: backendOrder.payments || backendOrder.payment,

@@ -118,8 +118,23 @@ export class ApiService {
       .pipe(catchError(error => this.handleError(error, () => this.patch<T>(endpoint, body, options))));
   }
 
-  delete<T>(endpoint: string, options: { skipAuth?: boolean } = {}): Observable<T> {
-    return this.http.delete<T>(`${this.baseUrl}/${endpoint}`, { headers: this.getHeaders(options.skipAuth) })
+  delete<T>(endpoint: string, options: { skipAuth?: boolean, body?: any } = {}): Observable<T> {
+    const contentType = options.body ? 'application/json' : null;
+    const requestOptions: any = {
+      headers: this.getHeaders(options.skipAuth, contentType)
+    };
+
+    if (options.body) {
+      requestOptions.body = options.body;
+    }
+
+    console.log('API DELETE Request:', {
+      url: `${this.baseUrl}/${endpoint}`,
+      body: options.body,
+      contentType
+    });
+
+    return this.http.delete<T>(`${this.baseUrl}/${endpoint}`, requestOptions)
       .pipe(catchError(error => this.handleError(error, () => this.delete<T>(endpoint, options))));
   }
 }

@@ -29,6 +29,7 @@ export class DashboardComponent implements OnInit {
   mobileMenuOpen = signal<boolean>(false);
   isMobile = signal<boolean>(false);
   currentRoute = signal<string>('');
+  expandedSections = signal<Set<string>>(new Set(['Main']));
 
   private notificationService = inject(NotificationService);
   private messageService = inject(MessageService);
@@ -81,14 +82,37 @@ export class DashboardComponent implements OnInit {
   private updateCurrentRoute(url: string) {
     // Extract the last segment of the URL
     const segments = url.split('/').filter(s => s);
-    this.currentRoute.set(segments[segments.length - 1] || 'dashboard');
+    const lastSegment = segments[segments.length - 1] || 'dashboard';
+    this.currentRoute.set(lastSegment);
+
+    // Auto-expand the section containing the active route
+    const activeItem = this.menuItems.find(item => url.includes(item.route));
+    if (activeItem && activeItem.section) {
+      this.expandSection(activeItem.section);
+    }
+  }
+
+  expandSection(section: string) {
+    if (!this.expandedSections().has(section)) {
+      this.expandedSections.update(set => {
+        const newSet = new Set(set);
+        newSet.add(section);
+        return newSet;
+      });
+    }
   }
 
   toggleSidebar() {
     if (this.isMobile()) {
       this.mobileMenuOpen.update(v => !v);
     } else {
-      this.sidebarCollapsed.update(v => !v);
+      const isCollapsing = !this.sidebarCollapsed();
+      this.sidebarCollapsed.set(isCollapsing);
+
+      // If we are expanding, ensure the active section is open
+      if (!isCollapsing) {
+        this.updateCurrentRoute(this.router.url);
+      }
     }
   }
 
@@ -108,6 +132,22 @@ export class DashboardComponent implements OnInit {
 
   getItemsBySection(section: string): MenuItem[] {
     return this.menuItems.filter(item => (item.section || 'Other') === section);
+  }
+
+  isSectionExpanded(section: string): boolean {
+    return this.expandedSections().has(section);
+  }
+
+  toggleSection(section: string) {
+    this.expandedSections.update(set => {
+      const newSet = new Set(set);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
   }
 
   getBreadcrumb(): string {

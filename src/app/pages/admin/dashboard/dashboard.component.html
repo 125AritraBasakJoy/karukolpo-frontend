@@ -20,12 +20,20 @@
         <!-- Navigation Menu -->
         <nav class="nav-menu">
             <div *ngFor="let section of getMenuSections()" class="menu-section">
-                <div class="menu-section-title" *ngIf="!sidebarCollapsed() || isMobile()">{{ section }}</div>
-                <a *ngFor="let item of getItemsBySection(section)" [routerLink]="item.route" class="menu-item"
-                    [class.active]="isActiveRoute(item.route)" (click)="closeMobileMenu()">
-                    <i [class]="item.icon + ' menu-icon'"></i>
-                    <span class="menu-label">{{ item.label }}</span>
-                </a>
+                <div class="menu-section-header" *ngIf="!sidebarCollapsed() || isMobile()"
+                    (click)="toggleSection(section)">
+                    <span class="menu-section-title">{{ section }}</span>
+                    <i class="pi" [ngClass]="isSectionExpanded(section) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                </div>
+
+                <div class="menu-section-content"
+                    [class.expanded]="isSectionExpanded(section) || (sidebarCollapsed() && !isMobile())">
+                    <a *ngFor="let item of getItemsBySection(section)" [routerLink]="item.route" class="menu-item"
+                        [class.active]="isActiveRoute(item.route)" (click)="closeMobileMenu()">
+                        <i [class]="item.icon + ' menu-icon'"></i>
+                        <span class="menu-label">{{ item.label }}</span>
+                    </a>
+                </div>
             </div>
         </nav>
 

@@ -90,12 +90,14 @@
                                        (product.stock > 0 ? 'success' : 'danger'))"></p-tag>
                 </td>
                 <td>
-                    <p-button icon="pi pi-box" [rounded]="true" [text]="true" severity="info" pTooltip="Manage Inventory"
-                        (onClick)="manageInventory(product)"></p-button>
-                    <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="success"
-                        (onClick)="editProduct(product)"></p-button>
-                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                        (onClick)="deleteProduct(product)"></p-button>
+                    <div class="flex gap-1">
+                        <p-button icon="pi pi-box" [rounded]="true" [text]="true" severity="info"
+                            pTooltip="Manage Inventory" (onClick)="manageInventory(product)"></p-button>
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="editProduct(product)"></p-button>
+                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                            (onClick)="deleteProduct(product)"></p-button>
+                    </div>
                 </td>
             </tr>
         </ng-template>
@@ -108,18 +110,20 @@
     <ng-template pTemplate="content">
         <div class="field">
             <label for="name">Name</label>
-            <input type="text" pInputText id="name" [(ngModel)]="productForm.name" #name="ngModel" required autofocus class="w-full" />
+            <input type="text" pInputText id="name" [(ngModel)]="productForm.name" #name="ngModel" required autofocus
+                class="w-full" />
             <app-validation-message [control]="name.control"></app-validation-message>
         </div>
         <div class="field">
             <label for="description">Description</label>
-            <textarea id="description" pInputTextarea [(ngModel)]="productForm.description" required rows="3"
-                cols="20" class="w-full"></textarea>
+            <textarea id="description" pInputTextarea [(ngModel)]="productForm.description" required rows="3" cols="20"
+                class="w-full"></textarea>
         </div>
         <div class="field">
             <label for="price">Price</label>
             <p-inputNumber id="price" [(ngModel)]="productForm.price" #price="ngModel" required mode="currency"
-                currency="BDT" locale="en-US" styleClass="w-full" inputStyleClass="w-full" [style]="{'width':'100%'}"></p-inputNumber>
+                currency="BDT" locale="en-US" styleClass="w-full" inputStyleClass="w-full"
+                [style]="{'width':'100%'}"></p-inputNumber>
             <app-validation-message [control]="price.control"></app-validation-message>
         </div>
     </ng-template>
@@ -138,7 +142,8 @@
             <label for="category">Category</label>
             <p-dropdown id="category" [options]="categories" optionLabel="name" optionValue="id"
                 [(ngModel)]="productForm.categoryId" placeholder="Select a Category" [showClear]="true"
-                appendTo="body" styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
+                [editable]="true" [filter]="true" filterBy="name" styleClass="w-full" [style]="{'width':'100%'}"
+                [panelStyle]="{'width':'100%'}" panelStyleClass="w-full"></p-dropdown>
         </div>
 
         <div class="field">
@@ -146,10 +151,11 @@
             <div class="flex flex-column gap-2">
                 <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="hidden" />
 
-                <button pButton type="button" label="Choose Main Image" icon="pi pi-image" class="p-button-outlined w-full"
-                    (click)="fileInput.click()"></button>
-                
-                <div *ngIf="productForm.imageUrl" class="surface-card p-3 border-round shadow-2 w-full text-center mt-2">
+                <button pButton type="button" label="Choose Main Image" icon="pi pi-image"
+                    class="p-button-outlined w-full" (click)="fileInput.click()"></button>
+
+                <div *ngIf="productForm.imageUrl"
+                    class="surface-card p-3 border-round shadow-2 w-full text-center mt-2">
                     <img [src]="productForm.imageUrl" alt="Preview"
                         style="max-height: 200px; max-width: 100%; object-fit: contain;">
                 </div>
@@ -188,15 +194,15 @@
     <ng-template pTemplate="content">
         <div class="field">
             <label for="stock">Quantity</label>
-            <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal"
-                styleClass="w-full" inputStyleClass="w-full" [style]="{'width':'100%'}"></p-inputNumber>
+            <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal" styleClass="w-full"
+                inputStyleClass="w-full" [style]="{'width':'100%'}"></p-inputNumber>
         </div>
 
         <div class="field">
             <label for="manualStockStatus">Stock Availability Control</label>
             <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
-                [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
-                appendTo="body" styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
+                [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status" appendTo="body"
+                styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
             <small class="block mt-1 text-500">Override the automatic stock calculation if needed.</small>
         </div>
     </ng-template>

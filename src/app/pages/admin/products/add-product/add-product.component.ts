@@ -55,8 +55,13 @@ import { catchError, map, switchMap } from 'rxjs/operators';
                     optionValue="id"
                     placeholder="Select a Category"
                     [showClear]="true"
+                    [editable]="true"
+                    [filter]="true"
+                    filterBy="name"
                     (onChange)="onCategoryChange($event)"
-                    styleClass="w-full">
+                    styleClass="w-full"
+                    [style]="{'width':'100%'}"
+                    [panelStyle]="{'width':'100%'}">
                 </p-dropdown>
             </div>
         </div>

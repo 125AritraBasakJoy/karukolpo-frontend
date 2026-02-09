@@ -158,7 +158,7 @@ import { TagModule } from 'primeng/tag';
                 <label for="newCategory" class="font-bold block mb-3">Select Target Category</label>
                 <p-dropdown [options]="otherCategories" [(ngModel)]="targetCategoryId" optionLabel="name" optionValue="id" 
                     placeholder="Select a Category" [filter]="true" filterBy="name" [showClear]="true"
-                    appendTo="body" styleClass="w-full" [autoDisplayFirst]="false">
+                    appendTo="body" styleClass="w-full" [autoDisplayFirst]="false" [style]="{'width':'100%'}">
                     <ng-template let-category pTemplate="item">
                         <div class="flex align-items-center gap-2">
                             <div>{{category.name}}</div>
@@ -217,7 +217,7 @@ export class CategoryManagerComponent implements OnInit {
     selectedProductForMove: Product | null = null;
     targetCategoryId: string | null = null;
     otherCategories: Category[] = [];
-    
+
     imageLoadError: { [key: string]: boolean } = {};
 
     private categoryService = inject(CategoryService);
@@ -282,7 +282,7 @@ export class CategoryManagerComponent implements OnInit {
         this.loadingProducts = true;
         this.categoryProducts = [];
         this.imageLoadError = {}; // Reset image errors
-        this.cdr.detectChanges(); 
+        this.cdr.detectChanges();
 
         this.categoryService.getCategoryProducts(category.id).subscribe({
             next: (products) => {
@@ -292,7 +292,7 @@ export class CategoryManagerComponent implements OnInit {
                     this.categoryProducts = [];
                 }
                 this.loadingProducts = false;
-                this.cdr.detectChanges(); 
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Category products fetch failed', err);

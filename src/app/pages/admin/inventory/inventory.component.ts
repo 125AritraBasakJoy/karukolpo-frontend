@@ -227,7 +227,7 @@ export class InventoryComponent implements OnInit {
 
   editProduct(product: Product) {
     this.isNewProduct = false;
-    this.createdProduct = product;
+    this.createdProduct = product; // Store current product
     this.productForm = { ...product };
     this.inventoryForm.stock = product.stock || 0;
     this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
@@ -237,6 +237,27 @@ export class InventoryComponent implements OnInit {
     if (!this.productForm.images) {
       this.productForm.images = [];
     }
+
+    // Explicitly fetch product categories to ensure pre-selection
+    const productId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
+    this.productService.listProductCategories(productId).subscribe({
+      next: (productCategories) => {
+        if (productCategories && productCategories.length > 0) {
+          // Take the first category ID
+          const firstCat = productCategories[0];
+          const catId = typeof firstCat === 'object' ? firstCat.id?.toString() : firstCat.toString();
+
+          this.productForm.categoryId = catId;
+          // Also update createdProduct so subsequent steps have the categoryId
+          if (this.createdProduct) {
+            this.createdProduct.categoryId = catId;
+          }
+          console.log('Pre-selected category ID:', catId);
+        }
+      },
+      error: (err) => console.error('Error fetching product categories:', err)
+    });
+
     this.displayStep1 = true;
     this.displayStep2 = false;
     this.displayStep3 = false;

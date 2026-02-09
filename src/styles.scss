@@ -64,7 +64,6 @@ body {
 /* Global Form & Input Refinements */
 .p-inputtext,
 .p-inputnumber-input,
-.p-dropdown,
 .p-password-input {
     background: rgba(0, 0, 0, 0.4) !important;
     /* Dark translucent background */
@@ -79,6 +78,42 @@ body {
     /* Slate 200 - Light text for readability */
 
     &:focus {
+        background: rgba(0, 0, 0, 0.6) !important;
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px var(--p-focus-ring-color) !important;
+    }
+}
+
+.p-dropdown {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    color: #e2e8f0 !important;
+    padding: 0 !important; // Remove container padding to prevent icon overlap
+    display: flex;
+    align-items: center;
+
+    .p-dropdown-label {
+        padding: 0.95rem 1.25rem !important;
+        font-size: 1rem !important;
+        display: flex;
+        align-items: center;
+        background: transparent !important; // Essential for editable dropdowns to match container
+        border: none !important; // Avoid internal borders
+        height: 100%;
+    }
+
+    .p-dropdown-trigger {
+        width: 3rem !important;
+    }
+
+    .p-dropdown-clear-icon {
+        right: 2.5rem !important; // Position clear icon to the left of the dropdown arrow
+        color: #94a3b8 !important;
+    }
+
+    &:focus-within {
         background: rgba(0, 0, 0, 0.6) !important;
         border-color: var(--primary-color) !important;
         box-shadow: 0 0 0 3px var(--p-focus-ring-color) !important;

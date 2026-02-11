@@ -20,10 +20,9 @@ To get a local copy up and running, follow these simple steps.
 Open your terminal or command prompt and run the following command to clone the repository:
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/your-username/karukolpo-frontend.git
 cd karukolpo-frontend
 ```
-*(Replace `<YOUR_REPOSITORY_URL>` with the actual URL of your GitHub repository)*
 
 ### 2. Install Dependencies
 
@@ -46,6 +45,11 @@ ng serve
 ```
 
 Navigate to `http://localhost:4200/` in your browser. The application will automatically reload if you change any of the source files.
+
+### Admin Portal
+
+To access the admin login page, navigate to:
+[http://localhost:4200/admin](http://localhost:4200/admin)
 
 ## Build
 

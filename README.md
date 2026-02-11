@@ -48,8 +48,9 @@ Navigate to `http://localhost:4200/` in your browser. The application will autom
 
 ### Admin Portal
 
-To access the admin login page, navigate to:
-[http://localhost:4200/admin](http://localhost:4200/admin)
+Once the application is running, click the link below to access the admin login:
+
+[**🚀 Launch Admin Portal**](http://localhost:4200/admin)
 
 ## Build
 

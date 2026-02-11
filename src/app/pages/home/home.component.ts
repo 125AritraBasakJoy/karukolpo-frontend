@@ -285,7 +285,9 @@ export class HomeComponent implements OnInit {
       const config = localStorage.getItem('landingConfig');
       if (config) {
         const parsed = JSON.parse(config);
-        this.landingPageImage.set(parsed.image || 'assets/landing-bg.jpg');
+        // Ignore base64 data URLs — they are per-device and can show wrong images
+        const image = parsed.image && !parsed.image.startsWith('data:') ? parsed.image : 'assets/landing-bg.jpg';
+        this.landingPageImage.set(image);
         this.landingPageTagline.set(parsed.tagline || 'Authentic Bangladeshi Handcrafts');
       }
     };

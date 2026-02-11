@@ -7,6 +7,7 @@ This project is an Angular application for the Karukolpo platform.
 Before you begin, ensure you have met the following requirements:
 *   **Node.js**: Make sure you have Node.js installed. You can download it from [nodejs.org](https://nodejs.org/).
 *   **Angular CLI**: Install the Angular CLI globally if you haven't already.
+
     ```bash
     npm install -g @angular/cli
     ```

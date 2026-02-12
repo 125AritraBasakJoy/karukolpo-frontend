@@ -35,11 +35,8 @@ export class OrderService {
    */
   createOrder(order: Omit<Order, 'id'>): Observable<string> {
     const backendOrder = this.mapFrontendToBackend(order);
-    console.log('Creating order with payload:', backendOrder);
-
     return this.apiService.post<any>(API_ENDPOINTS.ORDERS.CREATE, backendOrder).pipe(
       tap({
-        next: (response) => console.log('Order created successfully:', response),
         error: (err) => console.error('Order creation failed:', err)
       }),
       map(response => {
@@ -56,10 +53,9 @@ export class OrderService {
    * GET /orders
    * Note: Fetches details for each order to ensure accurate status
    */
-  getOrders(skip = 0, limit = 1000): Observable<Order[]> {
+  getOrders(skip = 0, limit = 100): Observable<Order[]> {
     const query = buildListQuery(skip, limit);
     return this.apiService.get<any>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
-      tap(response => console.log('Raw response from backend:', response)),
       map(response => {
         // Handle direct array or wrapped object { data: [], orders: [], etc }
         let rawOrders: any[] = [];
@@ -282,7 +278,7 @@ export class OrderService {
       payment_status: order.paymentStatus ? order.paymentStatus : 'Pending'
     };
 
-    console.log('Final Order Payload:', JSON.stringify(payload, null, 2));
+
     return payload;
   }
 

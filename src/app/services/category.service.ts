@@ -55,7 +55,6 @@ export class CategoryService {
      */
     addCategory(category: Category): Observable<Category> {
         const backendCategory = { name: category.name };
-        console.log('CategoryService: Adding category', backendCategory);
         return this.apiService.post<any>(API_ENDPOINTS.CATEGORIES.CREATE, backendCategory).pipe(
             map(cat => this.mapBackendToFrontend(cat))
         );
@@ -68,7 +67,6 @@ export class CategoryService {
     updateCategory(category: Category): Observable<Category> {
         const categoryId = typeof category.id === 'string' ? parseInt(category.id, 10) : category.id;
         const backendCategory = { name: category.name };
-        console.log('CategoryService: Updating category', categoryId, backendCategory);
         return this.apiService.patch<any>(API_ENDPOINTS.CATEGORIES.UPDATE(categoryId), backendCategory).pipe(
             map(cat => this.mapBackendToFrontend(cat))
         );
@@ -111,7 +109,6 @@ export class CategoryService {
                     map(results => results.filter(p => p !== null) as Product[])
                 );
             }),
-            tap(filteredProducts => console.log(`Optimized fetch found ${filteredProducts.length} products for category ${id}`))
         );
     }
 
@@ -123,24 +120,15 @@ export class CategoryService {
         const cId = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId;
         const pId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
 
-        console.log('CategoryService: Removing product from category', {
-            originalCategoryId: categoryId,
-            originalProductId: productId,
-            parsedCategoryId: cId,
-            parsedProductId: pId
-        });
-
         if (isNaN(cId) || isNaN(pId)) {
             console.error('CategoryService: Invalid IDs (NaN) provided!');
         }
 
         const endpoint = API_ENDPOINTS.PRODUCTS.REMOVE_CATEGORY(pId, cId);
-        console.log('CategoryService: Hitting endpoint:', endpoint);
 
         return this.apiService.delete<void>(endpoint).pipe(
             tap({
                 next: () => {
-                    console.log('CategoryService: Successfully removed product from category');
                     this.productService.clearCache();
                 },
                 error: (err) => console.error('CategoryService: Failed to remove product from category', err)

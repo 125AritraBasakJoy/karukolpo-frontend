@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { forkJoin, map, catchError, of, lastValueFrom } from 'rxjs';
@@ -58,7 +58,8 @@ import { ActivatedRoute, Router } from '@angular/router';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
+  private storageListener: (() => void) | null = null;
   products = signal<Product[]>([]);
   // cart = signal<CartItem[]>([]); // Removed, using CartService
   loading = signal<boolean>(false);
@@ -228,12 +229,7 @@ export class HomeComponent implements OnInit {
         const inventoryRequests = products.map(p => {
           const pid = parseInt(p.id, 10);
 
-          // Fetch Inventory
-          const inventoryReq = this.productService.getInventory(pid).pipe(
-            catchError(() => of({ quantity: 0 }))
-          );
-
-          // Fetch Full Details
+          // Fetch Full Details (includes stock from backend, no auth required)
           const detailsReq = this.productService.getProductById(pid).pipe(
             catchError(() => of(p))
           );
@@ -243,24 +239,18 @@ export class HomeComponent implements OnInit {
             catchError(() => of([]))
           );
 
-          return forkJoin([inventoryReq, detailsReq, categoriesReq]).pipe(
-            map(([inv, details, cats]) => {
-              // Merge details, inventory, and category info
-              // Prioritize the explicitly fetched category list
+          return forkJoin([detailsReq, categoriesReq]).pipe(
+            map(([details, cats]) => {
+              // Merge details and category info
+              // Stock comes from the product details response
               const categoryId = (cats && cats.length > 0) ? cats[0].id.toString() : (details?.categoryId || p.categoryId);
-              return { ...details, stock: inv.quantity, categoryId };
+              return { ...details, stock: details?.stock || p.stock || 0, categoryId };
             })
           );
         });
 
         forkJoin(inventoryRequests).subscribe({
           next: (productsWithInventory: any[]) => {
-            console.log('Loaded products with details:', productsWithInventory);
-            // Log category IDs for debugging
-            productsWithInventory.forEach(p => {
-              console.log(`Product: ${p.name}, CategoryID: ${p.categoryId}`);
-            });
-
             this.products.set(productsWithInventory);
             this.filterProducts();
             this.loading.set(false);
@@ -289,7 +279,14 @@ export class HomeComponent implements OnInit {
       }
     };
     load(); // Initial load
-    window.addEventListener('storage', load); // Listen for updates
+    this.storageListener = load;
+    window.addEventListener('storage', load);
+  }
+
+  ngOnDestroy() {
+    if (this.storageListener) {
+      window.removeEventListener('storage', this.storageListener);
+    }
   }
 
   showProductDetails(product: Product) {
@@ -481,7 +478,7 @@ export class HomeComponent implements OnInit {
 
     // If we already have a payment ID for this session, skip creation
     if (this.currentPaymentId) {
-      console.log('Using existing payment ID:', this.currentPaymentId);
+
       handleConfirmation(this.currentPaymentId);
       return;
     }
@@ -492,7 +489,7 @@ export class HomeComponent implements OnInit {
 
     this.paymentService.createPayment(oid, methodToSend).subscribe({
       next: (payment) => {
-        console.log('Payment created:', payment);
+
 
         if (payment && payment.id) {
           this.currentPaymentId = payment.id;
@@ -504,7 +501,7 @@ export class HomeComponent implements OnInit {
       },
       error: (err) => {
         console.error('Payment creation failed', err);
-        console.log('Error details:', JSON.stringify(err.error));
+
         this.showError('Failed to initiate payment. Please try again.');
       }
     });
@@ -618,7 +615,7 @@ export class HomeComponent implements OnInit {
 
     // Step 2: Submit the transaction details
     try {
-      console.log('Submitting payment details via submitTrx...', payload);
+
       await lastValueFrom(this.orderService.submitTrx(oid, payload));
 
       // Success Logic
@@ -651,15 +648,12 @@ export class HomeComponent implements OnInit {
   }
 
   filterProducts() {
-    console.log('Filtering products. Selected Category:', this.selectedCategory);
     if (this.selectedCategory) {
       const selectedId = this.selectedCategory.id.toString();
       const filtered = this.products().filter(p => {
         const prodCatId = p.categoryId ? p.categoryId.toString() : null;
-        console.log(`Product ${p.name} (ID: ${p.id}) Category ID: ${prodCatId} vs Selected: ${selectedId}`);
         return prodCatId === selectedId;
       });
-      console.log('Filtered count:', filtered.length);
       this.filteredProducts.set(filtered);
     } else {
       this.filteredProducts.set(this.products());

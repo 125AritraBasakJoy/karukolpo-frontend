@@ -128,17 +128,13 @@ export class InventoryComponent implements OnInit {
         forkJoin(inventoryRequests).subscribe({
           next: (productsWithInventory: Product[]) => {
             this.products.set(productsWithInventory);
-            // Fetch orders for chart, but handle error so loading stops
+            // Show table immediately — don't wait for chart data
+            this.loading.set(false);
+
+            // Load chart data in the background (non-blocking)
             this.orderService.getOrders().subscribe({
-              next: (orders) => {
-                this.updateChart(productsWithInventory, orders);
-                this.loading.set(false);
-              },
-              error: (err) => {
-                console.error('Failed to load orders for chart:', err);
-                // Still stop loading even if orders fail
-                this.loading.set(false);
-              }
+              next: (orders) => this.updateChart(productsWithInventory, orders),
+              error: () => { } // Chart failure is non-critical
             });
           },
           error: (err) => {
@@ -252,7 +248,6 @@ export class InventoryComponent implements OnInit {
           if (this.createdProduct) {
             this.createdProduct.categoryId = catId;
           }
-          console.log('Pre-selected category ID:', catId);
         }
       },
       error: (err) => console.error('Error fetching product categories:', err)
@@ -389,11 +384,9 @@ export class InventoryComponent implements OnInit {
     const productId = parseInt(this.createdProduct.id, 10);
     const quantity = this.inventoryForm.stock;
 
-    console.log(`Saving inventory for product ${productId}:`, quantity);
 
     this.productService.updateInventory(productId, quantity).subscribe({
       next: (response) => {
-        console.log('Inventory update response:', response);
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Inventory Updated. Product Setup Complete.' });
         this.displayStep3 = false;
         this.loadProducts(); // Refresh list

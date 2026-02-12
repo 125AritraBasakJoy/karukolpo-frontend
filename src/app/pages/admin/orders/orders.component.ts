@@ -104,7 +104,6 @@ export class OrdersComponent implements OnInit {
   }
 
   viewOrder(order: Order) {
-    console.log('Viewing order:', order);
     this.selectedOrder = JSON.parse(JSON.stringify(order));
     this.displayOrderDialog = true;
     this.loadingDetails = true;
@@ -113,7 +112,6 @@ export class OrdersComponent implements OnInit {
     this.orderService.getOrderById(order.id!).subscribe({
       next: (fullOrder) => {
         if (fullOrder) {
-          console.log('Fetched full order details:', fullOrder);
           this.selectedOrder = fullOrder;
         }
         this.fetchMissingProductDetails();
@@ -211,12 +209,8 @@ export class OrdersComponent implements OnInit {
   }
 
   adminConfirmPayment(order: Order) {
-    console.log('adminConfirmPayment called for order:', order);
-    // window.alert('Debugging: adminConfirmPayment called'); 
-
     // Use ID as is, don't force parseInt
     const orderId = order.id!;
-    console.log('Payment Method:', order.paymentMethod);
 
     // Construct payload for verification
     const verifyPayload = {
@@ -230,10 +224,8 @@ export class OrdersComponent implements OnInit {
     // Use specific verify endpoint for bKash (or general admin verification if applicable to all)
     // The user specifically mentioned this for bKash
     if (order.paymentMethod?.toLowerCase() === 'bkash') {
-      console.log('Calling verifyPayment with payload:', verifyPayload);
       this.paymentService.verifyPayment(orderId, verifyPayload).subscribe({
         next: (res) => {
-          console.log('Verify Success:', res);
           this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated' });
 
           // Use status from backend response or default to Paid
@@ -264,7 +256,6 @@ export class OrdersComponent implements OnInit {
         }
       });
     } else {
-      console.log('Else block (not bkash or mismatched case):', order.paymentMethod);
       // Fallback for COD or others if needed
       this.paymentService.verifyPayment(orderId, verifyPayload).subscribe({
         next: (res) => {

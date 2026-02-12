@@ -84,7 +84,6 @@ export class TrackOrderComponent {
         normalizedPhone = '0' + normalizedPhone;
       }
 
-      console.log('Tracking by phone:', normalizedPhone);
 
       this.orderService.trackOrdersByPhone(normalizedPhone).subscribe({
         next: (orders) => {

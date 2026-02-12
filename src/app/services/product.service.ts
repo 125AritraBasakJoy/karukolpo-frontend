@@ -125,11 +125,9 @@ export class ProductService {
    */
   updateInventory(productId: number, quantity: number): Observable<any> {
     const payload = { quantity: parseInt(String(quantity)) };
-    console.log(`Updating inventory for product ${productId}:`, payload);
 
     return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload).pipe(
       tap({
-        next: (res) => console.log('Inventory updated successfully:', res),
         error: (err) => console.error('Inventory update failed:', err)
       })
     );

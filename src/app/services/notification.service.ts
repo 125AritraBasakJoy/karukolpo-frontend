@@ -68,7 +68,6 @@ export class NotificationService {
         this.requestNotificationPermission();
 
         this.orderSub = this.orderService.newOrderNotification$.subscribe(orderId => {
-            console.log('NotificationService: Received new order notification for', orderId);
 
             // 1. Add to Notification Center (Always)
             this.addNotification({
@@ -97,7 +96,6 @@ export class NotificationService {
     }
 
     init(messageService: MessageService) {
-        console.log('NotificationService: init called with MessageService');
         this.messageService = messageService;
         // Subscription is already active from constructor
     }

@@ -10,8 +10,7 @@ import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-product-details',
@@ -54,7 +53,7 @@ export class ProductDetailsComponent implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private messageService: MessageService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -69,31 +68,21 @@ export class ProductDetailsComponent implements OnInit {
     this.loading.set(true);
     const pid = typeof id === 'string' ? parseInt(id, 10) : id;
 
-    // Fetch Product + Inventory
-    const inventoryReq = this.productService.getInventory(pid).pipe(
-        catchError(() => of({ quantity: 0 }))
-    );
-
-    const detailsReq = this.productService.getProductById(pid).pipe(
-        catchError((err) => {
-            console.error('Failed to load product', err);
-            return of(null);
-        })
-    );
-
-    forkJoin([inventoryReq, detailsReq]).subscribe({
-        next: ([inv, details]) => {
-            if (details) {
-                this.product.set({ ...details, stock: inv.quantity });
-            } else {
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Product not found' });
-            }
-            this.loading.set(false);
-        },
-        error: () => {
-            this.loading.set(false);
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load product' });
+    // Fetch Product details (stock is included in the response, no auth required)
+    this.productService.getProductById(pid).subscribe({
+      next: (product) => {
+        if (product) {
+          this.product.set(product);
+        } else {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Product not found' });
         }
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load product', err);
+        this.loading.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load product' });
+      }
     });
   }
 
@@ -115,15 +104,15 @@ export class ProductDetailsComponent implements OnInit {
   addToCart() {
     const p = this.product();
     if (p) {
-        this.cartService.addToCart(p);
+      this.cartService.addToCart(p);
     }
   }
 
   buyNow() {
     const p = this.product();
     if (p) {
-        this.cartService.addToCart(p);
-        this.router.navigate(['/'], { queryParams: { checkout: 'true' } });
+      this.cartService.addToCart(p);
+      this.router.navigate(['/'], { queryParams: { checkout: 'true' } });
     }
   }
 }

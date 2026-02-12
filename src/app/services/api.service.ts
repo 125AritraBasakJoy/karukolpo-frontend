@@ -94,13 +94,6 @@ export class ApiService {
     const isFormData = body instanceof FormData;
     const contentType = isFormData ? null : 'application/json';
 
-    console.log('API POST Request:', {
-      url: `${this.baseUrl}/${endpoint}`,
-      body,
-      isFormData,
-      skipAuth: options.skipAuth
-    });
-
     return this.http.post<T>(`${this.baseUrl}/${endpoint}`, body, { headers: this.getHeaders(options.skipAuth, contentType) })
       .pipe(catchError(error => this.handleError(error, () => this.post<T>(endpoint, body, options))));
   }
@@ -130,12 +123,6 @@ export class ApiService {
     if (options.body) {
       requestOptions.body = options.body;
     }
-
-    console.log('API DELETE Request:', {
-      url: `${this.baseUrl}/${endpoint}`,
-      body: options.body,
-      contentType
-    });
 
     return this.http.delete<T>(`${this.baseUrl}/${endpoint}`, requestOptions)
       .pipe(catchError(error => this.handleError(error, () => this.delete<T>(endpoint, options))));

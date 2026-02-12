@@ -92,14 +92,12 @@ export class LandingPageManagerComponent implements OnInit {
     }
 
     saveConfig() {
-        console.log('Saving config...', this.tagline, this.imageUrl);
         const config = {
             tagline: this.tagline,
             image: this.imageUrl
         };
         try {
             localStorage.setItem('landingConfig', JSON.stringify(config));
-            console.log('Config saved to localStorage');
             this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Landing page configuration saved!' });
 
             // Dispatch event for same-window updates if needed

@@ -22,10 +22,10 @@ export class AuthService {
 
   login(email: string, password: string): Observable<any> {
     // Send both email and username to cover different backend expectations
-    const payload = { 
-      email, 
+    const payload = {
+      email,
       username: email,
-      password 
+      password
     };
 
     return this.apiService.post<{ access_token: string; refresh_token?: string; token_type: string }>(
@@ -60,7 +60,7 @@ export class AuthService {
   updateCredentials(email: string, password: string): void {
     // This is a placeholder for credential update functionality
     // In a real app, this would call a backend endpoint
-    console.log('Credentials update requested for:', email);
+    // For now, just store in localStorage as a demo
     // For now, just store in localStorage as a demo
     localStorage.setItem('adminEmail', email);
   }

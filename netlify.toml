@@ -1,0 +1,12 @@
+[build]
+  # This should match the "outputPath" in your angular.json
+  publish = "dist/karukolpo-frontend/browser"
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "20" # Match your local Node version

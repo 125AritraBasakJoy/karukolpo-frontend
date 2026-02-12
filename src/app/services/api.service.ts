@@ -79,7 +79,10 @@ export class ApiService {
   private logout() {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminRefreshToken');
-    this.router.navigate(['/admin/login']);
+    // Only redirect to admin login if the user is currently on an admin page
+    if (this.router.url.startsWith('/admin')) {
+      this.router.navigate(['/admin/login']);
+    }
   }
 
   get<T>(endpoint: string, options: { skipAuth?: boolean } = {}): Observable<T> {

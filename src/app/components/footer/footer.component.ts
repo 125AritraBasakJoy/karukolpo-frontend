@@ -12,10 +12,9 @@ export class FooterComponent {
     currentYear = new Date().getFullYear();
 
     socialLinks = [
-        { icon: 'pi pi-facebook', url: 'https://facebook.com', label: 'Facebook' },
-        { icon: 'pi pi-instagram', url: 'https://instagram.com', label: 'Instagram' },
-        { icon: 'pi pi-twitter', url: 'https://twitter.com', label: 'Twitter' },
-        { icon: 'pi pi-youtube', url: 'https://youtube.com', label: 'YouTube' }
+        { icon: 'pi pi-facebook', url: 'https://www.facebook.com/karukalpo', label: 'Facebook' },
+        { icon: 'pi pi-instagram', url: 'https://www.instagram.com/karukolpo.crafts/', label: 'Instagram' },
+        { icon: 'pi pi-whatsapp', url: 'https://wa.me/8801675718846', label: 'WhatsApp' }
     ];
 
     quickLinks = [
@@ -25,8 +24,8 @@ export class FooterComponent {
     ];
 
     contactInfo = {
-        email: 'info@karukolpo.com',
-        phone: '+880 1XXX-XXXXXX',
+        email: 'karukolpocrafts@gmail.com',
+        phone: '01675-718846',
         address: 'Dhaka, Bangladesh'
     };
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { Observable, of, forkJoin } from 'rxjs';
+import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { Product } from '../models/product.model';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
@@ -14,7 +14,7 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 })
 export class ProductService {
   private productsCache: Product[] | null = null;
-  private productCategoriesCache = new Map<number, any[]>();
+  private productCategoriesCache = new Map<string | number, any[]>();
 
   constructor(private apiService: ApiService) { }
 
@@ -40,12 +40,35 @@ export class ProductService {
       query += `&category_id=${categoryId}`;
     }
     return this.apiService.get<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${query}`).pipe(
+      switchMap(backendProducts => {
+        const products = backendProducts.map(p => this.mapBackendToFrontend(p));
+
+        if (products.length === 0) {
+          return of(products);
+        }
+
+        // Fetch inventory for each product in parallel
+        const inventoryRequests = products.map(product =>
+          this.getInventory(product.id).pipe(
+            catchError(() => of({ quantity: 0, reserved: 0, available: 0 }))
+          )
+        );
+
+        return forkJoin(inventoryRequests).pipe(
+          map(inventories => {
+            products.forEach((product, index) => {
+              const inv = inventories[index] as any;
+              product.stock = inv.quantity ?? 0;
+            });
+            return products;
+          })
+        );
+      }),
       tap(products => {
         if (!categoryId && skip === 0) {
-          this.productsCache = products.map(p => this.mapBackendToFrontend(p));
+          this.productsCache = products;
         }
-      }),
-      map(backendProducts => backendProducts.map(this.mapBackendToFrontend))
+      })
     );
   }
 
@@ -54,9 +77,8 @@ export class ProductService {
    * GET /products/{id}
    */
   getProductById(id: number | string): Observable<Product | undefined> {
-    const productId = typeof id === 'string' ? parseInt(id, 10) : id;
-    return this.apiService.get<any>(API_ENDPOINTS.PRODUCTS.GET_BY_ID(productId)).pipe(
-      map(this.mapBackendToFrontend),
+    return this.apiService.get<any>(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id)).pipe(
+      map(p => this.mapBackendToFrontend(p)),
       catchError(() => {
         // Return undefined if product not found
         return new Observable<Product | undefined>(observer => {
@@ -72,7 +94,7 @@ export class ProductService {
    * POST /products (requires auth)
    */
   addProduct(product: Product): Observable<Product> {
-    // Backend only accepts name, price, description
+    // Backend ProductCreate schema only accepts: name, price, description
     const backendProduct = {
       name: product.name,
       price: product.price,
@@ -80,7 +102,7 @@ export class ProductService {
     };
 
     return this.apiService.post<any>(API_ENDPOINTS.PRODUCTS.CREATE, backendProduct).pipe(
-      map(this.mapBackendToFrontend)
+      map(p => this.mapBackendToFrontend(p))
     );
   }
 
@@ -89,8 +111,8 @@ export class ProductService {
    * PATCH /products/{id} (requires auth)
    */
   updateProduct(product: Product): Observable<Product> {
-    const productId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
-    // Backend only accepts name, price, description
+    const productId = product.id;
+    // Backend ProductUpdate schema only accepts: name, price, description
     const backendProduct = {
       name: product.name,
       price: product.price,
@@ -98,7 +120,7 @@ export class ProductService {
     };
 
     return this.apiService.patch<any>(API_ENDPOINTS.PRODUCTS.UPDATE(productId), backendProduct).pipe(
-      map(this.mapBackendToFrontend)
+      map(p => this.mapBackendToFrontend(p))
     );
   }
 
@@ -107,15 +129,14 @@ export class ProductService {
    * DELETE /products/{id} (requires auth)
    */
   deleteProduct(id: number | string): Observable<void> {
-    const productId = typeof id === 'string' ? Number(id) : id;
-    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.DELETE(productId));
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.DELETE(id));
   }
 
   /**
    * Get product inventory
    * GET /products/{id}/inventory (requires auth)
    */
-  getInventory(productId: number): Observable<{ product_id: number; quantity: number }> {
+  getInventory(productId: number | string): Observable<{ product_id: number; quantity: number }> {
     return this.apiService.get(API_ENDPOINTS.PRODUCTS.GET_INVENTORY(productId));
   }
 
@@ -123,7 +144,7 @@ export class ProductService {
    * Update product inventory
    * PATCH /products/{id}/inventory (requires auth)
    */
-  updateInventory(productId: number, quantity: number): Observable<any> {
+  updateInventory(productId: number | string, quantity: number): Observable<any> {
     const payload = { quantity: parseInt(String(quantity)) };
 
     return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload).pipe(
@@ -137,7 +158,7 @@ export class ProductService {
    * Add category to product
    * POST /products/{productId}/categories/{categoryId}
    */
-  addCategoryToProduct(productId: number, categoryId: number): Observable<any> {
+  addCategoryToProduct(productId: number | string, categoryId: number | string): Observable<any> {
     return this.apiService.post(API_ENDPOINTS.PRODUCTS.ADD_CATEGORY(productId, categoryId), {});
   }
 
@@ -145,7 +166,7 @@ export class ProductService {
    * Remove category from product
    * DELETE /products/{productId}/categories/{categoryId}
    */
-  removeCategoryFromProduct(productId: number, categoryId: number): Observable<any> {
+  removeCategoryFromProduct(productId: number | string, categoryId: number | string): Observable<any> {
     return this.apiService.delete(API_ENDPOINTS.PRODUCTS.REMOVE_CATEGORY(productId, categoryId));
   }
 
@@ -153,7 +174,7 @@ export class ProductService {
    * List categories for a product
    * GET /products/{productId}/categories
    */
-  listProductCategories(productId: number, forceRefresh = false): Observable<any[]> {
+  listProductCategories(productId: number | string, forceRefresh = false): Observable<any[]> {
     if (!forceRefresh && this.productCategoriesCache.has(productId)) {
       return of(this.productCategoriesCache.get(productId)!);
     }
@@ -166,7 +187,7 @@ export class ProductService {
    * Add image to product
    * POST /products/{productId}/images
    */
-  addImage(productId: number, file: File): Observable<any> {
+  addImage(productId: number | string, file: File): Observable<any> {
     const formData = new FormData();
     // Changed 'file' to 'image' as a potential fix for backend expectation
     formData.append('image', file);
@@ -177,7 +198,7 @@ export class ProductService {
    * Remove image from product
    * DELETE /products/{productId}/images/{imageId}
    */
-  removeImage(productId: number, imageId: number): Observable<any> {
+  removeImage(productId: number | string, imageId: number | string): Observable<any> {
     return this.apiService.delete(API_ENDPOINTS.PRODUCTS.REMOVE_IMAGE(productId, imageId));
   }
 
@@ -185,7 +206,7 @@ export class ProductService {
    * Set primary image
    * PATCH /products/{productId}/images/{imageId}/set-primary
    */
-  setPrimaryImage(productId: number, imageId: number): Observable<any> {
+  setPrimaryImage(productId: number | string, imageId: number | string): Observable<any> {
     return this.apiService.patch(API_ENDPOINTS.PRODUCTS.SET_PRIMARY_IMAGE(productId, imageId), {});
   }
 
@@ -194,22 +215,15 @@ export class ProductService {
    * Note: This updates inventory on the backend
    */
   reduceStock(items: { product: Product, quantity: number }[]): Observable<void> {
-    // Create an observable that updates each product's inventory
     const updates = items.map(item => {
-      const productId = typeof item.product.id === 'string' ? parseInt(item.product.id, 10) : item.product.id;
+      const productId = item.product.id;
       const newQuantity = (item.product.stock || 0) - item.quantity;
       return this.updateInventory(productId, Math.max(0, newQuantity));
     });
 
-    // Execute all updates
-    return new Observable(observer => {
-      Promise.all(updates.map(obs => obs.toPromise()))
-        .then(() => {
-          observer.next();
-          observer.complete();
-        })
-        .catch(error => observer.error(error));
-    });
+    return forkJoin(updates).pipe(
+      map(() => void 0)
+    );
   }
 
   /**
@@ -217,19 +231,14 @@ export class ProductService {
    */
   restoreStock(items: { product: Product, quantity: number }[]): Observable<void> {
     const updates = items.map(item => {
-      const productId = typeof item.product.id === 'string' ? parseInt(item.product.id, 10) : item.product.id;
+      const productId = item.product.id;
       const newQuantity = (item.product.stock || 0) + item.quantity;
       return this.updateInventory(productId, newQuantity);
     });
 
-    return new Observable(observer => {
-      Promise.all(updates.map(obs => obs.toPromise()))
-        .then(() => {
-          observer.next();
-          observer.complete();
-        })
-        .catch(error => observer.error(error));
-    });
+    return forkJoin(updates).pipe(
+      map(() => void 0)
+    );
   }
 
   /**
@@ -245,6 +254,9 @@ export class ProductService {
    * Map backend product format to frontend format
    */
   public mapBackendToFrontend(backendProduct: any): Product {
+    // Handle both 'stock' and 'quantity' fields for inventory
+    const stock = backendProduct.stock !== undefined ? backendProduct.stock : (backendProduct.quantity !== undefined ? backendProduct.quantity : 0);
+
     return {
       id: backendProduct.id?.toString() || '',
       code: backendProduct.code || `P${backendProduct.id}`,
@@ -253,8 +265,8 @@ export class ProductService {
       price: parseFloat(backendProduct.price),
       imageUrl: backendProduct.imageUrl || backendProduct.image_url || '',
       images: backendProduct.images || [],
-      stock: backendProduct.stock || 0,
-      manualStockStatus: backendProduct.manualStockStatus || 'AUTO',
+      stock: parseInt(String(stock), 10),
+      manualStockStatus: backendProduct.manualStockStatus || backendProduct.manual_stock_status || 'AUTO',
       categoryId: backendProduct.categoryId?.toString() ||
         backendProduct.category_id?.toString() ||
         (backendProduct.categories && backendProduct.categories.length > 0
@@ -274,7 +286,7 @@ export class ProductService {
       name: product.name,
       price: product.price,
       description: product.description || null,
-      category_id: product.categoryId ? parseInt(product.categoryId, 10) : null,
+      category_id: product.categoryId ? product.categoryId : null,
       image_url: product.imageUrl || null,
       images: product.images || []
     };

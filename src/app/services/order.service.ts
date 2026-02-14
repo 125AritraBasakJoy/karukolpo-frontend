@@ -26,8 +26,16 @@ export interface PaymentConfirm {
 export class OrderService {
   private newOrderSubject = new Subject<string>();
   newOrderNotification$ = this.newOrderSubject.asObservable();
+  private ordersCache: Order[] | null = null;
 
   constructor(private apiService: ApiService) { }
+
+  /**
+   * Clear orders cache
+   */
+  clearCache() {
+    this.ordersCache = null;
+  }
 
   /**
    * Create new order
@@ -37,6 +45,7 @@ export class OrderService {
     const backendOrder = this.mapFrontendToBackend(order);
     return this.apiService.post<any>(API_ENDPOINTS.ORDERS.CREATE, backendOrder).pipe(
       tap({
+        next: () => this.clearCache(), // Invalidate cache on new order
         error: (err) => console.error('Order creation failed:', err)
       }),
       map(response => {
@@ -53,7 +62,11 @@ export class OrderService {
    * GET /orders
    * Note: Fetches details for each order to ensure accurate status
    */
-  getOrders(skip = 0, limit = 100): Observable<Order[]> {
+  getOrders(skip = 0, limit = 100, forceRefresh = false): Observable<Order[]> {
+    if (!forceRefresh && this.ordersCache && skip === 0) {
+      return of(this.ordersCache);
+    }
+
     const query = buildListQuery(skip, limit);
     return this.apiService.get<any>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
       map(response => {
@@ -70,6 +83,11 @@ export class OrderService {
         }
         return rawOrders.map(order => this.mapBackendToFrontend(order));
       }),
+      tap(orders => {
+        if (skip === 0) {
+          this.ordersCache = orders;
+        }
+      }),
       catchError(err => {
         console.error('Failed to fetch orders:', err);
         throw err;
@@ -81,7 +99,7 @@ export class OrderService {
    * Reload orders (alias for getOrders)
    */
   reloadOrders(): Observable<Order[]> {
-    return this.getOrders();
+    return this.getOrders(0, 100, true);
   }
 
   /**
@@ -125,7 +143,10 @@ export class OrderService {
    */
   cancelOrder(id: number | string): Observable<Order> {
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.CANCEL(id), {}).pipe(
-      tap(() => this.notifyAdmin(id.toString())),
+      tap(() => {
+        this.clearCache();
+        this.notifyAdmin(id.toString());
+      }),
       map(order => this.mapBackendToFrontend(order))
     );
   }
@@ -137,6 +158,7 @@ export class OrderService {
   adminConfirmOrder(id: number | string): Observable<Order> {
     // Use the specific admin confirm endpoint as requested
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(id), { status: 'confirmed' }).pipe(
+      tap(() => this.clearCache()),
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.error('Admin Confirm Order Failed. Status:', err.status);
@@ -154,6 +176,7 @@ export class OrderService {
   adminCancelOrder(id: number | string): Observable<Order> {
     // Try admin cancel endpoint first
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(id), {}).pipe(
+      tap(() => this.clearCache()),
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.warn('Admin Cancel Order Failed. Trying Customer Cancel Endpoint as fallback.', err);
@@ -171,6 +194,7 @@ export class OrderService {
   adminCompleteOrder(id: number | string): Observable<Order> {
     // Use the specific admin complete endpoint
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_COMPLETE(id), { status: 'completed' }).pipe(
+      tap(() => this.clearCache()),
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.error('Admin Complete Order Failed. Status:', err.status);
@@ -185,7 +209,9 @@ export class OrderService {
    * POST /orders/{order_id}/payments
    */
   createPayment(orderId: number | string, paymentData: PaymentCreate): Observable<any> {
-    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.CREATE(orderId), paymentData);
+    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.CREATE(orderId), paymentData).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**
@@ -193,7 +219,9 @@ export class OrderService {
    * PATCH /orders/{order_id}/payments/{payment_id}/confirm
    */
   confirmPayment(orderId: number | string, paymentId: number | string, confirmData: PaymentConfirm): Observable<any> {
-    return this.apiService.patch<any>(API_ENDPOINTS.PAYMENTS.CONFIRM(orderId, paymentId), confirmData);
+    return this.apiService.patch<any>(API_ENDPOINTS.PAYMENTS.CONFIRM(orderId, paymentId), confirmData).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**
@@ -201,7 +229,9 @@ export class OrderService {
    * POST /orders/{order_id}/payment/submit
    */
   submitTrx(orderId: number | string, data: any): Observable<any> {
-    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(orderId), data);
+    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(orderId), data).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**
@@ -212,7 +242,9 @@ export class OrderService {
     return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(orderId), {
       transaction_id: 'COD_AUTO_CONFIRMED',
       sender_phone: 'COD'
-    });
+    }).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**
@@ -270,7 +302,7 @@ export class OrderService {
         additional_info: order.additionalInfo || '' // Schema requires string, null causes 422
       },
       items: order.items.map(item => ({
-        product_id: typeof item.product.id === 'string' ? parseInt(item.product.id, 10) : item.product.id,
+        product_id: item.product.id,
         quantity: item.quantity
       })),
       // strictly use lowercase 'bkash'

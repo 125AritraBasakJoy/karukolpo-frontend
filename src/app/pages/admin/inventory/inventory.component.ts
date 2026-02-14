@@ -13,7 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextarea } from 'primeng/inputtextarea';
+import { TextareaModule } from 'primeng/textarea';
 import { FormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -27,6 +27,7 @@ import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { forkJoin, map, catchError, of } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-inventory',
@@ -39,7 +40,7 @@ import { forkJoin, map, catchError, of } from 'rxjs';
     DialogModule,
     InputTextModule,
     InputNumberModule,
-    InputTextarea,
+    TextareaModule,
     FormsModule,
     ToastModule,
     ConfirmDialogModule,
@@ -95,7 +96,8 @@ export class InventoryComponent implements OnInit {
     private orderService: OrderService,
     private categoryService: CategoryService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -111,37 +113,13 @@ export class InventoryComponent implements OnInit {
     this.loading.set(true);
     this.productService.getProducts().subscribe({
       next: (products) => {
-        if (products.length === 0) {
-          this.products.set([]);
-          this.loading.set(false);
-          return;
-        }
+        this.products.set(products);
+        this.loading.set(false);
 
-        const inventoryRequests = products.map(p => {
-          const pid = parseInt(p.id, 10);
-          return this.productService.getInventory(pid).pipe(
-            map(inv => ({ ...p, stock: inv.quantity })),
-            catchError(() => of(p))
-          );
-        });
-
-        forkJoin(inventoryRequests).subscribe({
-          next: (productsWithInventory: Product[]) => {
-            this.products.set(productsWithInventory);
-            // Show table immediately — don't wait for chart data
-            this.loading.set(false);
-
-            // Load chart data in the background (non-blocking)
-            this.orderService.getOrders().subscribe({
-              next: (orders) => this.updateChart(productsWithInventory, orders),
-              error: () => { } // Chart failure is non-critical
-            });
-          },
-          error: (err) => {
-            console.error('Error fetching inventory details', err);
-            this.products.set(products);
-            this.loading.set(false);
-          }
+        // Load chart data in the background (non-blocking)
+        this.orderService.getOrders().subscribe({
+          next: (orders) => this.updateChart(products, orders),
+          error: () => { } // Chart failure is non-critical
         });
       },
       error: () => {
@@ -151,8 +129,18 @@ export class InventoryComponent implements OnInit {
   }
 
   refreshProducts() {
-    this.loadProducts();
-    this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Inventory updated' });
+    this.loading.set(true);
+    // Force refresh
+    this.productService.getProducts(0, 100, undefined, true).subscribe({
+      next: (products) => {
+        this.products.set(products);
+        this.loading.set(false);
+        this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Inventory updated' });
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
   }
 
   updateChart(products: Product[], orders: Order[]) {
@@ -200,7 +188,6 @@ export class InventoryComponent implements OnInit {
     this.isNewProduct = true;
     this.createdProduct = null;
     this.productForm = {
-      code: this.generateProductCode(),
       images: [],
       manualStockStatus: 'AUTO'
     };
@@ -215,11 +202,6 @@ export class InventoryComponent implements OnInit {
     this.displayStep3 = false;
   }
 
-  generateProductCode(): string {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `PROD-${timestamp}-${random}`;
-  }
 
   editProduct(product: Product) {
     this.isNewProduct = false;
@@ -235,7 +217,7 @@ export class InventoryComponent implements OnInit {
     }
 
     // Explicitly fetch product categories to ensure pre-selection
-    const productId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
+    const productId = product.id;
     this.productService.listProductCategories(productId).subscribe({
       next: (productCategories) => {
         if (productCategories && productCategories.length > 0) {
@@ -310,7 +292,7 @@ export class InventoryComponent implements OnInit {
   // Step 2: Media & Category
   saveProductStep2() {
     if (!this.createdProduct) return;
-    const productId = parseInt(this.createdProduct.id, 10);
+    const productId = this.createdProduct.id;
 
     // 1. Handle Category Linking
     const categoryObservable = this.productForm.categoryId
@@ -381,25 +363,59 @@ export class InventoryComponent implements OnInit {
   saveInventory() {
     if (!this.createdProduct) return;
 
-    const productId = parseInt(this.createdProduct.id, 10);
+    const productId = this.createdProduct.id;
     const quantity = this.inventoryForm.stock;
+    const manualStatus = this.inventoryForm.manualStockStatus;
 
+    // 1. Update Inventory Quantity
+    const inventoryObs = this.productService.updateInventory(productId, quantity).pipe(
+      catchError(err => {
+        // Don't swallow 401 — let ApiService handle token refresh
+        if (err.status === 401) {
+          throw err;
+        }
+        console.error('Inventory update error:', err);
+        return of({ error: true, msg: 'Failed to update quantity', status: err.status });
+      })
+    );
 
-    this.productService.updateInventory(productId, quantity).subscribe({
-      next: (response) => {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Inventory Updated. Product Setup Complete.' });
+    // 2. Update Product Status (Manual Stock Status)
+    const productUpdate: Product = {
+      ...this.createdProduct,
+      manualStockStatus: manualStatus
+    };
+
+    const statusObs = this.productService.updateProduct(productUpdate).pipe(
+      catchError(err => {
+        // Don't swallow 401 — let ApiService handle token refresh
+        if (err.status === 401) {
+          throw err;
+        }
+        console.error('Status update error:', err);
+        return of({ error: true, msg: 'Failed to update stock status', status: err.status });
+      })
+    );
+
+    forkJoin([inventoryObs, statusObs]).subscribe({
+      next: (results: any[]) => {
+        const errors = results.filter(r => r && r.error);
+
+        if (errors.length > 0) {
+          this.messageService.add({ severity: 'warn', summary: 'Partial Update', detail: 'Some updates failed. Please check.' });
+        } else {
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Inventory & Status Updated.' });
+        }
         this.displayStep3 = false;
-        this.loadProducts(); // Refresh list
+        this.refreshProducts();
       },
       error: (err) => {
-        console.error('Inventory update error:', err);
-        let errorDetail = 'Failed to update inventory';
-        if (err.error && err.error.detail) {
-          errorDetail += ': ' + (typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail));
-        } else if (err.message) {
-          errorDetail += ': ' + err.message;
+        console.error('Error in Step 3:', err);
+        if (err.status === 401) {
+          this.messageService.add({ severity: 'error', summary: 'Session Expired', detail: 'Please log in again.' });
+          this.router.navigate(['/admin/login']);
+        } else {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Unexpected error occurred.' });
         }
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: errorDetail });
       }
     });
   }
@@ -413,7 +429,7 @@ export class InventoryComponent implements OnInit {
         this.productService.deleteProduct(product.id).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
-            this.loadProducts();
+            this.refreshProducts(); // Refresh list to update cache
           },
           error: (err) => {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });

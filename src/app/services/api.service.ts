@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, switchMap, filter, take } from 'rxjs/operators';
-import { Router } from '@angular/router';
 
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,11 +14,11 @@ export class ApiService {
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-  constructor(private http: HttpClient, private router: Router) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
   // Helper to get headers with JWT token if available
   private getHeaders(skipAuth = false, contentType: string | null = 'application/json'): HttpHeaders {
-    const token = localStorage.getItem('adminToken');
+    const token = this.authService.getAccessToken();
     let headers = new HttpHeaders();
 
     if (contentType) {
@@ -38,50 +38,34 @@ export class ApiService {
     return throwError(() => error);
   }
 
+  /**
+   * Step 3: When the access token expires, automatically refresh it.
+   * Delegates the actual refresh call to AuthService.refreshAccessToken().
+   * Queues concurrent requests while a refresh is in progress.
+   */
   private handle401Error(requestFn: () => Observable<any>): Observable<any> {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
 
-      const refreshToken = localStorage.getItem('adminRefreshToken');
-
-      if (refreshToken) {
-        return this.http.post<any>(`${this.baseUrl}/admin/refresh`, { refresh_token: refreshToken }).pipe(
-          switchMap((token: any) => {
-            this.isRefreshing = false;
-            localStorage.setItem('adminToken', token.access_token);
-            if (token.refresh_token) {
-              localStorage.setItem('adminRefreshToken', token.refresh_token);
-            }
-            this.refreshTokenSubject.next(token.access_token);
-            return requestFn();
-          }),
-          catchError((err) => {
-            this.isRefreshing = false;
-            this.logout();
-            return throwError(() => err);
-          })
-        );
-      } else {
-        this.isRefreshing = false;
-        this.logout();
-        return throwError(() => new Error('No refresh token available'));
-      }
+      return this.authService.refreshAccessToken().pipe(
+        switchMap((token: any) => {
+          this.isRefreshing = false;
+          this.refreshTokenSubject.next(token.access_token);
+          return requestFn();
+        }),
+        catchError((err) => {
+          this.isRefreshing = false;
+          return throwError(() => err);
+        })
+      );
     } else {
+      // Another refresh is already in progress — wait for it, then retry
       return this.refreshTokenSubject.pipe(
         filter(token => token != null),
         take(1),
         switchMap(() => requestFn())
       );
-    }
-  }
-
-  private logout() {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminRefreshToken');
-    // Only redirect to admin login if the user is currently on an admin page
-    if (this.router.url.startsWith('/admin')) {
-      this.router.navigate(['/admin/login']);
     }
   }
 

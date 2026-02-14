@@ -7,7 +7,7 @@ import { DataViewModule } from 'primeng/dataview';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule, NgModel } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputTextarea } from 'primeng/inputtextarea';
+import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { ProductService } from '../../services/product.service';
@@ -29,8 +29,6 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
-import JsBarcode from 'jsbarcode';
-import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 import { Order } from '../../models/order.model';
 import { CartService } from '../../services/cart.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -45,7 +43,7 @@ import { ActivatedRoute, Router } from '@angular/router';
     InputNumberModule,
     FormsModule,
     InputTextModule,
-    InputTextarea,
+    TextareaModule,
     ToastModule,
     GalleriaModule,
     ProgressSpinnerModule,
@@ -227,7 +225,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
 
         const inventoryRequests = products.map(p => {
-          const pid = parseInt(p.id, 10);
+          const pid = p.id;
 
           // Fetch Full Details (includes stock from backend, no auth required)
           const detailsReq = this.productService.getProductById(pid).pipe(

@@ -24,7 +24,7 @@ export class FooterComponent {
     ];
 
     contactInfo = {
-        email: 'karukolpocrafts@gmail.com',
+        email: 'contact@karukolpocrafts.com',
         phone: '01675-718846',
         address: 'Dhaka, Bangladesh'
     };

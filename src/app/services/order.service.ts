@@ -18,7 +18,7 @@ export interface PaymentConfirm {
 
 /**
  * OrderService - Backend API Integration
- * Connects to: https://karukolpo-backend.onrender.com/orders
+ * Connects to: https://api.karukolpocrafts.com/orders
  */
 @Injectable({
   providedIn: 'root'

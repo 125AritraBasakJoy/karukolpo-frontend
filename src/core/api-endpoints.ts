@@ -1,7 +1,6 @@
 /**
  * Centralized API Endpoints Configuration
  * All backend API endpoints for Karukolpo
- * Base URL: https://karukolpo-backend.onrender.com
  */
 
 import { environment } from '../environments/environment';

@@ -7,7 +7,7 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 
 /**
  * ProductService - Backend API Integration
- * Connects to: https://karukolpo-backend.onrender.com/products
+ * Connects to: https://api.karukolpocrafts.com/products
  */
 @Injectable({
   providedIn: 'root'
@@ -42,29 +42,8 @@ export class ProductService {
       query += `&category_id=${categoryId}`;
     }
     return this.apiService.get<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${query}`).pipe(
-      switchMap(backendProducts => {
-        const products = backendProducts.map(p => this.mapBackendToFrontend(p));
-
-        if (products.length === 0) {
-          return of(products);
-        }
-
-        // Fetch inventory for each product in parallel
-        const inventoryRequests = products.map(product =>
-          this.getInventory(product.id).pipe(
-            catchError(() => of({ quantity: 0, reserved: 0, available: 0 }))
-          )
-        );
-
-        return forkJoin(inventoryRequests).pipe(
-          map(inventories => {
-            products.forEach((product, index) => {
-              const inv = inventories[index] as any;
-              product.stock = inv.quantity ?? 0;
-            });
-            return products;
-          })
-        );
+      map(backendProducts => {
+        return backendProducts.map(p => this.mapBackendToFrontend(p));
       }),
       tap(products => {
         if (!categoryId && skip === 0) {
@@ -99,7 +78,6 @@ export class ProductService {
    * POST /products (requires auth)
    */
   addProduct(product: Product): Observable<Product> {
-    // Backend ProductCreate schema only accepts: name, price, description
     const backendProduct = {
       name: product.name,
       price: product.price,
@@ -117,7 +95,6 @@ export class ProductService {
    */
   updateProduct(product: Product): Observable<Product> {
     const productId = product.id;
-    // Backend ProductUpdate schema only accepts: name, price, description
     const backendProduct = {
       name: product.name,
       price: product.price,
@@ -152,11 +129,7 @@ export class ProductService {
   updateInventory(productId: number | string, quantity: number): Observable<any> {
     const payload = { quantity: parseInt(String(quantity)) };
 
-    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload).pipe(
-      tap({
-        error: (err) => console.error('Inventory update failed:', err)
-      })
-    );
+    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload);
   }
 
   /**
@@ -194,7 +167,6 @@ export class ProductService {
    */
   addImage(productId: number | string, file: File): Observable<any> {
     const formData = new FormData();
-    // Changed 'file' to 'image' as a potential fix for backend expectation
     formData.append('image', file);
     return this.apiService.post(API_ENDPOINTS.PRODUCTS.ADD_IMAGE(productId), formData);
   }
@@ -217,7 +189,6 @@ export class ProductService {
 
   /**
    * Reduce stock (used when order is placed)
-   * Note: This updates inventory on the backend
    */
   reduceStock(items: { product: Product, quantity: number }[]): Observable<void> {
     const updates = items.map(item => {
@@ -259,8 +230,14 @@ export class ProductService {
    * Map backend product format to frontend format
    */
   public mapBackendToFrontend(backendProduct: any): Product {
-    // Handle both 'stock' and 'quantity' fields for inventory
-    const stock = backendProduct.stock !== undefined ? backendProduct.stock : (backendProduct.quantity !== undefined ? backendProduct.quantity : 0);
+    // Correct mapping for public API fields: available_quantity and is_in_stock
+    const stock = backendProduct.available_quantity !== undefined ? backendProduct.available_quantity :
+      (backendProduct.stock !== undefined ? backendProduct.stock :
+        (backendProduct.quantity !== undefined ? backendProduct.quantity : 0));
+
+    // Handle manual stock status if present, otherwise default to AUTO
+    // We avoid deriving it from is_in_stock to prevent "(Forced)" labels in the UI
+    const manualStatus = backendProduct.manualStockStatus || backendProduct.manual_stock_status || 'AUTO';
 
     return {
       id: backendProduct.id?.toString() || '',
@@ -271,7 +248,7 @@ export class ProductService {
       imageUrl: backendProduct.imageUrl || backendProduct.image_url || '',
       images: backendProduct.images || [],
       stock: parseInt(String(stock), 10),
-      manualStockStatus: backendProduct.manualStockStatus || backendProduct.manual_stock_status || 'AUTO',
+      manualStockStatus: manualStatus as 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO',
       categoryId: backendProduct.categoryId?.toString() ||
         backendProduct.category_id?.toString() ||
         (backendProduct.categories && backendProduct.categories.length > 0

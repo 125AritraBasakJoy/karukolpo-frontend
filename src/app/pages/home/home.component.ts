@@ -217,52 +217,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.productService.getProducts().subscribe({
       next: (products) => {
-        if (products.length === 0) {
-          this.products.set([]);
-          this.filteredProducts.set([]);
-          this.loading.set(false);
-          return;
-        }
-
-        const inventoryRequests = products.map(p => {
-          const pid = p.id;
-
-          // Fetch Full Details (includes stock from backend, no auth required)
-          const detailsReq = this.productService.getProductById(pid).pipe(
-            catchError(() => of(p))
-          );
-
-          // Fetch Categories explicitly
-          const categoriesReq = this.productService.listProductCategories(pid).pipe(
-            catchError(() => of([]))
-          );
-
-          return forkJoin([detailsReq, categoriesReq]).pipe(
-            map(([details, cats]) => {
-              // Merge details and category info
-              // Stock comes from the product details response
-              const categoryId = (cats && cats.length > 0) ? cats[0].id.toString() : (details?.categoryId || p.categoryId);
-              return { ...details, stock: details?.stock || p.stock || 0, categoryId };
-            })
-          );
-        });
-
-        forkJoin(inventoryRequests).subscribe({
-          next: (productsWithInventory: any[]) => {
-            this.products.set(productsWithInventory);
-            this.filterProducts();
-            this.loading.set(false);
-          },
-          error: (err) => {
-            console.error('Error fetching inventory details', err);
-            // Fallback to products without inventory details
-            this.products.set(products);
-            this.filterProducts();
-            this.loading.set(false);
-          }
-        });
+        this.products.set(products);
+        this.filterProducts();
+        this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error fetching products', err);
         this.loading.set(false);
       }
     });

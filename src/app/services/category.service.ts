@@ -9,7 +9,6 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 
 /**
  * CategoryService - Backend API Integration
- * Connects to: https://karukolpo-backend.onrender.com/categories
  */
 @Injectable({
     providedIn: 'root'

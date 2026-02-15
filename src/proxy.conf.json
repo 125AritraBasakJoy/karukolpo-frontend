@@ -1,6 +1,6 @@
 {
     "/api": {
-        "target": "https://karukolpo-backend.onrender.com",
+        "target": "https://api.karukolpocrafts.com",
         "secure": true,
         "changeOrigin": true,
         "logLevel": "debug",

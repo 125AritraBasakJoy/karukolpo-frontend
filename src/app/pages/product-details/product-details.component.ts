@@ -112,7 +112,7 @@ export class ProductDetailsComponent implements OnInit {
     const p = this.product();
     if (p) {
       this.cartService.addToCart(p);
-      this.router.navigate(['/'], { queryParams: { checkout: 'true' } });
+      this.router.navigate(['/cart']);
     }
   }
 }

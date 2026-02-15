@@ -1,0 +1,372 @@
+<div class="cart-page">
+    <p-toast></p-toast>
+
+    <div class="cart-container">
+
+        <!-- Cash Memo / Order Receipt -->
+        <div *ngIf="orderConfirmed" class="success-section py-6">
+            <div class="surface-card border-round-xl shadow-4 p-5 mx-auto" style="max-width: 600px;">
+
+                <!-- Header -->
+                <div class="text-center mb-4 pb-4 border-bottom-2 border-primary">
+                    <h2 class="m-0 mb-1 text-primary font-bold text-3xl">Karukolpo</h2>
+                    <p class="text-color-secondary text-sm m-0">Order Receipt</p>
+                </div>
+
+                <!-- Order Info -->
+                <div class="flex justify-content-between mb-3">
+                    <div>
+                        <div class="text-xs text-color-secondary">Order ID</div>
+                        <div class="font-bold text-lg text-primary">#{{ placedOrderId }}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-color-secondary">Date</div>
+                        <div class="font-semibold">{{ today | date:'mediumDate' }}</div>
+                    </div>
+                </div>
+
+                <!-- Customer Info -->
+                <div class="surface-ground border-round-lg p-3 mb-4 border-1 surface-border">
+                    <div class="grid">
+                        <div class="col-6">
+                            <div class="text-xs text-color-secondary mb-1">Customer</div>
+                            <div class="font-semibold">{{ orderFormSnapshot.fullName }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-xs text-color-secondary mb-1">Phone</div>
+                            <div class="font-semibold">{{ orderFormSnapshot.phoneNumber }}</div>
+                        </div>
+                        <div class="col-12 mt-2" *ngIf="orderFormSnapshot.fullAddress">
+                            <div class="text-xs text-color-secondary mb-1">Address</div>
+                            <div class="text-sm">{{ orderFormSnapshot.fullAddress }},
+                                {{ orderFormSnapshot.subDistrict ? orderFormSnapshot.subDistrict + ', ' : '' }}{{
+                                orderFormSnapshot.district }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <div class="mb-4">
+                    <div
+                        class="flex font-bold text-xs text-color-secondary pb-2 border-bottom-1 surface-border mb-2 uppercase">
+                        <div class="flex-grow-1">Product</div>
+                        <div class="w-4rem text-center">Qty</div>
+                        <div class="w-6rem text-right">Price</div>
+                        <div class="w-6rem text-right">Total</div>
+                    </div>
+                    <div *ngFor="let item of orderedItems"
+                        class="flex align-items-center py-2 border-bottom-1 surface-border text-sm">
+                        <div class="flex-grow-1 font-medium">{{ item.product.name }}</div>
+                        <div class="w-4rem text-center">{{ item.quantity }}</div>
+                        <div class="w-6rem text-right">{{ item.product.price | currency:'BDT':'symbol-narrow' }}</div>
+                        <div class="w-6rem text-right font-semibold">{{ item.product.price * item.quantity |
+                            currency:'BDT':'symbol-narrow' }}</div>
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="border-top-2 surface-border pt-3">
+                    <div class="flex justify-content-between mb-2 text-sm">
+                        <span class="text-color-secondary">Subtotal</span>
+                        <span class="font-semibold">{{ getOrderSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
+                    </div>
+                    <div class="flex justify-content-between mb-2 text-sm">
+                        <span class="text-color-secondary">Delivery Charge</span>
+                        <span class="font-semibold">{{ orderDeliveryCharge | currency:'BDT':'symbol-narrow' }}</span>
+                    </div>
+                    <div class="flex justify-content-between mt-3 pt-3 border-top-2 border-primary">
+                        <span class="font-bold text-xl">Grand Total</span>
+                        <span class="font-bold text-xl text-primary">{{ orderTotal |
+                            currency:'BDT':'symbol-narrow' }}</span>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="mt-4 surface-ground border-round-lg p-3 border-1 surface-border text-center">
+                    <span class="text-color-secondary text-sm">Payment Method: </span>
+                    <span class="font-bold text-primary">{{ orderPaymentMethod }}</span>
+                </div>
+
+                <!-- Action -->
+                <div class="text-center mt-5">
+                    <p class="text-color-secondary mb-4 text-sm">Thank you for your order! Our team will process it
+                        soon.</p>
+                    <button pButton label="Continue Shopping" icon="pi pi-shopping-bag" class="p-button-lg"
+                        (click)="continueShopping()"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Cart Content -->
+        <div *ngIf="!orderConfirmed">
+
+            <!-- Header -->
+            <div class="cart-header flex justify-content-between align-items-center mb-5">
+                <h1 class="m-0 flex align-items-center gap-3">
+                    <i class="pi pi-shopping-cart text-primary"></i>
+                    Your Cart
+                    <p-tag *ngIf="cartService.cart().length > 0" [value]="cartService.totalItems() + ' items'"
+                        severity="info" [rounded]="true"></p-tag>
+                </h1>
+                <button pButton label="Continue Shopping" icon="pi pi-arrow-left"
+                    class="p-button-text p-button-secondary" (click)="goBack()"></button>
+            </div>
+
+            <!-- Empty Cart -->
+            <div *ngIf="cartService.cart().length === 0" class="empty-cart text-center py-8">
+                <div class="surface-card border-round-xl shadow-2 p-6 mx-auto" style="max-width: 500px;">
+                    <i class="pi pi-shopping-cart text-6xl text-400 mb-4 block"></i>
+                    <h2 class="text-color-secondary mb-3">Your cart is empty</h2>
+                    <p class="text-500 mb-5">Browse our products and add something you love!</p>
+                    <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg"
+                        (click)="goBack()"></button>
+                </div>
+            </div>
+
+            <!-- Cart + Checkout -->
+            <div *ngIf="cartService.cart().length > 0" class="grid">
+
+                <!-- Left: Cart Items -->
+                <div class="col-12 lg:col-7">
+                    <div class="surface-card border-round-xl shadow-2 p-4 mb-4">
+                        <h3 class="mt-0 mb-4 flex align-items-center gap-2">
+                            <i class="pi pi-list"></i> Cart Items
+                        </h3>
+
+                        <div *ngFor="let item of cartService.cart(); let last = last"
+                            class="cart-item flex align-items-center gap-4 py-3" [class.border-bottom-1]="!last"
+                            [class.surface-border]="!last">
+                            <img [src]="item.product.imageUrl" [alt]="item.product.name"
+                                class="cart-item-image border-round shadow-1">
+
+                            <div class="flex-grow-1">
+                                <div class="font-bold text-lg mb-1">{{ item.product.name }}</div>
+                                <div class="text-primary font-semibold">{{ item.product.price |
+                                    currency:'BDT':'symbol-narrow' }}
+                                </div>
+                            </div>
+
+                            <div class="flex align-items-center gap-2">
+                                <button pButton icon="pi pi-minus"
+                                    class="p-button-rounded p-button-outlined p-button-sm"
+                                    (click)="updateQuantity(item, -1)"></button>
+                                <span class="font-bold text-lg w-3rem text-center">{{ item.quantity }}</span>
+                                <button pButton icon="pi pi-plus" class="p-button-rounded p-button-outlined p-button-sm"
+                                    (click)="updateQuantity(item, 1)"></button>
+                            </div>
+
+                            <div class="text-right" style="min-width: 100px;">
+                                <div class="font-bold text-lg">{{ item.product.price * item.quantity |
+                                    currency:'BDT':'symbol-narrow' }}</div>
+                            </div>
+
+                            <button pButton icon="pi pi-trash"
+                                class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                                (click)="removeItem(item)"></button>
+                        </div>
+
+                        <!-- Price Summary -->
+                        <div class="mt-4 pt-3 border-top-1 surface-border">
+                            <div class="flex justify-content-between mb-2">
+                                <span class="text-color-secondary">Subtotal</span>
+                                <span class="font-semibold">{{ getSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
+                            </div>
+                            <div class="flex justify-content-between mb-2">
+                                <span class="text-color-secondary">Delivery Charge</span>
+                                <span class="font-semibold">{{ currentDeliveryCharge | currency:'BDT':'symbol-narrow'
+                                    }}</span>
+                            </div>
+                            <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl">
+                                <span class="font-bold">Total</span>
+                                <span class="font-bold text-primary">{{ getTotalPrice() | currency:'BDT':'symbol-narrow'
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Shipping + Payment -->
+                <div class="col-12 lg:col-5">
+
+                    <!-- Shipping Form (hidden when payment section is shown) -->
+                    <div *ngIf="!showPaymentSection" class="surface-card border-round-xl shadow-2 p-4 mb-4">
+                        <h3 class="mt-0 mb-4 flex align-items-center gap-2">
+                            <i class="pi pi-truck"></i> Shipping Details
+                        </h3>
+
+                        <div class="p-fluid">
+                            <div class="field">
+                                <label for="cart_fullname">Full Name <span class="text-red-500">*</span></label>
+                                <input pInputText id="cart_fullname" [(ngModel)]="checkoutForm.fullName"
+                                    placeholder="Enter your name" required #fullName="ngModel" class="w-full">
+                                <small class="p-error"
+                                    *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full Name is
+                                    required.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="cart_phone">Phone Number <span class="text-red-500">*</span></label>
+                                <input pInputText id="cart_phone" [(ngModel)]="checkoutForm.phoneNumber"
+                                    placeholder="017..." maxlength="11" required #phone="ngModel"
+                                    pattern="^(?:\+88|88)?(01[3-9]\d{8})$" class="w-full">
+                                <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid
+                                    Phone Number is
+                                    required.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="cart_email">Email <span
+                                        class="text-color-secondary text-xs font-normal">(Optional)</span></label>
+                                <input pInputText id="cart_email" [(ngModel)]="checkoutForm.email"
+                                    placeholder="example@email.com" email #email="ngModel" class="w-full">
+                                <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Please
+                                    enter a valid email address.</small>
+                            </div>
+
+                            <div class="formgrid grid">
+                                <div class="field col-6">
+                                    <label for="cart_district">District <span class="text-red-500">*</span></label>
+                                    <p-dropdown inputId="cart_district" [options]="districts" optionLabel="name"
+                                        optionValue="name" [(ngModel)]="checkoutForm.district"
+                                        (onChange)="onDistrictChange($event)" placeholder="Select District"
+                                        appendTo="body" required #district="ngModel" styleClass="w-full"
+                                        [style]="{'width':'100%'}" [filter]="true" filterBy="name"></p-dropdown>
+                                    <small class="p-error"
+                                        *ngIf="district.invalid && (district.dirty || district.touched)">District is
+                                        required.</small>
+                                </div>
+                                <div class="field col-6">
+                                    <label>Sub-District <span class="text-red-500"
+                                            *ngIf="subDistricts.length > 0">*</span></label>
+                                    <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
+                                        placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
+                                        [required]="subDistricts.length > 0" styleClass="w-full"
+                                        [style]="{'width':'100%'}" [filter]="true"></p-dropdown>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label for="cart_postal">Postal Code</label>
+                                <input pInputText id="cart_postal" [(ngModel)]="checkoutForm.postalCode"
+                                    placeholder="1234" maxlength="4" pattern="\d{4}" #postal="ngModel" class="w-full">
+                                <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid
+                                    Postal Code is
+                                    required.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="cart_address">Full Address <span class="text-red-500">*</span></label>
+                                <textarea pInputTextarea id="cart_address" [(ngModel)]="checkoutForm.fullAddress"
+                                    rows="2" placeholder="House, Road, Area..." required #address="ngModel"
+                                    class="w-full"></textarea>
+                                <small class="p-error"
+                                    *ngIf="address.invalid && (address.dirty || address.touched)">Full Address is
+                                    required.</small>
+                            </div>
+
+                            <div class="field">
+                                <label for="cart_info">Additional Info (Optional)</label>
+                                <textarea pInputTextarea id="cart_info" [(ngModel)]="checkoutForm.additionalInfo"
+                                    rows="2" placeholder="Landmarks, special instructions..." class="w-full"></textarea>
+                            </div>
+
+                            <button pButton label="Proceed to Payment" icon="pi pi-arrow-right"
+                                class="w-full p-button-lg mt-3" (click)="proceedToPayment()" [loading]="loading()"
+                                *ngIf="!showPaymentSection"></button>
+                        </div>
+                    </div>
+
+                    <!-- Payment Section (shown after form validation, replaces shipping form) -->
+                    <div *ngIf="showPaymentSection" id="payment-section"
+                        class="surface-card border-round-xl shadow-2 p-4 payment-appear">
+
+                        <!-- Shipping Summary -->
+                        <div class="surface-ground border-round-lg p-3 mb-4 border-1 surface-border">
+                            <div class="flex justify-content-between align-items-center mb-2">
+                                <span class="font-bold text-color flex align-items-center gap-2">
+                                    <i class="pi pi-truck"></i> Shipping To
+                                </span>
+                                <button pButton label="Edit" icon="pi pi-pencil" class="p-button-text p-button-sm"
+                                    (click)="showPaymentSection = false"></button>
+                            </div>
+                            <div class="text-color-secondary text-sm line-height-3">
+                                <div>{{ checkoutForm.fullName }} &bull; {{ checkoutForm.phoneNumber }}</div>
+                                <div>{{ checkoutForm.fullAddress }}, {{ checkoutForm.subDistrict ?
+                                    checkoutForm.subDistrict + ', ' : '' }}{{ checkoutForm.district }}</div>
+                            </div>
+                        </div>
+
+                        <h3 class="mt-0 mb-4 flex align-items-center gap-2">
+                            <i class="pi pi-wallet"></i> Payment Method
+                        </h3>
+
+                        <div class="grid mb-4">
+                            <div class="col-6">
+                                <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                                    [class.active]="selectedPaymentMethod === 'COD'"
+                                    (click)="selectedPaymentMethod = 'COD'">
+                                    <div class="bg-primary-reverse-100 p-3 border-circle">
+                                        <i class="pi pi-money-bill text-3xl text-primary"></i>
+                                    </div>
+                                    <div class="font-bold text-color">Cash on Delivery</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                                    [class.active]="selectedPaymentMethod === 'bKash'"
+                                    (click)="selectedPaymentMethod = 'bKash'">
+                                    <div class="bg-pink-900/20 p-3 border-circle">
+                                        <img src="assets/bkash-logo.png" alt="bKash" height="30">
+                                    </div>
+                                    <div class="font-bold text-color">bKash Payment</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- bKash Details -->
+                        <div *ngIf="selectedPaymentMethod === 'bKash'"
+                            class="payment-appear p-4 border-round-xl surface-ground border-1 surface-border">
+                            <div class="text-center mb-4">
+                                <div
+                                    class="inline-flex align-items-center justify-content-center surface-100 px-3 py-1 border-round-pill mb-3">
+                                    <span class="text-pink-400 font-bold text-sm">Scan to Pay</span>
+                                </div>
+                                <img src="assets/bkash-qr.png" alt="bKash QR" width="160"
+                                    class="border-round shadow-2 block mx-auto bg-white p-2">
+                            </div>
+
+                            <div class="p-fluid">
+                                <div class="field mb-4">
+                                    <label class="font-bold text-color block mb-2">Your bKash Number</label>
+                                    <input pInputText [(ngModel)]="bkashPhone" placeholder="017XXXXXXXX" maxlength="11"
+                                        class="w-full py-3">
+                                </div>
+                                <div class="field mb-4">
+                                    <label class="font-bold text-color block mb-2">Transaction ID</label>
+                                    <input pInputText [(ngModel)]="bkashTrxId" placeholder="Enter 10-digit ID"
+                                        class="w-full py-3">
+                                </div>
+                                <button pButton label="Complete Payment" icon="pi pi-shield"
+                                    class="p-button-danger p-button-lg w-full" (click)="submitBkashPayment()"
+                                    [disabled]="!bkashPhone || !bkashTrxId" [loading]="loading()"></button>
+                            </div>
+                        </div>
+
+                        <!-- COD Confirm -->
+                        <div *ngIf="selectedPaymentMethod === 'COD'" class="payment-appear">
+                            <div class="surface-ground p-3 border-round-lg mb-4 text-center border-1 surface-border">
+                                <p class="text-color-secondary m-0">You will pay the total amount to the delivery person
+                                    when your
+                                    package arrives.</p>
+                            </div>
+                            <button pButton label="Confirm COD Order" icon="pi pi-check" class="p-button-lg w-full"
+                                (click)="confirmCOD()" [loading]="loading()"></button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

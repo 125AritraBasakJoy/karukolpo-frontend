@@ -20,5 +20,9 @@ export const routes: Routes = [
   {
     path: 'track-order',
     loadComponent: () => import('./pages/track-order/track-order.component').then(m => m.TrackOrderComponent)
+  },
+  {
+    path: 'cart',
+    loadComponent: () => import('./pages/cart/cart.component').then(m => m.CartComponent)
   }
 ];

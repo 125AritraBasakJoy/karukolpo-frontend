@@ -1,0 +1,111 @@
+.cart-page {
+    min-height: 100vh;
+    background: var(--surface-ground);
+    padding: 2rem 1rem;
+}
+
+.cart-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.cart-header h1 {
+    font-size: 2rem;
+    color: var(--text-color);
+}
+
+.cart-item-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.cart-item {
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: var(--surface-hover);
+        border-radius: 8px;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+// Sticky shipping section on desktop
+@media (min-width: 992px) {
+    .col-12.lg\:col-5>div:first-child {
+        position: sticky;
+        top: 5rem;
+    }
+}
+
+// Payment cards
+.payment-method-card {
+    border: 2px solid var(--surface-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    background: var(--surface-card);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+        border-color: var(--primary-color);
+        background: var(--surface-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    &.active {
+        border-color: var(--primary-color);
+        background: var(--primary-50);
+
+        &::after {
+            content: '\e909';
+            font-family: 'primeicons';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+    }
+
+    i {
+        transition: transform 0.3s ease;
+    }
+
+    &:hover i {
+        transform: scale(1.1);
+    }
+}
+
+.payment-appear {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .cart-item {
+        flex-wrap: wrap;
+    }
+
+    .cart-item-image {
+        width: 60px;
+        height: 60px;
+    }
+}

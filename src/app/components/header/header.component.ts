@@ -39,10 +39,9 @@ export class HeaderComponent {
   constructor(
     public cartService: CartService,
     private router: Router
-  ) {}
+  ) { }
 
   openCart() {
-    // Navigate to home with checkout query param to trigger the modal
-    this.router.navigate(['/'], { queryParams: { checkout: 'true' } });
+    this.router.navigate(['/cart']);
   }
 }

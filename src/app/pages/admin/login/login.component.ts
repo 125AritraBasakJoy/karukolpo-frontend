@@ -40,7 +40,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
             <div class="flex flex-column gap-3">
                 <p-button label="Login" icon="pi pi-sign-in" (click)="login()" *ngIf="!loading()" styleClass="w-full"></p-button>
                 <div class="flex justify-content-center">
-                    <button pButton label="Change Credentials" icon="pi pi-cog" class="p-button-text p-button-secondary p-button-sm" (click)="showChangeCreds()"></button>
+                    <button pButton label="Forgot Password?" icon="pi pi-lock" class="p-button-text p-button-secondary p-button-sm" (click)="showForgotPassword()"></button>
                 </div>
             </div>
             <div *ngIf="loading()" class="flex justify-content-center">
@@ -49,52 +49,31 @@ import { FloatLabelModule } from 'primeng/floatlabel';
         </ng-template>
       </p-card>
 
-      <p-dialog header="Update Credentials" [(visible)]="displayChangeCredsModal" [modal]="true" [style]="{width: '450px'}">
+      <!-- Forgot Password Modal -->
+      <p-dialog header="Forgot Password" [(visible)]="displayForgotPasswordModal" [modal]="true" [style]="{width: '450px'}">
         <div class="p-fluid">
+            <p class="text-sm mb-4" style="color: var(--text-color-secondary);">
+                Enter your admin email address below. If the account exists, we'll send a password reset link to your inbox.
+            </p>
             <div class="field mb-3">
-                <label for="newUsername" class="font-bold block mb-2">New Username</label>
-                <input pInputText id="newUsername" [(ngModel)]="newUsername" />
-            </div>
-            
-            <div class="field mb-3">
-                <label for="newPassword" class="font-bold block mb-2">New Password using this format - <span style="color: red;">badhan&#64;1971</span></label>
-                <p-password id="newPassword" [(ngModel)]="newPassword" [toggleMask]="true" (ngModelChange)="checkPasswordStrength()"></p-password>
-                
-                <div class="mt-3 p-3 surface-ground border-round">
-                    <div class="text-sm font-bold mb-2">Password Requirements:</div>
-                    <ul class="list-none p-0 m-0 text-sm">
-                        <li class="flex align-items-center mb-1" [ngClass]="{'text-green-500': passwordRules.length, 'text-gray-600': !passwordRules.length}">
-                            <i class="pi mr-2" [ngClass]="{'pi-check-circle': passwordRules.length, 'pi-circle': !passwordRules.length}"></i>
-                            At least 6 characters
-                        </li>
-                        <li class="flex align-items-center mb-1" [ngClass]="{'text-green-500': passwordRules.upper, 'text-gray-600': !passwordRules.upper}">
-                            <i class="pi mr-2" [ngClass]="{'pi-check-circle': passwordRules.upper, 'pi-circle': !passwordRules.upper}"></i>
-                            At least one uppercase letter (A-Z)
-                        </li>
-                        <li class="flex align-items-center mb-1" [ngClass]="{'text-green-500': passwordRules.lower, 'text-gray-600': !passwordRules.lower}">
-                            <i class="pi mr-2" [ngClass]="{'pi-check-circle': passwordRules.lower, 'pi-circle': !passwordRules.lower}"></i>
-                            At least one lowercase letter (a-z)
-                        </li>
-                        <li class="flex align-items-center mb-1" [ngClass]="{'text-green-500': passwordRules.number, 'text-gray-600': !passwordRules.number}">
-                            <i class="pi mr-2" [ngClass]="{'pi-check-circle': passwordRules.number, 'pi-circle': !passwordRules.number}"></i>
-                            At least one number (0-9)
-                        </li>
-                        <li class="flex align-items-center" [ngClass]="{'text-green-500': passwordRules.special, 'text-gray-600': !passwordRules.special}">
-                            <i class="pi mr-2" [ngClass]="{'pi-check-circle': passwordRules.special, 'pi-circle': !passwordRules.special}"></i>
-                            At least one special character (&#64;$!%*?&)
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="field mb-3">
-                <label for="confirmPassword" class="font-bold block mb-2">Confirm Password</label>
-                <p-password id="confirmPassword" [(ngModel)]="confirmPassword" [feedback]="false"></p-password>
+                <p-floatlabel>
+                    <input type="email" pInputText id="forgotEmail" [(ngModel)]="forgotEmail" class="w-full">
+                    <label for="forgotEmail">Email Address</label>
+                </p-floatlabel>
             </div>
         </div>
         <ng-template pTemplate="footer">
-            <p-button label="Cancel" icon="pi pi-times" styleClass="p-button-text" (click)="displayChangeCredsModal=false"></p-button>
-            <p-button label="Update" icon="pi pi-check" (click)="updateCredentials()"></p-button>
+            <div class="flex justify-content-end gap-2">
+                <p-button label="Cancel" icon="pi pi-times" styleClass="p-button-text" (click)="displayForgotPasswordModal=false"></p-button>
+                <p-button
+                    label="Send Password Reset Link"
+                    icon="pi pi-send"
+                    (click)="sendForgotPassword()"
+                    [disabled]="forgotPasswordLoading()"
+                    *ngIf="!forgotPasswordLoading()">
+                </p-button>
+                <p-progressSpinner *ngIf="forgotPasswordLoading()" styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+            </div>
         </ng-template>
       </p-dialog>
     </div>
@@ -117,19 +96,10 @@ export class LoginComponent {
   password = '';
   loading = signal<boolean>(false);
 
-  // Modal State
-  displayChangeCredsModal = false;
-  newUsername = '';
-  newPassword = '';
-  confirmPassword = '';
-
-  passwordRules = {
-    length: false,
-    upper: false,
-    lower: false,
-    number: false,
-    special: false
-  };
+  // Forgot Password Modal State
+  displayForgotPasswordModal = false;
+  forgotEmail = '';
+  forgotPasswordLoading = signal<boolean>(false);
 
   constructor(
     private authService: AuthService,
@@ -162,62 +132,38 @@ export class LoginComponent {
     });
   }
 
-  showChangeCreds() {
-    this.displayChangeCredsModal = true;
-    this.newUsername = '';
-    this.newPassword = '';
-    this.confirmPassword = '';
-    this.resetRules();
+  showForgotPassword() {
+    this.forgotEmail = '';
+    this.displayForgotPasswordModal = true;
   }
 
-  resetRules() {
-    this.passwordRules = {
-      length: false,
-      upper: false,
-      lower: false,
-      number: false,
-      special: false
-    };
-  }
-
-  checkPasswordStrength() {
-    const p = this.newPassword;
-    this.passwordRules.length = p.length >= 6;
-    this.passwordRules.upper = /[A-Z]/.test(p);
-    this.passwordRules.lower = /[a-z]/.test(p);
-    this.passwordRules.number = /\d/.test(p);
-    this.passwordRules.special = /[@$!%*?&]/.test(p);
-  }
-
-  resetPasswordForm() {
-    this.newUsername = '';
-    this.newPassword = '';
-    this.confirmPassword = '';
-    this.resetRules();
-  }
-
-  updateCredentials() {
-    if (!this.newUsername || !this.newPassword) {
-      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'All fields are required' });
+  sendForgotPassword() {
+    if (!this.forgotEmail || !this.forgotEmail.trim()) {
+      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please enter your email address' });
       return;
     }
 
-    this.checkPasswordStrength(); // Ensure rules are up to date
-    const r = this.passwordRules;
-    const isValid = r.length && r.upper && r.lower && r.number && r.special;
-
-    if (!isValid) {
-      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please satisfy all password requirements' });
-      return;
-    }
-
-    if (this.newPassword !== this.confirmPassword) {
-      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Passwords do not match' });
-      return;
-    }
-
-    this.authService.updateCredentials(this.newUsername, this.newPassword);
-    this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Credentials updated. Please login.' });
-    this.displayChangeCredsModal = false;
+    this.forgotPasswordLoading.set(true);
+    this.authService.forgotPassword(this.forgotEmail.trim()).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Email Sent',
+          detail: 'If this account exists, a password reset link has been sent to your email.',
+          life: 6000
+        });
+        this.forgotPasswordLoading.set(false);
+        this.displayForgotPasswordModal = false;
+      },
+      error: (error) => {
+        console.error('Forgot password error:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: error.error?.detail || 'Something went wrong. Please try again.'
+        });
+        this.forgotPasswordLoading.set(false);
+      }
+    });
   }
 }

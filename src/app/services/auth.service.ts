@@ -106,9 +106,27 @@ export class AuthService {
     return this.isAdminLoggedInSubject.value;
   }
 
-  // Update credentials (currently localStorage-based)
-  // TODO: Connect to backend endpoint when available
-  updateCredentials(email: string, password: string): void {
-    localStorage.setItem('adminEmail', email);
+  /**
+   * Forgot Password — sends a reset link to the admin's email.
+   * POST /admin/forgot-password  { email }
+   */
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiUrl}/${API_ENDPOINTS.ADMIN.FORGOT_PASSWORD}`,
+      { email },
+      { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
+    );
+  }
+
+  /**
+   * Reset Password — sets a new password using the token from the email link.
+   * POST /admin/reset-password  { token, new_password }
+   */
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiUrl}/${API_ENDPOINTS.ADMIN.RESET_PASSWORD}`,
+      { token, new_password: newPassword },
+      { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
+    );
   }
 }

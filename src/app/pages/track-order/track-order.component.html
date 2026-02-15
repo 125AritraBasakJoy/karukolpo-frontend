@@ -88,6 +88,29 @@
                 <span>Payment Method:</span>
                 <p-tag [value]="order()?.paymentMethod || 'N/A'" severity="info" styleClass="text-xs"></p-tag>
               </div>
+              <div class="flex justify-content-between mb-2">
+                <span>Subtotal:</span>
+                <span class="font-semibold">{{ (order()?.subtotal || order()?.totalAmount) |
+                  currency:'BDT':'symbol-narrow' }}</span>
+              </div>
+              @if (order()?.deliveryCharge) {
+              <div class="flex justify-content-between mb-2">
+                <span>Delivery Charge:</span>
+                <span class="font-semibold">{{ order()?.deliveryCharge |
+                  currency:'BDT':'symbol-narrow' }}</span>
+              </div>
+              }
+              @if (order()?.discountAmount) {
+              <div class="flex justify-content-between mb-2">
+                <span class="text-green-500">Discount
+                  @if (order()?.couponCode) {
+                  <span class="text-xs">({{ order()?.couponCode }})</span>
+                  }
+                </span>
+                <span class="font-semibold text-green-500">-{{ order()?.discountAmount |
+                  currency:'BDT':'symbol-narrow' }}</span>
+              </div>
+              }
               <div class="flex justify-content-between align-items-center mt-3 pt-2 border-top-1 border-100">
                 <span class="font-bold text-lg">Total Amount:</span>
                 <span class="font-bold text-2xl text-emerald-500">{{ order()?.totalAmount |

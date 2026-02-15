@@ -19,9 +19,12 @@ export interface Order {
   bkashNumber?: string;
   deliveryLocation?: string;
   deliveryCharge?: number;
+  subtotal?: number;
+  discountAmount?: number;
+  couponCode?: string;
   additionalInfo?: string;
   orderDate: Date;
-  
+
   // New fields to match backend response structure
   address?: {
     id: number;

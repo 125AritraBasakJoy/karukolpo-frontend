@@ -75,8 +75,7 @@
                     <div class="flex flex-column gap-1">
                         <!-- Robust Status Display -->
                         <p-tag [value]="order.paymentStatus || 'Pending'"
-                            [severity]="getPaymentSeverity(order.paymentStatus)"
-                            [rounded]="true"></p-tag>
+                            [severity]="getPaymentSeverity(order.paymentStatus)" [rounded]="true"></p-tag>
                     </div>
                 </td>
                 <td><p-tag [value]="order.status" [severity]="getSeverity(order.status)"></p-tag></td>
@@ -87,21 +86,20 @@
 
                         <!-- Status Actions -->
                         @if (order.status === 'Pending') {
-                            <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
-                            (onClick)="updateStatus(order, 'Confirmed')"
-                            pTooltip="Confirm Order" tooltipPosition="top"></p-button>
+                        <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="updateStatus(order, 'Confirmed')" pTooltip="Confirm Order"
+                            tooltipPosition="top"></p-button>
                         }
 
                         @if (order.status === 'Confirmed' && order.paymentMethod?.toLowerCase() !== 'bkash') {
-                            <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="success"
-                            (onClick)="updateStatus(order, 'Completed')"
-                            pTooltip="Mark Complete" tooltipPosition="top"></p-button>
+                        <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="updateStatus(order, 'Completed')" pTooltip="Mark Complete"
+                            tooltipPosition="top"></p-button>
                         }
 
                         @if (order.status !== 'Cancelled' && order.status !== 'Completed') {
-                            <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
-                            (onClick)="updateStatus(order, 'Cancelled')"
-                            pTooltip="Cancel Order"
+                        <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
+                            (onClick)="updateStatus(order, 'Cancelled')" pTooltip="Cancel Order"
                             tooltipPosition="top"></p-button>
                         }
                     </div>
@@ -119,20 +117,21 @@
             <h3>Customer Info</h3>
             <!-- Prefer address object if available -->
             @if (selectedOrder.address) {
-                <p><strong>Name:</strong> {{ selectedOrder.address.full_name }}</p>
-                <p><strong>Phone:</strong> {{ selectedOrder.address.phone }}</p>
-                <p><strong>Address:</strong> {{ selectedOrder.address.address_line }}, {{ selectedOrder.address.subdistrict }}, {{ selectedOrder.address.district }}</p>
-                @if (selectedOrder.address.additional_info) {
-                    <p><strong>Additional Info:</strong> {{ selectedOrder.address.additional_info }}</p>
-                }
+            <p><strong>Name:</strong> {{ selectedOrder.address.full_name }}</p>
+            <p><strong>Phone:</strong> {{ selectedOrder.address.phone }}</p>
+            <p><strong>Address:</strong> {{ selectedOrder.address.address_line }}, {{ selectedOrder.address.subdistrict
+                }}, {{ selectedOrder.address.district }}</p>
+            @if (selectedOrder.address.additional_info) {
+            <p><strong>Additional Info:</strong> {{ selectedOrder.address.additional_info }}</p>
+            }
             } @else {
-                <p><strong>Name:</strong> {{ selectedOrder.fullName }}</p>
-                <p><strong>Phone:</strong> {{ selectedOrder.phoneNumber }}</p>
-                @if (selectedOrder.bkashNumber) {
-                <p><strong>bKash Number:</strong> {{ selectedOrder.bkashNumber }}</p>
-                }
-                <p><strong>Address:</strong> {{ selectedOrder.fullAddress }}, {{ selectedOrder.subDistrict }} {{
-                    selectedOrder.district }} - {{ selectedOrder.postalCode }}</p>
+            <p><strong>Name:</strong> {{ selectedOrder.fullName }}</p>
+            <p><strong>Phone:</strong> {{ selectedOrder.phoneNumber }}</p>
+            @if (selectedOrder.bkashNumber) {
+            <p><strong>bKash Number:</strong> {{ selectedOrder.bkashNumber }}</p>
+            }
+            <p><strong>Address:</strong> {{ selectedOrder.fullAddress }}, {{ selectedOrder.subDistrict }} {{
+                selectedOrder.district }} - {{ selectedOrder.postalCode }}</p>
             }
         </div>
         <div class="col-12 md:col-6">
@@ -153,20 +152,18 @@
 
             <p><strong>Payment Status:</strong>
                 @if (selectedOrder.payments) {
-                    <p-tag [value]="selectedOrder.payments.status || 'Pending'"
-                    [severity]="getPaymentSeverity(selectedOrder.payments.status)"
-                    [rounded]="true"></p-tag>
+                <p-tag [value]="selectedOrder.payments.status || 'Pending'"
+                    [severity]="getPaymentSeverity(selectedOrder.payments.status)" [rounded]="true"></p-tag>
                 } @else {
-                    <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
-                    [severity]="getPaymentSeverity(selectedOrder.paymentStatus)"
-                    [rounded]="true"></p-tag>
+                <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
+                    [severity]="getPaymentSeverity(selectedOrder.paymentStatus)" [rounded]="true"></p-tag>
                 }
             </p>
 
             @if (selectedOrder.payments && selectedOrder.payments.transaction_id) {
-                <p><strong>Transaction ID:</strong> {{ selectedOrder.payments.transaction_id }}</p>
+            <p><strong>Transaction ID:</strong> {{ selectedOrder.payments.transaction_id }}</p>
             } @else if (selectedOrder.transactionId != null && selectedOrder.transactionId !== '') {
-                <p><strong>Transaction ID:</strong> {{ selectedOrder.transactionId }}</p>
+            <p><strong>Transaction ID:</strong> {{ selectedOrder.transactionId }}</p>
             }
 
             @if (selectedOrder.paymentId != null) {
@@ -217,8 +214,8 @@
                         <td>
                             <div class="flex align-items-center gap-2">
                                 @if (item.product.imageUrl) {
-                                    <img [src]="item.product.imageUrl"
-                                    [alt]="item.product.name" width="40" class="shadow-2 border-round" />
+                                <img [src]="item.product.imageUrl" [alt]="item.product.name" width="40"
+                                    class="shadow-2 border-round" />
                                 }
                                 <span>{{ item.product.name }}</span>
                             </div>
@@ -230,8 +227,32 @@
                 </ng-template>
                 <ng-template pTemplate="footer">
                     <tr>
-                        <td colspan="3" class="text-right font-bold">Total Amount</td>
-                        <td class="font-bold">{{ selectedOrder.totalAmount | currency:'BDT':'symbol-narrow' }}</td>
+                        <td colspan="3" class="text-right">Subtotal</td>
+                        <td>{{ (selectedOrder.subtotal || selectedOrder.totalAmount) | currency:'BDT':'symbol-narrow' }}
+                        </td>
+                    </tr>
+                    @if (selectedOrder.deliveryCharge) {
+                    <tr>
+                        <td colspan="3" class="text-right">Delivery Charge</td>
+                        <td>{{ selectedOrder.deliveryCharge | currency:'BDT':'symbol-narrow' }}</td>
+                    </tr>
+                    }
+                    @if (selectedOrder.discountAmount) {
+                    <tr>
+                        <td colspan="3" class="text-right text-green-500">
+                            Discount
+                            @if (selectedOrder.couponCode) {
+                            <span class="text-xs ml-1">({{ selectedOrder.couponCode }})</span>
+                            }
+                        </td>
+                        <td class="text-green-500">-{{ selectedOrder.discountAmount | currency:'BDT':'symbol-narrow' }}
+                        </td>
+                    </tr>
+                    }
+                    <tr>
+                        <td colspan="3" class="text-right font-bold text-lg">Total Amount</td>
+                        <td class="font-bold text-lg">{{ selectedOrder.totalAmount | currency:'BDT':'symbol-narrow' }}
+                        </td>
                     </tr>
                 </ng-template>
             </p-table>

@@ -418,9 +418,16 @@ export class OrderService {
         },
         quantity: item.quantity || 0
       })),
-      totalAmount: (backendOrder.total_amount !== undefined && backendOrder.total_amount !== null) ? backendOrder.total_amount :
-        (backendOrder.totalAmount !== undefined && backendOrder.totalAmount !== null) ? backendOrder.totalAmount :
-          this.calculateTotal(backendOrder.items || []),
+      totalAmount: backendOrder.total != null ? parseFloat(backendOrder.total) :
+        (backendOrder.total_amount != null ? parseFloat(backendOrder.total_amount) :
+          (backendOrder.totalAmount != null ? parseFloat(backendOrder.totalAmount) :
+            this.calculateTotal(backendOrder.items || []))),
+      subtotal: backendOrder.subtotal != null ? parseFloat(backendOrder.subtotal) : undefined,
+      deliveryCharge: backendOrder.delivery_charge != null ? parseFloat(backendOrder.delivery_charge) :
+        (backendOrder.deliveryCharge != null ? parseFloat(backendOrder.deliveryCharge) : 0),
+      discountAmount: backendOrder.discount_amount != null ? parseFloat(backendOrder.discount_amount) :
+        (backendOrder.discountAmount != null ? parseFloat(backendOrder.discountAmount) : 0),
+      couponCode: backendOrder.coupon_code || backendOrder.couponCode || undefined,
       status: orderStatus,
       paymentMethod: paymentMethod as 'COD' | 'bKash' | null,
       paymentStatus: paymentStatus as 'Pending' | 'Paid',

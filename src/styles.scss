@@ -29,68 +29,68 @@ body {
     --ag-border-radius: 12px;
 }
 
-/* Global Premium Styling */
+/* Global Premium Styling (Dark Mode Only) */
 :root {
     --primary-color: #1e293b;
-    /* Slate 800 - Matching Footer */
     --primary-hover: #334155;
-    /* Slate 700 - Lighter for hover */
     --accent-color: #3b82f6;
-    /* Blue 500 */
-    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --card-shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
-    /* Enforced Dark Mode Variables */
-    --surface-ground: #0f172a;
+    --surface-ground: #020617;
+    /* Slate 950 */
+    --surface-card: #0f172a;
     /* Slate 900 */
-    --surface-card: rgba(30, 41, 59, 0.7);
-    /* Slate 800 with transparency */
     --surface-section: #1e293b;
-    --surface-border: rgba(255, 255, 255, 0.08);
-    /* Lightened for cleaner look */
-    --surface-hover: rgba(255, 255, 255, 0.04);
-    --text-color: #f1f5f9;
+    /* Slate 800 */
+    --surface-border: rgba(255, 255, 255, 0.06);
+    --surface-hover: rgba(255, 255, 255, 0.03);
+    --text-color: #f8fafc;
+    /* Slate 50 */
     --text-color-secondary: #94a3b8;
+    /* Slate 400 */
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --card-shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
 
     /* PrimeNG mapping */
-    --p-content-background: #1e293b;
-    --p-content-border-color: rgba(255, 255, 255, 0.08);
-    --p-text-color: #f1f5f9;
-    --p-primary-color: var(--primary-color);
-    --p-focus-ring-color: rgba(37, 99, 235, 0.3);
-    /* Themed focus ring */
+    --p-content-background: var(--surface-card);
+    --p-content-border-color: var(--surface-border);
+    --p-text-color: var(--text-color);
+    --p-focus-ring-color: rgba(59, 130, 246, 0.3);
+
+    /* Helper for RGB backgrounds */
+    --surface-ground-rgb: 2, 6, 23;
 }
 
 /* Global Form & Input Refinements */
 .p-inputtext,
 .p-inputnumber-input,
 .p-password-input {
-    background: rgba(0, 0, 0, 0.4) !important;
-    /* Dark translucent background */
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    /* Subtle light border */
+    background: var(--surface-card) !important;
+    border: 1px solid var(--surface-border) !important;
     border-radius: 12px !important;
     padding: 0.95rem 1.25rem !important;
-    /* Professional thickness */
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-size: 1rem !important;
-    color: #e2e8f0 !important;
-    /* Slate 200 - Light text for readability */
+    color: var(--text-color) !important;
 
     &:focus {
-        background: rgba(0, 0, 0, 0.6) !important;
-        border-color: var(--primary-color) !important;
+        background: var(--surface-card) !important;
+        border-color: var(--accent-color) !important;
         box-shadow: 0 0 0 3px var(--p-focus-ring-color) !important;
+    }
+
+    &::placeholder {
+        color: var(--text-color-secondary) !important;
+        opacity: 0.7;
     }
 }
 
 .p-dropdown {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: var(--surface-card) !important;
+    border: 1px solid var(--surface-border) !important;
     border-radius: 12px !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    color: #e2e8f0 !important;
-    padding: 0 !important; // Remove container padding to prevent icon overlap
+    color: var(--text-color) !important;
+    padding: 0 !important;
     display: flex;
     align-items: center;
 
@@ -99,23 +99,24 @@ body {
         font-size: 1rem !important;
         display: flex;
         align-items: center;
-        background: transparent !important; // Essential for editable dropdowns to match container
-        border: none !important; // Avoid internal borders
+        background: transparent !important;
+        border: none !important;
         height: 100%;
+        color: var(--text-color) !important;
     }
 
     .p-dropdown-trigger {
         width: 3rem !important;
+        color: var(--text-color-secondary) !important;
     }
 
     .p-dropdown-clear-icon {
-        right: 2.5rem !important; // Position clear icon to the left of the dropdown arrow
-        color: #94a3b8 !important;
+        right: 2.5rem !important;
+        color: var(--text-color-secondary) !important;
     }
 
     &:focus-within {
-        background: rgba(0, 0, 0, 0.6) !important;
-        border-color: var(--primary-color) !important;
+        border-color: var(--accent-color) !important;
         box-shadow: 0 0 0 3px var(--p-focus-ring-color) !important;
     }
 }
@@ -126,8 +127,7 @@ body {
     border-color: var(--primary-color) !important;
     color: #fff !important;
     border-radius: 12px !important;
-    padding: 0.95rem 1.5rem !important;
-    /* Perfect match for input height */
+    padding: 0.85rem 1.5rem !important;
     font-weight: 600 !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     justify-content: center;
@@ -136,22 +136,33 @@ body {
         background-color: var(--primary-hover) !important;
         border-color: var(--primary-hover) !important;
         transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3) !important;
-    }
-
-    &:active {
-        transform: scale(0.98);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
     }
 
     &.p-button-secondary {
         background-color: var(--surface-section) !important;
         border-color: var(--surface-border) !important;
         color: var(--text-color) !important;
+
+        &:hover {
+            background-color: var(--surface-hover) !important;
+            border-color: var(--surface-border) !important;
+        }
     }
 
     &.p-button-text {
         background: transparent !important;
         border: none !important;
+        color: var(--text-color) !important;
+
+        &:hover {
+            background: var(--surface-hover) !important;
+        }
+    }
+
+    &.p-button-outlined {
+        background: transparent !important;
+        border: 1px solid var(--surface-border) !important;
         color: var(--text-color) !important;
 
         &:hover {
@@ -190,16 +201,17 @@ body {
 /* Clean Solid Cards (Apple Style) */
 .p-card,
 .card-custom {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
     background: var(--surface-card) !important;
-    border: none !important;
-    /* Remove visible borders for cleaner look */
+    border: 1px solid var(--surface-border) !important;
     box-shadow: var(--card-shadow) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     border-radius: 18px !important;
-    /* Slightly more rounded */
     overflow: hidden;
+    color: var(--text-color) !important;
+
+    .p-card-body {
+        padding: 1.5rem !important;
+    }
 
     &:hover {
         transform: translateY(-4px);
@@ -234,99 +246,97 @@ body {
     /* Blue 500 */
 }
 
-/* ADMIN LOGIN SPECIFIC OVERRIDES - FIXING VISIBILITY & THEME */
+/* ADMIN LOGIN SPECIFIC OVERRIDES - THEME AWARE */
 .login-container {
-    background: linear-gradient(rgba(2, 6, 23, 0.7), rgba(2, 6, 23, 0.7)), url('assets/admin-login-bg.png') no-repeat center center;
+    background: linear-gradient(rgba(var(--surface-ground-rgb), 0.8), rgba(var(--surface-ground-rgb), 0.8)), url('assets/admin-login-bg.png') no-repeat center center;
     background-size: cover;
 
-    /* Force Input Backgrounds to be Dark and Visible */
-    .p-inputtext,
-    .p-password-input {
-        background-color: rgba(15, 23, 42, 0.95) !important;
-        /* Dark Slate */
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        color: #f8fafc !important;
-        /* Slate 50 */
-        opacity: 1 !important;
+    .p-card {
+        background: var(--surface-card) !important;
+        border: 1px solid var(--surface-border) !important;
+        box-shadow: var(--card-shadow-hover) !important;
     }
 
-    .p-inputtext:focus {
-        border-color: #10b981 !important;
-        /* Emerald 500 */
-        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
-    }
-
-    /* Floating Labels - Green */
-    .p-float-label label {
-        color: #10b981 !important;
-        opacity: 1 !important;
-    }
-
-    /* Buttons - Green and Visible (Force Override) */
+    /* Emerald Accent for Admin Login */
     .p-button {
         background-color: #10b981 !important;
-        /* emerald-500 */
         border-color: #10b981 !important;
         color: #ffffff !important;
-        opacity: 1 !important;
-        box-shadow: none !important;
 
         &:hover {
             background-color: #059669 !important;
-            /* emerald-600 */
             border-color: #059669 !important;
         }
     }
 
-    /* Change Credentials Button - Text Mode specific */
-    .p-button.p-button-text {
-        background-color: transparent !important;
-        border-color: transparent !important;
+    .p-float-label label {
         color: #10b981 !important;
-        /* Green Text */
-
-        &:hover {
-            background-color: rgba(16, 185, 129, 0.1) !important;
-        }
     }
 
-    /* Force Card Background */
-    .p-card {
-        background: rgba(15, 23, 42, 0.95) !important;
-        /* Dark Slate */
+    .p-inputtext:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
     }
 }
 
-/* Fix Tag Visibility in Dark Mode */
+/* Helper for RGB backgrounds if needed */
+:root {
+    --surface-ground-rgb: 248, 250, 252;
+}
+
+.dark-mode {
+    --surface-ground-rgb: 2, 6, 23;
+}
+
+/* Fix Tag Visibility in Dark/Light Mode */
 .p-tag {
     font-weight: 600;
+    border-radius: 6px;
 
     &.p-tag-warning {
-        background-color: rgba(245, 158, 11, 0.15) !important;
-        color: #fbbf24 !important;
-        /* Amber 400 */
-        border: 1px solid rgba(245, 158, 11, 0.3);
+        background-color: rgba(245, 158, 11, 0.1) !important;
+        color: #d97706 !important;
+        /* Amber 600 */
+        border: 1px solid rgba(245, 158, 11, 0.2);
     }
 
     &.p-tag-info {
-        background-color: rgba(59, 130, 246, 0.15) !important;
-        color: #60a5fa !important;
-        /* Blue 400 */
-        border: 1px solid rgba(59, 130, 246, 0.3);
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        color: #2563eb !important;
+        /* Blue 600 */
+        border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
     &.p-tag-success {
-        background-color: rgba(16, 185, 129, 0.15) !important;
-        color: #34d399 !important;
-        /* Emerald 400 */
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background-color: rgba(16, 185, 129, 0.1) !important;
+        color: #059669 !important;
+        /* Emerald 600 */
+        border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     &.p-tag-danger {
-        background-color: rgba(239, 68, 68, 0.15) !important;
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        color: #dc2626 !important;
+        /* Red 600 */
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+}
+
+.dark-mode {
+    .p-tag-warning {
+        color: #fbbf24 !important;
+    }
+
+    .p-tag-info {
+        color: #60a5fa !important;
+    }
+
+    .p-tag-success {
+        color: #34d399 !important;
+    }
+
+    .p-tag-danger {
         color: #f87171 !important;
-        /* Red 400 */
-        border: 1px solid rgba(239, 68, 68, 0.3);
     }
 }
 

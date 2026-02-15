@@ -1,2 +1,8 @@
 <!-- Theme Toggle Disabled (Enforced Dark Mode) -->
-<!-- <button pButton type="button" ... > ... </button> -->
+<!-- <button pButton type="button"
+    [icon]="themeService.currentTheme() === 'dark' ? 'pi pi-moon' : 'pi pi-sun'"
+    [class]="'p-button-rounded p-button-text transition-all duration-300 ' + (themeService.currentTheme() === 'dark' ? 'text-yellow-400' : 'text-orange-500')"
+    [pTooltip]="themeService.currentTheme() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+    tooltipPosition="bottom"
+    (click)="toggleTheme()">
+</button> -->

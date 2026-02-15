@@ -7,6 +7,107 @@
 .card {
     background: var(--surface-card);
     border: 1px solid var(--surface-border);
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+:host ::v-deep .order-details-dialog {
+    .p-dialog-content {
+        padding: 0;
+    }
+
+    .dialog-content {
+        padding: 1.5rem;
+    }
+
+    .status-banner {
+        &.warning {
+            background: rgba(var(--warning-color-rgb, 245, 158, 11), 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        &.danger {
+            background: rgba(var(--danger-color-rgb, 239, 68, 68), 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        &.success {
+            background: rgba(var(--success-color-rgb, 16, 185, 129), 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        &.info {
+            background: rgba(var(--info-color-rgb, 59, 130, 246), 0.15);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        i {
+            font-size: 1.25rem;
+        }
+    }
+
+    .section-header {
+        h4 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-color-secondary);
+        }
+    }
+
+    .info-card {
+        border: 1px solid var(--surface-border);
+        transition: border-color 0.2s;
+
+        &:hover {
+            border-color: var(--primary-color);
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+
+            .label {
+                font-size: 0.85rem;
+                font-weight: 500;
+                color: var(--text-color-secondary);
+                white-space: nowrap;
+            }
+
+            .value {
+                font-size: 0.85rem;
+                color: var(--text-color);
+                word-break: break-word;
+            }
+        }
+    }
+
+    .items-list-container {
+        border: 1px solid var(--surface-border);
+
+        .p-datatable {
+            .p-datatable-thead>tr>th {
+                padding: 0.75rem;
+                font-size: 0.8rem;
+                border: none;
+                color: var(--text-color-secondary);
+            }
+
+            .p-datatable-tbody>tr>td {
+                padding: 0.75rem;
+                border-color: var(--surface-border);
+            }
+        }
+    }
+
+    .totals-card {
+        .text-color-secondary {
+            font-size: 0.9rem;
+        }
+    }
 }

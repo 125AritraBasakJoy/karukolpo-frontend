@@ -22,8 +22,8 @@
 }
 
 .premium-card {
-  border: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--card-shadow);
   border-radius: 1.5rem;
   overflow: hidden;
   background: var(--surface-card);
@@ -80,22 +80,7 @@
   color: #10b981;
 }
 
-::ng-deep {
-  .p-tag-success {
-    background: #ecfdf5;
-    color: #059669;
-  }
-
-  .p-tag-warning {
-    background: #fffbeb;
-    color: #d97706;
-  }
-
-  .p-tag-danger {
-    background: #fef2f2;
-    color: #dc2626;
-  }
-}
+/* Global tags are handled in styles.scss */
 
 @media screen and (max-width: 768px) {
   .track-order-container {

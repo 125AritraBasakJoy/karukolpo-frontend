@@ -59,8 +59,8 @@
     }
 
     &.active {
-        border-color: var(--primary-color);
-        background: var(--primary-50);
+        border-color: var(--accent-color);
+        background: var(--surface-hover);
 
         &::after {
             content: '\e909';

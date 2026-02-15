@@ -110,153 +110,183 @@
     }
 </div>
 
-<p-dialog header="Order Details" [(visible)]="displayOrderDialog" [modal]="true" [style]="{width: '50vw'}">
+<p-dialog [(visible)]="displayOrderDialog" [modal]="true" [style]="{width: '70vw', maxWidth: '900px'}"
+    [draggable]="false" [resizable]="false" styleClass="order-details-dialog">
+    <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-shopping-bag text-primary text-xl"></i>
+            <span class="text-xl font-bold">Order Details #{{ selectedOrder?.id }}</span>
+        </div>
+    </ng-template>
+
     @if (selectedOrder) {
-    <div class="grid">
-        <div class="col-12 md:col-6">
-            <h3>Customer Info</h3>
-            <!-- Prefer address object if available -->
-            @if (selectedOrder.address) {
-            <p><strong>Name:</strong> {{ selectedOrder.address.full_name }}</p>
-            <p><strong>Phone:</strong> {{ selectedOrder.address.phone }}</p>
-            <p><strong>Address:</strong> {{ selectedOrder.address.address_line }}, {{ selectedOrder.address.subdistrict
-                }}, {{ selectedOrder.address.district }}</p>
-            @if (selectedOrder.address.additional_info) {
-            <p><strong>Additional Info:</strong> {{ selectedOrder.address.additional_info }}</p>
-            }
-            } @else {
-            <p><strong>Name:</strong> {{ selectedOrder.fullName }}</p>
-            <p><strong>Phone:</strong> {{ selectedOrder.phoneNumber }}</p>
-            @if (selectedOrder.bkashNumber) {
-            <p><strong>bKash Number:</strong> {{ selectedOrder.bkashNumber }}</p>
-            }
-            <p><strong>Address:</strong> {{ selectedOrder.fullAddress }}, {{ selectedOrder.subDistrict }} {{
-                selectedOrder.district }} - {{ selectedOrder.postalCode }}</p>
-            }
-        </div>
-        <div class="col-12 md:col-6">
-            <h3>Order Info</h3>
-            <p><strong>Order ID:</strong> {{ selectedOrder.id }}</p>
-            <p><strong>Date:</strong> {{ (selectedOrder.created_at || selectedOrder.orderDate) | date:'medium' }}</p>
-            <p><strong>Status:</strong>
-                <p-tag [value]="selectedOrder.status"
-                    [severity]="selectedOrder.status === 'Pending' ? 'warning' : (selectedOrder.status === 'Cancelled' ? 'danger' : 'success')"></p-tag>
-            </p>
-
-            @if (selectedOrder.paymentMethod) {
-            <p><strong>Payment Method:</strong>
-                <p-tag [value]="selectedOrder.paymentMethod"
-                    [severity]="selectedOrder.paymentMethod.toLowerCase() === 'bkash' ? 'info' : (selectedOrder.paymentMethod.toLowerCase() === 'cod' ? 'success' : 'danger')"></p-tag>
-            </p>
-            }
-
-            <p><strong>Payment Status:</strong>
-                @if (selectedOrder.payments) {
-                <p-tag [value]="selectedOrder.payments.status || 'Pending'"
-                    [severity]="getPaymentSeverity(selectedOrder.payments.status)" [rounded]="true"></p-tag>
-                } @else {
-                <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
-                    [severity]="getPaymentSeverity(selectedOrder.paymentStatus)" [rounded]="true"></p-tag>
-                }
-            </p>
-
-            @if (selectedOrder.payments && selectedOrder.payments.transaction_id) {
-            <p><strong>Transaction ID:</strong> {{ selectedOrder.payments.transaction_id }}</p>
-            } @else if (selectedOrder.transactionId != null && selectedOrder.transactionId !== '') {
-            <p><strong>Transaction ID:</strong> {{ selectedOrder.transactionId }}</p>
-            }
-
-            @if (selectedOrder.paymentId != null) {
-            <p>
-                <strong>Payment ID:</strong> {{ selectedOrder.paymentId }}
-            </p>
-            }
-
-            <!-- Admin Payment Actions -->
-            @if (!isPaymentConfirmed(selectedOrder.paymentStatus)) {
-            <div class="mt-3 border-top-1 surface-border pt-3">
-                <h4 class="mb-2">Payment Actions</h4>
-
-                <!-- bKash Manual Confirmation -->
-                @if (selectedOrder.paymentMethod?.toLowerCase() === 'bkash') {
-                <button pButton label="Confirm bKash Payment" icon="pi pi-check-circle" class="p-button-primary w-full"
-                    (click)="adminConfirmPayment(selectedOrder)"></button>
-                }
-
-                <!-- COD Info (No action needed as per requirement) -->
-                @if (selectedOrder.paymentMethod?.toLowerCase() === 'cod') {
-                <div class="text-green-600 font-bold p-2 surface-100 border-round text-center">
-                    <i class="pi pi-check mr-2"></i>COD Auto-Confirmed
-                </div>
-                }
-
-                @if (!selectedOrder.paymentMethod) {
-                <div class="text-500 font-italic">
-                    Waiting for customer to select payment method.
-                </div>
-                }
+    <div class="dialog-content">
+        <!-- Status Banner -->
+        <div class="status-banner mb-4 p-3 border-round-xl flex align-items-center justify-content-between"
+            [ngClass]="getSeverity(selectedOrder.status)">
+            <div class="flex align-items-center gap-2">
+                <i [class]="'pi ' + (selectedOrder.status === 'Completed' ? 'pi-check-circle' : 'pi-clock')"></i>
+                <span class="font-bold">Status: {{ selectedOrder.status }}</span>
             </div>
-            }
+            <span class="text-sm opacity-80">{{ (selectedOrder.created_at || selectedOrder.orderDate) | date:'medium'
+                }}</span>
         </div>
-        <div class="col-12">
-            <h3>Items</h3>
-            <p-table [value]="selectedOrder.items">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Product</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-item>
-                    <tr>
-                        <td>
-                            <div class="flex align-items-center gap-2">
-                                @if (item.product.imageUrl) {
-                                <img [src]="item.product.imageUrl" [alt]="item.product.name" width="40"
-                                    class="shadow-2 border-round" />
+
+        <div class="grid">
+            <!-- Left Column: Customer & Payment -->
+            <div class="col-12 md:col-6">
+                <div class="info-section h-full">
+                    <div class="section-header flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-user text-primary"></i>
+                        <h4 class="m-0">Customer Information</h4>
+                    </div>
+
+                    <div class="info-card p-3 border-round-lg surface-section">
+                        @if (selectedOrder.address) {
+                        <div class="info-row mb-2">
+                            <span class="label">Name:</span>
+                            <span class="value font-semibold ml-2">{{ selectedOrder.address.full_name }}</span>
+                        </div>
+                        <div class="info-row mb-2">
+                            <span class="label">Phone:</span>
+                            <span class="value ml-2">{{ selectedOrder.address.phone }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Address:</span>
+                            <span class="value ml-2">{{ selectedOrder.address.address_line }}, {{
+                                selectedOrder.address.subdistrict }}, {{ selectedOrder.address.district }}</span>
+                        </div>
+                        } @else {
+                        <div class="info-row mb-2">
+                            <span class="label">Name:</span>
+                            <span class="value font-semibold ml-2">{{ selectedOrder.fullName }}</span>
+                        </div>
+                        <div class="info-row mb-2">
+                            <span class="label">Phone:</span>
+                            <span class="value ml-2">{{ selectedOrder.phoneNumber }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Address:</span>
+                            <span class="value text-sm ml-2">{{ selectedOrder.fullAddress }}, {{
+                                selectedOrder.subDistrict }} {{ selectedOrder.district }}</span>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="section-header flex align-items-center gap-2 mt-4 mb-3">
+                        <i class="pi pi-credit-card text-primary"></i>
+                        <h4 class="m-0">Payment Details</h4>
+                    </div>
+
+                    <div class="info-card p-3 border-round-lg surface-section">
+                        <div class="info-row mb-2 flex justify-content-between align-items-center">
+                            <span class="label">Method</span>
+                            <p-tag [value]="selectedOrder.paymentMethod || 'Not Selected'"
+                                [severity]="selectedOrder.paymentMethod?.toLowerCase() === 'bkash' ? 'info' : 'success'"></p-tag>
+                        </div>
+                        <div class="info-row flex justify-content-between align-items-center">
+                            <span class="label">Status</span>
+                            <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
+                                [severity]="getPaymentSeverity(selectedOrder.paymentStatus)" [rounded]="true"></p-tag>
+                        </div>
+
+                        @if (selectedOrder.transactionId) {
+                        <div class="info-row mt-2 pt-2 border-top-1 surface-border">
+                            <span class="label block mb-1">Transaction ID</span>
+                            <span class="value font-mono text-sm uppercase">{{ selectedOrder.transactionId }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Order Items & Summary -->
+            <div class="col-12 md:col-6">
+                <div class="items-section info-section h-full flex flex-column">
+                    <div class="section-header flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-list text-primary"></i>
+                        <h4 class="m-0">Order Summary</h4>
+                    </div>
+
+                    <div
+                        class="items-list-container flex-grow-1 p-0 border-round-lg overflow-hidden surface-section mb-3">
+                        <p-table [value]="selectedOrder.items" styleClass="p-datatable-sm p-datatable-striped">
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th class="bg-transparent">Item</th>
+                                    <th class="bg-transparent text-right">Qty</th>
+                                    <th class="bg-transparent text-right">Total</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-item>
+                                <tr>
+                                    <td class="text-sm">
+                                        <div class="flex align-items-center gap-2">
+                                            @if (item.product.imageUrl) {
+                                            <img [src]="item.product.imageUrl" width="32"
+                                                class="border-round shadow-1" />
+                                            }
+                                            <span class="line-height-2">{{ item.product.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-right text-sm">x{{ item.quantity }}</td>
+                                    <td class="text-right font-semibold text-sm">{{ item.product.price * item.quantity |
+                                        currency:'BDT':'symbol-narrow' }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+
+                    <!-- Totals Card -->
+                    <div class="totals-card p-3 border-round-lg surface-card border-1 surface-border">
+                        <div class="flex justify-content-between mb-2">
+                            <span class="text-color-secondary">Subtotal</span>
+                            <span>{{ (selectedOrder.subtotal || selectedOrder.totalAmount -
+                                (selectedOrder.deliveryCharge || 0)) | currency:'BDT':'symbol-narrow' }}</span>
+                        </div>
+                        @if (selectedOrder.deliveryCharge) {
+                        <div class="flex justify-content-between mb-2">
+                            <span class="text-color-secondary">Delivery</span>
+                            <span>+{{ selectedOrder.deliveryCharge | currency:'BDT':'symbol-narrow' }}</span>
+                        </div>
+                        }
+                        @if (selectedOrder.discountAmount) {
+                        <div class="flex justify-content-between mb-2 text-green-500">
+                            <span class="flex align-items-center gap-1">
+                                Discount
+                                @if (selectedOrder.couponCode) {
+                                <span class="text-xs">({{ selectedOrder.couponCode }})</span>
                                 }
-                                <span>{{ item.product.name }}</span>
-                            </div>
-                        </td>
-                        <td>{{ item.product.price | currency:'BDT':'symbol-narrow' }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>{{ item.product.price * item.quantity | currency:'BDT':'symbol-narrow' }}</td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="footer">
-                    <tr>
-                        <td colspan="3" class="text-right">Subtotal</td>
-                        <td>{{ (selectedOrder.subtotal || selectedOrder.totalAmount) | currency:'BDT':'symbol-narrow' }}
-                        </td>
-                    </tr>
-                    @if (selectedOrder.deliveryCharge) {
-                    <tr>
-                        <td colspan="3" class="text-right">Delivery Charge</td>
-                        <td>{{ selectedOrder.deliveryCharge | currency:'BDT':'symbol-narrow' }}</td>
-                    </tr>
-                    }
-                    @if (selectedOrder.discountAmount) {
-                    <tr>
-                        <td colspan="3" class="text-right text-green-500">
-                            Discount
-                            @if (selectedOrder.couponCode) {
-                            <span class="text-xs ml-1">({{ selectedOrder.couponCode }})</span>
-                            }
-                        </td>
-                        <td class="text-green-500">-{{ selectedOrder.discountAmount | currency:'BDT':'symbol-narrow' }}
-                        </td>
-                    </tr>
-                    }
-                    <tr>
-                        <td colspan="3" class="text-right font-bold text-lg">Total Amount</td>
-                        <td class="font-bold text-lg">{{ selectedOrder.totalAmount | currency:'BDT':'symbol-narrow' }}
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
+                            </span>
+                            <span>-{{ selectedOrder.discountAmount | currency:'BDT':'symbol-narrow' }}</span>
+                        </div>
+                        }
+                        <div
+                            class="flex justify-content-between pt-2 border-top-1 surface-border mt-2 font-bold text-xl text-primary">
+                            <span>Total</span>
+                            <span>{{ selectedOrder.totalAmount | currency:'BDT':'symbol-narrow' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Admin Actions Footer -->
+        @if (!isPaymentConfirmed(selectedOrder.paymentStatus) || (selectedOrder.status === 'Pending')) {
+        <div class="admin-actions mt-4 pt-4 border-top-1 surface-border flex justify-content-end gap-2">
+            @if (selectedOrder.paymentMethod?.toLowerCase() === 'bkash' &&
+            !isPaymentConfirmed(selectedOrder.paymentStatus)) {
+            <button pButton label="Verify & Confirm Payment" icon="pi pi-check-circle" class="p-button-primary"
+                (click)="adminConfirmPayment(selectedOrder)"></button>
+            }
+            @if (selectedOrder.status === 'Pending') {
+            <button pButton label="Confirm Order" icon="pi pi-check" class="p-button-success p-button-outlined"
+                (click)="updateStatus(selectedOrder, 'Confirmed')"></button>
+            }
+            <button pButton label="Close" icon="pi pi-times" class="p-button-text p-button-secondary"
+                (click)="displayOrderDialog = false"></button>
+        </div>
+        }
     </div>
     }
 </p-dialog>

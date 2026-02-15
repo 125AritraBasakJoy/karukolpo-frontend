@@ -15,6 +15,7 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 export class ProductService {
   private productsCache: Product[] | null = null;
   private productCategoriesCache = new Map<string | number, any[]>();
+  private productMap = new Map<string | number, Product>();
 
   constructor(private apiService: ApiService) { }
 
@@ -24,6 +25,7 @@ export class ProductService {
   clearCache() {
     this.productsCache = null;
     this.productCategoriesCache.clear();
+    this.productMap.clear();
   }
 
   /**
@@ -73,19 +75,22 @@ export class ProductService {
   }
 
   /**
-   * Get product by ID
+   * Get product by ID with caching
    * GET /products/{id}
    */
-  getProductById(id: number | string): Observable<Product | undefined> {
+  getProductById(id: number | string, forceRefresh = false): Observable<Product | undefined> {
+    const stringId = id.toString();
+    if (!forceRefresh && this.productMap.has(stringId)) {
+      return of(this.productMap.get(stringId));
+    }
+
     return this.apiService.get<any>(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id)).pipe(
-      map(p => this.mapBackendToFrontend(p)),
-      catchError(() => {
-        // Return undefined if product not found
-        return new Observable<Product | undefined>(observer => {
-          observer.next(undefined);
-          observer.complete();
-        });
-      })
+      map(p => {
+        const product = this.mapBackendToFrontend(p);
+        this.productMap.set(stringId, product);
+        return product;
+      }),
+      catchError(() => of(undefined))
     );
   }
 

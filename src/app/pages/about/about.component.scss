@@ -34,7 +34,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        background: linear-gradient(135deg, var(--surface-section) 0%, var(--surface-card) 100%);
         overflow: hidden;
 
         &::before {
@@ -62,10 +62,7 @@
         font-size: 3.5rem;
         font-weight: 800;
         margin-bottom: 1rem;
-        background: linear-gradient(135deg, #fff, #e2e8f0);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--text-color);
     }
 
     .hero-subtitle {
@@ -226,8 +223,8 @@
     // CTA Section
     .cta-section {
         padding: 5rem 0;
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        color: white;
+        background: linear-gradient(135deg, var(--surface-section) 0%, var(--surface-card) 100%);
+        color: var(--text-color);
     }
 
     .cta-title {

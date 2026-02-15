@@ -24,7 +24,7 @@ export class ThemeService {
 
         const element = document.querySelector('html');
         if (element) {
-            // Always add dark-mode class, or simply rely on global styles now
+            // Always add dark-mode class
             element.classList.add('dark-mode');
         }
     }

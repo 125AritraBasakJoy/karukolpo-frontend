@@ -605,22 +605,25 @@ export class HomeComponent implements OnInit, OnDestroy {
     return (product.stock || 0) <= 0;
   }
 
-  filterProducts() {
-    if (this.selectedCategory) {
-      const selectedId = this.selectedCategory.id.toString();
-      const filtered = this.products().filter(p => {
-        const prodCatId = p.categoryId ? p.categoryId.toString() : null;
-        return prodCatId === selectedId;
-      });
-      this.filteredProducts.set(filtered);
-    } else {
-      this.filteredProducts.set(this.products());
-    }
-  }
 
   selectCategory(category: Category | null) {
     this.selectedCategory = category;
-    this.filterProducts();
+    if (category) {
+      this.loading.set(true);
+      this.categoryService.getCategoryProducts(category.id).subscribe({
+        next: (products) => {
+          this.filteredProducts.set(products);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error fetching category products', err);
+          this.filteredProducts.set([]);
+          this.loading.set(false);
+        }
+      });
+    } else {
+      this.loadProducts();
+    }
     this.scrollToProducts();
   }
 }

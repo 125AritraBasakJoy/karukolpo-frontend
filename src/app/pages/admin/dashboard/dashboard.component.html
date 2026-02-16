@@ -5,17 +5,6 @@
     <!-- Sidebar -->
     <aside class="sidebar" [class.collapsed]="sidebarCollapsed() && !isMobile()" [class.mobile-open]="mobileMenuOpen()">
 
-        <!-- Sidebar Header -->
-        <div class="sidebar-header" style="height: 80px; padding: 0 0.4rem; display: flex; align-items: center;">
-            <div class="logo" style="height: 80px; display: flex; align-items: center;">
-                <img src="assets/logo.png" alt="Karukolpo Logo" class="logo-img"
-                    style="height: 80px; width: auto; object-fit: contain;" />
-            </div>
-            <button pButton *ngIf="!isMobile()" type="button"
-                [icon]="sidebarCollapsed() ? 'pi pi-angle-right' : 'pi pi-angle-left'"
-                class="p-button-text p-button-rounded toggle-btn" (click)="toggleSidebar()" pTooltip="Toggle Sidebar"
-                tooltipPosition="right"></button>
-        </div>
 
         <!-- Navigation Menu -->
         <nav class="nav-menu">
@@ -51,6 +40,11 @@
     <div class="content">
         <!-- Content Header -->
         <header class="content-header">
+            <div class="logo mr-3" style="height: 40px; display: flex; align-items: center;">
+                <img src="assets/logo.png" alt="Karukolpo Logo" class="logo-img"
+                    style="height: 40px; width: auto; object-fit: contain;" />
+            </div>
+
             <button pButton type="button" icon="pi pi-bars" class="p-button-text p-button-rounded mobile-toggle-btn"
                 (click)="toggleSidebar()"></button>
 

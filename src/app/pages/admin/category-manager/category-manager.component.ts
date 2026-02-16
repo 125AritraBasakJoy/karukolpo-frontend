@@ -49,7 +49,7 @@ import { TagModule } from 'primeng/tag';
 
         <p-table #dt [value]="categories" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'slug']"
             [tableStyle]="{'min-width': '50rem'}" selectionMode="single" dataKey="id"
-            styleClass="p-datatable-striped" [showCurrentPageReport]="true"
+            styleClass="premium-table" [rowHover]="true" [showCurrentPageReport]="true"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} categories">
             
             <ng-template pTemplate="caption">

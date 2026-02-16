@@ -434,3 +434,65 @@ textarea {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     }
 }
+
+/* Premium Table Styling */
+.premium-table {
+    .p-datatable-header {
+        background: transparent !important;
+        border: none !important;
+        padding: 1rem 0 !important;
+    }
+
+    .p-datatable-thead>tr>th {
+        background: transparent !important;
+        border-bottom: 1px solid var(--surface-border) !important;
+        color: var(--text-color-secondary) !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.05em !important;
+        padding: 1rem !important;
+    }
+
+    .p-datatable-tbody {
+        >tr {
+            background: transparent !important;
+            transition: all 0.2s !important;
+
+            >td {
+                background: var(--surface-card) !important;
+                border-top: 1px solid var(--surface-border) !important;
+                border-bottom: 1px solid var(--surface-border) !important;
+                padding: 1.25rem 1rem !important;
+
+                &:first-child {
+                    border-left: 1px solid var(--surface-border) !important;
+                    border-top-left-radius: 12px !important;
+                    border-bottom-left-radius: 12px !important;
+                }
+
+                &:last-child {
+                    border-right: 1px solid var(--surface-border) !important;
+                    border-top-right-radius: 12px !important;
+                    border-bottom-right-radius: 12px !important;
+                }
+            }
+        }
+    }
+
+    /* Apply spacing to table rows via border spacing on the table element */
+    .p-datatable-table {
+        border-collapse: separate !important;
+        border-spacing: 0 0.75rem !important;
+    }
+
+    /* Hover Effect */
+    .p-datatable-tbody>tr:hover>td {
+        background: var(--surface-hover) !important;
+        border-color: var(--primary-hover) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+}

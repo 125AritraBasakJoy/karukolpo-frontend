@@ -10,10 +10,9 @@ import { CartService } from '../../services/cart.service';
   standalone: true,
   imports: [CommonModule, RouterModule, ButtonModule, BadgeModule],
   template: `
-    <div class="surface-card shadow-2 flex justify-content-between align-items-center px-4 py-3 sticky top-0 z-5">
-      <div class="flex align-items-center gap-2 cursor-pointer" routerLink="/">
-        <!-- You can add a logo image here if available -->
-        <span class="text-2xl font-bold text-900">Karukolpo</span>
+    <div class="surface-card shadow-2 flex justify-content-between align-items-center pl-1 pr-4 sticky top-0 z-5" style="height: 80px;">
+      <div class="flex align-items-center gap-2 cursor-pointer h-full" routerLink="/">
+        <img src="assets/logo.png" alt="Karukolpo Logo" style="height: 80px; width: auto; object-fit: contain;" />
       </div>
       
       <div class="flex align-items-center gap-3">

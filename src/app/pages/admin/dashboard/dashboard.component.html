@@ -6,10 +6,10 @@
     <aside class="sidebar" [class.collapsed]="sidebarCollapsed() && !isMobile()" [class.mobile-open]="mobileMenuOpen()">
 
         <!-- Sidebar Header -->
-        <div class="sidebar-header">
-            <div class="logo">
-                <i class="pi pi-shopping-bag logo-icon"></i>
-                <span class="logo-text">Karukolpo</span>
+        <div class="sidebar-header" style="height: 80px; padding: 0 0.4rem; display: flex; align-items: center;">
+            <div class="logo" style="height: 80px; display: flex; align-items: center;">
+                <img src="assets/logo.png" alt="Karukolpo Logo" class="logo-img"
+                    style="height: 80px; width: auto; object-fit: contain;" />
             </div>
             <button pButton *ngIf="!isMobile()" type="button"
                 [icon]="sidebarCollapsed() ? 'pi pi-angle-right' : 'pi pi-angle-left'"

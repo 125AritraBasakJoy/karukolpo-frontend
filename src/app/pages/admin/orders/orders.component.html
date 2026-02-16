@@ -52,7 +52,7 @@
     }
 
     @if (!loading()) {
-    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" [paginator]="true" [rows]="100"
+    <p-table [value]="orders()" [tableStyle]="{'min-width': '50rem'}" [paginator]="true" [rows]="10"
         [rowsPerPageOptions]="[10, 25, 50, 100]">
         <ng-template pTemplate="header">
             <tr>

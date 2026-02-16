@@ -9,7 +9,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextarea } from 'primeng/inputtextarea';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { DropdownModule } from 'primeng/dropdown';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
@@ -27,7 +27,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
         InputTextModule,
         InputTextarea,
         InputNumberModule,
-        DropdownModule,
+        MultiSelectModule,
         ButtonModule,
         ToastModule,
         DialogModule,
@@ -47,22 +47,21 @@ import { catchError, map, switchMap } from 'rxjs/operators';
             </div>
 
             <div class="flex-1">
-                <label for="category" class="block font-bold mb-2">Category</label>
-                <p-dropdown 
+                <label for="category" class="block font-bold mb-2">Categories</label>
+                <p-multiSelect 
                     [options]="categories()" 
-                    [(ngModel)]="selectedCategory" 
+                    [(ngModel)]="selectedCategories" 
                     optionLabel="name" 
                     optionValue="id"
-                    placeholder="Select a Category"
-                    [showClear]="true"
-                    [editable]="true"
+                    placeholder="Select Categories"
                     [filter]="true"
                     filterBy="name"
-                    (onChange)="onCategoryChange($event)"
+                    [filterPlaceHolder]="'Search Categories...'"
                     styleClass="w-full"
                     [style]="{'width':'100%'}"
-                    [panelStyle]="{'width':'100%'}">
-                </p-dropdown>
+                    [panelStyle]="{'width':'100%'}"
+                    display="chip">
+                </p-multiSelect>
             </div>
         </div>
 
@@ -146,12 +145,11 @@ export class AddProductComponent {
     product = {
         name: '',
         description: '',
-        categoryId: '',
         price: 0
     };
 
     categories = signal<any[]>([]);
-    selectedCategory: string | null = null;
+    selectedCategories: any[] = [];
     loading = signal(false);
     productCreated = false;
     createdProductId: number | null = null;
@@ -176,10 +174,6 @@ export class AddProductComponent {
         this.categoryService.getCategories().subscribe(cats => {
             this.categories.set(cats);
         });
-    }
-
-    onCategoryChange(event: any) {
-        this.product.categoryId = event.value;
     }
 
     onMainImageSelect(event: any) {
@@ -233,12 +227,14 @@ export class AddProductComponent {
                 const productId = this.createdProductId;
                 const tasks = [];
 
-                // 2. Link Category if selected
-                if (this.selectedCategory) {
-                    tasks.push(
-                        this.productService.addCategoryToProduct(productId, parseInt(this.selectedCategory, 10))
-                            .pipe(catchError(err => of({ error: 'category', err })))
-                    );
+                // 2. Link Categories if selected
+                if (this.selectedCategories && this.selectedCategories.length > 0) {
+                    this.selectedCategories.forEach(categoryId => {
+                        tasks.push(
+                            this.productService.addCategoryToProduct(productId, parseInt(categoryId, 10))
+                                .pipe(catchError(err => of({ error: 'category', err })))
+                        );
+                    });
                 }
 
                 // 3. Upload Main Image
@@ -274,7 +270,7 @@ export class AddProductComponent {
                 // Check for partial failures
                 const errors = (results as any[]).filter(r => r && r.error);
                 if (errors.length > 0) {
-                    this.messageService.add({ severity: 'warn', summary: 'Partial Success', detail: 'Product created but some images/category failed.' });
+                    this.messageService.add({ severity: 'warn', summary: 'Partial Success', detail: 'Product created but some images/categories failed.' });
                 } else {
                     this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully' });
                 }

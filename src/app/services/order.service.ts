@@ -156,13 +156,12 @@ export class OrderService {
    * PATCH /admin/orders/{id}/confirm
    */
   adminConfirmOrder(id: number | string): Observable<Order> {
-    // Use the specific admin confirm endpoint as requested
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(id), { status: 'confirmed' }).pipe(
+    // Use the specific admin confirm endpoint as requested (takes no body parameters per spec)
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(id), {}).pipe(
       tap(() => this.clearCache()),
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.error('Admin Confirm Order Failed. Status:', err.status);
-        console.error('Error Body:', err.error);
         throw err;
       })
     );
@@ -192,13 +191,12 @@ export class OrderService {
    * Since /confirm endpoint only accepts pending orders
    */
   adminCompleteOrder(id: number | string): Observable<Order> {
-    // Use the specific admin complete endpoint
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_COMPLETE(id), { status: 'completed' }).pipe(
+    // Use the specific admin complete endpoint (takes no body parameters per spec)
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_COMPLETE(id), {}).pipe(
       tap(() => this.clearCache()),
       map(order => this.mapBackendToFrontend(order)),
       catchError((err: any) => {
         console.error('Admin Complete Order Failed. Status:', err.status);
-        console.error('Error Body:', err.error);
         throw err;
       })
     );

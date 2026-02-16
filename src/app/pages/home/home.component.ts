@@ -218,7 +218,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.productService.getProducts().subscribe({
       next: (products) => {
         this.products.set(products);
-        this.filterProducts();
+        this.filteredProducts.set(products);
         this.loading.set(false);
       },
       error: (err) => {

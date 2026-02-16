@@ -119,7 +119,7 @@ If you get **400 Bad Request** when creating categories:
 
 4. **Expected Request**:
    ```
-   POST https://karukolpo-backend.onrender.com/categories
+   POST https://api.karukolpocrafts.com/categories
    Headers: Authorization: Bearer <token>
    Body: {"name": "Category Name"}
    ```

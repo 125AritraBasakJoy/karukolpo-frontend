@@ -91,7 +91,7 @@
                             tooltipPosition="top"></p-button>
                         }
 
-                        @if (order.status === 'Confirmed' && order.paymentMethod?.toLowerCase() !== 'bkash') {
+                        @if (order.status === 'Confirmed') {
                         <p-button icon="pi pi-check-circle" [rounded]="true" [text]="true" severity="success"
                             (onClick)="updateStatus(order, 'Completed')" pTooltip="Mark Complete"
                             tooltipPosition="top"></p-button>
@@ -282,6 +282,10 @@
             @if (selectedOrder.status === 'Pending') {
             <button pButton label="Confirm Order" icon="pi pi-check" class="p-button-success p-button-outlined"
                 (click)="updateStatus(selectedOrder, 'Confirmed')"></button>
+            }
+            @if (selectedOrder.status === 'Confirmed') {
+            <button pButton label="Complete Order" icon="pi pi-check-circle" class="p-button-success"
+                (click)="updateStatus(selectedOrder, 'Completed')"></button>
             }
             <button pButton label="Close" icon="pi pi-times" class="p-button-text p-button-secondary"
                 (click)="displayOrderDialog = false"></button>

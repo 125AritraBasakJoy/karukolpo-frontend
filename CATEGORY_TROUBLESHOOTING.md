@@ -29,7 +29,7 @@ Enhanced error handling in the category manager to show **clear error messages**
 **Cause**: Backend API not accessible
 
 **Solution**:
-- Check if backend is running at `https://karukolpo-backend.onrender.com`
+- Check if backend is running at `https://api.karukolpocrafts.com`
 - Open DevTools → Network tab to see the actual error
 - Backend might be in sleep mode (Render free tier)
 
@@ -64,7 +64,7 @@ Enhanced error handling in the category manager to show **clear error messages**
 
 **Request**:
 ```
-POST https://karukolpo-backend.onrender.com/categories
+POST https://api.karukolpocrafts.com/categories
 Headers: Authorization: Bearer <token>
 Body: {"name": "Your Category Name"}
 ```

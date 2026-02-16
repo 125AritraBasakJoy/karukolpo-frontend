@@ -1,7 +1,7 @@
 # API Connection Status - Complete Analysis
 
 **Date**: 2026-01-26  
-**Backend URL**: https://karukolpo-backend.onrender.com
+**Backend URL**: https://api.karukolpocrafts.com
 
 ---
 
@@ -44,7 +44,7 @@ login(email: string, password: string): Observable<any> {
 
 **Network Activity**: 
 - ✅ Visible in Network tab when logging in
-- ✅ Sends request to `https://karukolpo-backend.onrender.com/admin/login`
+- ✅ Sends request to `https://api.karukolpocrafts.com/admin/login`
 
 ---
 

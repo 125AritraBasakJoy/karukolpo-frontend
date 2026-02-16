@@ -1,6 +1,6 @@
 # Karukolpo Backend API Endpoints
 
-**Base URL:** `https://karukolpo-backend.onrender.com`
+**Base URL:** `https://api.karukolpocrafts.com`
 
 ## Products
 

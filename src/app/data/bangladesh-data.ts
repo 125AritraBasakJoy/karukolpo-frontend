@@ -18,7 +18,7 @@ export const districts: District[] = [
     },
     {
         name: "Barishal",
-        subDistricts: ["Agailjhara", "Babuganj", "Bakerganj", "Banaripara", "Barishal Sadar", "Gournadi", "Hizla", "Mehendiganj", "Muladi", "Wazirpur"]
+        subDistricts: ["Agailjhara", "Airport Thana", "Babuganj", "Bakerganj", "Banaripara", "Bandar Thana", "Barishal Sadar", "Gournadi", "Hizla", "Kawnia Thana", "Kotwali Thana", "Mehendiganj", "Muladi", "Wazirpur"]
     },
     {
         name: "Bhola",
@@ -37,8 +37,12 @@ export const districts: District[] = [
         subDistricts: ["Chandpur Sadar", "Faridganj", "Haimchar", "Haziganj", "Kachua", "Matlab Dakshin", "Matlab Uttar", "Shahrasti"]
     },
     {
+        name: "Chapainawabganj",
+        subDistricts: ["Bholahat", "Chapainawabganj Sadar", "Gomastapur", "Nachole", "Shibganj"]
+    },
+    {
         name: "Chattogram",
-        subDistricts: ["Anwara", "Banshkhali", "Boalkhali", "Chandanaish", "Fatikchhari", "Hathazari", "Lohagara", "Mirsharai", "Patiya", "Rangunia", "Raozan", "Sandwip", "Satkania", "Sitakunda", "Karnaphuli"]
+        subDistricts: ["Akbar Shah", "Anwara", "Bakolia", "Bandar", "Banshkhali", "Bayazid Bostami", "Boalkhali", "Chandanaish", "Chandgaon", "Chawkbazar", "Chittagong Kotwali", "Double Mooring", "EPZ", "Fatikchhari", "Halishahar", "Hathazari", "Karnaphuli", "Khulshi", "Lohagara", "Mirsharai", "Pahartali", "Panchlaish", "Patenga", "Patiya", "Rangunia", "Raozan", "Sadarghat", "Sandwip", "Satkania", "Sitakunda"]
     },
     {
         name: "Chuadanga",
@@ -46,7 +50,7 @@ export const districts: District[] = [
     },
     {
         name: "Cox's Bazar",
-        subDistricts: ["Chakaria", "Cox's Bazar Sadar", "Kutubdia", "Maheshkhali", "Pekua", "Ramu", "Teknaf", "Ukhia"]
+        subDistricts: ["Chakaria", "Cox's Bazar Sadar", "Eidgaon", "Kutubdia", "Maheshkhali", "Pekua", "Ramu", "Teknaf", "Ukhia"]
     },
     {
         name: "Cumilla",
@@ -54,11 +58,11 @@ export const districts: District[] = [
     },
     {
         name: "Dhaka",
-        subDistricts: ["Dhamrai", "Dohar", "Keraniganj", "Nawabganj", "Savar"]
+        subDistricts: ["Adabor", "Airport (Bimanbondor)", "Badda", "Banani", "Bangsal", "Bhashantek", "Cantonment", "Chawkbazar", "Dakshinkhan", "Darus Salam", "Demra", "Dhamrai", "Dhanmondi", "Dohar", "Gendaria", "Gulshan", "Hatirjheel", "Hazaribagh", "Jatrabari", "Kadamtali", "Kafrul", "Kalabagan", "Kamrangirchar", "Keraniganj", "Khilgaon", "Khilkhet", "Kotwali", "Lalbagh", "Mirpur", "Mohammadpur", "Motijheel", "Mugda", "Nawabganj", "New Market", "Pallabi", "Paltan", "Ramna", "Rampura", "Rupnagar", "Sabujbagh", "Savar", "Shah Ali", "Shahbagh", "Shahjahanpur", "Sher-e-Bangla Nagar", "Shyampur", "Sutrapur", "Tejgaon", "Tejgaon Industrial Area", "Turag", "Uttara", "Uttara West", "Uttarkhan", "Vasantek", "Vatara", "Wari"]
     },
     {
         name: "Dinajpur",
-        subDistricts: ["Birampur", "Birganj", "Biral", "Bochaganj", "Chirirbandar", "Dinajpur Sadar", "Ghoraghat", "Hakimpur", "Kaharole", "Khansama", "Nawabganj", "Parbatipur", "Fulbari"]
+        subDistricts: ["Birampur", "Birganj", "Biral", "Bochaganj", "Chirirbandar", "Dinajpur Sadar", "Fulbari", "Ghoraghat", "Hakimpur", "Kaharole", "Khansama", "Nawabganj", "Parbatipur"]
     },
     {
         name: "Faridpur",
@@ -74,7 +78,7 @@ export const districts: District[] = [
     },
     {
         name: "Gazipur",
-        subDistricts: ["Gazipur Sadar", "Kaliakair", "Kaliganj", "Kapasia", "Sreepur"]
+        subDistricts: ["Bason Thana", "Gacha Thana", "Gazipur Sadar", "Kaliakair", "Kaliganj", "Kapasia", "Kashimpur Thana", "Konabari Thana", "Pubail Thana", "Sreepur", "Tongi East", "Tongi West"]
     },
     {
         name: "Gopalganj",
@@ -110,7 +114,7 @@ export const districts: District[] = [
     },
     {
         name: "Khulna",
-        subDistricts: ["Batiaghata", "Dacope", "Dumuria", "Dighalia", "Koyra", "Paikgachha", "Phultala", "Rupsha", "Terokhada"]
+        subDistricts: ["Aranghata", "Batiaghata", "Dacope", "Daulatpur", "Dighalia", "Dumuria", "Harintana", "Khalishpur", "Khan Jahan Ali", "Khulna Sadar", "Koyra", "Labanchara", "Paikgachha", "Phultala", "Rupsha", "Sonadanga", "Terokhada"]
     },
     {
         name: "Kishoreganj",
@@ -134,7 +138,7 @@ export const districts: District[] = [
     },
     {
         name: "Madaripur",
-        subDistricts: ["Kalkini", "Madaripur Sadar", "Rajoir", "Shibchar", "Dasar"]
+        subDistricts: ["Dasar", "Kalkini", "Madaripur Sadar", "Rajoir", "Shibchar"]
     },
     {
         name: "Magura",
@@ -158,7 +162,7 @@ export const districts: District[] = [
     },
     {
         name: "Mymensingh",
-        subDistricts: ["Bhaluka", "Dhobaura", "Fulbaria", "Gafargaon", "Gauripur", "Haluaghat", "Ishwarganj", "Mymensingh Sadar", "Muktagachha", "Nandail", "Phulpur", "Tara Khanda"]
+        subDistricts: ["Bhaluka", "Dhobaura", "Fulbaria", "Gafargaon", "Gauripur", "Haluaghat", "Ishwarganj", "Kotwali Thana", "Muktagachha", "Mymensingh Sadar", "Nandail", "Phulpur", "Taraikanda", "Trishal"]
     },
     {
         name: "Naogaon",
@@ -170,7 +174,7 @@ export const districts: District[] = [
     },
     {
         name: "Narayanganj",
-        subDistricts: ["Araihazar", "Bandar", "Narayanganj Sadar", "Rupganj", "Sonargaon"]
+        subDistricts: ["Araihazar", "Bandar", "Fatullah", "Narayanganj Sadar", "Rupganj", "Siddhirganj", "Sonargaon"]
     },
     {
         name: "Narsingdi",
@@ -178,11 +182,11 @@ export const districts: District[] = [
     },
     {
         name: "Natore",
-        subDistricts: ["Bagatipara", "Baraigram", "Gurudaspur", "Lalpur", "Natore Sadar", "Naldanga", "Singra"]
+        subDistricts: ["Bagatipara", "Baraigram", "Gurudaspur", "Lalpur", "Naldanga", "Natore Sadar", "Singra"]
     },
     {
         name: "Netrokona",
-        subDistricts: ["Atpara", "Barhatta", "Durgapur", "Khaliajuri", "Kalmakanda", "Kendua", "Madan", "Mohanganj", "Netrokona Sadar", "Purbadhala"]
+        subDistricts: ["Atpara", "Barhatta", "Durgapur", "Kalmakanda", "Kendua", "Khaliajuri", "Madan", "Mohanganj", "Netrokona Sadar", "Purbadhala"]
     },
     {
         name: "Nilphamari",
@@ -190,11 +194,11 @@ export const districts: District[] = [
     },
     {
         name: "Noakhali",
-        subDistricts: ["Begumganj", "Chatkhil", "Companiganj", "Hatiya", "Kabirhat", "Senbagh", "Sonaimuri", "Subarnachar", "Noakhali Sadar"]
+        subDistricts: ["Begumganj", "Chatkhil", "Companiganj", "Hatiya", "Kabirhat", "Noakhali Sadar", "Senbagh", "Sonaimuri", "Subarnachar"]
     },
     {
         name: "Pabna",
-        subDistricts: ["Atgharia", "Bera", "Bhangura", "Chatmohar", "Faridpur", "Ishwardi", "Pabna Sadar", "Santhia", "Sujanagar"]
+        subDistricts: ["Ataikula", "Atgharia", "Bera", "Bhangura", "Chatmohar", "Faridpur", "Ishwardi", "Pabna Sadar", "Santhia", "Sujanagar"]
     },
     {
         name: "Panchagarh",
@@ -206,7 +210,7 @@ export const districts: District[] = [
     },
     {
         name: "Pirojpur",
-        subDistricts: ["Bhandaria", "Kawkhali", "Mathbaria", "Nazirpur", "Nesarabad", "Pirojpur Sadar", "Indurkani"]
+        subDistricts: ["Bhandaria", "Indurkani", "Kawkhali", "Mathbaria", "Nazirpur", "Nesarabad", "Pirojpur Sadar"]
     },
     {
         name: "Rajbari",
@@ -214,7 +218,7 @@ export const districts: District[] = [
     },
     {
         name: "Rajshahi",
-        subDistricts: ["Bagha", "Bagmara", "Charghat", "Durgapur", "Godagari", "Mohanpur", "Paba", "Puthia", "Tanore"]
+        subDistricts: ["Bagha", "Bagmara", "Boalia", "Charghat", "Durgapur", "Godagari", "Matihar", "Mohanpur", "Paba", "Puthia", "Rajpara", "Shah Mokdum", "Tanore"]
     },
     {
         name: "Rangamati",
@@ -222,7 +226,7 @@ export const districts: District[] = [
     },
     {
         name: "Rangpur",
-        subDistricts: ["Badarganj", "Gangachhara", "Kaunia", "Rangpur Sadar", "Mithapukur", "Pirgachha", "Pirganj", "Taraganj"]
+        subDistricts: ["Badarganj", "Gangachhara", "Haragach Thana", "Hazirhat Thana", "Kaunia", "Kotwali Thana", "Mahiganj Thana", "Mithapukur", "Parshuram Thana", "Pirgachha", "Pirganj", "Rangpur Sadar", "Tajhat Thana", "Taraganj"]
     },
     {
         name: "Satkhira",
@@ -242,18 +246,18 @@ export const districts: District[] = [
     },
     {
         name: "Sunamganj",
-        subDistricts: ["Bishwamvarpur", "Chhatak", "Dakshin Sunamganj", "Derai", "Dharamapasha", "Dowarabazar", "Jagannathpur", "Jamalganj", "Sullah", "Sunamganj Sadar", "Tahirpur"]
+        subDistricts: ["Bishwamvarpur", "Chhatak", "Derai", "Dharamapasha", "Dowarabazar", "Jagannathpur", "Jamalganj", "Madhyanagar", "Shantiganj", "Sullah", "Sunamganj Sadar", "Tahirpur"]
     },
     {
         name: "Sylhet",
-        subDistricts: ["Balaganj", "Beanibazar", "Bishwanath", "Companiganj", "Fenchuganj", "Golapganj", "Gowainghat", "Jaintiapur", "Kanaighat", "Osmani Nagar", "Sylhet Sadar", "Zakiganj"]
+        subDistricts: ["Balaganj", "Beanibazar", "Bimanbandar Thana", "Bishwanath", "Companiganj", "Dakshin Surma", "Fenchuganj", "Golapganj", "Gowainghat", "Jaintiapur", "Jalalabad Thana", "Kanaighat", "Moglabazar Thana", "Osmani Nagar", "Shah Poran Thana", "Sylhet Sadar", "Zakiganj"]
     },
     {
         name: "Tangail",
-        subDistricts: ["Basail", "Bhuapur", "Delduar", "Dhanbari", "Gopalpur", "Ghatail", "Kalihati", "Madhupur", "Mirzapur", "Nagarpur", "Sakhipur", "Tangail Sadar"]
+        subDistricts: ["Basail", "Bhuapur", "Delduar", "Dhanbari", "Ghatail", "Gopalpur", "Kalihati", "Madhupur", "Mirzapur", "Nagarpur", "Sakhipur", "Tangail Sadar"]
     },
     {
         name: "Thakurgaon",
         subDistricts: ["Baliadangi", "Haripur", "Pirganj", "Ranisankail", "Thakurgaon Sadar"]
     }
-].sort((a, b) => a.name.localeCompare(b.name));
+];

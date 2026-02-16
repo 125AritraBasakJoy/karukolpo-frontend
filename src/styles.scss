@@ -29,7 +29,7 @@ body {
     --ag-border-radius: 12px;
 }
 
-/* Global Premium Styling (Dark Mode Only) */
+/* Global Premium Styling (Dark-First Approach) */
 :root {
     --primary-color: #1e293b;
     --primary-hover: #334155;
@@ -41,29 +41,112 @@ body {
     /* Slate 900 */
     --surface-section: #1e293b;
     /* Slate 800 */
-    --surface-border: rgba(255, 255, 255, 0.06);
-    --surface-hover: rgba(255, 255, 255, 0.03);
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --surface-hover: rgba(255, 255, 255, 0.04);
+
     --text-color: #f8fafc;
     /* Slate 50 */
     --text-color-secondary: #94a3b8;
     /* Slate 400 */
-    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-    --card-shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
 
-    /* PrimeNG mapping */
     --p-content-background: var(--surface-card);
     --p-content-border-color: var(--surface-border);
     --p-text-color: var(--text-color);
     --p-focus-ring-color: rgba(59, 130, 246, 0.3);
 
-    /* Helper for RGB backgrounds */
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --card-shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+
     --surface-ground-rgb: 2, 6, 23;
+
+    /* PrimeNG v18 Select Variable Overrides */
+    --p-select-background: var(--surface-card);
+    --p-select-panel-background: var(--surface-card);
+    --p-select-overlay-background: var(--surface-card);
+    --p-select-color: var(--text-color);
+    --p-select-placeholder-color: var(--text-color-secondary);
+    --p-select-border-color: var(--surface-border);
+    --p-select-option-color: var(--text-color);
+    --p-select-option-focus-background: var(--surface-hover);
+    --p-select-option-selected-background: rgba(59, 130, 246, 0.12);
+    --p-select-option-selected-color: var(--accent-color);
+}
+
+/* Explicit Overrides for PrimeNG v18 Overlays */
+.p-select-overlay,
+.p-select-panel,
+.p-dropdown-panel,
+.p-overlay {
+    background: var(--surface-card) !important;
+    border: 1px solid var(--surface-border) !important;
+    box-shadow: var(--card-shadow-hover) !important;
+    border-radius: 12px !important;
+    color: var(--text-color) !important;
+    padding: 0.5rem !important;
+}
+
+.p-select-items-wrapper,
+.p-dropdown-items-wrapper {
+    background: transparent !important;
+}
+
+.p-select-option,
+.p-dropdown-item {
+    margin: 2px 0 !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 8px !important;
+    color: var(--text-color) !important;
+    transition: all 0.15s ease !important;
+    background: transparent !important;
+
+    &:hover,
+    &.p-select-option-selected,
+    &.p-highlight {
+        background: var(--surface-hover) !important;
+        color: var(--accent-color) !important;
+    }
+
+    &.p-select-option-selected,
+    &.p-highlight {
+        font-weight: 600 !important;
+        background: rgba(59, 130, 246, 0.12) !important;
+    }
+}
+
+/* Filter Input Styling */
+.p-select-filter-container,
+.p-dropdown-header {
+    background: transparent !important;
+    padding: 0.5rem !important;
+    border-bottom: 1px solid var(--surface-border) !important;
+    margin-bottom: 0.5rem !important;
+
+    .p-select-filter,
+    .p-dropdown-filter {
+        background: var(--surface-ground) !important;
+        border: 1px solid var(--surface-border) !important;
+        border-radius: 8px !important;
+        color: var(--text-color) !important;
+        padding: 0.5rem 1rem !important;
+
+        &:focus {
+            border-color: var(--accent-color) !important;
+            box-shadow: 0 0 0 3px var(--p-focus-ring-color) !important;
+        }
+    }
+
+    .p-select-filter-icon,
+    .p-dropdown-filter-icon {
+        color: var(--text-color-secondary) !important;
+    }
 }
 
 /* Global Form & Input Refinements */
 .p-inputtext,
 .p-inputnumber-input,
-.p-password-input {
+.p-password-input,
+.p-inputtextarea,
+textarea {
     background: var(--surface-card) !important;
     border: 1px solid var(--surface-border) !important;
     border-radius: 12px !important;
@@ -73,7 +156,6 @@ body {
     color: var(--text-color) !important;
 
     &:focus {
-        background: var(--surface-card) !important;
         border-color: var(--accent-color) !important;
         box-shadow: 0 0 0 3px var(--p-focus-ring-color) !important;
     }
@@ -84,34 +166,31 @@ body {
     }
 }
 
+.p-select,
 .p-dropdown {
     background: var(--surface-card) !important;
     border: 1px solid var(--surface-border) !important;
     border-radius: 12px !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     color: var(--text-color) !important;
-    padding: 0 !important;
     display: flex;
     align-items: center;
 
+    .p-select-label,
     .p-dropdown-label {
         padding: 0.95rem 1.25rem !important;
-        font-size: 1rem !important;
-        display: flex;
-        align-items: center;
         background: transparent !important;
         border: none !important;
-        height: 100%;
         color: var(--text-color) !important;
+
+        &.p-placeholder {
+            color: var(--text-color-secondary) !important;
+        }
     }
 
+    .p-select-trigger,
     .p-dropdown-trigger {
         width: 3rem !important;
-        color: var(--text-color-secondary) !important;
-    }
-
-    .p-dropdown-clear-icon {
-        right: 2.5rem !important;
         color: var(--text-color-secondary) !important;
     }
 
@@ -135,8 +214,8 @@ body {
     &:hover {
         background-color: var(--primary-hover) !important;
         border-color: var(--primary-hover) !important;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-1.5px) scale(1.01) !important;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3) !important;
     }
 
     &.p-button-secondary {
@@ -146,72 +225,20 @@ body {
 
         &:hover {
             background-color: var(--surface-hover) !important;
-            border-color: var(--surface-border) !important;
-        }
-    }
-
-    &.p-button-text {
-        background: transparent !important;
-        border: none !important;
-        color: var(--text-color) !important;
-
-        &:hover {
-            background: var(--surface-hover) !important;
-        }
-    }
-
-    &.p-button-outlined {
-        background: transparent !important;
-        border: 1px solid var(--surface-border) !important;
-        color: var(--text-color) !important;
-
-        &:hover {
-            background: var(--surface-hover) !important;
         }
     }
 }
 
-/* Input Group Fixes */
-.p-inputgroup {
-    background: transparent !important;
-    border-radius: 12px !important;
-    overflow: hidden;
-
-    &>* {
-        border-radius: 0 !important;
-        margin: 0 !important;
-        border: 1px solid var(--surface-border) !important;
-    }
-
-    &>*:not(:last-child) {
-        border-right: none !important;
-    }
-
-    &>*:first-child {
-        border-top-left-radius: 12px !important;
-        border-bottom-left-radius: 12px !important;
-    }
-
-    &>*:last-child {
-        border-top-right-radius: 12px !important;
-        border-bottom-right-radius: 12px !important;
-    }
-}
-
-/* Clean Solid Cards (Apple Style) */
+/* Premium Card (Apple Style) */
 .p-card,
 .card-custom {
     background: var(--surface-card) !important;
     border: 1px solid var(--surface-border) !important;
-    box-shadow: var(--card-shadow) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     border-radius: 18px !important;
     overflow: hidden;
     color: var(--text-color) !important;
-
-    .p-card-body {
-        padding: 1.5rem !important;
-    }
+    box-shadow: var(--card-shadow) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
     &:hover {
         transform: translateY(-4px);
@@ -219,164 +246,33 @@ body {
     }
 }
 
-/* Premium Button Transitions */
-.p-button {
-    border-radius: 10px !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    font-weight: 500 !important;
-
-    &:hover {
-        transform: scale(1.02);
-    }
-
-    &:active {
-        transform: scale(0.98);
-    }
-}
-
-/* Dropdown Panel Width Fix */
-.p-dropdown-panel {
-    min-width: 100% !important;
-}
-
-
-/* Visibility Fix for Text Primary */
-.text-primary {
-    color: var(--accent-color) !important;
-    /* Blue 500 */
-}
-
-/* ADMIN LOGIN SPECIFIC OVERRIDES - THEME AWARE */
-.login-container {
-    background: linear-gradient(rgba(var(--surface-ground-rgb), 0.8), rgba(var(--surface-ground-rgb), 0.8)), url('assets/admin-login-bg.png') no-repeat center center;
-    background-size: cover;
-
-    .p-card {
-        background: var(--surface-card) !important;
-        border: 1px solid var(--surface-border) !important;
-        box-shadow: var(--card-shadow-hover) !important;
-    }
-
-    /* Emerald Accent for Admin Login */
-    .p-button {
-        background-color: #10b981 !important;
-        border-color: #10b981 !important;
-        color: #ffffff !important;
-
-        &:hover {
-            background-color: #059669 !important;
-            border-color: #059669 !important;
-        }
-    }
-
-    .p-float-label label {
-        color: #10b981 !important;
-    }
-
-    .p-inputtext:focus {
-        border-color: #10b981 !important;
-        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
-    }
-}
-
-/* Helper for RGB backgrounds if needed */
-:root {
-    --surface-ground-rgb: 248, 250, 252;
-}
-
-.dark-mode {
-    --surface-ground-rgb: 2, 6, 23;
-}
-
-/* Fix Tag Visibility in Dark/Light Mode */
+/* Tag Visibility */
 .p-tag {
     font-weight: 600;
     border-radius: 6px;
 
-    &.p-tag-warning {
-        background-color: rgba(245, 158, 11, 0.1) !important;
-        color: #d97706 !important;
-        /* Amber 600 */
-        border: 1px solid rgba(245, 158, 11, 0.2);
-    }
-
     &.p-tag-info {
         background-color: rgba(59, 130, 246, 0.1) !important;
-        color: #2563eb !important;
-        /* Blue 600 */
-        border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-
-    &.p-tag-success {
-        background-color: rgba(16, 185, 129, 0.1) !important;
-        color: #059669 !important;
-        /* Emerald 600 */
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-
-    &.p-tag-danger {
-        background-color: rgba(239, 68, 68, 0.1) !important;
-        color: #dc2626 !important;
-        /* Red 600 */
-        border: 1px solid rgba(239, 68, 68, 0.2);
-    }
-}
-
-.dark-mode {
-    .p-tag-warning {
-        color: #fbbf24 !important;
-    }
-
-    .p-tag-info {
         color: #60a5fa !important;
-    }
-
-    .p-tag-success {
-        color: #34d399 !important;
-    }
-
-    .p-tag-danger {
-        color: #f87171 !important;
-    }
-}
-
-/* Glass Effect Button */
-.glass-button {
-    background: rgba(255, 255, 255, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-    transition: all 0.3s ease !important;
-
-    &:hover {
-        background: rgba(255, 255, 255, 0.2) !important;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2) !important;
-        border-color: rgba(255, 255, 255, 0.4) !important;
-    }
-
-    &:active {
-        transform: translateY(0);
-    }
-
-    /* Ensure icon color matches text */
-    .p-button-icon {
-        color: white !important;
+        border: 1px solid rgba(59, 130, 246, 0.2);
     }
 }
 
 /* Global Validation Error Styling */
 .ng-dirty.ng-invalid,
 .p-inputtext.ng-dirty.ng-invalid,
+.p-select.ng-dirty.ng-invalid,
 .p-dropdown.ng-dirty.ng-invalid,
 .p-inputtextarea.ng-dirty.ng-invalid {
     border-color: #ef4444 !important;
-    /* Red 500 */
     box-shadow: 0 0 0 1px #ef4444 !important;
 }
 
 .p-error {
     color: #ef4444 !important;
+}
+
+/* Visibility Fix for Text Primary */
+.text-primary {
+    color: var(--accent-color) !important;
 }

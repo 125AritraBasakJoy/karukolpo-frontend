@@ -8,8 +8,9 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -35,8 +36,10 @@ import * as XLSX from 'xlsx';
     SkeletonModule,
     TooltipModule,
     InputTextModule,
-    FormsModule
+    FormsModule,
+    ConfirmDialogModule
   ],
+  providers: [ConfirmationService],
   templateUrl: './orders.component.html',
   standalone: true,
   styleUrls: ['./orders.component.scss']
@@ -52,7 +55,8 @@ export class OrdersComponent implements OnInit {
     private orderService: OrderService,
     private productService: ProductService,
     private paymentService: PaymentService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService
   ) { }
 
   ngOnInit() {
@@ -187,25 +191,44 @@ export class OrdersComponent implements OnInit {
   }
 
   updateStatus(order: Order, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed') {
-    this.orderService.updateOrderStatus(order.id!, status as any).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
+    console.log('updateStatus called with:', status);
+    const proceedWithStatusUpdate = () => {
+      this.orderService.updateOrderStatus(order.id!, status as any).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
 
-        // Update local state
-        this.orders.update(currentOrders => currentOrders.map(o =>
-          o.id === order.id ? { ...o, status: status } : o
-        ));
+          // Update local state
+          this.orders.update(currentOrders => currentOrders.map(o =>
+            o.id === order.id ? { ...o, status: status } : o
+          ));
 
-        if (this.selectedOrder && this.selectedOrder.id === order.id) {
-          this.selectedOrder.status = status;
+          if (this.selectedOrder && this.selectedOrder.id === order.id) {
+            this.selectedOrder.status = status;
+          }
+        },
+        error: (err) => {
+          console.error(`Failed to update order status to ${status}`, err);
+          const errorMsg = err.error?.detail || 'Failed to update order status.';
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: errorMsg });
         }
-      },
-      error: (err) => {
-        console.error(`Failed to update order status to ${status}`, err);
-        const errorMsg = err.error?.detail || 'Failed to update order status.';
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: errorMsg });
-      }
-    });
+      });
+    };
+
+    if (status === 'Completed') {
+      this.confirmationService.confirm({
+        message: 'Are you sure the order is delivered to the customer?',
+        header: 'Confirm Completion',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          proceedWithStatusUpdate();
+        },
+        reject: () => {
+          // Do nothing
+        }
+      });
+    } else {
+      proceedWithStatusUpdate();
+    }
   }
 
   adminConfirmPayment(order: Order) {

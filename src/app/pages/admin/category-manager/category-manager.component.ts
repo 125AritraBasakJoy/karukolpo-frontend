@@ -1,5 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { of } from 'rxjs';
+import { switchMap, catchError, tap } from 'rxjs/operators';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoryService } from '../../../services/category.service';
 import { ProductService } from '../../../services/product.service';
@@ -18,6 +20,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 @Component({
     selector: 'app-category-manager',
@@ -36,7 +39,9 @@ import { TagModule } from 'primeng/tag';
         ProgressSpinnerModule,
         DropdownModule,
         TooltipModule,
-        TagModule
+        TooltipModule,
+        TagModule,
+        MultiSelectModule
     ],
     providers: [MessageService, ConfirmationService],
     template: `
@@ -44,6 +49,7 @@ import { TagModule } from 'primeng/tag';
         <p-toolbar styleClass="mb-4 gap-2">
             <ng-template pTemplate="left">
                 <button pButton pRipple label="New Category" icon="pi pi-plus" class="p-button-success mr-2" (click)="openNew()"></button>
+                <button pButton pRipple label="Uncategorized Products" icon="pi pi-eye-slash" class="p-button-warning" (click)="viewUncategorizedProducts()"></button>
             </ng-template>
         </p-toolbar>
 
@@ -131,8 +137,13 @@ import { TagModule } from 'primeng/tag';
                     <td>{{product.price | currency:'BDT':'symbol-narrow'}}</td>
                     <td>
                         <div class="flex gap-2">
-                            <button pButton pRipple label="Move" icon="pi pi-arrow-right-arrow-left" class="p-button-outlined p-button-secondary p-button-sm" (click)="moveProduct(product)" pTooltip="Move to Another Category" tooltipPosition="left"></button>
-                            <button pButton pRipple label="Remove" icon="pi pi-trash" class="p-button-outlined p-button-danger p-button-sm" (click)="removeProductFromCategory(product)" pTooltip="Remove from Category" tooltipPosition="left"></button>
+                            <button pButton pRipple [label]="viewingCategory?.id === 'uncategorized' ? 'Assign' : 'Move'" 
+                                icon="pi pi-arrow-right-arrow-left" 
+                                class="p-button-outlined p-button-secondary p-button-sm" 
+                                (click)="moveProduct(product)" 
+                                [pTooltip]="viewingCategory?.id === 'uncategorized' ? 'Assign Category' : 'Move Category'" 
+                                tooltipPosition="left"></button>
+                            <button *ngIf="viewingCategory?.id !== 'uncategorized'" pButton pRipple label="Remove" icon="pi pi-trash" class="p-button-outlined p-button-danger p-button-sm" (click)="removeProductFromCategory(product)" pTooltip="Remove from Category" tooltipPosition="left"></button>
                         </div>
                     </td>
                 </tr>
@@ -152,25 +163,27 @@ import { TagModule } from 'primeng/tag';
     </p-dialog>
 
     <!-- Move Product Dialog -->
-    <p-dialog [(visible)]="moveDialog" [style]="{width: '450px'}" header="Move Product" [modal]="true" appendTo="body" styleClass="p-fluid" [baseZIndex]="10000">
+    <p-dialog [(visible)]="moveDialog" [style]="{width: '450px'}" [header]="viewingCategory?.id === 'uncategorized' ? 'Assign Category' : 'Move Product'" [modal]="true" appendTo="body" styleClass="p-fluid" [baseZIndex]="10000">
         <ng-template pTemplate="content">
             <div class="field pt-2" style="min-height: 150px">
-                <label for="newCategory" class="font-bold block mb-3">Select Target Category</label>
-                <p-dropdown [options]="otherCategories" [(ngModel)]="targetCategoryId" optionLabel="name" optionValue="id" 
-                    placeholder="Select a Category" [filter]="true" filterBy="name" [showClear]="true"
-                    appendTo="body" styleClass="w-full" [autoDisplayFirst]="false" [style]="{'width':'100%'}">
+                <label for="newCategory" class="font-bold block mb-3">Select Target Categories</label>
+                <p-multiSelect [options]="otherCategories" [(ngModel)]="targetCategoryIds" optionLabel="name" optionValue="id"
+                    placeholder="Select Categories" [filter]="true" filterBy="name" [showClear]="true"
+                    appendTo="body" styleClass="w-full" [style]="{'width':'100%'}" display="chip">
                     <ng-template let-category pTemplate="item">
                         <div class="flex align-items-center gap-2">
                             <div>{{category.name}}</div>
                         </div>
                     </ng-template>
-                </p-dropdown>
-                <small class="block mt-2 text-500">The product will be moved from <strong>{{viewingCategory?.name}}</strong> to the selected category.</small>
+                </p-multiSelect>
+                <small class="block mt-2 text-500">
+                    {{viewingCategory?.id === 'uncategorized' ? 'The product will be assigned to the selected categories.' : 'The product will be moved from ' + viewingCategory?.name + ' to the selected categories.'}}
+                </small>
             </div>
         </ng-template>
         <ng-template pTemplate="footer">
             <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="moveDialog = false"></button>
-            <button pButton pRipple label="Move Product" icon="pi pi-check" (click)="confirmMove()" [disabled]="!targetCategoryId" class="p-button-primary"></button>
+            <button pButton pRipple [label]="viewingCategory?.id === 'uncategorized' ? 'Assign' : 'Move Product'" icon="pi pi-check" (click)="confirmMove()" [disabled]="!targetCategoryIds || targetCategoryIds.length === 0" class="p-button-primary"></button>
         </ng-template>
     </p-dialog>
 
@@ -215,7 +228,7 @@ export class CategoryManagerComponent implements OnInit {
 
     moveDialog: boolean = false;
     selectedProductForMove: Product | null = null;
-    targetCategoryId: string | null = null;
+    targetCategoryIds: string[] | null = null;
     otherCategories: Category[] = [];
 
     imageLoadError: { [key: string]: boolean } = {};
@@ -301,6 +314,31 @@ export class CategoryManagerComponent implements OnInit {
         });
     }
 
+
+
+    viewUncategorizedProducts() {
+        this.viewingCategory = { id: 'uncategorized', name: 'Uncategorized Products', slug: 'uncategorized' };
+        this.productsDialog = true;
+        this.loadingProducts = true;
+        this.categoryProducts = [];
+        this.imageLoadError = {};
+        this.cdr.detectChanges();
+
+        this.categoryService.getCategoryProducts('uncategorized').subscribe({
+            next: (products) => {
+                this.categoryProducts = products;
+                this.loadingProducts = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                console.error('Failed to load uncategorized products', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load products', life: 3000 });
+                this.loadingProducts = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
     fetchProductsFallback(categoryId: string) {
         this.productService.getProducts(0, 1000).subscribe({
             next: (allProducts) => {
@@ -345,41 +383,100 @@ export class CategoryManagerComponent implements OnInit {
 
     moveProduct(product: Product) {
         this.selectedProductForMove = product;
-        this.targetCategoryId = null;
+        this.targetCategoryIds = []; // Reset selection
+        // Exclude current category from options
         this.otherCategories = this.categories.filter(c => c.id !== this.viewingCategory?.id);
         this.moveDialog = true;
     }
 
     confirmMove() {
-        if (!this.selectedProductForMove || !this.targetCategoryId || !this.viewingCategory) return;
+        if (!this.selectedProductForMove || !this.targetCategoryIds || this.targetCategoryIds.length === 0 || !this.viewingCategory) return;
 
-        const targetCategoryName = this.categories.find(c => c.id === this.targetCategoryId)?.name;
+        // console.log('Moving product:', this.selectedProductForMove.id, 'to categories:', this.targetCategoryIds);
 
-        this.categoryService.moveProductToCategory(
-            this.selectedProductForMove.id,
-            this.viewingCategory.id,
-            this.targetCategoryId
+        const productIdToRemove = this.selectedProductForMove.id;
+        const targetIds = this.targetCategoryIds;
+        const currentCategoryId = this.viewingCategory.id;
+
+        // Map IDs to names for display
+        const targetCategoryNames = this.categories
+            .filter(c => targetIds.includes(c.id))
+            .map(c => c.name)
+            .join(', ');
+
+        // Step 1: Atomic synchronization using PUT (replaces all existing categories)
+        this.productService.updateProductCategories(productIdToRemove, targetIds).pipe(
+            switchMap(() => {
+                // Step 2: Update primary category ID on the product itself
+                // This ensures it's no longer 'uncategorized' in simple list views
+                if (this.selectedProductForMove) {
+                    const updatedProduct = {
+                        ...this.selectedProductForMove,
+                        categoryId: targetIds[0]
+                    };
+                    return this.productService.updateProduct(updatedProduct);
+                }
+                return of(null);
+            }),
+            switchMap(() => {
+                // Step 3: Refresh categories list to confirm synchronization
+                return this.productService.listProductCategories(productIdToRemove, true).pipe(
+                    tap((categories: any[]) => {
+                        if (this.selectedProductForMove) {
+                            // Populate the categories array on the local product state
+                            this.selectedProductForMove.categories = categories || [];
+
+                            // Also update the primary categoryId for backward compatibility
+                            if (categories && categories.length > 0) {
+                                this.selectedProductForMove.categoryId = categories[0].id?.toString() || targetIds[0];
+                            } else {
+                                this.selectedProductForMove.categoryId = '0';
+                            }
+                        }
+                    }),
+                    catchError(err => {
+                        console.warn('Post-assignment categories fetch failed:', err);
+                        return of(null); // Continue anyway as PUT succeeded
+                    })
+                );
+            })
         ).subscribe({
             next: () => {
-                this.categoryProducts = this.categoryProducts.filter(p => p.id !== this.selectedProductForMove?.id);
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: `Product moved to ${targetCategoryName}`,
-                    life: 3000
-                });
-                this.moveDialog = false;
-                this.cdr.detectChanges();
+                this.finalizeMove(productIdToRemove, targetCategoryNames, currentCategoryId === 'uncategorized');
             },
-            error: (err) => {
+            error: (err: any) => {
+                console.error('Category Assignment Failed:', err);
+                let detail = 'Failed to update product category';
+                if (err.status === 401) detail = 'Authentication error. Please login again.';
+                else if (err.message) detail = err.message;
+
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: err.message || 'Failed to move product',
-                    life: 3000
+                    detail: detail,
+                    life: 5000
                 });
             }
         });
+    }
+
+    finalizeMove(productId: string, targetNames: string, isAssign: boolean = false) {
+        // Clear caches to ensure fresh data on next load
+        this.productService.clearCache();
+        this.categoryService.clearCache();
+
+        // Local UI update for immediate feedback
+        this.categoryProducts = [...this.categoryProducts.filter(p => p.id !== productId)];
+
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Successful',
+            detail: isAssign ? `Product assigned to ${targetNames}` : `Product moved to ${targetNames}`,
+            life: 3000
+        });
+        this.moveDialog = false;
+        this.selectedProductForMove = null;
+        this.cdr.detectChanges();
     }
 
     hideDialog() {

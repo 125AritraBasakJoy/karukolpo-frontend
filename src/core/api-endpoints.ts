@@ -23,6 +23,8 @@ export const PRODUCTS_API = {
     LIST_CATEGORIES: (productId: number | string) => `products/${productId}/categories`,
     ADD_CATEGORY: (productId: number | string, categoryId: number | string) => `products/${productId}/categories/${categoryId}`,
     REMOVE_CATEGORY: (productId: number | string, categoryId: number | string) => `products/${productId}/categories/${categoryId}`,
+    ADD_MULTIPLE_CATEGORIES: (productId: number | string) => `products/${productId}/categories`,
+    UPDATE_CATEGORIES: (productId: number | string) => `products/${productId}/categories`,
 
     // Product Inventory
     GET_INVENTORY: (productId: number | string) => `products/${productId}/inventory`,

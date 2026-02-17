@@ -78,12 +78,7 @@ export class ProductService {
    * POST /products (requires auth)
    */
   addProduct(product: Product): Observable<Product> {
-    const backendProduct = {
-      name: product.name,
-      price: product.price,
-      description: product.description || null
-    };
-
+    const backendProduct = this.mapFrontendToBackend(product);
     return this.apiService.post<any>(API_ENDPOINTS.PRODUCTS.CREATE, backendProduct).pipe(
       map(p => this.mapBackendToFrontend(p))
     );
@@ -95,12 +90,7 @@ export class ProductService {
    */
   updateProduct(product: Product): Observable<Product> {
     const productId = product.id;
-    const backendProduct = {
-      name: product.name,
-      price: product.price,
-      description: product.description || null
-    };
-
+    const backendProduct = this.mapFrontendToBackend(product);
     return this.apiService.patch<any>(API_ENDPOINTS.PRODUCTS.UPDATE(productId), backendProduct).pipe(
       map(p => this.mapBackendToFrontend(p))
     );
@@ -146,6 +136,22 @@ export class ProductService {
    */
   removeCategoryFromProduct(productId: number | string, categoryId: number | string): Observable<any> {
     return this.apiService.delete(API_ENDPOINTS.PRODUCTS.REMOVE_CATEGORY(productId, categoryId));
+  }
+
+  /**
+   * Add multiple categories to product
+   * POST /products/{productId}/categories
+   */
+  addMultipleCategoriesToProduct(productId: number | string, categoryIds: (number | string)[]): Observable<any> {
+    return this.apiService.post(API_ENDPOINTS.PRODUCTS.ADD_MULTIPLE_CATEGORIES(productId), categoryIds);
+  }
+
+  /**
+   * Update product categories (replace all)
+   * PUT /products/{productId}/categories
+   */
+  updateProductCategories(productId: number | string, categoryIds: (number | string)[]): Observable<any> {
+    return this.apiService.put(API_ENDPOINTS.PRODUCTS.UPDATE_CATEGORIES(productId), categoryIds);
   }
 
   /**
@@ -229,34 +235,31 @@ export class ProductService {
   /**
    * Map backend product format to frontend format
    */
-  public mapBackendToFrontend(backendProduct: any): Product {
+  public mapBackendToFrontend(data: any): Product {
     // Correct mapping for public API fields: available_quantity and is_in_stock
-    const stock = backendProduct.available_quantity !== undefined ? backendProduct.available_quantity :
-      (backendProduct.stock !== undefined ? backendProduct.stock :
-        (backendProduct.quantity !== undefined ? backendProduct.quantity : 0));
+    const stock = data.stock_quantity ?? (
+      data.available_quantity !== undefined ? data.available_quantity :
+        (data.stock !== undefined ? data.stock : 0)
+    );
 
-    // Handle manual stock status if present, otherwise default to AUTO
-    // We avoid deriving it from is_in_stock to prevent "(Forced)" labels in the UI
-    const manualStatus = backendProduct.manualStockStatus || backendProduct.manual_stock_status || 'AUTO';
+    const manualStatus = data.stock_status || data.manualStockStatus || 'AUTO';
 
     return {
-      id: backendProduct.id?.toString() || '',
-      code: backendProduct.code || `P${backendProduct.id}`,
-      name: backendProduct.name,
-      description: backendProduct.description || '',
-      price: parseFloat(backendProduct.price),
-      imageUrl: backendProduct.imageUrl || backendProduct.image_url || '',
-      images: backendProduct.images || [],
+      id: data.id?.toString() || '',
+      code: data.code || '',
+      name: data.name || '',
+      description: data.description || '',
+      price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
+      // Handle images: primary image is imageUrl, list is images
+      imageUrl: data.primary_image_url || data.imageUrl || (data.images && data.images.length > 0 ? data.images[0].url : ''),
+      images: data.images ? data.images.map((img: any) => typeof img === 'string' ? img : img.url) : [],
+      // Map category info
+      categoryId: data.category_id?.toString() ||
+        (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : '0'),
+      // Store full categories array if available
       stock: parseInt(String(stock), 10),
       manualStockStatus: manualStatus as 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO',
-      categoryId: backendProduct.categoryId?.toString() ||
-        backendProduct.category_id?.toString() ||
-        (backendProduct.categories && backendProduct.categories.length > 0
-          ? backendProduct.categories.map((c: any) => typeof c === 'object' ? c.id : c).join(',')
-          : undefined) ||
-        (backendProduct.category
-          ? (typeof backendProduct.category === 'object' ? backendProduct.category.id?.toString() : backendProduct.category.toString())
-          : undefined)
+      categories: data.categories || []
     };
   }
 

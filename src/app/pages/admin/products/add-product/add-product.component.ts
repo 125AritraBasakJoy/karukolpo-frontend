@@ -15,7 +15,7 @@ import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { InventoryModalComponent } from '../inventory-modal/inventory-modal.component';
 import { forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-add-product',
@@ -219,22 +219,63 @@ export class AddProductComponent {
         }
 
         this.loading.set(true);
+        console.log('Creating Product:', this.product);
+        console.log('Selected Categories:', this.selectedCategories);
 
         // 1. Create Product
         this.productService.addProduct(this.product as any).pipe(
             switchMap((createdProduct) => {
+                console.log('Product Created:', createdProduct);
                 this.createdProductId = parseInt(createdProduct.id);
                 const productId = this.createdProductId;
+                console.log('Parsed ProductID:', productId);
+
                 const tasks = [];
 
                 // 2. Link Categories if selected
                 if (this.selectedCategories && this.selectedCategories.length > 0) {
-                    this.selectedCategories.forEach(categoryId => {
+                    console.log('Processing Categories:', this.selectedCategories);
+
+                    if (this.selectedCategories.length === 1) {
+                        // Single category
+                        const catId = parseInt(this.selectedCategories[0].toString(), 10);
+                        console.log('Adding Single Category:', catId);
+
                         tasks.push(
-                            this.productService.addCategoryToProduct(productId, parseInt(categoryId, 10))
-                                .pipe(catchError(err => of({ error: 'category', err })))
+                            this.productService.addCategoryToProduct(productId, catId)
+                                .pipe(
+                                    tap(() => console.log('Single Category Added')),
+                                    catchError(err => {
+                                        console.error('Error adding single category', err);
+                                        return of({ error: 'category', err });
+                                    })
+                                )
                         );
-                    });
+                    } else {
+                        // Multiple categories
+                        const categoryIds = this.selectedCategories
+                            .map(c => parseInt(c.toString(), 10))
+                            .filter(id => !isNaN(id));
+
+                        console.log('Adding Multiple Categories:', categoryIds);
+
+                        if (categoryIds.length === 0) {
+                            console.warn('No valid category IDs found after parsing');
+                        } else {
+                            tasks.push(
+                                this.productService.addMultipleCategoriesToProduct(productId, categoryIds)
+                                    .pipe(
+                                        tap(() => console.log('Multiple Categories Added')),
+                                        catchError(err => {
+                                            console.error('Error adding multiple categories', err);
+                                            return of({ error: 'category_multiple', err });
+                                        })
+                                    )
+                            );
+                        }
+                    }
+                } else {
+                    console.warn('No categories selected to add.');
                 }
 
                 // 3. Upload Main Image

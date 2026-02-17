@@ -21,6 +21,13 @@ export class CategoryService {
     ) { }
 
     /**
+     * Clear service-related caches
+     */
+    clearCache() {
+        this.productService.clearCache();
+    }
+
+    /**
      * Get all categories from backend
      * GET /categories
      */
@@ -84,26 +91,42 @@ export class CategoryService {
      * Get products in a category with optimized fetching and caching
      */
     getCategoryProducts(categoryId: number | string): Observable<Product[]> {
-        const id = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId;
+        const isUncategorized = categoryId === 'uncategorized';
+        const id = isUncategorized ? -1 : (typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId);
 
-        return this.productService.getProducts(0, 1000).pipe(
+        return this.productService.getProducts(0, 1000, undefined, true).pipe(
             switchMap(products => {
                 if (products.length === 0) return of([]);
 
-                // Use from(products) to create a stream of individual products
                 return from(products).pipe(
-                    // mergeMap with concurrency limit of 5
                     mergeMap(product => {
                         const pId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
                         return this.productService.listProductCategories(pId).pipe(
                             map(categories => {
-                                const belongsToCategory = categories.some((c: any) =>
-                                    (typeof c === 'object' ? c.id : c) == id
+                                // Populate the categories array on the product object
+                                product.categories = categories || [];
+
+                                // Determine if product belongs to the requested category
+                                if (isUncategorized) {
+                                    return (product.categories.length === 0) ? product : null;
+                                }
+
+                                const belongsToCategory = product.categories.some((c: any) =>
+                                    (typeof c === 'object' ? (c.id || c.categoryId) : c) == id
                                 );
                                 return belongsToCategory ? product : null;
+                            }),
+                            catchError(() => {
+                                // If categories fetch fails, fallback to existing product state for uncategorized check
+                                if (isUncategorized) {
+                                    const hasKnownCategories = product.categories && product.categories.length > 0;
+                                    const isLikelyUncategorized = !hasKnownCategories && (!product.categoryId || product.categoryId === '0');
+                                    return of(isLikelyUncategorized ? product : null);
+                                }
+                                return of(null);
                             })
                         );
-                    }, 5),
+                    }, 10),
                     toArray(),
                     map(results => results.filter(p => p !== null) as Product[])
                 );

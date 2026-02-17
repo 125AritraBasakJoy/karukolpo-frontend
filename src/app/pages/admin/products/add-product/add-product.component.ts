@@ -34,101 +34,117 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
         InventoryModalComponent
     ],
     providers: [MessageService],
+    styleUrl: './add-product.component.scss',
     template: `
-    <div class="card p-4">
-      <h2 class="text-3xl font-bold mb-6">Add New Product</h2>
-      
-      <div class="flex flex-column gap-4">
-        <!-- Row 1: Name and Category -->
-        <div class="flex flex-column md:flex-row gap-3">
-            <div class="flex-1">
-                <label for="name" class="block font-bold mb-2">Name</label>
-                <input type="text" pInputText id="name" [(ngModel)]="product.name" required placeholder="Enter product name" class="w-full">
-            </div>
-
-            <div class="flex-1">
-                <label for="category" class="block font-bold mb-2">Categories</label>
-                <p-multiSelect 
-                    [options]="categories()" 
-                    [(ngModel)]="selectedCategories" 
-                    optionLabel="name" 
-                    optionValue="id"
-                    placeholder="Select Categories"
-                    [filter]="true"
-                    filterBy="name"
-                    [filterPlaceHolder]="'Search Categories...'"
-                    styleClass="w-full"
-                    [style]="{'width':'100%'}"
-                    [panelStyle]="{'width':'100%'}"
-                    display="chip">
-                </p-multiSelect>
-            </div>
+    <div class="add-product-container p-4 min-h-screen">
+        <div class="header-section mb-6">
+            <h1 class="text-4xl font-bold m-0 tracking-tight text-white mb-2">Add New Product</h1>
+            <p class="text-slate-400 m-0 text-lg">Create a new masterpiece for your collection.</p>
         </div>
 
-        <!-- Row 2: Description -->
-        <div class="w-full">
-            <label for="description" class="block font-bold mb-2">Description</label>
-            <textarea pInputTextarea id="description" [(ngModel)]="product.description" rows="4" class="w-full" placeholder="Tell us about the product..."></textarea>
-        </div>
+        <div class="glass-card p-5 fadein animation-duration-500">
+            <div class="flex flex-column gap-5">
+                <!-- Row 1: Name and Category -->
+                <div class="grid">
+                    <div class="col-12 md:col-6">
+                        <label for="name" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Product Name</label>
+                        <input type="text" pInputText id="name" [(ngModel)]="product.name" required 
+                            placeholder="Enter product name" class="w-full premium-input">
+                    </div>
 
-        <!-- Row 3: Price and Image Uploads -->
-        <div class="grid">
-            <div class="col-12 md:col-4">
-                <label for="price" class="block font-bold mb-2">Price (BDT)</label>
-                <p-inputNumber id="price" [(ngModel)]="product.price" mode="currency" currency="BDT" locale="en-BD" styleClass="w-full" inputStyleClass="w-full" [style]="{'width':'100%'}" [inputStyle]="{'width':'100%'}"></p-inputNumber>
-            </div>
-
-            <div class="col-12 md:col-4">
-                <label class="block font-bold mb-2">Main Product Image</label>
-                <div class="flex flex-column gap-2">
-                    <input type="file" #mainFileInput (change)="onMainImageSelect($event)" accept="image/*" class="hidden" />
-                    <button pButton type="button" label="Choose Image" icon="pi pi-image" class="p-button-outlined w-full" (click)="mainFileInput.click()"></button>
-                    
-                    <div *ngIf="mainImagePreview" class="mt-2 p-2 border-round surface-section border-1 border-50 text-center">
-                        <img [src]="mainImagePreview" alt="Preview" class="max-w-full h-8rem border-round shadow-2 object-contain">
+                    <div class="col-12 md:col-6">
+                        <label for="category" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Categories</label>
+                        <p-multiSelect 
+                            [options]="categories()" 
+                            [(ngModel)]="selectedCategories" 
+                            optionLabel="name" 
+                            optionValue="id"
+                            placeholder="Select Categories"
+                            [filter]="true"
+                            filterBy="name"
+                            styleClass="w-full premium-input"
+                            [style]="{'width':'100%'}"
+                            [panelStyle]="{'width':'100%'}"
+                            display="chip"
+                            appendTo="body">
+                        </p-multiSelect>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-12 md:col-4">
-                <label class="block font-bold mb-2">Additional Images</label>
-                <div class="flex flex-column gap-2">
-                    <input type="file" #addFileInput (change)="onAdditionalImageSelect($event)" accept="image/*" multiple class="hidden" />
-                    <button pButton type="button" label="Add More" icon="pi pi-images" class="p-button-outlined p-button-secondary w-full" (click)="addFileInput.click()"></button>
-                    
-                    <div *ngIf="additionalImagesPreview.length" class="flex flex-wrap gap-2 mt-2 p-2 border-round surface-section border-1 border-50">
-                        <div *ngFor="let img of additionalImagesPreview; let i = index" class="relative">
-                            <img [src]="img" alt="Preview" class="w-4rem h-4rem border-round shadow-1 object-cover">
-                            <button pButton icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text absolute top-0 right-0 w-2rem h-2rem" (click)="removeAdditionalImage(i)"></button>
+                <!-- Row 2: Description -->
+                <div class="w-full">
+                    <label for="description" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Description</label>
+                    <textarea pInputTextarea id="description" [(ngModel)]="product.description" rows="4" 
+                        class="w-full premium-input" placeholder="Tell the story of this product..."></textarea>
+                </div>
+
+                <!-- Row 3: Price and Image Uploads -->
+                <div class="grid">
+                    <div class="col-12 md:col-4">
+                        <label for="price" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Price (BDT)</label>
+                        <p-inputNumber id="price" [(ngModel)]="product.price" mode="currency" currency="BDT" locale="en-BD" 
+                            styleClass="w-full" inputStyleClass="w-full premium-input" [style]="{'width':'100%'}"></p-inputNumber>
+                    </div>
+
+                    <div class="col-12 md:col-4">
+                        <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Main Image</label>
+                        <div class="flex flex-column gap-3">
+                            <input type="file" #mainFileInput (change)="onMainImageSelect($event)" accept="image/*" class="hidden" />
+                            <button pButton type="button" label="Select Primary" icon="pi pi-image" 
+                                class="p-button-outlined premium-btn-secondary w-full" (click)="mainFileInput.click()"></button>
+                            
+                            <div *ngIf="mainImagePreview" class="relative group border-round-xl border-1 border-white-alpha-10 overflow-hidden surface-card h-12rem flex align-items-center justify-content-center">
+                                <img [src]="mainImagePreview" alt="Preview" class="max-w-full h-full object-contain">
+                                <div class="absolute inset-0 bg-black-alpha-40 flex align-items-center justify-content-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text text-white" (click)="mainFileInput.click()"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 md:col-4">
+                        <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Additional Images</label>
+                        <div class="flex flex-column gap-3">
+                            <input type="file" #addFileInput (change)="onAdditionalImageSelect($event)" accept="image/*" multiple class="hidden" />
+                            <button pButton type="button" label="Add Gallery Images" icon="pi pi-images" 
+                                class="p-button-outlined premium-btn-secondary w-full" (click)="addFileInput.click()"></button>
+                            
+                            <div *ngIf="additionalImagesPreview.length" class="flex flex-wrap gap-2 p-2 border-round-xl border-1 border-white-alpha-10 surface-section min-h-5rem">
+                                <div *ngFor="let img of additionalImagesPreview; let i = index" class="relative group">
+                                    <img [src]="img" alt="Preview" class="w-4rem h-4rem border-round shadow-2 object-cover block">
+                                    <div class="absolute inset-0 bg-red-500-alpha-40 flex align-items-center justify-content-center opacity-0 group-hover:opacity-100 transition-opacity border-round">
+                                        <button pButton icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text text-white w-2rem h-2rem" (click)="removeAdditionalImage(i)"></button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <div class="flex justify-content-end gap-3 mt-6 pt-4 border-top-1 border-white-alpha-10">
+                <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="cancel()"></button>
+                
+                <!-- Create Button -->
+                <button pButton 
+                  label="Create Product" 
+                  icon="pi pi-check" 
+                  (click)="createProduct()" 
+                  [loading]="loading()" 
+                  *ngIf="!productCreated"
+                  class="premium-btn-primary px-5 shadow-4">
+                </button>
+
+                <!-- Next Button -->
+                <button pButton 
+                  label="Next: Set Inventory" 
+                  icon="pi pi-arrow-right" 
+                  (click)="openInventoryModal()" 
+                  *ngIf="productCreated"
+                  class="premium-btn-primary px-5 shadow-4">
+                </button>
+            </div>
         </div>
-      </div>
-
-      <div class="flex justify-content-end gap-3 mt-5 pt-3 border-top-1 border-100">
-        <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary" (click)="cancel()" size="small"></p-button>
-        
-        <!-- Create Button (Step 1) -->
-        <p-button 
-          label="Create Product" 
-          icon="pi pi-check" 
-          (click)="createProduct()" 
-          [loading]="loading()" 
-          *ngIf="!productCreated"
-          size="small">
-        </p-button>
-
-        <!-- Next Button (Step 2 - Only visible after creation) -->
-        <p-button 
-          label="Next: Set Inventory" 
-          icon="pi pi-arrow-right" 
-          (click)="openInventoryModal()" 
-          *ngIf="productCreated"
-          size="small">
-        </p-button>
-      </div>
     </div>
 
     <app-inventory-modal
@@ -139,7 +155,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
     </app-inventory-modal>
     
     <p-toast></p-toast>
-  `
+    `
 })
 export class AddProductComponent {
     product = {

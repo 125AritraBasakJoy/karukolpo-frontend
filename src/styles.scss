@@ -486,64 +486,417 @@ textarea {
     }
 }
 
-/* Premium Table Styling */
-.premium-table {
+/* Premium Table V2 (Modern Glassmorphism) */
+.premium-table-v2 {
     .p-datatable-header {
         background: transparent !important;
         border: none !important;
-        padding: 1rem 0 !important;
+        padding: 1.5rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
 
     .p-datatable-thead>tr>th {
-        background: transparent !important;
-        border-bottom: 1px solid var(--surface-border) !important;
-        color: var(--text-color-secondary) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        color: #94a3b8 !important;
         font-weight: 600 !important;
-        text-transform: uppercase !important;
-        font-size: 0.75rem !important;
-        letter-spacing: 0.05em !important;
-        padding: 1rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.75rem;
+        padding: 1.25rem 1.5rem !important;
+        border: none !important;
     }
 
-    .p-datatable-tbody {
-        >tr {
-            background: transparent !important;
-            transition: all 0.2s !important;
+    .p-datatable-tbody>tr {
+        background: transparent !important;
+        color: #e2e8f0 !important;
+        transition: all 0.2s ease;
+    }
 
-            >td {
-                background: var(--surface-card) !important;
-                border-top: 1px solid var(--surface-border) !important;
-                border-bottom: 1px solid var(--surface-border) !important;
-                padding: 1.25rem 1rem !important;
+    .p-datatable-tbody>tr>td {
+        padding: 1.25rem 1.5rem !important;
+        border: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+    }
 
-                &:first-child {
-                    border-left: 1px solid var(--surface-border) !important;
-                    border-top-left-radius: 12px !important;
-                    border-bottom-left-radius: 12px !important;
-                }
+    .p-datatable-tbody>tr:hover {
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
 
-                &:last-child {
-                    border-right: 1px solid var(--surface-border) !important;
-                    border-top-right-radius: 12px !important;
-                    border-bottom-right-radius: 12px !important;
-                }
+    .p-paginator {
+        background: rgba(2, 6, 23, 0.4) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+        padding: 0.75rem 1.5rem !important;
+        color: #64748b !important;
+        border-bottom-left-radius: 24px;
+        border-bottom-right-radius: 24px;
+
+        .p-paginator-pages .p-paginator-page {
+            border-radius: 10px;
+            min-width: 2.5rem;
+            height: 2.5rem;
+            margin: 0 0.2rem;
+            transition: all 0.2s ease;
+            color: #94a3b8 !important;
+
+            &:hover:not(.p-highlight) {
+                background: rgba(255, 255, 255, 0.05) !important;
+                color: white !important;
+            }
+
+            &.p-highlight {
+                background: rgba(59, 130, 246, 0.15) !important;
+                color: #3b82f6 !important;
+                border: 1px solid rgba(59, 130, 246, 0.2);
+            }
+        }
+
+        .p-paginator-first,
+        .p-paginator-prev,
+        .p-paginator-next,
+        .p-paginator-last {
+            color: #64748b !important;
+            min-width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 10px;
+
+            &:hover:not(.p-disabled) {
+                background: rgba(255, 255, 255, 0.05) !important;
+                color: white !important;
             }
         }
     }
 
-    /* Apply spacing to table rows via border spacing on the table element */
-    .p-datatable-table {
-        border-collapse: separate !important;
-        border-spacing: 0 0.75rem !important;
+    .p-datatable-footer {
+        background: rgba(2, 6, 23, 0.4) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+        padding: 1rem 1.5rem !important;
+        color: #94a3b8 !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        border-bottom-left-radius: 24px;
+        border-bottom-right-radius: 24px;
+    }
+}
+
+/* Fix for Paginator Clipping */
+.p-datatable-wrapper {
+    overflow: visible !important;
+}
+
+/* Glassmorphism Components */
+.glass-card {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+/* Premium Buttons */
+.premium-btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 0.8rem 1.6rem !important;
+    font-weight: 600 !important;
+    color: white !important;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3) !important;
+    transition: all 0.3s ease !important;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4) !important;
+        filter: brightness(1.1);
+    }
+}
+
+.premium-btn-secondary {
+    border: 1px solid rgba(148, 163, 184, 0.3) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-radius: 14px !important;
+    padding: 0.8rem 1.6rem !important;
+    font-weight: 600 !important;
+    color: #f8fafc !important;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease !important;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(148, 163, 184, 0.5) !important;
+        transform: translateY(-1px);
+    }
+}
+
+/* Premium Dialogs */
+.premium-dialog,
+.premium-confirm-dialog {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 28px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+    overflow: hidden !important;
+
+    .p-dialog-header {
+        background: transparent !important;
+        color: white !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        padding: 1.75rem 2.5rem !important;
     }
 
-    /* Hover Effect */
-    .p-datatable-tbody>tr:hover>td {
-        background: var(--surface-hover) !important;
-        border-color: var(--primary-hover) !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        position: relative;
+    .p-dialog-title {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
+    }
+
+    .p-dialog-header-icons,
+    .p-confirm-dialog-header-icons {
+
+        .p-dialog-header-close,
+        .p-dialog-header-icon,
+        .p-confirm-dialog-close {
+            width: 2.25rem !important;
+            height: 2.25rem !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            color: #94a3b8 !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.1) !important;
+                color: white !important;
+                border-color: rgba(255, 255, 255, 0.2) !important;
+                transform: scale(1.05);
+            }
+        }
+    }
+
+    .p-dialog-content {
+        background: transparent !important;
+        padding: 2rem 2.5rem !important;
+
+        .field {
+            margin-bottom: 1.5rem;
+
+            label {
+                display: block;
+                margin-bottom: 0.75rem;
+                color: #94a3b8;
+                font-weight: 500;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+        }
+    }
+
+    .p-dialog-footer {
+        background: transparent !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+        padding: 1.25rem 2.5rem !important;
+    }
+}
+
+/* Premium Inputs */
+.premium-input {
+    background: rgba(2, 6, 23, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    padding: 0.85rem 1rem 0.85rem 3rem !important;
+    color: white !important;
+
+    &:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+    }
+}
+
+/* Input Icon positioning helper */
+.p-input-icon-left {
+    position: relative;
+    display: block;
+    width: 100%;
+
+    i {
+        position: absolute;
+        top: 50%;
+        left: 1.25rem;
+        transform: translateY(-50%);
+        color: #64748b;
         z-index: 1;
+        font-size: 1.1rem;
+    }
+}
+
+/* Global Premium UI Elements */
+.id-tag {
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    padding: 0.25rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: monospace;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.product-img-container {
+    width: 60px;
+    height: 60px;
+    background: rgba(2, 6, 23, 0.5);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .product-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 1;
+    }
+}
+
+.price-badge,
+.price-value {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    padding: 0.4rem 0.8rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Common Action Buttons */
+.action-btn {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
+.info-btn:hover {
+    color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.success-btn:hover {
+    color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.danger-btn:hover {
+    color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Empty States */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.6;
+
+    .empty-icon-circle {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+        color: #334155;
+    }
+}
+
+/* Premium MultiSelect Overrides */
+.premium-multiselect {
+    background: rgba(2, 6, 23, 0.5) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+
+    .p-multiselect-label {
+        padding: 0.6rem 1rem !important;
+    }
+
+    .p-multiselect-token {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: #60a5fa !important;
+        border-radius: 8px !important;
+    }
+}
+
+/* Premium Dropdown & MultiSelect Overlay Styling */
+.p-dropdown-panel,
+.p-multiselect-panel {
+    background: rgba(15, 23, 42, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 48px -12px rgba(0, 0, 0, 0.9) !important;
+    padding: 0.5rem !important;
+    z-index: 100000 !important;
+
+    .p-dropdown-items,
+    .p-multiselect-items {
+        padding: 0 !important;
+
+        .p-dropdown-item,
+        .p-multiselect-item {
+            margin: 2px 0 !important;
+            border-radius: 10px !important;
+            padding: 0.75rem 1rem !important;
+            color: #e2e8f0 !important;
+            transition: all 0.2s ease !important;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.05) !important;
+                color: white !important;
+            }
+
+            &.p-highlight {
+                background: rgba(59, 130, 246, 0.15) !important;
+                color: #3b82f6 !important;
+            }
+        }
+    }
+
+    .p-dropdown-filter-container,
+    .p-multiselect-header {
+        padding: 1rem !important;
+        background: transparent !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+
+        .p-dropdown-filter,
+        .p-multiselect-filter {
+            background: rgba(2, 6, 23, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            color: white !important;
+            padding: 0.6rem 1rem !important;
+        }
+
+        .p-multiselect-close {
+            color: #94a3b8 !important;
+
+            &:hover {
+                color: white !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+            }
+        }
     }
 }

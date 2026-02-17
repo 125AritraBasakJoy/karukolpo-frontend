@@ -4,7 +4,7 @@ import { OrderService } from '../../../services/order.service';
 import { ProductService } from '../../../services/product.service';
 import { PaymentService } from '../../../services/payment.service';
 import { Order } from '../../../models/order.model';
-import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -46,10 +46,12 @@ import * as XLSX from 'xlsx';
 })
 export class OrdersComponent implements OnInit {
   orders = signal<Order[]>([]);
+  totalRecords = signal<number>(0); // Initialize to 0, will grow as we fetch
   loading = signal<boolean>(false);
   selectedOrder: Order | null = null;
   displayOrderDialog = false;
   loadingDetails = false;
+  lastLazyLoadEvent: TableLazyLoadEvent | null = null;
 
   constructor(
     private orderService: OrderService,
@@ -66,17 +68,77 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  loadOrders() {
+  // Data Buffering
+  ordersBuffer: Order[] = [];
+  readonly BUFFER_SIZE = 100;
+
+  loadOrders(event?: TableLazyLoadEvent) {
     this.loading.set(true);
-    this.orderService.getOrders().subscribe({
+
+    // Check if event is provided, otherwise use default or last event
+    const lazyEvent = event || this.lastLazyLoadEvent || { first: 0, rows: 10 };
+    this.lastLazyLoadEvent = lazyEvent;
+
+    const first = lazyEvent.first || 0;
+    const rows = lazyEvent.rows || 10;
+
+    // Check if we have data in buffer
+    // We need to check if the range [first, first + rows] is fully covered in buffer
+    let dataMissing = false;
+    for (let i = first; i < first + rows; i++) {
+      if (!this.ordersBuffer[i]) {
+        dataMissing = true;
+        break;
+      }
+    }
+
+    if (!dataMissing) {
+      // Data exists in buffer, serve it immediately
+      // Check bounds to avoid slicing beyond buffer length if total is known/capped
+      const end = Math.min(first + rows, this.ordersBuffer.length);
+      // If we happen to request past the buffer length (e.g. end of list), we gracefully return what we have
+      const pageData = this.ordersBuffer.slice(first, end);
+
+      // Sort if needed (since buffer might be populated in chunks, local sort of the page is good practice)
+      pageData.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+
+      this.orders.set(pageData);
+      this.loading.set(false);
+      return;
+    }
+
+    // Data missing, fetch a chunk
+    // Align fetch to BUFFER_SIZE boundaries
+    // e.g. if request is 25, we fetch 0-100. If request is 110, we fetch 100-200.
+    const chunkStart = Math.floor(first / this.BUFFER_SIZE) * this.BUFFER_SIZE;
+
+    this.orderService.getOrders(chunkStart, this.BUFFER_SIZE).subscribe({
       next: (orders) => {
-        // Sort by date descending
-        const sortedOrders = orders.sort((a, b) => {
-          const dateA = new Date(a.orderDate);
-          const dateB = new Date(b.orderDate);
-          return (isNaN(dateB.getTime()) ? 0 : dateB.getTime()) - (isNaN(dateA.getTime()) ? 0 : dateA.getTime());
+        // Populate buffer
+        orders.forEach((order, index) => {
+          this.ordersBuffer[chunkStart + index] = order;
         });
-        this.orders.set(sortedOrders);
+
+        // Update Total Records (Pseudo-Infinite)
+        // If we received a full chunk, valid total is at least chunkStart + chunkLength + 1
+        // If partial chunk, we found the end.
+        const currentTotal = chunkStart + orders.length;
+        if (orders.length === this.BUFFER_SIZE) {
+          // We allow scrolling further
+          this.totalRecords.set(currentTotal + 1);
+          // Ideally +1 or maybe +BUFFER_SIZE to hint more? +1 is safer for "Next" button.
+        } else {
+          // End of data reached
+          this.totalRecords.set(currentTotal);
+        }
+
+        // Slice and serve the requested page from the now-populated buffer
+        const end = Math.min(first + rows, this.ordersBuffer.length);
+        const pageData = this.ordersBuffer.slice(first, end);
+
+        pageData.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+
+        this.orders.set(pageData);
         this.loading.set(false);
       },
       error: (err) => {
@@ -84,7 +146,7 @@ export class OrdersComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to load orders. Please check your connection or try again.'
+          detail: 'Failed to load orders.'
         });
         this.loading.set(false);
       }
@@ -92,19 +154,13 @@ export class OrdersComponent implements OnInit {
   }
 
   refreshOrders() {
-    this.loading.set(true);
-    this.orderService.reloadOrders().subscribe({
-      next: (orders) => {
-        // Sort by date descending
-        const sortedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-        this.orders.set(sortedOrders);
-        this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Orders list updated' });
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-      }
-    });
+    // Clear buffer to force fresh fetch
+    this.ordersBuffer = [];
+    this.totalRecords.set(0);
+
+    // Reset to first page
+    const event: TableLazyLoadEvent = this.lastLazyLoadEvent ? { ...this.lastLazyLoadEvent } : { first: 0, rows: 10 };
+    this.loadOrders(event);
   }
 
   viewOrder(order: Order) {
@@ -197,10 +253,8 @@ export class OrdersComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
 
-          // Update local state
-          this.orders.update(currentOrders => currentOrders.map(o =>
-            o.id === order.id ? { ...o, status: status } : o
-          ));
+          // Force reload to ensure status is persisted and we get latest data
+          this.refreshOrders();
 
           if (this.selectedOrder && this.selectedOrder.id === order.id) {
             this.selectedOrder.status = status;

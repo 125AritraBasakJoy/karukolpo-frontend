@@ -117,6 +117,7 @@ export class InventoryComponent implements OnInit {
         this.loading.set(false);
 
         // Load chart data in the background (non-blocking)
+        // Fetch all orders for the chart
         this.orderService.getOrders().subscribe({
           next: (orders) => this.updateChart(products, orders),
           error: () => { } // Chart failure is non-critical

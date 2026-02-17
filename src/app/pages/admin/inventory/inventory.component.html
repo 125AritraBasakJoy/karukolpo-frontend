@@ -1,149 +1,180 @@
-<div class="card">
-    <div class="flex justify-content-between align-items-center mb-4">
-        <h2>Inventory Management</h2>
-        <div class="flex gap-2">
-            <app-notification-button></app-notification-button>
-            <p-button icon="pi pi-refresh" (onClick)="refreshProducts()"
-                styleClass="p-button-outlined p-button-secondary" pTooltip="Refresh Inventory"
-                tooltipPosition="bottom"></p-button>
-            <!-- New Product button removed as per request -->
+<div class="inventory-container p-4 min-h-screen">
+    <div class="header-section mb-6">
+        <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-4">
+            <div>
+                <h1 class="text-4xl font-bold m-0 tracking-tight text-white mb-2">Inventory Management</h1>
+                <p class="text-slate-400 m-0 text-lg">Track stock levels and monitor product performance.</p>
+            </div>
+            <div class="flex gap-2">
+                <app-notification-button></app-notification-button>
+                <button pButton pRipple icon="pi pi-refresh" (click)="refreshProducts()"
+                    class="p-button-outlined premium-btn-secondary" pTooltip="Refresh Inventory"
+                    tooltipPosition="bottom"></button>
+            </div>
         </div>
     </div>
 
-    <div class="grid mb-4">
-        <div class="col-12 lg:col-6">
-            <p-card header="Product Sales Overview">
-                <div *ngIf="chartData; else loadingChart" class="flex justify-content-center">
-                    <p-chart type="bar" [data]="chartData" [options]="chartOptions" styleClass="w-full"></p-chart>
+    <div class="grid mb-6">
+        <div class="col-12 lg:col-8">
+            <div class="glass-card h-full p-4">
+                <h3 class="text-xl font-bold m-0 mb-4 text-white">Product Sales Performance</h3>
+                <div *ngIf="chartData; else loadingChart" class="chart-wrapper">
+                    <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="300px"></p-chart>
                 </div>
                 <ng-template #loadingChart>
                     <div class="flex align-items-center justify-content-center h-20rem">
                         <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
                     </div>
                 </ng-template>
-            </p-card>
+            </div>
         </div>
-        <div class="col-12 lg:col-6">
-            <p-card header="Stats">
-                <div class="text-center">
-                    <h3>Total Products</h3>
-                    <p class="text-4xl font-bold text-primary">{{ products().length }}</p>
+        <div class="col-12 lg:col-4">
+            <div class="glass-card h-full p-5 flex flex-column align-items-center justify-content-center text-center">
+                <div class="stats-icon-circle mb-3">
+                    <i class="pi pi-box text-blue-400 text-3xl"></i>
                 </div>
-            </p-card>
-
+                <h3 class="m-0 text-slate-400 font-medium">Total Products</h3>
+                <p class="text-6xl font-bold text-white m-0 mt-2">{{ products().length }}</p>
+            </div>
         </div>
     </div>
 
-    <div *ngIf="loading()" class="mb-4">
-        <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '50rem' }">
+    <div class="glass-card fadein animation-duration-500">
+        <p-table #dt [value]="products()" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'id', 'code']"
+            [tableStyle]="{'min-width': '60rem'}" styleClass="premium-table-v2" [rowHover]="true" *ngIf="!loading()"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} items">
+
             <ng-template pTemplate="header">
                 <tr>
-                    <th>Code</th>
-                    <th>Name</th>
+                    <th pSortableColumn="id" style="width: 120px">ID <p-sortIcon field="id"></p-sortIcon></th>
+                    <th pSortableColumn="name" style="min-width: 15rem">Product Name <p-sortIcon
+                            field="name"></p-sortIcon></th>
                     <th>Image</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th pSortableColumn="price">Price <p-sortIcon field="price"></p-sortIcon></th>
+                    <th pSortableColumn="stock">Status <p-sortIcon field="stock"></p-sortIcon></th>
+                    <th class="text-right">Actions</th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body">
-                <tr>
-                    <td><p-skeleton></p-skeleton></td>
-                    <td><p-skeleton></p-skeleton></td>
-                    <td><p-skeleton width="50px" height="50px"></p-skeleton></td>
-                    <td><p-skeleton></p-skeleton></td>
-                    <td><p-skeleton width="5rem"></p-skeleton></td>
+
+            <ng-template pTemplate="body" let-product>
+                <tr class="table-row">
                     <td>
-                        <div class="flex gap-2">
-                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
-                            <p-skeleton shape="circle" size="2rem"></p-skeleton>
+                        <code class="id-tag">#{{ product.id }}</code>
+                    </td>
+                    <td>
+                        <span class="font-semibold text-white">{{ product.name }}</span>
+                    </td>
+                    <td>
+                        <div class="product-img-container">
+                            <img [src]="product.imageUrl" [alt]="product.name" class="product-img" />
+                        </div>
+                    </td>
+                    <td>
+                        <span class="price-value font-medium">{{ product.price | currency:'BDT':'symbol-narrow'
+                            }}</span>
+                    </td>
+                    <td>
+                        <div class="status-badge-container">
+                            <p-tag [value]="product.manualStockStatus === 'IN_STOCK' ? 'In Stock (Forced)' : 
+                                           (product.manualStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock (Forced)' : 
+                                           (product.stock > 0 ? 'In Stock (' + product.stock + ')' : 'Out of Stock'))"
+                                [severity]="product.manualStockStatus === 'IN_STOCK' ? 'success' : 
+                                               (product.manualStockStatus === 'OUT_OF_STOCK' ? 'danger' : 
+                                               (product.stock > 0 ? 'success' : 'danger'))"
+                                styleClass="custom-stock-tag"></p-tag>
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <div class="flex justify-content-end gap-2">
+                            <button pButton pRipple icon="pi pi-box"
+                                class="p-button-rounded p-button-text action-btn info-btn"
+                                (click)="manageInventory(product)" pTooltip="Manage Inventory"
+                                tooltipPosition="top"></button>
+                            <button pButton pRipple icon="pi pi-pencil"
+                                class="p-button-rounded p-button-text action-btn success-btn"
+                                (click)="editProduct(product)" pTooltip="Edit Product" tooltipPosition="top"></button>
+                            <button pButton pRipple icon="pi pi-trash"
+                                class="p-button-rounded p-button-text action-btn danger-btn"
+                                (click)="deleteProduct(product)" pTooltip="Delete Product"
+                                tooltipPosition="top"></button>
                         </div>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
-    </div>
 
-    <p-table [value]="products()" [tableStyle]="{ 'min-width': '50rem' }" *ngIf="!loading()">
-        <ng-template pTemplate="header">
-            <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Image</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-product>
-            <tr>
-                <td>{{ product.code }}</td>
-                <td>{{ product.name }}</td>
-                <td><img [src]="product.imageUrl" [alt]="product.name" width="50" class="shadow-4" /></td>
-                <td>{{ product.price | currency:'BDT':'symbol-narrow' }}</td>
-                <td>
-                    <p-tag [value]="product.manualStockStatus === 'IN_STOCK' ? 'In Stock (Forced)' : 
-                                   (product.manualStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock (Forced)' : 
-                                   (product.stock > 0 ? 'In Stock (' + product.stock + ')' : 'Out of Stock'))"
-                        [severity]="product.manualStockStatus === 'IN_STOCK' ? 'success' : 
-                                       (product.manualStockStatus === 'OUT_OF_STOCK' ? 'danger' : 
-                                       (product.stock > 0 ? 'success' : 'danger'))"></p-tag>
-                </td>
-                <td>
-                    <div class="flex gap-1">
-                        <p-button icon="pi pi-box" [rounded]="true" [text]="true" severity="info"
-                            pTooltip="Manage Inventory" (onClick)="manageInventory(product)"></p-button>
-                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="success"
-                            (onClick)="editProduct(product)"></p-button>
-                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                            (onClick)="deleteProduct(product)"></p-button>
-                    </div>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+        <!-- Skeleton for loading state -->
+        <p-table [value]="[1,2,3,4,5,6]" *ngIf="loading()" styleClass="premium-table-v2">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 120px">ID</th>
+                    <th style="min-width: 15rem">Product Name</th>
+                    <th>Image</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body">
+                <tr>
+                    <td><p-skeleton width="60px"></p-skeleton></td>
+                    <td><p-skeleton width="150px"></p-skeleton></td>
+                    <td><p-skeleton width="50px" height="50px" borderRadius="12px"></p-skeleton></td>
+                    <td><p-skeleton width="80px"></p-skeleton></td>
+                    <td><p-skeleton width="100px" height="24px" borderRadius="20px"></p-skeleton></td>
+                    <td class="text-right"><p-skeleton width="100px" height="32px"></p-skeleton></td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
 </div>
 
 <!-- Step 1: Basic Details Dialog -->
-<p-dialog [(visible)]="displayStep1" [style]="{ width: '450px' }" header="Step 1: Basic Details" [modal]="true"
-    styleClass="p-fluid">
+<p-dialog [(visible)]="displayStep1" [style]=" { width: '450px' } " header="Step 1: Basic Details" [modal]="true"
+    styleClass="premium-dialog" appendTo="body">
     <ng-template pTemplate="content">
         <div class="field">
             <label for="name">Name</label>
             <input type="text" pInputText id="name" [(ngModel)]="productForm.name" #name="ngModel" required autofocus
-                class="w-full" />
+                class="w-full premium-input" />
             <app-validation-message [control]="name.control"></app-validation-message>
         </div>
         <div class="field">
             <label for="description">Description</label>
             <textarea id="description" pInputTextarea [(ngModel)]="productForm.description" required rows="3" cols="20"
-                class="w-full"></textarea>
+                class="w-full premium-input"></textarea>
         </div>
         <div class="field">
             <label for="price">Price</label>
             <p-inputNumber id="price" [(ngModel)]="productForm.price" #price="ngModel" required mode="currency"
-                currency="BDT" locale="en-US" styleClass="w-full" inputStyleClass="w-full"
+                currency="BDT" locale="en-US" styleClass="w-full" inputStyleClass="w-full premium-input"
                 [style]="{'width':'100%'}"></p-inputNumber>
             <app-validation-message [control]="price.control"></app-validation-message>
         </div>
     </ng-template>
 
     <ng-template pTemplate="footer">
-        <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="displayStep1 = false"></p-button>
-        <p-button label="Next" icon="pi pi-arrow-right" (onClick)="saveProductStep1()"></p-button>
+        <div class="flex justify-content-end gap-2 px-3 pb-3">
+            <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary"
+                (click)="displayStep1 = false"></button>
+            <button pButton pRipple label="Next" icon="pi pi-arrow-right" class="premium-btn-primary px-4"
+                (click)="saveProductStep1()"></button>
+        </div>
     </ng-template>
 </p-dialog>
 
 <!-- Step 2: Media & Category Dialog -->
-<p-dialog [(visible)]="displayStep2" [style]="{ width: '450px' }" header="Step 2: Category & Images" [modal]="true"
-    styleClass="p-fluid">
+<p-dialog [(visible)]="displayStep2" [style]=" { width: '450px' } " header="Step 2: Category & Images" [modal]="true"
+    styleClass="premium-dialog" appendTo="body">
     <ng-template pTemplate="content">
         <div class="field">
             <label for="category">Category</label>
             <p-dropdown id="category" [options]="categories" optionLabel="name" optionValue="id"
                 [(ngModel)]="productForm.categoryId" placeholder="Select a Category" [showClear]="true"
-                [editable]="true" [filter]="true" filterBy="name" styleClass="w-full" [style]="{'width':'100%'}"
-                [panelStyle]="{'width':'100%'}" panelStyleClass="w-full"></p-dropdown>
+                [editable]="true" [filter]="true" filterBy="name" styleClass="w-full premium-input"
+                [style]="{'width':'100%'}" [panelStyle]="{'width':'100%'}" panelStyleClass="w-full"
+                appendTo="body"></p-dropdown>
         </div>
 
         <div class="field">
@@ -152,7 +183,7 @@
                 <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="hidden" />
 
                 <button pButton type="button" label="Choose Main Image" icon="pi pi-image"
-                    class="p-button-outlined w-full" (click)="fileInput.click()"></button>
+                    class="premium-btn-secondary w-full" (click)="fileInput.click()"></button>
 
                 <div *ngIf="productForm.imageUrl"
                     class="surface-card p-3 border-round shadow-2 w-full text-center mt-2">
@@ -169,7 +200,7 @@
                     multiple class="hidden" />
 
                 <button pButton type="button" label="Add Additional Images" icon="pi pi-images"
-                    class="p-button-outlined p-button-secondary w-full" (click)="additionalFilesInput.click()"></button>
+                    class="premium-btn-secondary w-full" (click)="additionalFilesInput.click()"></button>
 
                 <div *ngIf="productForm.images && productForm.images.length > 0" class="flex flex-wrap gap-2 mt-2">
                     <div *ngFor="let img of productForm.images; let i = index" class="relative">
@@ -184,33 +215,39 @@
     </ng-template>
 
     <ng-template pTemplate="footer">
-        <p-button label="Next" icon="pi pi-arrow-right" (onClick)="saveProductStep2()"></p-button>
+        <div class="flex justify-content-end gap-2 px-3 pb-3">
+            <button pButton pRipple label="Next" icon="pi pi-arrow-right" class="premium-btn-primary px-4"
+                (click)="saveProductStep2()"></button>
+        </div>
     </ng-template>
 </p-dialog>
 
 <!-- Step 3: Inventory Management Dialog -->
-<p-dialog [(visible)]="displayStep3" [style]="{ width: '450px' }" header="Step 3: Inventory" [modal]="true"
-    styleClass="p-fluid">
+<p-dialog [(visible)]="displayStep3" [style]=" { width: '450px' } " header="Step 3: Inventory" [modal]="true"
+    styleClass="premium-dialog" appendTo="body">
     <ng-template pTemplate="content">
         <div class="field">
             <label for="stock">Quantity</label>
             <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal" styleClass="w-full"
-                inputStyleClass="w-full" [style]="{'width':'100%'}"></p-inputNumber>
+                inputStyleClass="w-full premium-input" [style]="{'width':'100%'}"></p-inputNumber>
         </div>
 
         <div class="field">
             <label for="manualStockStatus">Stock Availability Control</label>
             <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
                 [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status" appendTo="body"
-                styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
+                styleClass="w-full premium-input" [style]="{'width':'100%'}"></p-dropdown>
             <small class="block mt-1 text-500">Override the automatic stock calculation if needed.</small>
         </div>
     </ng-template>
 
     <ng-template pTemplate="footer">
-        <p-button label="Save & Finish" icon="pi pi-check" (onClick)="saveInventory()"></p-button>
+        <div class="flex justify-content-end gap-2 px-3 pb-3">
+            <button pButton pRipple label="Save & Finish" icon="pi pi-check" class="premium-btn-primary px-4"
+                (click)="saveInventory()"></button>
+        </div>
     </ng-template>
 </p-dialog>
 
-<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+<p-confirmDialog [style]=" { width: '450px' } " styleClass="premium-confirm-dialog" appendTo="body"></p-confirmDialog>
 <p-toast></p-toast>

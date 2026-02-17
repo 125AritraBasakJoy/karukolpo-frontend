@@ -1,12 +1,44 @@
-.inventory-container {
-    h2 {
-        color: var(--text-color);
-    }
+:host {
+    display: block;
+    background: radial-gradient(circle at 100% 0%, rgba(30, 41, 59, 0.4) 0%, transparent 40%),
+        radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.1) 0%, transparent 40%);
 }
 
-.card {
-    background: var(--surface-card);
-    border: 1px solid var(--surface-border);
-    border-radius: 8px;
-    padding: 1.5rem;
+.inventory-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header-section {
+    padding: 1rem 0;
+}
+
+.stats-icon-circle {
+    width: 64px;
+    height: 64px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.chart-wrapper {
+    padding: 1rem;
+    background: rgba(2, 6, 23, 0.3);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+::ng-deep .custom-stock-tag {
+    .p-tag-value {
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.02em !important;
+        font-size: 0.75rem !important;
+    }
+
+    padding: 0.4rem 0.8rem !important;
+    border-radius: 10px !important;
 }

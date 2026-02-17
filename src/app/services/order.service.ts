@@ -60,9 +60,10 @@ export class OrderService {
   /**
    * Get all orders
    * GET /orders
-   * Note: Fetches details for each order to ensure accurate status
+   * Fetches all orders (default limit 10000) to allow client-side pagination 
+   * since backend does not return total count.
    */
-  getOrders(skip = 0, limit = 100, forceRefresh = false): Observable<Order[]> {
+  getOrders(skip = 0, limit = 10000, forceRefresh = false): Observable<Order[]> {
     if (!forceRefresh && this.ordersCache && skip === 0) {
       return of(this.ordersCache);
     }
@@ -72,6 +73,7 @@ export class OrderService {
       map(response => {
         // Handle direct array or wrapped object { data: [], orders: [], etc }
         let rawOrders: any[] = [];
+
         if (Array.isArray(response)) {
           rawOrders = response;
         } else if (response && typeof response === 'object') {
@@ -99,7 +101,7 @@ export class OrderService {
    * Reload orders (alias for getOrders)
    */
   reloadOrders(): Observable<Order[]> {
-    return this.getOrders(0, 100, true);
+    return this.getOrders(0, 10000, true);
   }
 
   /**
@@ -115,13 +117,12 @@ export class OrderService {
     );
   }
 
-  /**
-   * Get order by phone number (search across all orders)
-   */
   getOrderByPhone(phone: string): Observable<Order | undefined> {
-    return this.getOrders().pipe(
+    // Fetch a larger batch when searching by phone to increase chance of finding it
+    // ideally backend should support phone filter directly
+    return this.getOrders(0, 10000).pipe(
       map(orders => {
-        const matches = orders.filter(o => o.phoneNumber === phone);
+        const matches = orders.filter((o: Order) => o.phoneNumber === phone);
         return matches.length > 0 ? matches[matches.length - 1] : undefined;
       })
     );
@@ -245,26 +246,33 @@ export class OrderService {
     );
   }
 
-  /**
-   * Update order status
-   * Uses specific endpoints for Confirmed/Cancelled/Completed
-   */
   updateOrderStatus(id: string, status: 'Confirmed' | 'Cancelled' | 'Completed'): Observable<void> {
     // Pass ID directly, do not parse
+    let updateObs: Observable<Order>;
+
     if (status === 'Confirmed') {
-      return this.adminConfirmOrder(id).pipe(map(() => void 0));
+      updateObs = this.adminConfirmOrder(id);
     } else if (status === 'Cancelled') {
-      return this.adminCancelOrder(id).pipe(map(() => void 0));
+      updateObs = this.adminCancelOrder(id);
     } else if (status === 'Completed') {
-      return this.adminCompleteOrder(id).pipe(map(() => void 0));
+      updateObs = this.adminCompleteOrder(id);
+    } else {
+      // Fallback for unexpected statuses
+      console.warn(`Status update to ${status} not supported by backend yet`);
+      return new Observable<void>(observer => {
+        observer.next();
+        observer.complete();
+      });
     }
 
-    // Fallback for unexpected statuses
-    console.warn(`Status update to ${status} not supported by backend yet`);
-    return new Observable<void>(observer => {
-      observer.next();
-      observer.complete();
-    });
+    return updateObs.pipe(
+      tap(() => {
+        this.clearCache();
+        // Trigger a notification so components can reload
+        this.notifyAdmin(id);
+      }),
+      map(() => void 0)
+    );
   }
 
   /**

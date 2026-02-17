@@ -19,8 +19,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-
 import * as XLSX from 'xlsx';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-orders',
@@ -45,6 +45,7 @@ import * as XLSX from 'xlsx';
   styleUrls: ['./orders.component.scss']
 })
 export class OrdersComponent implements OnInit {
+  // ... signals remain same ...
   orders = signal<Order[]>([]);
   totalRecords = signal<number>(0); // Initialize to 0, will grow as we fetch
   loading = signal<boolean>(false);
@@ -58,13 +59,49 @@ export class OrdersComponent implements OnInit {
     private productService: ProductService,
     private paymentService: PaymentService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private notificationService: NotificationService
   ) { }
 
   ngOnInit() {
     this.loadOrders();
     this.orderService.newOrderNotification$.subscribe(() => {
       this.loadOrders();
+    });
+
+    this.notificationService.notificationClicked$.subscribe(notif => {
+      if (notif.type === 'order' && notif.data && notif.data.orderId) {
+        const orderId = notif.data.orderId.toString();
+
+        // Try to find in current list
+        const existingOrder = this.orders().find(o => o.id === orderId);
+
+        if (existingOrder) {
+          this.viewOrder(existingOrder);
+        } else {
+          // Fetch from backend
+          this.loadingDetails = true;
+          this.displayOrderDialog = true; // Open dialog first to show loading state
+
+          this.orderService.getOrderById(orderId).subscribe({
+            next: (order) => {
+              if (order) {
+                this.viewOrder(order);
+              } else {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Order not found' });
+                this.displayOrderDialog = false;
+              }
+              this.loadingDetails = false;
+            },
+            error: (err) => {
+              console.error('Failed to load order from notification', err);
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load order details' });
+              this.displayOrderDialog = false;
+              this.loadingDetails = false;
+            }
+          });
+        }
+      }
     });
   }
 

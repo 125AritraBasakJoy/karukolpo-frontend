@@ -11,32 +11,54 @@ import { TooltipModule } from 'primeng/tooltip';
     selector: 'app-notification-button',
     imports: [CommonModule, ButtonModule, BadgeModule, OverlayBadgeModule, OverlayPanelModule, TooltipModule],
     template: `
-        <p-button styleClass="p-button-outlined p-button-secondary" (click)="op.toggle($event)" pTooltip="Notifications"
+        <p-button styleClass="p-button-outlined p-button-secondary border-circle w-3rem h-3rem p-0" (click)="op.toggle($event)" pTooltip="Notifications"
                   tooltipPosition="bottom">
             <p-overlay-badge 
                 [value]="notificationService.notifications.length > 0 ? notificationService.notifications.length : null" 
-                severity="danger">
-                <i class="pi pi-bell"></i>
+                severity="danger" styleClass="custom-badge">
+                <i class="pi pi-bell text-xl"></i>
             </p-overlay-badge>
         </p-button>
 
-        <p-overlayPanel #op [style]="{width: '300px'}">
+        <p-overlayPanel #op [style]="{width: '380px'}" styleClass="notification-panel">
             <ng-template pTemplate>
-                <div class="flex flex-column gap-2">
-                    <span class="font-bold text-lg mb-2">Notifications</span>
-                    <div *ngIf="notificationService.notifications.length === 0" class="text-center p-3 text-500">
-                        No new notifications
+                <div class="flex flex-column">
+                    <!-- Header -->
+                    <div class="flex align-items-center justify-content-between p-3 border-bottom-1 surface-border">
+                        <span class="font-bold text-lg">Notifications</span>
+                        <p-button *ngIf="notificationService.notifications.length > 0" 
+                                label="Clear All" [text]="true" size="small" 
+                                styleClass="p-0 text-sm text-primary hover:text-primary-600"
+                                (onClick)="notificationService.clearNotifications()"></p-button>
                     </div>
-                    <div *ngFor="let notif of notificationService.notifications"
-                         class="p-2 border-round surface-hover cursor-pointer"
-                         style="border-bottom: 1px solid var(--surface-border)">
-                        <div class="font-bold text-sm">{{ notif.title }}</div>
-                        <div class="text-xs text-500">{{ notif.message }}</div>
-                        <div class="text-xs text-400 text-right mt-1">{{ notif.time | date:'shortTime' }}</div>
-                    </div>
-                    <div *ngIf="notificationService.notifications.length > 0" class="text-center mt-2">
-                        <p-button label="Clear All" [text]="true" size="small"
-                                  (onClick)="notificationService.clearNotifications()"></p-button>
+
+                    <!-- Notification List -->
+                    <div class="notification-list custom-scrollbar" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Empty State -->
+                        <div *ngIf="notificationService.notifications.length === 0" class="flex flex-column align-items-center justify-content-center p-5 text-center text-500">
+                            <i class="pi pi-bell-slash text-4xl mb-3 opacity-50"></i>
+                            <span class="font-medium">No new notifications</span>
+                            <span class="text-sm mt-1">We'll let you know when updates arrive.</span>
+                        </div>
+
+                        <!-- Items -->
+                        <div *ngFor="let notif of notificationService.notifications"
+                             class="notification-item p-3 border-bottom-1 surface-border cursor-pointer hover:surface-ground transition-colors transition-duration-150 flex gap-3"
+                             (click)="onNotificationClick(notif, op)">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-2rem h-2rem border-circle bg-blue-500 bg-opacity-10 flex align-items-center justify-content-center text-blue-500">
+                                    <i class="pi pi-info-circle text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="font-semibold text-color mb-1 line-height-2">{{ notif.title }}</div>
+                                <div class="text-sm text-500 line-height-3 mb-2">{{ notif.message }}</div>
+                                <div class="text-xs text-400 flex align-items-center gap-1">
+                                    <i class="pi pi-clock text-xs"></i>
+                                    {{ notif.time | date:'shortTime' }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </ng-template>
@@ -44,23 +66,41 @@ import { TooltipModule } from 'primeng/tooltip';
     `,
     standalone: true,
     styles: [`
-    .p-button {
-        overflow: visible !important;
+    :host ::ng-deep .notification-panel .p-overlaypanel-content {
+        padding: 0 !important;
     }
-    ::ng-deep .p-overlay-badge .p-badge {
-        font-size: 0.65rem;
+    
+    .notification-item:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: var(--surface-border);
+        border-radius: 20px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: var(--text-color-secondary);
+    }
+
+    ::ng-deep .custom-badge .p-badge {
         min-width: 1.25rem;
         height: 1.25rem;
         line-height: 1.25rem;
-        font-weight: 700;
-        border: 1px solid var(--surface-ground);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    ::ng-deep .dark-mode .p-overlay-badge .p-badge {
-        color: #ffffff !important;
     }
   `]
 })
 export class NotificationButtonComponent {
     constructor(public notificationService: NotificationService) { }
+
+    onNotificationClick(notif: any, overlay: any) {
+        this.notificationService.handleNotificationClick(notif);
+        overlay.hide();
+    }
 }

@@ -172,9 +172,8 @@
             <label for="category">Category</label>
             <p-dropdown id="category" [options]="categories" optionLabel="name" optionValue="id"
                 [(ngModel)]="productForm.categoryId" placeholder="Select a Category" [showClear]="true"
-                [editable]="true" [filter]="true" filterBy="name" styleClass="w-full premium-input"
-                [style]="{'width':'100%'}" [panelStyle]="{'width':'100%'}" panelStyleClass="w-full"
-                appendTo="body"></p-dropdown>
+                [editable]="true" [filter]="true" filterBy="name" styleClass="w-full" [style]="{'width':'100%'}"
+                [panelStyle]="{'width':'100%'}" panelStyleClass="w-full" appendTo="body"></p-dropdown>
         </div>
 
         <div class="field">
@@ -236,7 +235,7 @@
             <label for="manualStockStatus">Stock Availability Control</label>
             <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
                 [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status" appendTo="body"
-                styleClass="w-full premium-input" [style]="{'width':'100%'}"></p-dropdown>
+                styleClass="w-full" [style]="{'width':'100%'}"></p-dropdown>
             <small class="block mt-1 text-500">Override the automatic stock calculation if needed.</small>
         </div>
     </ng-template>

@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { OrderService } from './order.service';
 import { ProductService } from './product.service';
-import { Subscription } from 'rxjs'; // Import Subscription
+import { Subscription, Subject } from 'rxjs'; // Import Subscription and Subject
 
 export interface AppNotification {
     title: string;
     message: string;
     time: Date;
     type: 'order' | 'stock';
+    data?: any;
 }
 
 @Injectable({
@@ -19,6 +20,10 @@ export class NotificationService {
     private orderService = inject(OrderService);
     private productService = inject(ProductService);
     private messageService!: MessageService;
+
+    // Subject for handling notification clicks
+    private notificationClickSubject = new Subject<AppNotification>();
+    notificationClicked$ = this.notificationClickSubject.asObservable();
 
     private readonly NOTIF_STORAGE_KEY = 'admin_notifications';
     private orderSub: Subscription | undefined;
@@ -33,7 +38,11 @@ export class NotificationService {
         const saved = localStorage.getItem(this.NOTIF_STORAGE_KEY);
         if (saved) {
             try {
-                this.notifications = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                this.notifications = parsed.map((n: any) => ({
+                    ...n,
+                    time: new Date(n.time) // Re-hydrate Date object
+                }));
             } catch (e) {
                 console.error('Error loading notifications', e);
             }
@@ -62,6 +71,10 @@ export class NotificationService {
         this.saveNotifications();
     }
 
+    handleNotificationClick(notification: AppNotification) {
+        this.notificationClickSubject.next(notification);
+    }
+
     private startListening() {
         if (this.orderSub) return;
 
@@ -74,7 +87,8 @@ export class NotificationService {
                 title: 'New Order',
                 message: `Order #${orderId} placed.`,
                 time: new Date(),
-                type: 'order'
+                type: 'order',
+                data: { orderId }
             });
 
             // 2. Browser Notification (Always if allowed)

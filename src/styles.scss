@@ -899,3 +899,26 @@ textarea {
         }
     }
 }
+/* Notification Panel Theme */
+.notification-panel {
+    background: rgba(15, 23, 42, 0.8) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5) !important;
+    
+    .p-overlaypanel-content {
+        padding: 0 !important;
+        background: transparent !important;
+    }
+    
+    .p-overlaypanel-close {
+        display: none !important;
+    }
+
+    /* Arrow styling */
+    &:after, &:before {
+        display: none !important;
+    }
+}

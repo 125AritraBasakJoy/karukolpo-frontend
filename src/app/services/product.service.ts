@@ -242,26 +242,47 @@ export class ProductService {
         (data.stock !== undefined ? data.stock : 0)
     );
 
-    const manualStatus = data.stock_status || data.manualStockStatus || 'AUTO';
+    const manualStatus = data.stock_status || data.manual_stock_status || data.manualStockStatus || 'AUTO';
+
+    // Map Images
+    let mainImageUrl = data.primary_image_url || data.imageUrl || 'assets/images/placeholder.jpg';
+    let galleryImages: string[] = [];
+
+    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+      // Sort to find primary (is_primary=true) or just take first
+      const primaryImage = data.images.find((img: any) => img.is_primary) || data.images[0];
+
+      // Use large image for quality, fallbacks provided
+      if (primaryImage) {
+        mainImageUrl = primaryImage.image_large || primaryImage.image_medium || primaryImage.image_thumb || mainImageUrl;
+      }
+
+      // Map all images for gallery
+      galleryImages = data.images.map((img: any) => img.image_large || img.image_medium || img.image_thumb).filter(Boolean);
+    } else if (data.image) {
+      // Fallback for potentially flat image field
+      mainImageUrl = data.image;
+      galleryImages = [data.image];
+    }
 
     return {
       id: data.id?.toString() || '',
-      code: data.code || '',
+      code: data.code || `PROD-${data.id}`,
       name: data.name || '',
       description: data.description || '',
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
-      // Handle images: primary image is imageUrl, list is images
-      imageUrl: data.primary_image_url || data.imageUrl || (data.images && data.images.length > 0 ? data.images[0].url : ''),
-      images: data.images ? data.images.map((img: any) => typeof img === 'string' ? img : img.url) : [],
+      imageUrl: mainImageUrl,
+      images: galleryImages,
       // Map category info
       categoryId: data.category_id?.toString() ||
-        (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : '0'),
+        (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : 'uncategorized'),
       // Store full categories array if available
+      categories: data.categories || [],
       stock: parseInt(String(stock), 10),
-      manualStockStatus: manualStatus as 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO',
-      categories: data.categories || []
+      manualStockStatus: manualStatus
     };
-  }
+  };
+
 
   /**
    * Map frontend product format to backend format

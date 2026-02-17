@@ -169,7 +169,8 @@ import { MultiSelectModule } from 'primeng/multiselect';
                 <label for="newCategory" class="font-bold block mb-3">Select Target Categories</label>
                 <p-multiSelect [options]="otherCategories" [(ngModel)]="targetCategoryIds" optionLabel="name" optionValue="id"
                     placeholder="Select Categories" [filter]="true" filterBy="name" [showClear]="true"
-                    appendTo="body" styleClass="w-full" [style]="{'width':'100%'}" display="chip">
+                    appendTo="body" styleClass="w-full custom-multiselect" panelStyleClass="custom-multiselect-panel" 
+                    [style]="{'width':'100%'}" display="chip">
                     <ng-template let-category pTemplate="item">
                         <div class="flex align-items-center gap-2">
                             <div>{{category.name}}</div>

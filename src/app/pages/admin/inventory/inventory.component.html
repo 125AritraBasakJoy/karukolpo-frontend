@@ -41,9 +41,10 @@
 
     <div class="glass-card fadein animation-duration-500">
         <p-table #dt [value]="products()" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'id', 'code']"
-            [tableStyle]="{'min-width': '60rem'}" styleClass="premium-table-v2" [rowHover]="true" *ngIf="!loading()"
-            [showCurrentPageReport]="true"
-            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} items">
+            [rowsPerPageOptions]="[10, 25, 50, 100]" [tableStyle]="{'min-width': '60rem'}" styleClass="premium-table-v2"
+            [rowHover]="true" [loading]="loading()" [showCurrentPageReport]="true"
+            currentPageReportTemplate="Showing {first} to {last} of many (Buffered)" [lazy]="true"
+            (onLazyLoad)="loadProducts($event)" [totalRecords]="totalRecords()">
 
             <ng-template pTemplate="header">
                 <tr>

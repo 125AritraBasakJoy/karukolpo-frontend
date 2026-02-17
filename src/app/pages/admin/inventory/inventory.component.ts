@@ -8,7 +8,7 @@ import { CategoryService } from '../../../services/category.service';
 import { Category } from '../../../models/category.model';
 import { OrderService } from '../../../services/order.service';
 import { Order } from '../../../models/order.model';
-import { TableModule } from 'primeng/table';
+import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -91,6 +91,12 @@ export class InventoryComponent implements OnInit {
     { label: 'Out of Stock (Force)', value: 'OUT_OF_STOCK' }
   ];
 
+  // Data Buffering
+  productsBuffer: Product[] = [];
+  totalRecords = signal<number>(0);
+  lastLazyLoadEvent: TableLazyLoadEvent | null = null;
+  readonly BUFFER_SIZE = 100;
+
   constructor(
     private productService: ProductService,
     private orderService: OrderService,
@@ -101,27 +107,66 @@ export class InventoryComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.loadProducts();
     this.loadCategories();
+    // loadProducts will be called by lazy load
   }
 
   loadCategories() {
     this.categoryService.getCategories().subscribe(cats => this.categories = cats);
   }
 
-  loadProducts() {
+  loadProducts(event?: TableLazyLoadEvent) {
     this.loading.set(true);
-    this.productService.getProducts().subscribe({
+
+    const lazyEvent = event || this.lastLazyLoadEvent || { first: 0, rows: 10 };
+    this.lastLazyLoadEvent = lazyEvent;
+
+    const first = lazyEvent.first || 0;
+    const rows = lazyEvent.rows || 10;
+
+    let dataMissing = false;
+    for (let i = first; i < first + rows; i++) {
+      if (!this.productsBuffer[i]) {
+        dataMissing = true;
+        break;
+      }
+    }
+
+    if (!dataMissing) {
+      const end = Math.min(first + rows, this.productsBuffer.length);
+      const pageData = this.productsBuffer.slice(first, end);
+      this.products.set(pageData);
+      this.loading.set(false);
+      return;
+    }
+
+    const chunkStart = Math.floor(first / this.BUFFER_SIZE) * this.BUFFER_SIZE;
+
+    this.productService.getProducts(chunkStart, this.BUFFER_SIZE).subscribe({
       next: (products) => {
-        this.products.set(products);
+        products.forEach((item, index) => {
+          this.productsBuffer[chunkStart + index] = item;
+        });
+
+        const currentTotal = chunkStart + products.length;
+        if (products.length === this.BUFFER_SIZE) {
+          this.totalRecords.set(currentTotal + 1);
+        } else {
+          this.totalRecords.set(currentTotal);
+        }
+
+        const end = Math.min(first + rows, this.productsBuffer.length);
+        const pageData = this.productsBuffer.slice(first, end);
+        this.products.set(pageData);
         this.loading.set(false);
 
-        // Load chart data in the background (non-blocking)
-        // Fetch all orders for the chart
-        this.orderService.getOrders().subscribe({
-          next: (orders) => this.updateChart(products, orders),
-          error: () => { } // Chart failure is non-critical
-        });
+        // Load chart data once if this is the first chunk (optional optimization to avoid reloading chart constantly)
+        if (chunkStart === 0 && !this.chartData) {
+          this.orderService.getOrders().subscribe({
+            next: (orders) => this.updateChart(products, orders),
+            error: () => { }
+          });
+        }
       },
       error: () => {
         this.loading.set(false);
@@ -130,18 +175,12 @@ export class InventoryComponent implements OnInit {
   }
 
   refreshProducts() {
-    this.loading.set(true);
-    // Force refresh
-    this.productService.getProducts(0, 100, undefined, true).subscribe({
-      next: (products) => {
-        this.products.set(products);
-        this.loading.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Inventory updated' });
-      },
-      error: () => {
-        this.loading.set(false);
-      }
-    });
+    this.productsBuffer = [];
+    this.totalRecords.set(0);
+    this.chartData = null; // Reset chart data to refresh it
+    const event: TableLazyLoadEvent = this.lastLazyLoadEvent ? { ...this.lastLazyLoadEvent } : { first: 0, rows: 10 };
+    this.loadProducts(event);
+    this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Inventory updated' });
   }
 
   updateChart(products: Product[], orders: Order[]) {

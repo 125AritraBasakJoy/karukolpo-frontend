@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { of } from 'rxjs';
 import { switchMap, catchError, tap } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { CategoryService } from '../../../services/category.service';
 import { ProductService } from '../../../services/product.service';
 import { Category } from '../../../models/category.model';
 import { Product } from '../../../models/product.model';
-import { TableModule } from 'primeng/table';
+import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -62,10 +62,12 @@ import { MultiSelectModule } from 'primeng/multiselect';
         </div>
 
         <div class="glass-card fadein animation-duration-500">
-            <p-table #dt [value]="categories" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'slug']"
+            <p-table #dt [value]="categories()" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'slug']"
+                [rowsPerPageOptions]="[10, 25, 50, 100]"
                 [tableStyle]="{'min-width': '50rem'}" selectionMode="single" dataKey="id"
                 styleClass="premium-table-v2" [rowHover]="true" [showCurrentPageReport]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} categories">
+                currentPageReportTemplate="Showing {first} to {last} of many (Buffered)"
+                [lazy]="true" (onLazyLoad)="loadCategories($event)" [totalRecords]="totalRecords()" [loading]="loading()">
                 
                 <ng-template pTemplate="caption">
                     <div class="flex align-items-center justify-content-between py-2">
@@ -118,7 +120,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
                 
                 <ng-template pTemplate="summary">
                     <div class="flex align-items-center justify-content-center">
-                        Total categories: {{categories ? categories.length : 0 }}
+                        Total categories: {{categories().length > 0 ? totalRecords() : 0 }}
                     </div>
                 </ng-template>
             </p-table>
@@ -295,7 +297,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 })
 export class CategoryManagerComponent implements OnInit {
     categoryDialog: boolean = false;
-    categories: Category[] = [];
+    categories = signal<Category[]>([]); // Changed to signal for consistency
     categoryForm: FormGroup;
     currentCategoryId: string | null = null;
 
@@ -304,10 +306,17 @@ export class CategoryManagerComponent implements OnInit {
     viewingCategory: Category | null = null;
     loadingProducts: boolean = false;
 
+    // Data Buffering
+    categoriesBuffer: Category[] = [];
+    totalRecords = signal<number>(0);
+    loading = signal<boolean>(false);
+    lastLazyLoadEvent: TableLazyLoadEvent | null = null;
+    readonly BUFFER_SIZE = 100;
+
     moveDialog: boolean = false;
     selectedProductForMove: Product | null = null;
     targetCategoryIds: string[] | null = null;
-    otherCategories: Category[] = [];
+    otherCategories: Category[] = []; // This might need adjustment if we don't have all categories loaded
 
     imageLoadError: { [key: string]: boolean } = {};
 
@@ -325,11 +334,75 @@ export class CategoryManagerComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.loadCategories();
+        // Initial load will be triggered by onLazyLoad
+        // If not, we can call this.loadCategories() manually with default event
     }
 
-    loadCategories() {
-        this.categoryService.getCategories().subscribe(data => this.categories = data);
+    loadCategories(event?: TableLazyLoadEvent) {
+        this.loading.set(true);
+
+        const lazyEvent = event || this.lastLazyLoadEvent || { first: 0, rows: 10 };
+        this.lastLazyLoadEvent = lazyEvent;
+
+        const first = lazyEvent.first || 0;
+        const rows = lazyEvent.rows || 10;
+
+        let dataMissing = false;
+        for (let i = first; i < first + rows; i++) {
+            if (!this.categoriesBuffer[i]) {
+                dataMissing = true;
+                break;
+            }
+        }
+
+        if (!dataMissing) {
+            const end = Math.min(first + rows, this.categoriesBuffer.length);
+            const pageData = this.categoriesBuffer.slice(first, end);
+            this.categories.set(pageData);
+            this.loading.set(false);
+            return;
+        }
+
+        const chunkStart = Math.floor(first / this.BUFFER_SIZE) * this.BUFFER_SIZE;
+
+        this.categoryService.getCategories(chunkStart, this.BUFFER_SIZE).subscribe({
+            next: (data) => {
+                data.forEach((item, index) => {
+                    this.categoriesBuffer[chunkStart + index] = item;
+                });
+
+                const currentTotal = chunkStart + data.length;
+                if (data.length === this.BUFFER_SIZE) {
+                    this.totalRecords.set(currentTotal + 1);
+                } else {
+                    this.totalRecords.set(currentTotal);
+                }
+
+                const end = Math.min(first + rows, this.categoriesBuffer.length);
+                const pageData = this.categoriesBuffer.slice(first, end);
+                this.categories.set(pageData);
+                this.loading.set(false);
+
+                // Update otherCategories for dropdowns if needed (might need a separate "load all for dropdown" strategy or just use what we have/fetch more)
+                // For now, let's keep otherCategories based on what we have or fetch all for dropdowns?
+                // The original code filtered `this.categories` which was everything.
+                // For move dialog, we probably want *all* categories or search capability. 
+                // Let's assume we use the buffer for now or fetch all specifically for the dropdown if needed.
+                // Since this.categories is now just the page data, using it for "otherCategories" in Move Dialog is insufficient.
+                // We will handle "otherCategories" separately when opening the move dialog.
+            },
+            error: (err) => {
+                console.error('Failed to load categories', err);
+                this.loading.set(false);
+            }
+        });
+    }
+
+    refreshCategories() {
+        this.categoriesBuffer = [];
+        this.totalRecords.set(0);
+        const event: TableLazyLoadEvent = this.lastLazyLoadEvent ? { ...this.lastLazyLoadEvent } : { first: 0, rows: 10 };
+        this.loadCategories(event);
     }
 
     openNew() {
@@ -356,7 +429,8 @@ export class CategoryManagerComponent implements OnInit {
             accept: () => {
                 this.categoryService.deleteCategory(category.id).subscribe({
                     next: () => {
-                        this.categories = this.categories.filter(val => val.id !== category.id);
+                        this.categories.update(vals => vals.filter((val: Category) => val.id !== category.id));
+                        this.refreshCategories(); // Refresh to update buffer logic
                         this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Category Deleted', life: 3000 });
                     },
                     error: (err) => {
@@ -463,7 +537,7 @@ export class CategoryManagerComponent implements OnInit {
         this.selectedProductForMove = product;
         this.targetCategoryIds = []; // Reset selection
         // Exclude current category from options
-        this.otherCategories = this.categories.filter(c => c.id !== this.viewingCategory?.id);
+        this.otherCategories = this.categories().filter((c: Category) => c.id !== this.viewingCategory?.id);
         this.moveDialog = true;
     }
 
@@ -477,9 +551,9 @@ export class CategoryManagerComponent implements OnInit {
         const currentCategoryId = this.viewingCategory.id;
 
         // Map IDs to names for display
-        const targetCategoryNames = this.categories
-            .filter(c => targetIds.includes(c.id))
-            .map(c => c.name)
+        const targetCategoryNames = this.categories()
+            .filter((c: Category) => targetIds.includes(c.id))
+            .map((c: Category) => c.name)
             .join(', ');
 
         // Step 1: Atomic synchronization using PUT (replaces all existing categories)

@@ -30,7 +30,7 @@ export class CartService {
 
   addToCart(product: Product) {
     // Check global stock first
-    if ((product.stock || 0) <= 0) {
+    if (this.isOutOfStock(product)) {
       this.messageService.add({ severity: 'error', summary: 'Out of Stock', detail: 'This product is out of stock' });
       return;
     }
@@ -44,7 +44,7 @@ export class CartService {
         return;
       }
       // Create new array reference for signal update
-      this.cart.update(items => items.map(item => 
+      this.cart.update(items => items.map(item =>
         item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
       ));
     } else {
@@ -58,11 +58,23 @@ export class CartService {
     this.saveCart();
   }
 
+  isOutOfStock(product: Product): boolean {
+    if (product.manualStockStatus === 'OUT_OF_STOCK') return true;
+    if (product.manualStockStatus === 'IN_STOCK') return false;
+    return (product.stock || 0) <= 0;
+  }
+
   updateQuantity(item: CartItem, change: number) {
     const currentCart = this.cart();
     const targetItem = currentCart.find(i => i.product.id === item.product.id);
-    
+
     if (!targetItem) return;
+
+    // If increasing, check if still in stock (manual status could have changed)
+    if (change > 0 && this.isOutOfStock(targetItem.product)) {
+      this.messageService.add({ severity: 'error', summary: 'Out of Stock', detail: 'This product is no longer available' });
+      return;
+    }
 
     const newQuantity = targetItem.quantity + change;
 
@@ -75,7 +87,7 @@ export class CartService {
     if (newQuantity <= 0) {
       this.cart.update(items => items.filter(i => i.product.id !== item.product.id));
     } else {
-      this.cart.update(items => items.map(i => 
+      this.cart.update(items => items.map(i =>
         i.product.id === item.product.id ? { ...i, quantity: newQuantity } : i
       ));
     }

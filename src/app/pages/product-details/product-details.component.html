@@ -37,12 +37,12 @@
                 <p class="line-height-3 text-700">{{ product()?.description }}</p>
             </div>
 
-            <div class="flex flex-column sm:flex-row gap-3 mt-5">
+            <div class="flex flex-column sm:flex-row gap-3 mt-5" *ngIf="!isOutOfStock()">
                 <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-lg flex-1"
-                    [disabled]="isOutOfStock()" (click)="addToCart()"></button>
+                    (click)="addToCart()"></button>
 
                 <button pButton label="Buy Now" icon="pi pi-check-circle" class="p-button-lg p-button-warning flex-1"
-                    [disabled]="isOutOfStock()" (click)="buyNow()"></button>
+                    (click)="buyNow()"></button>
             </div>
 
             <div class="mt-4 text-500 text-sm">

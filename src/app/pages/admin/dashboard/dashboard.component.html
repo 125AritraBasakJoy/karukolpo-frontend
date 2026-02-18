@@ -4,7 +4,10 @@
 
     <!-- Sidebar -->
     <aside class="sidebar" [class.collapsed]="sidebarCollapsed() && !isMobile()" [class.mobile-open]="mobileMenuOpen()">
-
+        <!-- Sidebar Header with Logo -->
+        <div class="sidebar-header">
+            <img src="assets/logo.png" alt="Karukolpo Logo" class="logo-img" loading="lazy" />
+        </div>
 
         <!-- Navigation Menu -->
         <nav class="nav-menu">
@@ -28,8 +31,6 @@
 
         <!-- Sidebar Footer -->
         <div class="sidebar-footer">
-            <!-- Theme Toggle Removed -->
-            <!-- <button pButton ... > ... </button> -->
             <button pButton [label]="(sidebarCollapsed() && !isMobile()) ? '' : 'Logout'" icon="pi pi-sign-out"
                 (click)="logout()" class="p-button-danger w-full"
                 [pTooltip]="(sidebarCollapsed() && !isMobile()) ? 'Logout' : ''" tooltipPosition="right"></button>
@@ -40,23 +41,25 @@
     <div class="content">
         <!-- Content Header -->
         <header class="content-header">
-            <div class="logo mr-3" style="height: 40px; display: flex; align-items: center;">
-                <img src="assets/logo.png" alt="Karukolpo Logo" class="logo-img"
-                    style="height: 40px; width: auto; object-fit: contain;" loading="lazy" />
+            <div class="header-left">
+                <button pButton type="button" icon="pi pi-bars"
+                    class="p-button-text p-button-rounded mobile-toggle-btn premium-toggle-btn"
+                    (click)="toggleSidebar()"></button>
+
+                <button pButton type="button" [icon]="sidebarCollapsed() ? 'pi pi-angle-right' : 'pi pi-angle-left'"
+                    class="p-button-text p-button-rounded desktop-toggle-btn premium-toggle-btn"
+                    (click)="toggleSidebar()" pTooltip="Toggle Sidebar"></button>
+
+                <div class="breadcrumb-container">
+                    <nav class="breadcrumb-nav">
+                        <i class="pi pi-home home-icon"></i>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current">{{ getBreadcrumb() }}</span>
+                    </nav>
+                </div>
             </div>
 
-            <button pButton type="button" icon="pi pi-bars" class="p-button-text p-button-rounded mobile-toggle-btn"
-                (click)="toggleSidebar()"></button>
-
-            <button pButton type="button" [icon]="sidebarCollapsed() ? 'pi pi-angle-right' : 'pi pi-angle-left'"
-                class="p-button-text p-button-rounded desktop-toggle-btn" (click)="toggleSidebar()"
-                pTooltip="Toggle Sidebar"></button>
-
-            <div class="breadcrumb">
-                <i class="pi pi-home"></i> / {{ getBreadcrumb() }}
-            </div>
-
-            <div style="margin-left: auto;">
+            <div class="header-right">
                 <span class="text-sm text-color-secondary">Admin Panel</span>
             </div>
         </header>

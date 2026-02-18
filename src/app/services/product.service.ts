@@ -266,22 +266,14 @@ export class ProductService {
       const primaryImage = data.images.find((img: any) => img.is_primary) || data.images[0];
 
       if (primaryImage) {
-        mainImageUrl = primaryImage.image_large || primaryImage.image_medium || primaryImage.image_thumb || mainImageUrl;
+        // Enforce image_medium for home/list cards for optimal loading/quality balance
+        mainImageUrl = primaryImage.image_medium || primaryImage.image_large || primaryImage.image_thumb || mainImageUrl;
       }
 
-      // 2. Map all images and deduplicate URLs
-      // We use a Set to ensure that if 'image_large' and 'image_medium' are the same URL, 
-      // or if the backend returns duplicate image objects, they are filtered out.
-      const uniqueUrls = new Set<string>();
-
-      data.images.forEach((img: any) => {
-        // Collect all variants as they may contain distinct images
-        if (img.image_large) uniqueUrls.add(img.image_large);
-        if (img.image_medium) uniqueUrls.add(img.image_medium);
-        if (img.image_thumb) uniqueUrls.add(img.image_thumb);
-      });
-
-      galleryImages = Array.from(uniqueUrls);
+      // 2. Map all image records to their high-quality 'large' variant for the product details carousel
+      galleryImages = data.images
+        .map((img: any) => img.image_large || img.image_medium || img.image_thumb)
+        .filter(Boolean);
 
     } else if (data.image) {
       mainImageUrl = data.image;

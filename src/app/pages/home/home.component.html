@@ -16,37 +16,51 @@
         </div>
     </div>
 
-    <!-- Category Filter -->
-    <div class="container mb-4 px-4">
-        <div class="flex flex-wrap justify-content-center gap-2">
-            <button pButton [label]="'All'" [class.p-button-outlined]="selectedCategory !== null"
-                (click)="selectCategory(null)" class="p-button-rounded p-button-sm glass-button"></button>
-            <button *ngFor="let cat of categories()" pButton [label]="cat.name"
-                [class.p-button-outlined]="selectedCategory?.id !== cat.id" (click)="selectCategory(cat)"
-                class="p-button-rounded p-button-sm glass-button"></button>
+    <!-- Category Section -->
+    <div class="container mb-6 px-4">
+        <h2 class="text-3xl font-bold text-center mb-5">Browse Categories</h2>
+        <div class="category-grid">
+            @for (cat of categories(); track cat.id) {
+            <div class="category-card" (click)="selectCategory(cat)"
+                [style.background-image]="'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url(' + getCategoryImage(cat.name) + ')'">
+                <div class="category-info">
+                    <span class="category-name">{{ cat.name }}</span>
+                    <span class="category-link">Shop Collection</span>
+                </div>
+            </div>
+            }
         </div>
     </div>
 
     <!-- Products Grid -->
     <div id="products" class="container px-4 pb-8">
-        <div *ngIf="loading()" class="grid">
-            <div class="col-12 sm:col-6 md:col-4 lg:col-3" *ngFor="let i of [1,2,3,4]">
+        <h2 class="text-3xl font-bold mb-5">{{ selectedCategory ? selectedCategory.name : 'Hot Deals' }}</h2>
+        @if (loading()) {
+        <div class="grid">
+            @for (i of [1,2,3,4]; track i) {
+            <div class="col-12 sm:col-6 md:col-4 lg:col-3">
                 <div class="p-4 border-1 surface-border surface-card border-round">
                     <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
                     <p-skeleton width="50%" styleClass="mb-2"></p-skeleton>
                     <p-skeleton width="25%" styleClass="mb-2"></p-skeleton>
                 </div>
             </div>
+            }
         </div>
+        }
 
-        <div class="grid" *ngIf="!loading()">
-            <div class="col-12 sm:col-6 md:col-4 lg:col-3" *ngFor="let product of filteredProducts()">
+        @if (!loading()) {
+        <div class="grid">
+            @for (product of filteredProducts(); track product.id) {
+            <div class="col-12 sm:col-6 md:col-4 lg:col-3">
                 <div class="product-card surface-card border-round shadow-2 p-3 h-full flex flex-column relative">
                     <!-- Out of Stock Overlay -->
-                    <div *ngIf="isOutOfStock(product)"
+                    @if (isOutOfStock(product)) {
+                    <div
                         class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center border-round">
                         <span class="bg-red-500 text-white px-3 py-1 border-round font-bold">Out of Stock</span>
                     </div>
+                    }
 
                     <div class="relative mb-3 cursor-pointer" (click)="showProductDetails(product)">
                         <img [src]="product.imageUrl" [alt]="product.name" class="w-full border-round"
@@ -62,12 +76,16 @@
                         <button pButton label="View Product" icon="pi pi-eye"
                             [class]="isOutOfStock(product) ? 'p-button-outlined w-full' : 'p-button-outlined flex-1'"
                             (click)="showProductDetails(product)"></button>
-                        <button *ngIf="!isOutOfStock(product)" pButton label="Add to Cart" icon="pi pi-shopping-cart"
-                            class="flex-1" (click)="addToCart(product)"></button>
+                        @if (!isOutOfStock(product)) {
+                        <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="flex-1"
+                            (click)="addToCart(product)"></button>
+                        }
                     </div>
                 </div>
             </div>
+            }
         </div>
+        }
     </div>
 </div>
 
@@ -83,7 +101,8 @@
             <!-- Cart Summary -->
             <div class="col-12 mb-4">
                 <div class="surface-card p-3 border-round shadow-1">
-                    <div *ngFor="let item of cartService.cart()"
+                    @for (item of cartService.cart(); track item.product.id) {
+                    <div
                         class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
                         <div class="flex align-items-center gap-3">
                             <img [src]="item.product.imageUrl" class="w-3rem h-3rem border-round object-cover"
@@ -103,6 +122,7 @@
                                 (click)="updateQuantity(item, 1)"></button>
                         </div>
                     </div>
+                    }
                     <div class="flex justify-content-between mt-3">
                         <span>Subtotal</span>
                         <span class="font-bold">{{ getSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
@@ -125,25 +145,30 @@
                         <label for="field_fullname">Full Name <span class="text-red-500">*</span></label>
                         <input pInputText id="field_fullname" [(ngModel)]="checkoutForm.fullName"
                             placeholder="Enter your name" required class="w-full" #fullName="ngModel">
-                        <small class="p-error" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full
-                            Name is
+                        @if (fullName.invalid && (fullName.dirty || fullName.touched)) {
+                        <small class="p-error">Full Name is
                             required.</small>
+                        }
                     </div>
                     <div class="field">
                         <label for="field_phone">Phone Number <span class="text-red-500">*</span></label>
                         <input pInputText id="field_phone" [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..."
                             maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$"
                             class="w-full">
-                        <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid Phone
+                        @if (phone.invalid && (phone.dirty || phone.touched)) {
+                        <small class="p-error">Valid Phone
                             Number is
                             required.</small>
+                        }
                     </div>
                     <div class="field">
                         <label for="field_email">Email <span class="text-red-500">*</span></label>
                         <input pInputText id="field_email" [(ngModel)]="checkoutForm.email"
                             placeholder="example@email.com" required email class="w-full" #email="ngModel">
-                        <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Valid Email is
+                        @if (email.invalid && (email.dirty || email.touched)) {
+                        <small class="p-error">Valid Email is
                             required.</small>
+                        }
                     </div>
 
 
@@ -156,13 +181,14 @@
                                 (onChange)="onDistrictChange($event)" placeholder="Select District" appendTo="body"
                                 required #district="ngModel" styleClass="w-full" [style]="{'width':'100%'}"
                                 [filter]="true" filterBy="name"></p-dropdown>
-                            <small class="p-error"
-                                *ngIf="district.invalid && (district.dirty || district.touched)">District
+                            @if (district.invalid && (district.dirty || district.touched)) {
+                            <small class="p-error">District
                                 is required.</small>
+                            }
                         </div>
                         <div class="field col-6">
-                            <label>Sub-District <span class="text-red-500"
-                                    *ngIf="subDistricts.length > 0">*</span></label>
+                            <label>Sub-District @if (subDistricts.length > 0) { <span class="text-red-500">*</span>
+                                }</label>
                             <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
                                 placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
                                 [required]="subDistricts.length > 0" styleClass="w-full" [style]="{'width':'100%'}"
@@ -173,17 +199,21 @@
                         <label for="field_postal">Postal Code</label>
                         <input pInputText id="field_postal" [(ngModel)]="checkoutForm.postalCode" placeholder="1234"
                             maxlength="4" pattern="\d{4}" #postal="ngModel" class="w-full">
-                        <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid Postal
+                        @if (postal.invalid && (postal.dirty || postal.touched)) {
+                        <small class="p-error">Valid Postal
                             Code
                             is required.</small>
+                        }
                     </div>
                     <div class="field">
                         <label for="field_address">Full Address <span class="text-red-500">*</span></label>
                         <textarea pInputTextarea id="field_address" [(ngModel)]="checkoutForm.fullAddress" rows="2"
                             placeholder="House, Road, Area..." required #address="ngModel" class="w-full"></textarea>
-                        <small class="p-error" *ngIf="address.invalid && (address.dirty || address.touched)">Full
+                        @if (address.invalid && (address.dirty || address.touched)) {
+                        <small class="p-error">Full
                             Address is
                             required.</small>
+                        }
                     </div>
 
                     <div class="field">
@@ -212,8 +242,10 @@
             </div>
         </div>
 
-        <div *ngIf="trackedOrders.length > 0" class="mt-4">
-            <div *ngFor="let order of trackedOrders" class="surface-card p-3 border-round shadow-1 mb-3">
+        @if (trackedOrders.length > 0) {
+        <div class="mt-4">
+            @for (order of trackedOrders; track order.id) {
+            <div class="surface-card p-3 border-round shadow-1 mb-3">
                 <div class="flex justify-content-between align-items-center mb-2">
                     <span class="font-bold">Order #{{ order.id }}</span>
                     <p-tag [value]="order.status"
@@ -226,21 +258,28 @@
                     <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</span>
 
                     <!-- Payment Button -->
+                    @if (order.status === 'Confirmed' && order.paymentStatus !== 'Paid') {
                     <button pButton label="Make Payment" icon="pi pi-wallet" class="p-button-sm"
-                        *ngIf="order.status === 'Confirmed' && order.paymentStatus !== 'Paid'"
                         (click)="openPaymentForOrder(order.id)"></button>
+                    }
 
-                    <p-tag *ngIf="order.paymentStatus === 'Paid'" value="Paid" severity="success"></p-tag>
-                    <p-tag *ngIf="order.status !== 'Confirmed' && order.paymentStatus !== 'Paid'"
-                        value="Waiting Approval" severity="info"></p-tag>
+                    @if (order.paymentStatus === 'Paid') {
+                    <p-tag value="Paid" severity="success"></p-tag>
+                    }
+                    @if (order.status !== 'Confirmed' && order.paymentStatus !== 'Paid') {
+                    <p-tag value="Waiting Approval" severity="info"></p-tag>
+                    }
                 </div>
             </div>
+            }
         </div>
+        }
 
-        <div *ngIf="trackPhone && trackedOrders.length === 0 && !trackingLoading && hasSearched"
-            class="text-center mt-4 text-600">
+        @if (trackPhone && trackedOrders.length === 0 && !trackingLoading && hasSearched) {
+        <div class="text-center mt-4 text-600">
             No orders found for this phone number.
         </div>
+        }
     </div>
 </p-dialog>
 
@@ -286,8 +325,8 @@
                 </div>
 
                 <!-- bKash Details Area -->
-                <div *ngIf="selectedPaymentMethod === 'bKash'"
-                    class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
+                @if (selectedPaymentMethod === 'bKash') {
+                <div class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
                     <div class="text-center mb-4">
                         <div
                             class="inline-flex align-items-center justify-content-center surface-100 px-3 py-1 border-round-pill mb-3">
@@ -310,9 +349,11 @@
                         class="p-button-danger p-button-lg w-full mt-2" (click)="submitBkashPayment()"
                         [disabled]="!bkashPhone || !bkashTrxId"></button>
                 </div>
+                }
 
                 <!-- COD Action Area -->
-                <div *ngIf="selectedPaymentMethod === 'COD'" class="mt-4 bkash-details-area">
+                @if (selectedPaymentMethod === 'COD') {
+                <div class="mt-4 bkash-details-area">
                     <div class="surface-section p-3 border-round-lg mb-4 text-center border-1 surface-border">
                         <p class="text-color-secondary m-0">You will pay the total amount to the delivery person when
                             your
@@ -322,6 +363,7 @@
                     <button pButton label="Confirm COD Order" icon="pi pi-check" class="p-button-lg w-full"
                         (click)="confirmCOD()"></button>
                 </div>
+                }
             </div>
         </div>
     </ng-template>

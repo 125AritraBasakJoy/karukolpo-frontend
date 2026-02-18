@@ -22,6 +22,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/track-order/track-order.component').then(m => m.TrackOrderComponent)
   },
   {
+    path: 'category/:id',
+    loadComponent: () => import('./pages/category-products/category-products.component').then(m => m.CategoryProductsComponent)
+  },
+  {
     path: 'cart',
     loadComponent: () => import('./pages/cart/cart.component').then(m => m.CartComponent)
   }

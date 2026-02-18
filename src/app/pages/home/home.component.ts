@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, ViewChildren, QueryList } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { forkJoin, map, catchError, of, lastValueFrom } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
@@ -31,7 +32,6 @@ import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
 import { Order } from '../../models/order.model';
 import { CartService } from '../../services/cart.service';
-import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -52,6 +52,9 @@ import { ActivatedRoute, Router } from '@angular/router';
     SkeletonModule,
     BadgeModule,
     TagModule,
+    CurrencyPipe,
+    DatePipe,
+    RouterLink
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
@@ -110,6 +113,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   landingPageImage = signal<string>('assets/landing-bg.jpg');
   landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
+
+  categoryImages: { [key: string]: string } = {
+    'Prodip': 'assets/categories/prodip.png',
+    'Protima': 'assets/categories/protima.png',
+    'Shora': 'assets/categories/shora.png',
+    'Home Decor': 'assets/categories/homedecor.png',
+    'Mirror': 'assets/categories/mirror.png',
+    'Sharee': 'assets/categories/sharee.png'
+  };
+
+  getCategoryImage(categoryName: string): string {
+    return this.categoryImages[categoryName] || 'assets/category-default.jpg';
+  }
 
   categories = signal<Category[]>([]);
   selectedCategory: Category | null = null;
@@ -607,23 +623,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
 
   selectCategory(category: Category | null) {
-    this.selectedCategory = category;
     if (category) {
-      this.loading.set(true);
-      this.categoryService.getCategoryProducts(category.id).subscribe({
-        next: (products) => {
-          this.filteredProducts.set(products);
-          this.loading.set(false);
-        },
-        error: (err) => {
-          console.error('Error fetching category products', err);
-          this.filteredProducts.set([]);
-          this.loading.set(false);
-        }
-      });
+      this.router.navigate(['/category', category.id]);
     } else {
+      this.selectedCategory = null;
       this.loadProducts();
     }
-    this.scrollToProducts();
   }
 }

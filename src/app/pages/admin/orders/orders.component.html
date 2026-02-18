@@ -270,6 +270,17 @@
                                         styleClass="uppercase font-bold text-xs px-2"></p-tag>
                                 </div>
 
+                                @if (selectedOrder.bkashNumber) {
+                                <div class="mb-2">
+                                    <span class="text-gray-400 text-sm block mb-1">Sender Phone</span>
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="pi pi-phone text-blue-400 text-sm"></i>
+                                        <span class="font-mono text-white text-base">{{ selectedOrder.bkashNumber
+                                            }}</span>
+                                    </div>
+                                </div>
+                                }
+
                                 @if (selectedOrder.transactionId) {
                                 <div>
                                     <span class="text-gray-400 text-sm block mb-1">Transaction ID</span>

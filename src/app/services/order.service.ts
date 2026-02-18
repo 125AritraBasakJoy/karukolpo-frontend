@@ -370,26 +370,16 @@ export class OrderService {
     // Extract transaction ID with robust checks
     let transactionId = undefined;
 
-    // Check nested payment object first
-    if (backendOrder.payment) {
-      if (backendOrder.payment.transaction_id) {
-        transactionId = backendOrder.payment.transaction_id;
-      } else if (backendOrder.payment.trx_id) {
-        transactionId = backendOrder.payment.trx_id;
-      } else if (backendOrder.payment.bkash_trx_id) {
-        transactionId = backendOrder.payment.bkash_trx_id;
-      }
+    // Check nested payment object first (singular or plural)
+    const p = backendOrder.payment || backendOrder.payments;
+
+    if (p) {
+      transactionId = p.transaction_id || p.trx_id || p.bkash_trx_id || p.transactionId;
     }
 
     // Fallback to root object if not found in payment object
     if (!transactionId) {
-      if (backendOrder.transaction_id) {
-        transactionId = backendOrder.transaction_id;
-      } else if (backendOrder.trx_id) {
-        transactionId = backendOrder.trx_id;
-      } else if (backendOrder.bkash_trx_id) {
-        transactionId = backendOrder.bkash_trx_id;
-      }
+      transactionId = backendOrder.transaction_id || backendOrder.trx_id || backendOrder.bkash_trx_id || backendOrder.transactionId;
     }
 
     // Handle created_at timestamp

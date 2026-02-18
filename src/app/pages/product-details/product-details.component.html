@@ -1,59 +1,79 @@
-<div class="container py-5 px-4">
+<div class="container py-8 px-4">
     <p-toast></p-toast>
-
-    <div *ngIf="loading()" class="flex justify-content-center align-items-center h-30rem">
+    @if (loading()) {
+    <div class="flex justify-content-center align-items-center py-8">
         <p-progressSpinner></p-progressSpinner>
     </div>
+    }
 
-    <div *ngIf="!loading() && product()" class="grid">
-        <!-- Image Carousel -->
+    @if (!loading() && product()) {
+    <div class="grid">
+        <!-- Left Column: Product Image/Carousel -->
         <div class="col-12 md:col-6">
-            <div class="surface-card p-4 border-round shadow-2">
-                <p-carousel [value]="images" [numVisible]="1" [numScroll]="1" [circular]="true"
+            <div class="surface-card p-2 border-round shadow-2 bg-white">
+                @if (product()!.images && product()!.images!.length > 0) {
+                <p-carousel [value]="product()!.images!" [numVisible]="1" [numScroll]="1" [circular]="true"
                     [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
                     <ng-template let-image pTemplate="item">
-                        <div class="flex justify-content-center">
-                            <img [src]="image" [alt]="product()?.name" class="w-full border-round"
-                                style="max-height: 500px; object-fit: contain;" loading="lazy">
-                        </div>
+                        <img [src]="image" [alt]="product()!.name" class="w-full border-round shadow-1"
+                            style="max-height: 500px; object-fit: contain;">
                     </ng-template>
                 </p-carousel>
+                } @else {
+                <img [src]="product()!.imageUrl" [alt]="product()!.name" class="w-full border-round shadow-1"
+                    style="max-height: 500px; object-fit: contain;">
+                }
             </div>
         </div>
 
-        <!-- Product Info -->
-        <div class="col-12 md:col-6 pl-md-5">
-            <h1 class="text-4xl font-bold mb-3">{{ product()?.name }}</h1>
-
-            <div class="flex align-items-center gap-3 mb-4">
-                <span class="text-3xl font-bold text-primary">{{ product()?.price | currency:'BDT':'symbol-narrow'
-                    }}</span>
+        <!-- Right Column: Product Info -->
+        <div class="col-12 md:col-6 md:pl-6">
+            <div class="flex align-items-center justify-content-between mb-4">
+                <h1 class="text-4xl font-bold m-0 text-900">{{ product()!.name }}</h1>
                 <p-tag [value]="isOutOfStock() ? 'Out of Stock' : 'In Stock'"
                     [severity]="isOutOfStock() ? 'danger' : 'success'"></p-tag>
             </div>
 
-            <div class="mb-5">
-                <h3 class="text-xl font-semibold mb-2">Description</h3>
-                <p class="line-height-3 text-700">{{ product()?.description }}</p>
+            <div class="text-3xl text-primary font-bold mb-4">
+                {{ product()!.price | currency:'BDT':'symbol-narrow' }}
             </div>
 
-            <div class="flex flex-column sm:flex-row gap-3 mt-5" *ngIf="!isOutOfStock()">
-                <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-lg flex-1"
-                    (click)="addToCart()"></button>
-
-                <button pButton label="Buy Now" icon="pi pi-check-circle" class="p-button-lg p-button-warning flex-1"
-                    (click)="buyNow()"></button>
+            <div class="text-700 text-lg line-height-3 mb-5">
+                {{ product()!.description }}
             </div>
 
-            <div class="mt-4 text-500 text-sm">
-                <i class="pi pi-info-circle mr-1"></i>
-                Delivery charges are calculated at checkout.
+            <div class="surface-border border-top-1 pt-5">
+                @if (!isOutOfStock()) {
+                <div class="flex flex-column sm:flex-row gap-3 mt-5">
+                    <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-lg flex-1"
+                        (click)="addToCart()"></button>
+
+                    <button pButton label="Buy Now" icon="pi pi-check-circle"
+                        class="p-button-lg p-button-warning flex-1" (click)="buyNow()"></button>
+                </div>
+                }
+
+                <div class="mt-6">
+                    <div class="flex align-items-center gap-3 text-600 mb-2">
+                        <i class="pi pi-truck text-xl"></i>
+                        <span>Fast Delivery Available</span>
+                    </div>
+                    <div class="flex align-items-center gap-3 text-600">
+                        <i class="pi pi-verified text-xl"></i>
+                        <span>100% Authentic Product</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    }
 
-    <div *ngIf="!loading() && !product()" class="text-center py-8">
-        <h2>Product not found</h2>
-        <button pButton label="Back to Home" icon="pi pi-home" routerLink="/"></button>
+    <!-- Fallback for null product -->
+    @if (!loading() && !product()) {
+    <div class="text-center py-8">
+        <i class="pi pi-exclamation-circle text-6xl text-600 mb-3"></i>
+        <h2 class="text-2xl text-600">Product not found</h2>
+        <button pButton label="Return Home" icon="pi pi-home" routerLink="/" class="mt-4"></button>
     </div>
+    }
 </div>

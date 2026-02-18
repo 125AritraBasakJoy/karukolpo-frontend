@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { Product } from '../../models/product.model';
@@ -16,12 +16,13 @@ import { of } from 'rxjs';
   selector: 'app-product-details',
   standalone: true,
   imports: [
-    CommonModule,
     ButtonModule,
     CarouselModule,
     TagModule,
     ProgressSpinnerModule,
-    ToastModule
+    ToastModule,
+    CurrencyPipe,
+    RouterLink
   ],
   templateUrl: './product-details.component.html',
   styleUrls: ['./product-details.component.scss']
@@ -114,5 +115,9 @@ export class ProductDetailsComponent implements OnInit {
       this.cartService.addToCart(p);
       this.router.navigate(['/cart']);
     }
+  }
+
+  goBack() {
+    this.router.navigate(['/']);
   }
 }

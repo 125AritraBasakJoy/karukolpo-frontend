@@ -78,3 +78,39 @@
 .transition-opacity {
     transition: opacity 0.2s ease-in-out;
 }
+
+.premium-input-group {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+
+    &:focus-within {
+        border-color: #3b82f6; // blue-500
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    // .p-inputgroup-addon {
+    //     background: rgba(255, 255, 255, 0.03) !important;
+    //     border: none !important;
+    //     border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    //     color: #94a3b8 !important; // slate-400
+    //     font-weight: 600;
+    //     font-size: 0.875rem;
+    //     letter-spacing: 0.025em;
+    //     padding-left: 1.25rem;
+    //     padding-right: 1.25rem;
+    // }
+
+    .premium-input {
+        border: none !important;
+        background: transparent !important;
+        padding-left: 1rem !important;
+
+        &:focus {
+            box-shadow: none !important;
+        }
+    }
+}

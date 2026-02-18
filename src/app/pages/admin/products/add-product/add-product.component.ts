@@ -82,8 +82,14 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
                 <div class="grid">
                     <div class="col-12 md:col-4">
                         <label for="price" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Price (BDT)</label>
-                        <p-inputNumber id="price" [(ngModel)]="product.price" mode="currency" currency="BDT" locale="en-BD" 
-                            styleClass="w-full" inputStyleClass="w-full premium-input" [style]="{'width':'100%'}"></p-inputNumber>
+                        <div class="p-inputgroup premium-input-group w-full">
+                            <span class="p-inputgroup-addon"></span>
+                            <p-inputNumber id="price" [(ngModel)]="product.price" mode="decimal" [useGrouping]="true" 
+                                [minFractionDigits]="isPriceFocused ? 0 : 2" [maxFractionDigits]="2"
+                                (onFocus)="isPriceFocused = true" (onBlur)="isPriceFocused = false"
+                                placeholder="0.00" styleClass="w-full" inputStyleClass="w-full premium-input" [style]="{'width':'100%'}"
+                                inputmode="decimal"></p-inputNumber>
+                        </div>
                     </div>
 
                     <div class="col-12 md:col-4">
@@ -162,11 +168,12 @@ export class AddProductComponent {
     product = {
         name: '',
         description: '',
-        price: 0
+        price: null as number | null
     };
 
     categories = signal<any[]>([]);
     selectedCategories: any[] = [];
+    isPriceFocused = false;
     loading = signal(false);
     productCreated = false;
     createdProductId: number | null = null;

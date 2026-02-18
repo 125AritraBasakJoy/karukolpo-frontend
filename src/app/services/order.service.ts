@@ -60,10 +60,10 @@ export class OrderService {
   /**
    * Get all orders
    * GET /orders
-   * Fetches all orders (default limit 10000) to allow client-side pagination 
+   * Fetches all orders (default limit 100) to allow client-side pagination
    * since backend does not return total count.
    */
-  getOrders(skip = 0, limit = 10000, forceRefresh = false): Observable<Order[]> {
+  getOrders(skip = 0, limit = 100, forceRefresh = false): Observable<Order[]> {
     if (!forceRefresh && this.ordersCache && skip === 0) {
       return of(this.ordersCache);
     }

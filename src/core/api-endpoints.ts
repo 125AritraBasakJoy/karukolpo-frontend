@@ -32,8 +32,9 @@ export const PRODUCTS_API = {
 
     // Product Images
     ADD_IMAGE: (productId: number | string) => `products/${productId}/images`,
-    REMOVE_IMAGE: (productId: number | string, imageId: number | string) => `products/${productId}/images/${imageId}`,
-    SET_PRIMARY_IMAGE: (productId: number | string, imageId: number | string) => `products/${productId}/images/${imageId}/set-primary`,
+    BULK_UPLOAD_IMAGES: (productId: number | string) => `products/${productId}/images/bulk`,
+    REMOVE_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}`,
+    SET_PRIMARY_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}/set-primary`,
 } as const;
 
 /**

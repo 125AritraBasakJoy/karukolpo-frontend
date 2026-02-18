@@ -178,6 +178,19 @@ export class ProductService {
   }
 
   /**
+   * Bulk upload images to product
+   * POST /products/{productId}/images/bulk
+   */
+  bulkUploadImages(productId: number | string, primaryFile: File, additionalFiles: File[]): Observable<any[]> {
+    const formData = new FormData();
+    formData.append('primary_image', primaryFile);
+    additionalFiles.forEach(file => {
+      formData.append('gallery_images', file);
+    });
+    return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.BULK_UPLOAD_IMAGES(productId), formData);
+  }
+
+  /**
    * Remove image from product
    * DELETE /products/{productId}/images/{imageId}
    */
@@ -234,9 +247,9 @@ export class ProductService {
 
   /**
    * Map backend product format to frontend format
+   * FIX: Added URL deduplication to prevent duplicate images in gallery
    */
   public mapBackendToFrontend(data: any): Product {
-    // Correct mapping for public API fields: available_quantity and is_in_stock
     const stock = data.stock_quantity ?? (
       data.available_quantity !== undefined ? data.available_quantity :
         (data.stock !== undefined ? data.stock : 0)
@@ -249,18 +262,28 @@ export class ProductService {
     let galleryImages: string[] = [];
 
     if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-      // Sort to find primary (is_primary=true) or just take first
+      // 1. Identify the primary image object
       const primaryImage = data.images.find((img: any) => img.is_primary) || data.images[0];
 
-      // Use large image for quality, fallbacks provided
       if (primaryImage) {
         mainImageUrl = primaryImage.image_large || primaryImage.image_medium || primaryImage.image_thumb || mainImageUrl;
       }
 
-      // Map all images for gallery
-      galleryImages = data.images.map((img: any) => img.image_large || img.image_medium || img.image_thumb).filter(Boolean);
+      // 2. Map all images and deduplicate URLs
+      // We use a Set to ensure that if 'image_large' and 'image_medium' are the same URL, 
+      // or if the backend returns duplicate image objects, they are filtered out.
+      const uniqueUrls = new Set<string>();
+
+      data.images.forEach((img: any) => {
+        // Collect all variants as they may contain distinct images
+        if (img.image_large) uniqueUrls.add(img.image_large);
+        if (img.image_medium) uniqueUrls.add(img.image_medium);
+        if (img.image_thumb) uniqueUrls.add(img.image_thumb);
+      });
+
+      galleryImages = Array.from(uniqueUrls);
+
     } else if (data.image) {
-      // Fallback for potentially flat image field
       mainImageUrl = data.image;
       galleryImages = [data.image];
     }
@@ -273,15 +296,14 @@ export class ProductService {
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
       imageUrl: mainImageUrl,
       images: galleryImages,
-      // Map category info
       categoryId: data.category_id?.toString() ||
         (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : 'uncategorized'),
-      // Store full categories array if available
       categories: data.categories || [],
       stock: parseInt(String(stock), 10),
       manualStockStatus: manualStatus
     };
-  };
+  }
+
 
 
   /**
@@ -291,10 +313,7 @@ export class ProductService {
     return {
       name: product.name,
       price: product.price,
-      description: product.description || null,
-      category_id: product.categoryId ? product.categoryId : null,
-      image_url: product.imageUrl || null,
-      images: product.images || []
+      description: product.description || null
     };
   }
 }

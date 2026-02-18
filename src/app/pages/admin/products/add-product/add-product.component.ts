@@ -14,7 +14,7 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { InventoryModalComponent } from '../inventory-modal/inventory-modal.component';
-import { forkJoin, of } from 'rxjs';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 @Component({
@@ -241,121 +241,57 @@ export class AddProductComponent {
         });
     }
 
-    createProduct() {
+    async createProduct() {
         if (!this.product.name || !this.product.price) {
             this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Name and Price are required' });
             return;
         }
 
         this.loading.set(true);
-        console.log('Creating Product:', this.product);
-        console.log('Selected Categories:', this.selectedCategories);
+        try {
+            console.log('Creating Product Metadata...');
 
-        // 1. Create Product
-        const productPayload: any = { ...this.product };
-        if (this.selectedCategories && this.selectedCategories.length > 0) {
-            productPayload.categoryId = this.selectedCategories[0];
-        }
+            // 1. Create Product Metadata
+            const productPayload: any = { ...this.product };
+            const createdProduct = await firstValueFrom(this.productService.addProduct(productPayload));
+            this.createdProductId = parseInt(createdProduct.id);
+            const productId = this.createdProductId;
 
-        this.productService.addProduct(productPayload).pipe(
-            switchMap((createdProduct) => {
-                console.log('Product Created:', createdProduct);
-                this.createdProductId = parseInt(createdProduct.id);
-                const productId = this.createdProductId;
-                console.log('Parsed ProductID:', productId);
+            console.log('Product Created with ID:', productId);
 
-                const tasks = [];
-
-                // 2. Link Categories if selected
-                if (this.selectedCategories && this.selectedCategories.length > 0) {
-                    console.log('Processing Categories:', this.selectedCategories);
-
-                    if (this.selectedCategories.length === 1) {
-                        // Single category
-                        const catId = parseInt(this.selectedCategories[0].toString(), 10);
-                        console.log('Adding Single Category:', catId);
-
-                        tasks.push(
-                            this.productService.addCategoryToProduct(productId, catId)
-                                .pipe(
-                                    tap(() => console.log('Single Category Added')),
-                                    catchError(err => {
-                                        console.error('Error adding single category', err);
-                                        return of({ error: 'category', err });
-                                    })
-                                )
-                        );
-                    } else {
-                        // Multiple categories
-                        const categoryIds = this.selectedCategories
-                            .map(c => parseInt(c.toString(), 10))
-                            .filter(id => !isNaN(id));
-
-                        console.log('Adding Multiple Categories:', categoryIds);
-
-                        if (categoryIds.length === 0) {
-                            console.warn('No valid category IDs found after parsing');
-                        } else {
-                            tasks.push(
-                                this.productService.addMultipleCategoriesToProduct(productId, categoryIds)
-                                    .pipe(
-                                        tap(() => console.log('Multiple Categories Added')),
-                                        catchError(err => {
-                                            console.error('Error adding multiple categories', err);
-                                            return of({ error: 'category_multiple', err });
-                                        })
-                                    )
-                            );
-                        }
-                    }
-                } else {
-                    console.warn('No categories selected to add.');
+            // 2. Add Category Links
+            if (this.selectedCategories && this.selectedCategories.length > 0) {
+                const categoryIds = this.selectedCategories.map(c => parseInt(c.toString(), 10)).filter(id => !isNaN(id));
+                if (categoryIds.length > 0) {
+                    await firstValueFrom(this.productService.addMultipleCategoriesToProduct(productId, categoryIds));
+                    console.log('Categories linked');
                 }
-
-                // 3. Upload Main Image
-                if (this.selectedMainFile) {
-                    tasks.push(
-                        this.productService.addImage(productId, this.selectedMainFile).pipe(
-                            switchMap(img => {
-                                if (img && img.id) {
-                                    return this.productService.setPrimaryImage(productId, img.id);
-                                }
-                                return of(null);
-                            }),
-                            catchError(err => of({ error: 'main_image', err }))
-                        )
-                    );
-                }
-
-                // 4. Upload Additional Images
-                this.selectedAdditionalFiles.forEach(file => {
-                    tasks.push(
-                        this.productService.addImage(productId, file)
-                            .pipe(catchError(err => of({ error: 'additional_image', err })))
-                    );
-                });
-
-                return forkJoin(tasks.length ? tasks : [of(null)]);
-            })
-        ).subscribe({
-            next: (results) => {
-                this.loading.set(false);
-                this.productCreated = true;
-
-                // Check for partial failures
-                const errors = (results as any[]).filter(r => r && r.error);
-                if (errors.length > 0) {
-                    this.messageService.add({ severity: 'warn', summary: 'Partial Success', detail: 'Product created but some images/categories failed.' });
-                } else {
-                    this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully' });
-                }
-            },
-            error: (err) => {
-                this.loading.set(false);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create product' });
-                console.error(err);
             }
-        });
+
+            // 3. Bulk Upload Images
+            if (this.selectedMainFile) {
+                console.log('Uploading images in bulk...');
+                const uploadedImages = await firstValueFrom(
+                    this.productService.bulkUploadImages(productId, this.selectedMainFile, this.selectedAdditionalFiles)
+                );
+                console.log('Bulk upload complete:', uploadedImages);
+            } else if (this.selectedAdditionalFiles.length > 0) {
+                // Pick first additional as primary if main is missing? 
+                // Or show error. The user screenshot showed a primary image was selected.
+                // Let's require the main image for now to satisfy the backend.
+                this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Main image is required' });
+                this.loading.set(false);
+                return;
+            }
+
+            this.productCreated = true;
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully' });
+        } catch (error) {
+            console.error('Error in product creation flow:', error);
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create product or upload images' });
+        } finally {
+            this.loading.set(false);
+        }
     }
 
     openInventoryModal() {

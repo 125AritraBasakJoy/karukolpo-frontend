@@ -138,7 +138,7 @@
                             class="cart-item flex align-items-center gap-4 py-3" [class.border-bottom-1]="!last"
                             [class.surface-border]="!last">
                             <img [src]="item.product.imageUrl" [alt]="item.product.name"
-                                class="cart-item-image border-round shadow-1">
+                                class="cart-item-image border-round shadow-1" loading="lazy">
 
                             <div class="flex-grow-1">
                                 <div class="font-bold text-lg mb-1">{{ item.product.name }}</div>
@@ -317,7 +317,7 @@
                                     [class.active]="selectedPaymentMethod === 'bKash'"
                                     (click)="selectedPaymentMethod = 'bKash'">
                                     <div class="bg-pink-900/20 p-3 border-circle">
-                                        <img src="assets/bkash-logo.png" alt="bKash" height="30">
+                                        <img src="assets/bkash-logo.png" alt="bKash" height="30" loading="lazy">
                                     </div>
                                     <div class="font-bold text-color">bKash Payment</div>
                                 </div>
@@ -333,7 +333,7 @@
                                     <span class="text-pink-400 font-bold text-sm">Scan to Pay</span>
                                 </div>
                                 <img src="assets/bkash-qr.png" alt="bKash QR" width="160"
-                                    class="border-round shadow-2 block mx-auto bg-white p-2">
+                                    class="border-round shadow-2 block mx-auto bg-white p-2" loading="lazy">
                             </div>
 
                             <div class="p-fluid">

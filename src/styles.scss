@@ -707,7 +707,6 @@ textarea {
     background: rgba(2, 6, 23, 0.5) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 12px !important;
-    padding: 0.85rem 1rem 0.85rem 3rem !important;
     color: white !important;
 
     &:focus {
@@ -719,8 +718,8 @@ textarea {
 /* Input Icon positioning helper */
 .p-input-icon-left {
     position: relative;
-    display: block;
-    width: 100%;
+    display: inline-block;
+    width: auto;
 
     i {
         position: absolute;
@@ -730,6 +729,10 @@ textarea {
         color: #64748b;
         z-index: 1;
         font-size: 1.1rem;
+    }
+
+    .p-inputtext {
+        padding-left: 3rem !important;
     }
 }
 
@@ -899,6 +902,7 @@ textarea {
         }
     }
 }
+
 /* Notification Panel Theme */
 .notification-panel {
     background: rgba(15, 23, 42, 0.8) !important;
@@ -907,18 +911,19 @@ textarea {
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 16px !important;
     box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5) !important;
-    
+
     .p-overlaypanel-content {
         padding: 0 !important;
         background: transparent !important;
     }
-    
+
     .p-overlaypanel-close {
         display: none !important;
     }
 
     /* Arrow styling */
-    &:after, &:before {
+    &:after,
+    &:before {
         display: none !important;
     }
 }

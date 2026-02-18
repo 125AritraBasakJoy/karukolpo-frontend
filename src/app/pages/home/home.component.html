@@ -50,7 +50,7 @@
 
                     <div class="relative mb-3 cursor-pointer" (click)="showProductDetails(product)">
                         <img [src]="product.imageUrl" [alt]="product.name" class="w-full border-round"
-                            style="height: 200px; object-fit: cover;">
+                            style="height: 200px; object-fit: cover;" loading="lazy">
                     </div>
                     <div class="flex-grow-1">
                         <div class="text-xl font-bold mb-2">{{ product.name }}</div>
@@ -77,113 +77,125 @@
 <!-- Checkout Modal (Step 1: Shipping) -->
 <p-dialog [(visible)]="displayCheckoutModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
     header="Checkout" [dismissableMask]="false">
-    <div class="grid">
-        <!-- Cart Summary -->
-        <div class="col-12 mb-4">
-            <div class="surface-card p-3 border-round shadow-1">
-                <div *ngFor="let item of cartService.cart()"
-                    class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
-                    <div class="flex align-items-center gap-3">
-                        <img [src]="item.product.imageUrl" class="w-3rem h-3rem border-round object-cover">
-                        <div>
-                            <div class="font-bold">{{ item.product.name }}</div>
-                            <div class="text-sm text-600">{{ item.product.price | currency:'BDT':'symbol-narrow' }} x {{
-                                item.quantity }}</div>
+    <ng-template pTemplate="content">
+        <div class="grid">
+            <!-- Cart Summary -->
+            <div class="col-12 mb-4">
+                <div class="surface-card p-3 border-round shadow-1">
+                    <div *ngFor="let item of cartService.cart()"
+                        class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                        <div class="flex align-items-center gap-3">
+                            <img [src]="item.product.imageUrl" class="w-3rem h-3rem border-round object-cover"
+                                loading="lazy">
+                            <div>
+                                <div class="font-bold">{{ item.product.name }}</div>
+                                <div class="text-sm text-600">{{ item.product.price | currency:'BDT':'symbol-narrow' }}
+                                    x {{
+                                    item.quantity }}</div>
+                            </div>
+                        </div>
+                        <div class="flex align-items-center gap-2">
+                            <button pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
+                                (click)="updateQuantity(item, -1)"></button>
+                            <span class="font-bold w-2rem text-center">{{ item.quantity }}</span>
+                            <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
+                                (click)="updateQuantity(item, 1)"></button>
                         </div>
                     </div>
-                    <div class="flex align-items-center gap-2">
-                        <button pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
-                            (click)="updateQuantity(item, -1)"></button>
-                        <span class="font-bold w-2rem text-center">{{ item.quantity }}</span>
-                        <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
-                            (click)="updateQuantity(item, 1)"></button>
+                    <div class="flex justify-content-between mt-3">
+                        <span>Subtotal</span>
+                        <span class="font-bold">{{ getSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
+                    </div>
+                    <div class="flex justify-content-between mt-2">
+                        <span>Delivery Charge</span>
+                        <span class="font-bold">{{ currentDeliveryCharge | currency:'BDT':'symbol-narrow' }}</span>
+                    </div>
+                    <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl font-bold">
+                        <span>Total</span>
+                        <span class="text-primary">{{ getTotalPrice() | currency:'BDT':'symbol-narrow' }}</span>
                     </div>
                 </div>
-                <div class="flex justify-content-between mt-3">
-                    <span>Subtotal</span>
-                    <span class="font-bold">{{ getSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
-                </div>
-                <div class="flex justify-content-between mt-2">
-                    <span>Delivery Charge</span>
-                    <span class="font-bold">{{ currentDeliveryCharge | currency:'BDT':'symbol-narrow' }}</span>
-                </div>
-                <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl font-bold">
-                    <span>Total</span>
-                    <span class="text-primary">{{ getTotalPrice() | currency:'BDT':'symbol-narrow' }}</span>
-                </div>
             </div>
-        </div>
 
-        <!-- Shipping Form -->
-        <div class="col-12">
-            <div class="p-fluid">
-                <div class="field">
-                    <label for="field_fullname">Full Name <span class="text-red-500">*</span></label>
-                    <input pInputText id="field_fullname" [(ngModel)]="checkoutForm.fullName"
-                        placeholder="Enter your name" required class="w-full" #fullName="ngModel">
-                    <small class="p-error" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full Name is
-                        required.</small>
-                </div>
-                <div class="field">
-                    <label for="field_phone">Phone Number <span class="text-red-500">*</span></label>
-                    <input pInputText id="field_phone" [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..."
-                        maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$" class="w-full">
-                    <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid Phone Number is
-                        required.</small>
-                </div>
-                <div class="field">
-                    <label for="field_email">Email <span class="text-red-500">*</span></label>
-                    <input pInputText id="field_email" [(ngModel)]="checkoutForm.email" placeholder="example@email.com"
-                        required email class="w-full" #email="ngModel">
-                    <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Valid Email is
-                        required.</small>
-                </div>
+            <!-- Shipping Form -->
+            <div class="col-12">
+                <div class="p-fluid">
+                    <div class="field">
+                        <label for="field_fullname">Full Name <span class="text-red-500">*</span></label>
+                        <input pInputText id="field_fullname" [(ngModel)]="checkoutForm.fullName"
+                            placeholder="Enter your name" required class="w-full" #fullName="ngModel">
+                        <small class="p-error" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full
+                            Name is
+                            required.</small>
+                    </div>
+                    <div class="field">
+                        <label for="field_phone">Phone Number <span class="text-red-500">*</span></label>
+                        <input pInputText id="field_phone" [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..."
+                            maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$"
+                            class="w-full">
+                        <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid Phone
+                            Number is
+                            required.</small>
+                    </div>
+                    <div class="field">
+                        <label for="field_email">Email <span class="text-red-500">*</span></label>
+                        <input pInputText id="field_email" [(ngModel)]="checkoutForm.email"
+                            placeholder="example@email.com" required email class="w-full" #email="ngModel">
+                        <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Valid Email is
+                            required.</small>
+                    </div>
 
 
 
-                <div class="formgrid grid">
-                    <div class="field col-6">
-                        <label for="field_district">District <span class="text-red-500">*</span></label>
-                        <p-dropdown inputId="field_district" [options]="districts" optionLabel="name" optionValue="name"
-                            [(ngModel)]="checkoutForm.district" (onChange)="onDistrictChange($event)"
-                            placeholder="Select District" appendTo="body" required #district="ngModel"
-                            styleClass="w-full" [style]="{'width':'100%'}" [filter]="true" filterBy="name"></p-dropdown>
-                        <small class="p-error" *ngIf="district.invalid && (district.dirty || district.touched)">District
+                    <div class="formgrid grid">
+                        <div class="field col-6">
+                            <label for="field_district">District <span class="text-red-500">*</span></label>
+                            <p-dropdown inputId="field_district" [options]="districts" optionLabel="name"
+                                optionValue="name" [(ngModel)]="checkoutForm.district"
+                                (onChange)="onDistrictChange($event)" placeholder="Select District" appendTo="body"
+                                required #district="ngModel" styleClass="w-full" [style]="{'width':'100%'}"
+                                [filter]="true" filterBy="name"></p-dropdown>
+                            <small class="p-error"
+                                *ngIf="district.invalid && (district.dirty || district.touched)">District
+                                is required.</small>
+                        </div>
+                        <div class="field col-6">
+                            <label>Sub-District <span class="text-red-500"
+                                    *ngIf="subDistricts.length > 0">*</span></label>
+                            <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
+                                placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
+                                [required]="subDistricts.length > 0" styleClass="w-full" [style]="{'width':'100%'}"
+                                [filter]="true"></p-dropdown>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="field_postal">Postal Code</label>
+                        <input pInputText id="field_postal" [(ngModel)]="checkoutForm.postalCode" placeholder="1234"
+                            maxlength="4" pattern="\d{4}" #postal="ngModel" class="w-full">
+                        <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid Postal
+                            Code
                             is required.</small>
                     </div>
-                    <div class="field col-6">
-                        <label>Sub-District <span class="text-red-500" *ngIf="subDistricts.length > 0">*</span></label>
-                        <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
-                            placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
-                            [required]="subDistricts.length > 0" styleClass="w-full" [style]="{'width':'100%'}"
-                            [filter]="true"></p-dropdown>
+                    <div class="field">
+                        <label for="field_address">Full Address <span class="text-red-500">*</span></label>
+                        <textarea pInputTextarea id="field_address" [(ngModel)]="checkoutForm.fullAddress" rows="2"
+                            placeholder="House, Road, Area..." required #address="ngModel" class="w-full"></textarea>
+                        <small class="p-error" *ngIf="address.invalid && (address.dirty || address.touched)">Full
+                            Address is
+                            required.</small>
                     </div>
-                </div>
-                <div class="field">
-                    <label for="field_postal">Postal Code</label>
-                    <input pInputText id="field_postal" [(ngModel)]="checkoutForm.postalCode" placeholder="1234"
-                        maxlength="4" pattern="\d{4}" #postal="ngModel" class="w-full">
-                    <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid Postal Code
-                        is required.</small>
-                </div>
-                <div class="field">
-                    <label for="field_address">Full Address <span class="text-red-500">*</span></label>
-                    <textarea pInputTextarea id="field_address" [(ngModel)]="checkoutForm.fullAddress" rows="2"
-                        placeholder="House, Road, Area..." required #address="ngModel" class="w-full"></textarea>
-                    <small class="p-error" *ngIf="address.invalid && (address.dirty || address.touched)">Full Address is
-                        required.</small>
-                </div>
 
-                <div class="field">
-                    <label for="field_info">Additional Info (Optional)</label>
-                    <textarea pInputTextarea id="field_info" [(ngModel)]="checkoutForm.additionalInfo" rows="2"
-                        placeholder="Landmarks, special instructions..." class="w-full"></textarea>
-                </div>
+                    <div class="field">
+                        <label for="field_info">Additional Info (Optional)</label>
+                        <textarea pInputTextarea id="field_info" [(ngModel)]="checkoutForm.additionalInfo" rows="2"
+                            placeholder="Landmarks, special instructions..." class="w-full"></textarea>
+                    </div>
 
-                <button pButton label="Place Order" class="w-full p-button-lg mt-4" (click)="placeOrder()"></button>
+                    <button pButton label="Place Order" class="w-full p-button-lg mt-4" (click)="placeOrder()"></button>
+                </div>
             </div>
         </div>
-    </div>
+    </ng-template>
 </p-dialog>
 
 <!-- Track Order Modal -->
@@ -234,80 +246,84 @@
 <!-- Order Success & Payment Selection Modal -->
 <p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}"
     header="Order Created!" [closable]="false" styleClass="premium-dialog" (onShow)="selectedPaymentMethod = null">
-    <div class="p-fluid">
-        <div class="text-center mb-4">
-            <div class="flex justify-content-center mb-3">
-                <div class="bg-green-100 border-circle flex align-items-center justify-content-center"
-                    style="width: 80px; height: 80px;">
-                    <i class="pi pi-check text-4xl text-green-600"></i>
+    <ng-template pTemplate="content">
+        <div class="p-fluid">
+            <div class="text-center mb-4">
+                <div class="flex justify-content-center mb-3">
+                    <div class="bg-green-100 border-circle flex align-items-center justify-content-center"
+                        style="width: 80px; height: 80px;">
+                        <i class="pi pi-check text-4xl text-green-600"></i>
+                    </div>
                 </div>
+                <h2 class="m-0 text-900 font-bold">Excellent choice!</h2>
+                <p class="text-600 mt-2">One more step to complete your purchase. Please select your preferred payment
+                    method.</p>
             </div>
-            <h2 class="m-0 text-900 font-bold">Excellent choice!</h2>
-            <p class="text-600 mt-2">One more step to complete your purchase. Please select your preferred payment
-                method.</p>
-        </div>
 
-        <div class="surface-ground p-4 border-round-xl">
-            <h3 class="mt-0 mb-4 text-center font-bold text-900">Choose Payment Method</h3>
-            <div class="grid">
-                <div class="col-6">
-                    <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
-                        [class.active]="selectedPaymentMethod === 'COD'" (click)="selectedPaymentMethod = 'COD'">
-                        <div class="bg-primary-reverse-100 p-3 border-circle">
-                            <i class="pi pi-money-bill text-3xl text-primary"></i>
+            <div class="surface-ground p-4 border-round-xl">
+                <h3 class="mt-0 mb-4 text-center font-bold text-900">Choose Payment Method</h3>
+                <div class="grid">
+                    <div class="col-6">
+                        <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                            [class.active]="selectedPaymentMethod === 'COD'" (click)="selectedPaymentMethod = 'COD'">
+                            <div class="bg-primary-reverse-100 p-3 border-circle">
+                                <i class="pi pi-money-bill text-3xl text-primary"></i>
+                            </div>
+                            <div class="font-bold text-color">Cash on Delivery</div>
                         </div>
-                        <div class="font-bold text-color">Cash on Delivery</div>
                     </div>
-                </div>
-                <div class="col-6">
-                    <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
-                        [class.active]="selectedPaymentMethod === 'bKash'" (click)="selectedPaymentMethod = 'bKash'">
-                        <div class="bg-pink-900/20 p-3 border-circle">
-                            <img src="assets/bkash-logo.png" alt="bKash" height="30">
+                    <div class="col-6">
+                        <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                            [class.active]="selectedPaymentMethod === 'bKash'"
+                            (click)="selectedPaymentMethod = 'bKash'">
+                            <div class="bg-pink-900/20 p-3 border-circle">
+                                <img src="assets/bkash-logo.png" alt="bKash" height="30" loading="lazy">
+                            </div>
+                            <div class="font-bold text-color">bKash Payment</div>
                         </div>
-                        <div class="font-bold text-color">bKash Payment</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- bKash Details Area -->
-            <div *ngIf="selectedPaymentMethod === 'bKash'"
-                class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
-                <div class="text-center mb-4">
-                    <div
-                        class="inline-flex align-items-center justify-content-center surface-100 px-3 py-1 border-round-pill mb-3">
-                        <span class="text-pink-400 font-bold text-sm">Scan to Pay</span>
+                <!-- bKash Details Area -->
+                <div *ngIf="selectedPaymentMethod === 'bKash'"
+                    class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
+                    <div class="text-center mb-4">
+                        <div
+                            class="inline-flex align-items-center justify-content-center surface-100 px-3 py-1 border-round-pill mb-3">
+                            <span class="text-pink-400 font-bold text-sm">Scan to Pay</span>
+                        </div>
+                        <img src="assets/bkash-qr.png" alt="bKash QR" width="160"
+                            class="border-round shadow-2 block mx-auto bg-white p-2" loading="lazy">
                     </div>
-                    <img src="assets/bkash-qr.png" alt="bKash QR" width="160"
-                        class="border-round shadow-2 block mx-auto bg-white p-2">
+
+                    <div class="field mb-4">
+                        <label class="font-bold text-color block mb-2">Your bKash Number</label>
+                        <input pInputText [(ngModel)]="bkashPhone" placeholder="017XXXXXXXX" maxlength="11"
+                            class="w-full py-3">
+                    </div>
+                    <div class="field mb-4">
+                        <label class="font-bold text-color block mb-2">Transaction ID</label>
+                        <input pInputText [(ngModel)]="bkashTrxId" placeholder="Enter 10-digit ID" class="w-full py-3">
+                    </div>
+                    <button pButton label="Complete Payment" icon="pi pi-shield"
+                        class="p-button-danger p-button-lg w-full mt-2" (click)="submitBkashPayment()"
+                        [disabled]="!bkashPhone || !bkashTrxId"></button>
                 </div>
 
-                <div class="field mb-4">
-                    <label class="font-bold text-color block mb-2">Your bKash Number</label>
-                    <input pInputText [(ngModel)]="bkashPhone" placeholder="017XXXXXXXX" maxlength="11"
-                        class="w-full py-3">
+                <!-- COD Action Area -->
+                <div *ngIf="selectedPaymentMethod === 'COD'" class="mt-4 bkash-details-area">
+                    <div class="surface-section p-3 border-round-lg mb-4 text-center border-1 surface-border">
+                        <p class="text-color-secondary m-0">You will pay the total amount to the delivery person when
+                            your
+                            package
+                            arrives.</p>
+                    </div>
+                    <button pButton label="Confirm COD Order" icon="pi pi-check" class="p-button-lg w-full"
+                        (click)="confirmCOD()"></button>
                 </div>
-                <div class="field mb-4">
-                    <label class="font-bold text-color block mb-2">Transaction ID</label>
-                    <input pInputText [(ngModel)]="bkashTrxId" placeholder="Enter 10-digit ID" class="w-full py-3">
-                </div>
-                <button pButton label="Complete Payment" icon="pi pi-shield"
-                    class="p-button-danger p-button-lg w-full mt-2" (click)="submitBkashPayment()"
-                    [disabled]="!bkashPhone || !bkashTrxId"></button>
-            </div>
-
-            <!-- COD Action Area -->
-            <div *ngIf="selectedPaymentMethod === 'COD'" class="mt-4 bkash-details-area">
-                <div class="surface-section p-3 border-round-lg mb-4 text-center border-1 surface-border">
-                    <p class="text-color-secondary m-0">You will pay the total amount to the delivery person when your
-                        package
-                        arrives.</p>
-                </div>
-                <button pButton label="Confirm COD Order" icon="pi pi-check" class="p-button-lg w-full"
-                    (click)="confirmCOD()"></button>
             </div>
         </div>
-    </div>
+    </ng-template>
 </p-dialog>
 
 <!-- Final Global Success Modal -->

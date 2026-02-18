@@ -239,7 +239,12 @@ export class AddProductComponent {
         console.log('Selected Categories:', this.selectedCategories);
 
         // 1. Create Product
-        this.productService.addProduct(this.product as any).pipe(
+        const productPayload: any = { ...this.product };
+        if (this.selectedCategories && this.selectedCategories.length > 0) {
+            productPayload.categoryId = this.selectedCategories[0];
+        }
+
+        this.productService.addProduct(productPayload).pipe(
             switchMap((createdProduct) => {
                 console.log('Product Created:', createdProduct);
                 this.createdProductId = parseInt(createdProduct.id);

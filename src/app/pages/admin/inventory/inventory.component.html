@@ -68,7 +68,7 @@
                     </td>
                     <td>
                         <div class="product-img-container">
-                            <img [src]="product.imageUrl" [alt]="product.name" class="product-img" />
+                            <img [src]="product.imageUrl" [alt]="product.name" class="product-img" loading="lazy" />
                         </div>
                     </td>
                     <td>
@@ -188,7 +188,7 @@
                 <div *ngIf="productForm.imageUrl"
                     class="surface-card p-3 border-round shadow-2 w-full text-center mt-2">
                     <img [src]="productForm.imageUrl" alt="Preview"
-                        style="max-height: 200px; max-width: 100%; object-fit: contain;">
+                        style="max-height: 200px; max-width: 100%; object-fit: contain;" loading="lazy">
                 </div>
             </div>
         </div>

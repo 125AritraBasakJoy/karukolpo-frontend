@@ -72,11 +72,11 @@ import { MultiSelectModule } from 'primeng/multiselect';
                 <ng-template pTemplate="caption">
                     <div class="flex align-items-center justify-content-between py-2">
                         <h5 class="m-0 text-xl font-semibold">Manage List</h5>
-                        <div class="search-container">
-                            <i class="pi pi-search search-icon"></i>
+                        <div class="p-input-icon-left ml-auto w-auto">
+                            <i class="pi pi-search"></i>
                             <input pInputText type="text" 
                                 (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
-                                placeholder="Search Categories..." class="search-input" />
+                                placeholder="Search Categories..." class="premium-input" />
                         </div>
                     </div>
                 </ng-template>
@@ -100,7 +100,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
                             </div>
                         </td>
                         <td>
-                            <code class="slug-tag">{{category.slug}}</code>
+                            <code class="slug-tag">{{category.slug || 'no-identifier'}}</code>
                         </td>
                         <td>
                             <div class="flex justify-content-center gap-2">

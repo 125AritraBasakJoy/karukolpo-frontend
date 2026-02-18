@@ -188,6 +188,15 @@ export class CategoryService {
      * Generate URL-friendly slug from category name
      */
     private generateSlug(name: string): string {
-        return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        if (!name) return 'category';
+        // Replace spaces and special URL-unsafe chars with hyphens
+        // but try to keep Unicode characters if they are roughly word-like
+        let slug = name.toLowerCase()
+            .trim()
+            .replace(/[\s\t\n\r]+/g, '-')       // spaces/tabs/newlines to hyphens
+            .replace(/[^\w\u00C0-\u1FFF\u2C00-\uD7FF-]+/g, '') // keep word chars, hyphens, and most Unicode ranges
+            .replace(/-+/g, '-');               // collapse multiple hyphens
+
+        return slug || 'category';
     }
 }

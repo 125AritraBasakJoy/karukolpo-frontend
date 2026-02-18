@@ -97,6 +97,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
                                 <img [src]="mainImagePreview" alt="Preview" class="max-w-full h-full object-contain">
                                 <div class="absolute inset-0 bg-black-alpha-40 flex align-items-center justify-content-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text text-white" (click)="mainFileInput.click()"></button>
+                                    <button pButton icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text text-white ml-2" (click)="removeMainImage()"></button>
                                 </div>
                             </div>
                         </div>
@@ -200,6 +201,11 @@ export class AddProductComponent {
                 this.mainImagePreview = base64 as string;
             });
         }
+    }
+
+    removeMainImage() {
+        this.selectedMainFile = null;
+        this.mainImagePreview = null;
     }
 
     onAdditionalImageSelect(event: any) {

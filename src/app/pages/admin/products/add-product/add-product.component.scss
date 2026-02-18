@@ -64,3 +64,17 @@
         border-radius: 10px;
     }
 }
+
+.group {
+    position: relative;
+
+    &:hover {
+        .group-hover\:opacity-100 {
+            opacity: 1 !important;
+        }
+    }
+}
+
+.transition-opacity {
+    transition: opacity 0.2s ease-in-out;
+}

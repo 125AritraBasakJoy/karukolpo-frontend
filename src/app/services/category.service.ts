@@ -6,6 +6,7 @@ import { Product } from '../models/product.model';
 import { ApiService } from './api.service';
 import { ProductService } from './product.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
+import { signal } from '@angular/core';
 
 /**
  * CategoryService - Backend API Integration
@@ -14,17 +15,45 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
     providedIn: 'root'
 })
 export class CategoryService {
+    private readonly CACHE_KEY = 'karukolpo_categories_cache';
+    public categories = signal<Category[]>(this.loadFromCache());
 
     constructor(
         private apiService: ApiService,
         private productService: ProductService
-    ) { }
+    ) {
+        // Background refresh on service initialization
+        this.refreshCache();
+    }
 
     /**
      * Clear service-related caches
      */
     clearCache() {
         this.productService.clearCache();
+        localStorage.removeItem(this.CACHE_KEY);
+        this.categories.set([]);
+        this.refreshCache();
+    }
+
+    private loadFromCache(): Category[] {
+        try {
+            const cached = localStorage.getItem(this.CACHE_KEY);
+            return cached ? JSON.parse(cached) : [];
+        } catch (e) {
+            console.warn('CategoryService: Failed to load categories from cache', e);
+            return [];
+        }
+    }
+
+    private refreshCache() {
+        this.getCategories().subscribe({
+            next: (cats) => {
+                this.categories.set(cats);
+                localStorage.setItem(this.CACHE_KEY, JSON.stringify(cats));
+            },
+            error: (err) => console.error('CategoryService: Background refresh failed', err)
+        });
     }
 
     /**
@@ -62,7 +91,8 @@ export class CategoryService {
     addCategory(category: Category): Observable<Category> {
         const backendCategory = { name: category.name };
         return this.apiService.post<any>(API_ENDPOINTS.CATEGORIES.CREATE, backendCategory).pipe(
-            map(cat => this.mapBackendToFrontend(cat))
+            map(cat => this.mapBackendToFrontend(cat)),
+            tap(() => this.refreshCache())
         );
     }
 
@@ -74,7 +104,8 @@ export class CategoryService {
         const categoryId = typeof category.id === 'string' ? parseInt(category.id, 10) : category.id;
         const backendCategory = { name: category.name };
         return this.apiService.patch<any>(API_ENDPOINTS.CATEGORIES.UPDATE(categoryId), backendCategory).pipe(
-            map(cat => this.mapBackendToFrontend(cat))
+            map(cat => this.mapBackendToFrontend(cat)),
+            tap(() => this.refreshCache())
         );
     }
 
@@ -84,7 +115,9 @@ export class CategoryService {
      */
     deleteCategory(id: number | string): Observable<void> {
         const categoryId = typeof id === 'string' ? parseInt(id, 10) : id;
-        return this.apiService.delete<void>(API_ENDPOINTS.CATEGORIES.DELETE(categoryId));
+        return this.apiService.delete<void>(API_ENDPOINTS.CATEGORIES.DELETE(categoryId)).pipe(
+            tap(() => this.refreshCache())
+        );
     }
 
     /**

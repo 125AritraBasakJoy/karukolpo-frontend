@@ -284,7 +284,7 @@ export class ProductService {
       id: data.id?.toString() || '',
       code: data.code || `PROD-${data.id}`,
       name: data.name || '',
-      description: data.description || '',
+      description: data.description ? this.decodeHtml(data.description) : '',
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
       imageUrl: mainImageUrl,
       images: galleryImages,
@@ -297,6 +297,22 @@ export class ProductService {
   }
 
 
+
+  /**
+   * Helper to decode HTML entities (e.g., &lt; to <)
+   * This handles double-encoded content from backends or manual entries.
+   */
+  private decodeHtml(html: string): string {
+    if (!html) return '';
+    try {
+      const txt = document.createElement("textarea");
+      txt.innerHTML = html;
+      return txt.value;
+    } catch (e) {
+      console.warn('HTML decoding failed:', e);
+      return html;
+    }
+  }
 
   /**
    * Map frontend product format to backend format

@@ -128,7 +128,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.categoryImages[categoryName] || 'assets/category-default.jpg';
   }
 
-  categories = signal<Category[]>([]);
+  categories = this.categoryService.categories;
   selectedCategory: Category | null = null;
   filteredProducts = signal<Product[]>([]);
   dropdownOpen = false;
@@ -191,7 +191,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadProducts();
     this.loadLandingPageConfig();
     this.loadDeliveryCharges();
-    this.loadCategories();
 
     // Check for checkout query param
     this.route.queryParams.subscribe(params => {
@@ -211,9 +210,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadCategories() {
-    this.categoryService.getCategories().subscribe(cats => this.categories.set(cats));
-  }
 
   loadDeliveryCharges() {
     // Initial default set to 0 as requested

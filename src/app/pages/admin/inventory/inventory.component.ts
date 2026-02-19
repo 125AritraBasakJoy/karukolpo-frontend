@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 import { ValidationMessageComponent } from '../../../components/validation-message/validation-message.component';
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { ProductService } from '../../../services/product.service';
@@ -330,73 +331,43 @@ export class InventoryComponent implements OnInit {
   }
 
   // Step 2: Media & Category
-  saveProductStep2() {
+  async saveProductStep2() {
     if (!this.createdProduct) return;
     const productId = this.createdProduct.id;
 
-    // 1. Handle Category Linking
-    const categoryObservable = this.productForm.categoryId
-      ? this.productService.addCategoryToProduct(productId, parseInt(this.productForm.categoryId, 10)).pipe(
-        catchError(err => {
+    try {
+      // 1. Handle Category Linking
+      if (this.productForm.categoryId) {
+        try {
+          await firstValueFrom(
+            this.productService.addCategoryToProduct(productId, parseInt(this.productForm.categoryId, 10))
+          );
+          console.log('Category linked successfully');
+        } catch (err) {
           console.error('Category linking failed:', err);
-          return of({ error: 'category', details: err });
-        })
-      )
-      : of(null);
-
-    // 2. Handle Image Uploads
-    const imageUploads: any[] = [];
-
-    if (this.selectedMainImage) {
-      imageUploads.push(
-        this.productService.addImage(productId, this.selectedMainImage).pipe(
-          map(image => {
-            if (image && image.id) {
-              return this.productService.setPrimaryImage(productId, image.id);
-            }
-            return of(null);
-          }),
-          catchError(err => {
-            console.error('Main image upload failed:', err);
-            return of({ error: 'main_image', details: err });
-          })
-        )
-      );
-    }
-
-    this.selectedAdditionalImages.forEach((file, index) => {
-      imageUploads.push(
-        this.productService.addImage(productId, file).pipe(
-          catchError(err => {
-            console.error(`Additional image ${index} upload failed:`, err);
-            return of({ error: `additional_image_${index}`, details: err });
-          })
-        )
-      );
-    });
-
-    // Execute all operations
-    forkJoin([categoryObservable, ...imageUploads]).subscribe({
-      next: (results) => {
-        // Check if any result has an error
-        const errors = results.filter(r => r && r.error);
-
-        if (errors.length > 0) {
-          console.warn('Some operations failed:', errors);
-          this.messageService.add({ severity: 'warn', summary: 'Partial Success', detail: 'Product saved but some images/category failed. Check console for details.' });
-        } else {
-          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Category & Images Saved. Proceed to Inventory.' });
         }
-
-        this.displayStep2 = false;
-        this.displayStep3 = true;
-      },
-      error: (err) => {
-        // This shouldn't happen with catchError on inner observables, but just in case
-        console.error('Critical error in Step 2:', err);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Unexpected error occurred.' });
       }
-    });
+
+      // 2. Handle Bulk Image Upload (same flow as AddProduct)
+      if (this.selectedMainImage) {
+        console.log('Uploading images in bulk...');
+        const uploadedImages = await firstValueFrom(
+          this.productService.bulkUploadImages(productId, this.selectedMainImage, this.selectedAdditionalImages)
+        );
+        console.log('Bulk upload complete:', uploadedImages);
+      } else if (this.selectedAdditionalImages.length > 0) {
+        this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Main image is required for bulk upload' });
+        return;
+      }
+
+      this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Category & Images Saved. Proceed to Inventory.' });
+      this.displayStep2 = false;
+      this.displayStep3 = true;
+
+    } catch (err) {
+      console.error('Error in Step 2:', err);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save images. Please try again.' });
+    }
   }
 
   // Step 3: Inventory
@@ -480,7 +451,8 @@ export class InventoryComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    const file = event.files[0];
+    // Support both native file input (event.target.files) and PrimeNG (event.files)
+    const file = event?.target?.files?.[0] || event?.files?.[0];
     if (file) {
       this.selectedMainImage = file;
       // Preview
@@ -493,7 +465,8 @@ export class InventoryComponent implements OnInit {
   }
 
   onAdditionalFilesSelected(event: any) {
-    const files = event.files;
+    // Support both native file input (event.target.files) and PrimeNG (event.files)
+    const files = event?.target?.files || event?.files;
     if (files && files.length > 0) {
       if (!this.productForm.images) {
         this.productForm.images = [];

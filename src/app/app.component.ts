@@ -7,13 +7,15 @@ import { NotificationService } from './services/notification.service';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { CommonModule } from '@angular/common';
+import { LoadingComponent } from './components/loading/loading.component';
 import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, CommonModule],
+  imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, CommonModule, LoadingComponent],
   template: `
     <div class="app-layout">
+      <app-loading></app-loading>
       <app-header *ngIf="!isAdminRoute"></app-header>
       <div class="main-content">
         <router-outlet></router-outlet>

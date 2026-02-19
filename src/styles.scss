@@ -927,3 +927,34 @@ textarea {
         display: none !important;
     }
 }
+
+/* Notification Badge Positioning */
+.p-badge {
+    &.absolute.-top-1.-right-1 {
+        transform: translate(70%, -50%) !important;
+        z-index: 10 !important;
+    }
+}
+
+.custom-badge {
+    &.p-overlaybadge {
+        display: inline-flex !important;
+        position: relative !important;
+        overflow: visible !important;
+    }
+
+    .p-badge {
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        transform: translate(70%, -50%) !important;
+        min-width: 1.15rem !important;
+        height: 1.15rem !important;
+        line-height: 1.15rem !important;
+        font-size: 0.65rem !important;
+        font-weight: 700 !important;
+        border-radius: 50% !important;
+        box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.9) !important;
+        z-index: 10 !important;
+    }
+}

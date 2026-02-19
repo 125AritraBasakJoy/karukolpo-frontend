@@ -33,6 +33,7 @@ import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
 import { Order } from '../../models/order.model';
 import { CartService } from '../../services/cart.service';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-home',
@@ -53,6 +54,7 @@ import { CartService } from '../../services/cart.service';
     SkeletonModule,
     BadgeModule,
     TagModule,
+    TooltipModule,
     CurrencyPipe,
     DatePipe,
     RouterLink

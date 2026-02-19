@@ -50,12 +50,12 @@
                     </div>
                 </div>
                 <div class="mt-3 flex gap-2">
-                    <button pButton label="View" icon="pi pi-eye"
+                    <button pButton label="View Product" icon="pi pi-eye"
                         [class]="isOutOfStock(product) ? 'p-button-outlined w-full' : 'p-button-outlined flex-1'"
                         (click)="showProductDetails(product)"></button>
                     @if (!isOutOfStock(product)) {
-                    <button pButton label="Add" icon="pi pi-shopping-cart" class="flex-1"
-                        (click)="addToCart(product)"></button>
+                    <button pButton icon="pi pi-shopping-cart" class="p-button-primary" pTooltip="Add to Cart"
+                        tooltipPosition="top" (click)="addToCart(product)"></button>
                     }
                 </div>
             </div>

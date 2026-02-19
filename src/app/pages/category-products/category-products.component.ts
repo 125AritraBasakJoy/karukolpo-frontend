@@ -11,11 +11,12 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-category-products',
     standalone: true,
-    imports: [CommonModule, ButtonModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink],
+    imports: [CommonModule, ButtonModule, TooltipModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink],
     providers: [MessageService],
     templateUrl: './category-products.component.html',
     styleUrls: ['./category-products.component.scss']

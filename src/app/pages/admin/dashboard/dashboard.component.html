@@ -52,7 +52,10 @@
 
                 <div class="breadcrumb-container">
                     <nav class="breadcrumb-nav">
-                        <i class="pi pi-home home-icon"></i>
+                        <div class="header-branding" routerLink="/admin/dashboard">
+                            <img src="assets/logo_imresizer.png" alt="Logo" class="header-logo" />
+                            <span class="header-brand-name">Karukolpo</span>
+                        </div>
                         <span class="breadcrumb-separator">/</span>
                         <span class="breadcrumb-current">{{ getBreadcrumb() }}</span>
                     </nav>

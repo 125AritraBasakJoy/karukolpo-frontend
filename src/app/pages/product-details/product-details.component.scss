@@ -2,3 +2,53 @@
     max-width: 1200px;
     margin: 0 auto;
 }
+
+// Rich HTML description from Quill
+.rich-description {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+
+    // Quill output resets — ensure prose looks natural
+    p {
+        margin: 0 0 0.5rem;
+    }
+
+    ul,
+    ol {
+        padding-left: 1.5rem;
+        margin: 0.5rem 0;
+    }
+
+    ul {
+        list-style-type: disc;
+    }
+
+    ol {
+        list-style-type: decimal;
+    }
+
+    strong {
+        font-weight: 700;
+    }
+
+    em {
+        font-style: italic;
+    }
+
+    u {
+        text-decoration: underline;
+    }
+
+    a {
+        color: var(--primary-color);
+        text-decoration: underline;
+    }
+
+    h1,
+    h2,
+    h3 {
+        font-weight: 700;
+        margin: 0.75rem 0 0.25rem;
+    }
+}

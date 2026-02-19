@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
@@ -16,6 +17,7 @@ import { of } from 'rxjs';
   selector: 'app-product-details',
   standalone: true,
   imports: [
+    CommonModule,
     ButtonModule,
     CarouselModule,
     TagModule,
@@ -53,8 +55,14 @@ export class ProductDetailsComponent implements OnInit {
     private router: Router,
     private productService: ProductService,
     private cartService: CartService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private sanitizer: DomSanitizer
   ) { }
+
+  safeHtml(html: string | undefined | null): SafeHtml {
+    if (!html) return '';
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
 
   ngOnInit() {
     this.route.params.subscribe(params => {

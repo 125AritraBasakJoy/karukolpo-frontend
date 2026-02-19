@@ -14,7 +14,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { TextareaModule } from 'primeng/textarea';
+import { EditorModule } from 'primeng/editor';
 import { FormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -41,7 +41,7 @@ import { Router } from '@angular/router';
     DialogModule,
     InputTextModule,
     InputNumberModule,
-    TextareaModule,
+    EditorModule,
     FormsModule,
     ToastModule,
     ConfirmDialogModule,

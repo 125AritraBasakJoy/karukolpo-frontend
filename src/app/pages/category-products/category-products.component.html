@@ -44,7 +44,8 @@
                 </div>
                 <div class="flex-grow-1">
                     <div class="text-xl font-bold mb-2">{{ product.name }}</div>
-                    <div class="text-600 mb-3 line-clamp-2">{{ product.description }}</div>
+                    <div class="desc-clamp text-600 mb-3" [innerHTML]="sanitize(product.description)">
+                    </div>
                     <div class="text-primary text-xl font-bold">{{ product.price | currency:'BDT':'symbol-narrow' }}
                     </div>
                 </div>

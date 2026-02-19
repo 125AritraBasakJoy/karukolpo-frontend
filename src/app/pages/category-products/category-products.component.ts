@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
 import { ProductService } from '../../services/product.service';
@@ -30,8 +31,14 @@ export class CategoryProductsComponent implements OnInit {
         private categoryService: CategoryService,
         private productService: ProductService,
         public cartService: CartService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private sanitizer: DomSanitizer
     ) { }
+
+    sanitize(html: string | undefined | null): SafeHtml {
+        if (!html) return '';
+        return this.sanitizer.bypassSecurityTrustHtml(html);
+    }
 
     ngOnInit() {
         this.route.params.subscribe(params => {

@@ -38,8 +38,8 @@
                 {{ product()!.price | currency:'BDT':'symbol-narrow' }}
             </div>
 
-            <div class="text-700 text-lg line-height-3 mb-5">
-                {{ product()!.description }}
+            <div class="rich-description text-700 text-lg line-height-3 mb-5"
+                [innerHTML]="safeHtml(product()!.description)">
             </div>
 
             <div class="surface-border border-top-1 pt-5">

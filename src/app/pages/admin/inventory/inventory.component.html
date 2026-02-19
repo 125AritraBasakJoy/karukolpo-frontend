@@ -142,8 +142,24 @@
         </div>
         <div class="field">
             <label for="description">Description</label>
-            <textarea id="description" pInputTextarea [(ngModel)]="productForm.description" required rows="3" cols="20"
-                class="w-full premium-input"></textarea>
+            <p-editor id="description" [(ngModel)]="productForm.description" [style]="{'height': '160px'}"
+                styleClass="premium-editor w-full">
+                <ng-template pTemplate="header">
+                    <span class="ql-formats">
+                        <button class="ql-bold" title="Bold"></button>
+                        <button class="ql-italic" title="Italic"></button>
+                        <button class="ql-underline" title="Underline"></button>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-list" value="ordered" title="Ordered List"></button>
+                        <button class="ql-list" value="bullet" title="Bullet List"></button>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-link" title="Link"></button>
+                        <button class="ql-clean" title="Remove Formatting"></button>
+                    </span>
+                </ng-template>
+            </p-editor>
         </div>
         <div class="field">
             <label for="price">Price</label>

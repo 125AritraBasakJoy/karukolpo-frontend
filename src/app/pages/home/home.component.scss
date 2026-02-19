@@ -170,6 +170,36 @@
 .product-card {
   transition: all 0.3s ease;
 
+  // Clamp rich-text description to 3 lines in cards
+  .desc-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
+
+    // Strip unwanted Quill wrapper padding in card context
+    p {
+      margin: 0;
+    }
+
+    ul,
+    ol {
+      padding-left: 1.25rem;
+      margin: 0;
+    }
+
+    strong {
+      font-weight: 700;
+    }
+
+    em {
+      font-style: italic;
+    }
+  }
+
   // On small screens hide button text — icon-only fits two buttons side by side
   @media (max-width: 575px) {
     .p-button .p-button-label {

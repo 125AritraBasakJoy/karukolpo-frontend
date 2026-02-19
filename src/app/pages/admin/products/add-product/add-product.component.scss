@@ -102,3 +102,77 @@
         }
     }
 }
+
+// ── PrimeNG Editor (Quill) dark-theme overrides ──────────────────────────────
+::ng-deep .premium-editor {
+    &.p-editor-container {
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+        &:focus-within {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
+        }
+    }
+
+    // Toolbar
+    .p-editor-toolbar {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 0.5rem 0.75rem !important;
+
+        .ql-stroke {
+            stroke: #94a3b8 !important;
+        }
+
+        .ql-fill {
+            fill: #94a3b8 !important;
+        }
+
+        .ql-picker-label {
+            color: #94a3b8 !important;
+        }
+
+        button:hover .ql-stroke,
+        button.ql-active .ql-stroke {
+            stroke: #60a5fa !important;
+        }
+
+        button:hover .ql-fill,
+        button.ql-active .ql-fill {
+            fill: #60a5fa !important;
+        }
+    }
+
+    // Content area
+    .p-editor-content .ql-editor {
+        background: transparent !important;
+        color: #e2e8f0 !important;
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        min-height: 140px;
+        word-break: break-word;
+        overflow-wrap: break-word;
+
+        &.ql-blank::before {
+            color: #475569 !important;
+            font-style: italic !important;
+        }
+
+        p {
+            margin: 0 0 0.25rem;
+        }
+
+        ul,
+        ol {
+            padding-left: 1.5rem;
+        }
+
+        strong {
+            font-weight: 700;
+        }
+    }
+}

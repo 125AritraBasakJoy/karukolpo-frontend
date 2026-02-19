@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, signal, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { forkJoin, map, catchError, of, lastValueFrom } from 'rxjs';
@@ -157,10 +158,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     private paymentService: PaymentService,
     private deliveryService: DeliveryService,
     private categoryService: CategoryService,
-    public cartService: CartService, // Public to access in template
+    public cartService: CartService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) { }
+
+  sanitize(html: string | undefined | null): SafeHtml {
+    if (!html) return '';
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
 
   openPaymentModal(orderId: string) {
     // Deprecated

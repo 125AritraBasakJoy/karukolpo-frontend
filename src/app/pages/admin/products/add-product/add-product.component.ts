@@ -7,7 +7,7 @@ import { CategoryService } from '../../../../services/category.service';
 import { MessageService } from 'primeng/api';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputTextarea } from 'primeng/inputtextarea';
+import { EditorModule } from 'primeng/editor';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ButtonModule } from 'primeng/button';
@@ -25,7 +25,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
         FormsModule,
         CardModule,
         InputTextModule,
-        InputTextarea,
+        EditorModule,
         InputNumberModule,
         MultiSelectModule,
         ButtonModule,
@@ -74,8 +74,27 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
                 <!-- Row 2: Description -->
                 <div class="w-full">
                     <label for="description" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Description</label>
-                    <textarea pInputTextarea id="description" [(ngModel)]="product.description" rows="4" 
-                        class="w-full premium-input" placeholder="Tell the story of this product..."></textarea>
+                    <p-editor 
+                        id="description"
+                        [(ngModel)]="product.description"
+                        [style]="{'height': '180px', 'background': 'transparent', 'color': 'inherit'}"
+                        styleClass="premium-editor w-full">
+                        <ng-template pTemplate="header">
+                            <span class="ql-formats">
+                                <button class="ql-bold" title="Bold"></button>
+                                <button class="ql-italic" title="Italic"></button>
+                                <button class="ql-underline" title="Underline"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered" title="Ordered List"></button>
+                                <button class="ql-list" value="bullet" title="Bullet List"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-link" title="Link"></button>
+                                <button class="ql-clean" title="Remove Formatting"></button>
+                            </span>
+                        </ng-template>
+                    </p-editor>
                 </div>
 
                 <!-- Row 3: Price and Image Uploads -->

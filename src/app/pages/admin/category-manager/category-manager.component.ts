@@ -519,8 +519,28 @@ export class CategoryManagerComponent implements OnInit {
             acceptIcon: 'none',
             rejectIcon: 'none',
             accept: () => {
-                this.categoryService.removeProductFromCategory(this.viewingCategory!.id, product.id).subscribe({
+                const removedCategoryId = this.viewingCategory!.id;
+
+                this.categoryService.removeProductFromCategory(removedCategoryId, product.id).pipe(
+                    // After junction table DELETE, fetch the real remaining categories
+                    switchMap(() => this.productService.listProductCategories(product.id, true)),
+                    // PUT the remaining list back so backend fully settles the state
+                    // (if empty, backend will treat the product as truly uncategorized)
+                    switchMap((remaining: any[]) => {
+                        const remainingIds = remaining
+                            .map((c: any) => (typeof c === 'object' ? (c.id ?? c.categoryId) : c)?.toString())
+                            .filter(Boolean);
+                        return this.productService.updateProductCategories(product.id, remainingIds);
+                    }),
+                    catchError(err => {
+                        // If the follow-up sync fails, still treat the removal as done
+                        console.warn('Category sync after removal had an issue:', err);
+                        return of(null);
+                    })
+                ).subscribe({
                     next: () => {
+                        this.productService.clearCache();
+                        this.categoryService.clearCache();
                         this.categoryProducts = this.categoryProducts.filter(p => p.id !== product.id);
                         this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Product removed from category', life: 3000 });
                         this.cdr.detectChanges();

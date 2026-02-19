@@ -88,7 +88,12 @@ export class CategoryService {
     }
 
     /**
-     * Get products in a category with optimized fetching and caching
+     * Get products in a category (admin use). Checks the junction table per-product
+     * so that admin Remove/Move actions are always reflected accurately.
+     *
+     * For 'uncategorized': fetches all products and checks which have no category entries.
+     * For a real category ID: fetches all products and checks each one's categories via
+     * GET /products/{id}/categories so junction-table changes are immediately visible.
      */
     getCategoryProducts(categoryId: number | string): Observable<Product[]> {
         const isUncategorized = categoryId === 'uncategorized';
@@ -117,7 +122,7 @@ export class CategoryService {
                                 return belongsToCategory ? product : null;
                             }),
                             catchError(() => {
-                                // If categories fetch fails, fallback to existing product state for uncategorized check
+                                // If categories fetch fails, fallback to existing product state
                                 if (isUncategorized) {
                                     const hasKnownCategories = product.categories && product.categories.length > 0;
                                     const isLikelyUncategorized = !hasKnownCategories && (!product.categoryId || product.categoryId === '0');
@@ -132,6 +137,16 @@ export class CategoryService {
                 );
             }),
         );
+    }
+
+    /**
+     * Get products for a public category page with a single API call.
+     * Uses GET /products?category_id={id} — fast, no per-product fetches.
+     * Use this for the public-facing category products page only.
+     */
+    getProductsByCategory(categoryId: number | string): Observable<Product[]> {
+        const id = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId;
+        return this.productService.getProducts(0, 1000, id);
     }
 
     /**

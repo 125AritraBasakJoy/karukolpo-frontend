@@ -52,8 +52,8 @@ export class CategoryProductsComponent implements OnInit {
             }
         });
 
-        // Fetch Category Products
-        this.categoryService.getCategoryProducts(id).subscribe({
+        // Fetch products for this category with a single API call
+        this.categoryService.getProductsByCategory(id).subscribe({
             next: (products) => {
                 this.products.set(products);
                 this.loading.set(false);

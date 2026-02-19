@@ -321,6 +321,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
+  scrollToCategories() {
+    const categoriesSection = document.getElementById('categories');
+    if (categoriesSection) {
+      categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   goToAboutUs() {
     this.router.navigate(['/about']);
   }

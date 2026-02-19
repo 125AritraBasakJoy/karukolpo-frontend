@@ -2,6 +2,45 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+// ── Full-screen sections ────────────────────────────────────────
+.hero-section-fullscreen {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+}
+
+.category-section-fullscreen {
+  min-height: 100vh;
+  padding: 4rem 1rem;
+  box-sizing: border-box;
+
+  .category-grid {
+    flex: 1;
+  }
+}
+
+// Scroll-down bounce arrow on hero
+.scroll-down-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: pointer;
+  color: white;
+  font-size: 2rem;
+  animation: bounce 2s infinite;
+  opacity: 0.85;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(10px); }
+}
+
 .header {
   display: flex;
   justify-content: space-between;

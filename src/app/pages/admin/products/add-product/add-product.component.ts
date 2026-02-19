@@ -304,7 +304,22 @@ export class AddProductComponent {
 
     onInventorySaved() {
         this.showInventoryModal = false;
-        this.router.navigate(['/admin/products']);
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Product Complete!',
+            detail: 'Product created and inventory set successfully. You can now add another product.',
+            life: 4000
+        });
+
+        // Reset entire form for next product
+        this.product = { name: '', description: '', price: null };
+        this.selectedCategories = [];
+        this.selectedMainFile = null;
+        this.selectedAdditionalFiles = [];
+        this.mainImagePreview = null;
+        this.additionalImagesPreview = [];
+        this.productCreated = false;
+        this.createdProductId = null;
     }
 
     cancel() {

@@ -7,9 +7,8 @@
             </div>
             <div class="flex gap-2">
                 <app-notification-button></app-notification-button>
-                <button pButton pRipple icon="pi pi-refresh" (click)="refreshProducts()"
-                    class="p-button-outlined premium-btn-secondary" pTooltip="Refresh Inventory"
-                    tooltipPosition="bottom"></button>
+                <p-button icon="pi pi-refresh" (onClick)="refreshProducts()" styleClass="premium-btn-primary"
+                    pTooltip="Refresh Inventory" tooltipPosition="bottom"></p-button>
             </div>
         </div>
     </div>

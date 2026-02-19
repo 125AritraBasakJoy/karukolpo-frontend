@@ -176,6 +176,7 @@ export class InventoryComponent implements OnInit {
   }
 
   refreshProducts() {
+    this.productService.clearCache(); // Clear service-level cache to fetch fresh data from API
     this.productsBuffer = [];
     this.totalRecords.set(0);
     this.chartData = null; // Reset chart data to refresh it

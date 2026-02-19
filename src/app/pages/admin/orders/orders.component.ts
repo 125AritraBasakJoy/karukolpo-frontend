@@ -191,6 +191,7 @@ export class OrdersComponent implements OnInit {
   }
 
   refreshOrders() {
+    this.orderService.clearCache(); // Clear service-level cache to fetch fresh data from API
     // Clear buffer to force fresh fetch
     this.ordersBuffer = [];
     this.totalRecords.set(0);

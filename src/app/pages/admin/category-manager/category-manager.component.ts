@@ -70,13 +70,13 @@ import { MultiSelectModule } from 'primeng/multiselect';
                 [lazy]="true" (onLazyLoad)="loadCategories($event)" [totalRecords]="totalRecords()" [loading]="loading()">
                 
                 <ng-template pTemplate="caption">
-                    <div class="flex align-items-center justify-content-between py-2">
+                    <div class="flex flex-wrap align-items-center justify-content-between gap-2 py-2">
                         <h5 class="m-0 text-xl font-semibold">Manage List</h5>
-                        <div class="p-input-icon-left ml-auto w-auto">
+                        <div class="p-input-icon-left ml-auto search-container">
                             <i class="pi pi-search"></i>
                             <input pInputText type="text" 
                                 (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
-                                placeholder="Search Categories..." class="premium-input" />
+                                placeholder="Search Categories..." class="premium-input w-full" />
                         </div>
                     </div>
                 </ng-template>
@@ -292,6 +292,25 @@ import { MultiSelectModule } from 'primeng/multiselect';
             border-radius: 8px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
+        }
+
+        .search-container {
+            width: 300px;
+            max-width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        @media screen and (max-width: 768px) {
+            .search-container {
+                width: 200px;
+            }
+        }
+
+        @media screen and (max-width: 576px) {
+            .search-container {
+                width: 100%;
+                margin-left: 0 !important;
+            }
         }
     `]
 })

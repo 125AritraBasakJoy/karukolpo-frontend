@@ -37,8 +37,15 @@
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50%       { transform: translateX(-50%) translateY(10px); }
+
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(10px);
+  }
 }
 
 .header {
@@ -163,6 +170,18 @@
 .product-card {
   transition: all 0.3s ease;
 
+  // On small screens hide button text — icon-only fits two buttons side by side
+  @media (max-width: 575px) {
+    .p-button .p-button-label {
+      display: none;
+    }
+
+    .p-button {
+      padding: 0.5rem 0.75rem;
+      justify-content: center;
+    }
+  }
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: var(--card-shadow-hover);
@@ -230,21 +249,24 @@
 // Category Redesign Styles
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 1.5rem;
-  padding: 0 1rem;
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  padding: 0 0.5rem;
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 0 1rem;
   }
 }
 
 .category-card {
-  height: 300px;
+  height: 200px;
+
+  @media (min-width: 768px) {
+    height: 300px;
+  }
+
   border-radius: 16px;
   background-size: cover;
   background-position: center;
@@ -294,13 +316,18 @@
 
   .category-name {
     display: block;
-    font-size: 2rem;
+    font-size: 1.1rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 4px;
+    letter-spacing: 2px;
     margin-bottom: 0.5rem;
     transition: transform 0.3s ease;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+
+    @media (min-width: 768px) {
+      font-size: 2rem;
+      letter-spacing: 4px;
+    }
   }
 
   .category-link {

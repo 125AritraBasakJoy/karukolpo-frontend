@@ -43,7 +43,7 @@
         @if (loading()) {
         <div class="grid">
             @for (i of [1,2,3,4]; track i) {
-            <div class="col-12 sm:col-6 md:col-4 lg:col-3">
+            <div class="col-6 sm:col-6 md:col-4 lg:col-3">
                 <div class="p-4 border-1 surface-border surface-card border-round">
                     <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
                     <p-skeleton width="50%" styleClass="mb-2"></p-skeleton>
@@ -57,7 +57,7 @@
         @if (!loading()) {
         <div class="grid">
             @for (product of filteredProducts(); track product.id) {
-            <div class="col-12 sm:col-6 md:col-4 lg:col-3">
+            <div class="col-6 sm:col-6 md:col-4 lg:col-3">
                 <div class="product-card surface-card border-round shadow-2 p-3 h-full flex flex-column relative">
                     <!-- Out of Stock Overlay -->
                     @if (isOutOfStock(product)) {
@@ -73,7 +73,7 @@
                     </div>
                     <div class="flex-grow-1">
                         <div class="text-xl font-bold mb-2">{{ product.name }}</div>
-                        <div class="text-600 mb-3 line-clamp-2">{{ product.description }}</div>
+                        <div class="text-600 mb-3">{{ product.description }}</div>
                         <div class="text-primary text-xl font-bold">{{ product.price | currency:'BDT':'symbol-narrow' }}
                         </div>
                     </div>

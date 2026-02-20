@@ -12,7 +12,8 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-:host ::v-deep .order-details-dialog {
+:host ::v-deep .order-details-dialog,
+:host ::v-deep .responsive-order-dialog {
     .p-dialog-content {
         padding: 0;
     }
@@ -48,15 +49,6 @@
 
         i {
             font-size: 1.25rem;
-        }
-    }
-
-    .section-header {
-        h4 {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-color-secondary);
         }
     }
 
@@ -108,6 +100,72 @@
     .totals-card {
         .text-color-secondary {
             font-size: 0.9rem;
+        }
+    }
+
+    /* Mobile Responsive Overrides */
+    @media screen and (max-width: 768px) {
+        .dialog-content {
+            padding: 1rem;
+        }
+
+        .status-banner {
+            .pi {
+                font-size: 1.5rem !important;
+            }
+
+            .text-xl {
+                font-size: 1.25rem !important;
+            }
+
+            .flex-column {
+                gap: 0.5rem;
+            }
+        }
+
+        .glass-card {
+            .p-4 {
+                padding: 1rem !important;
+            }
+
+            h4 {
+                font-size: 1rem !important;
+            }
+        }
+
+        .p-4.border-round-xl {
+            padding: 1rem !important;
+        }
+
+        .text-xl.font-bold {
+            font-size: 1.1rem !important;
+        }
+
+        .text-lg.font-medium {
+            font-size: 1rem !important;
+        }
+    }
+}
+
+:host ::v-deep .responsive-order-dialog {
+    @media screen and (max-width: 768px) {
+        width: 95vw !important;
+
+        .p-dialog-header {
+            padding: 1rem;
+
+            .text-2xl {
+                font-size: 1.25rem !important;
+            }
+
+            .bg-primary-500 {
+                width: 40px !important;
+                height: 40px !important;
+
+                i {
+                    font-size: 1.25rem !important;
+                }
+            }
         }
     }
 }

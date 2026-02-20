@@ -6,11 +6,12 @@ import { ThemeService } from '../../../services/theme.service';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
+import { MessageService, MenuItem } from 'primeng/api';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { NotificationService } from '../../../services/notification.service';
 import { filter } from 'rxjs/operators';
 
-interface MenuItem {
+interface SidebarMenuItem {
   label: string;
   icon: string;
   route: string;
@@ -19,7 +20,7 @@ interface MenuItem {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule],
   providers: [MessageService],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
@@ -31,11 +32,14 @@ export class DashboardComponent implements OnInit {
   currentRoute = signal<string>('');
   expandedSections = signal<Set<string>>(new Set(['Main']));
 
+  breadcrumbItems: MenuItem[] = [];
+  homeItem: MenuItem = { icon: 'pi pi-home', routerLink: '/admin/inventory' };
+
   private notificationService = inject(NotificationService);
   private messageService = inject(MessageService);
   private router = inject(Router);
 
-  menuItems: MenuItem[] = [
+  menuItems: SidebarMenuItem[] = [
     { label: 'Inventory', icon: 'pi pi-box', route: 'inventory', section: 'Main' },
     { label: 'Orders', icon: 'pi pi-shopping-cart', route: 'orders', section: 'Main' },
     { label: 'Categories', icon: 'pi pi-tags', route: 'category-manager', section: 'Main' },
@@ -85,6 +89,25 @@ export class DashboardComponent implements OnInit {
     const lastSegment = segments[segments.length - 1] || 'dashboard';
     this.currentRoute.set(lastSegment);
 
+    // Build breadcrumb items
+    this.breadcrumbItems = [];
+    let currentPath = '';
+
+    // Handle breadcrumbs for admin routes
+    segments.forEach((segment, index) => {
+      currentPath += `/${segment}`;
+
+      // Skip 'admin' itself as a clickable breadcrumb if it's the first segment
+      if (segment === 'admin' && index === 0) return;
+
+      const menuItem = this.menuItems.find(item => item.route === segment || item.route.includes(segment));
+
+      this.breadcrumbItems.push({
+        label: menuItem ? menuItem.label : this.formatRouteName(segment),
+        routerLink: currentPath
+      });
+    });
+
     // Auto-expand the section containing the active route
     const activeItem = this.menuItems.find(item => url.includes(item.route));
     if (activeItem && activeItem.section) {
@@ -130,7 +153,7 @@ export class DashboardComponent implements OnInit {
     return [...new Set(this.menuItems.map(item => item.section || 'Other'))];
   }
 
-  getItemsBySection(section: string): MenuItem[] {
+  getItemsBySection(section: string): SidebarMenuItem[] {
     return this.menuItems.filter(item => (item.section || 'Other') === section);
   }
 

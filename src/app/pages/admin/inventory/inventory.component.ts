@@ -86,6 +86,11 @@ export class InventoryComponent implements OnInit {
   chartData: any;
   chartOptions: any;
 
+  // Sales Summary Metrics
+  totalUnitsSold = signal<number>(0);
+  totalRevenue = signal<number>(0);
+  confirmedOrdersCount = signal<number>(0);
+
   manualStockOptions = [
     { label: 'Auto (Based on Quantity)', value: 'AUTO' },
     { label: 'In Stock (Force)', value: 'IN_STOCK' },
@@ -189,14 +194,29 @@ export class InventoryComponent implements OnInit {
     const salesMap = new Map<string, number>();
     products.forEach(p => salesMap.set(p.name, 0));
 
+    let units = 0;
+    let revenue = 0;
+    let confirmedCount = 0;
+
     orders.forEach(order => {
       if (order.status !== 'Cancelled') {
+        confirmedCount++;
         order.items.forEach(item => {
+          const quantity = item.quantity || 0;
+          const price = item.product.price || 0;
+
           const current = salesMap.get(item.product.name) || 0;
-          salesMap.set(item.product.name, current + item.quantity);
+          salesMap.set(item.product.name, current + quantity);
+
+          units += quantity;
+          revenue += (quantity * price);
         });
       }
     });
+
+    this.totalUnitsSold.set(units);
+    this.totalRevenue.set(revenue);
+    this.confirmedOrdersCount.set(confirmedCount);
 
     const productNames = Array.from(salesMap.keys());
     const productSales = Array.from(salesMap.values());

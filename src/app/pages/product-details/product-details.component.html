@@ -10,18 +10,22 @@
     <div class="grid">
         <!-- Left Column: Product Image/Carousel -->
         <div class="col-12 md:col-6">
-            <div class="surface-card p-2 border-round shadow-2 bg-white">
+            <div class="product-gallery-container p-3">
                 @if (product()!.images && product()!.images!.length > 0) {
                 <p-carousel [value]="product()!.images!" [numVisible]="1" [numScroll]="1" [circular]="true"
                     [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
                     <ng-template let-image pTemplate="item">
-                        <img [src]="image" [alt]="product()!.name" class="w-full border-round shadow-1"
-                            style="max-height: 500px; object-fit: contain;">
+                        <div class="image-wrapper">
+                            <img [src]="image" [alt]="product()!.name" class="product-image"
+                                style="max-height: 500px; object-fit: contain;">
+                        </div>
                     </ng-template>
                 </p-carousel>
                 } @else {
-                <img [src]="product()!.imageUrl" [alt]="product()!.name" class="w-full border-round shadow-1"
-                    style="max-height: 500px; object-fit: contain;">
+                <div class="image-wrapper solo">
+                    <img [src]="product()!.imageUrl" [alt]="product()!.name" class="product-image"
+                        style="max-height: 500px; object-fit: contain;">
+                </div>
                 }
             </div>
         </div>

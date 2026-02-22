@@ -292,7 +292,8 @@ export class ProductService {
         (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : 'uncategorized'),
       categories: data.categories || [],
       stock: parseInt(String(stock), 10),
-      manualStockStatus: manualStatus
+      manualStockStatus: manualStatus,
+      isInStock: data.is_in_stock !== undefined ? !!data.is_in_stock : (manualStatus === 'IN_STOCK' ? true : (manualStatus === 'OUT_OF_STOCK' ? false : parseInt(String(stock), 10) > 0))
     };
   }
 

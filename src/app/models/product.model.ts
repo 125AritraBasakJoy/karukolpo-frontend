@@ -10,4 +10,5 @@ export interface Product {
   manualStockStatus?: 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO';
   categoryId?: string;
   categories?: any[];
+  isInStock?: boolean;
 }

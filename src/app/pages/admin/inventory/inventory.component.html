@@ -131,8 +131,8 @@
                                 (click)="editProduct(product)" pTooltip="Edit Product" tooltipPosition="top"></button>
                             <button pButton pRipple icon="pi pi-trash"
                                 class="p-button-rounded p-button-text action-btn danger-btn"
-                                (click)="deleteProduct(product)" pTooltip="Delete Product"
-                                tooltipPosition="top"></button>
+                                (click)="deleteProduct(product)" pTooltip="Delete Product" tooltipPosition="top"
+                                [disabled]="true"></button>
                         </div>
                     </td>
                 </tr>

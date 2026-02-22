@@ -188,35 +188,50 @@ export class InventoryComponent implements OnInit {
   }
 
   updateChart(products: Product[], orders: Order[]) {
+    // Build salesMap purely from completed order items (not pre-seeded from inventory buffer)
+    // Pre-seeding caused mismatches where order product names didn't match inventory names exactly
     const salesMap = new Map<string, number>();
-    products.forEach(p => salesMap.set(p.name, 0));
 
     let units = 0;
     let revenue = 0;
-    let confirmedCount = 0;
+    let completedCount = 0;
 
     orders.forEach(order => {
-      if (order.status !== 'Cancelled') {
-        confirmedCount++;
+      if (order.status?.toLowerCase() === 'completed') {
+        completedCount++;
         order.items.forEach(item => {
           const quantity = item.quantity || 0;
-          const price = item.product.price || 0;
+          const price = item.product?.price || 0;
+          const name = item.product?.name || `Product #${item.product?.id}`;
 
-          const current = salesMap.get(item.product.name) || 0;
-          salesMap.set(item.product.name, current + quantity);
-
+          salesMap.set(name, (salesMap.get(name) || 0) + quantity);
           units += quantity;
-          revenue += (quantity * price);
+          revenue += quantity * price;
         });
       }
     });
 
     this.totalUnitsSold.set(units);
     this.totalRevenue.set(revenue);
-    this.confirmedOrdersCount.set(confirmedCount);
+    this.confirmedOrdersCount.set(completedCount);
 
-    const productNames = Array.from(salesMap.keys());
-    const productSales = Array.from(salesMap.values());
+    // Sort by units sold descending
+    const sortedEntries = Array.from(salesMap.entries())
+      .sort((a, b) => b[1] - a[1]);
+
+    const productNames = sortedEntries.map(e => e[0]);
+    const productSales = sortedEntries.map(e => e[1]);
+
+    // Generate a distinct color per bar
+    const palette = [
+      'rgba(59, 130, 246, 0.7)',
+      'rgba(16, 185, 129, 0.7)',
+      'rgba(168, 85, 247, 0.7)',
+      'rgba(245, 158, 11, 0.7)',
+      'rgba(239, 68, 68, 0.7)',
+      'rgba(14, 165, 233, 0.7)'
+    ];
+    const colors = productNames.map((_, i) => palette[i % palette.length]);
 
     this.chartData = {
       labels: productNames,
@@ -224,24 +239,52 @@ export class InventoryComponent implements OnInit {
         {
           label: 'Units Sold',
           data: productSales,
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgb(54, 162, 235)',
-          borderWidth: 1
+          backgroundColor: colors,
+          borderColor: colors.map(c => c.replace('0.7', '1')),
+          borderWidth: 1,
+          borderRadius: 8
         }
       ]
     };
 
     this.chartOptions = {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
-        title: { display: true, text: 'Product Sales Performance' }
+        legend: { display: false },
+        title: {
+          display: true,
+          text: productNames.length === 0
+            ? 'No completed sales yet'
+            : 'Top Selling Products (Units)',
+          color: '#fff',
+          font: { size: 14, weight: 'bold' }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          titleColor: '#fff',
+          bodyColor: '#94a3b8',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: (ctx: any) => ` ${ctx.raw} units sold`
+          }
+        }
       },
       scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        x: {
+          ticks: { color: '#94a3b8', font: { size: 12 } },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#94a3b8' },
+          grid: { color: 'rgba(255, 255, 255, 0.05)' }
+        }
       }
     };
   }
+
 
   openNew() {
     this.isNewProduct = true;

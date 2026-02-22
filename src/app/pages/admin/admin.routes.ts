@@ -40,6 +40,10 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./category-manager/category-manager.component').then(m => m.CategoryManagerComponent)
       },
       {
+        path: 'maintenance-control',
+        loadComponent: () => import('./maintenance-control/maintenance-control.component').then(m => m.MaintenanceControlComponent)
+      },
+      {
         path: 'products/add',
         loadComponent: () => import('./products/add-product/add-product.component').then(m => m.AddProductComponent)
       }

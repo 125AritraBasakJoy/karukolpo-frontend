@@ -71,7 +71,7 @@ export class InventoryComponent implements OnInit {
   isNewProduct = true;
   selectedProduct: Product | null = null;
   createdProduct: Product | null = null; // Store product created in step 1
-  categories: Category[] = [];
+  categories = this.categoryService.categories;
 
   productForm: Partial<Product> = {};
   inventoryForm: { stock: number; manualStockStatus: 'AUTO' | 'IN_STOCK' | 'OUT_OF_STOCK' } = {
@@ -113,13 +113,10 @@ export class InventoryComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.loadCategories();
     // loadProducts will be called by lazy load
   }
 
-  loadCategories() {
-    this.categoryService.getCategories().subscribe(cats => this.categories = cats);
-  }
+
 
   loadProducts(event?: TableLazyLoadEvent) {
     this.loading.set(true);

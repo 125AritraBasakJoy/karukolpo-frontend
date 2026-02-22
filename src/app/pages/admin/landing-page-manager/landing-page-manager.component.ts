@@ -6,6 +6,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { SiteConfigService } from '../../../services/site-config.service';
 
 @Component({
     selector: 'app-landing-page-manager',
@@ -30,7 +31,9 @@ export class LandingPageManagerComponent implements OnInit {
     tagline = '';
     imageUrl = '';
 
-    constructor(private messageService: MessageService) { }
+    constructor(
+        private messageService: MessageService,
+    ) { }
 
     ngOnInit() {
         this.loadConfig();
@@ -92,13 +95,15 @@ export class LandingPageManagerComponent implements OnInit {
     }
 
     saveConfig() {
-        const config = {
+        // Update landing config (local storage for landing page only)
+        const landingConfig = {
             tagline: this.tagline,
             image: this.imageUrl
         };
+
         try {
-            localStorage.setItem('landingConfig', JSON.stringify(config));
-            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Landing page configuration saved!' });
+            localStorage.setItem('landingConfig', JSON.stringify(landingConfig));
+            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Configuration saved!' });
 
             // Dispatch event for same-window updates if needed
             window.dispatchEvent(new Event('storage'));

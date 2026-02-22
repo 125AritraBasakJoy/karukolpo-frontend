@@ -221,7 +221,7 @@
     <ng-template pTemplate="content">
         <div class="field">
             <label for="category">Category</label>
-            <p-dropdown id="category" [options]="categories" optionLabel="name" optionValue="id"
+            <p-dropdown id="category" [options]="categories()" optionLabel="name" optionValue="id"
                 [(ngModel)]="productForm.categoryId" placeholder="Select a Category" [showClear]="true"
                 [editable]="true" [filter]="true" filterBy="name" styleClass="w-full" [style]="{'width':'100%'}"
                 [panelStyle]="{'width':'100%'}" panelStyleClass="w-full" appendTo="body"></p-dropdown>

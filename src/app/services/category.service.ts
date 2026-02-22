@@ -6,7 +6,8 @@ import { Product } from '../models/product.model';
 import { ApiService } from './api.service';
 import { ProductService } from './product.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
-import { signal } from '@angular/core';
+import { signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 /**
  * CategoryService - Backend API Integration
@@ -16,14 +17,18 @@ import { signal } from '@angular/core';
 })
 export class CategoryService {
     private readonly CACHE_KEY = 'karukolpo_categories_cache';
-    public categories = signal<Category[]>(this.loadFromCache());
+    public categories = signal<Category[]>([]);
 
     constructor(
         private apiService: ApiService,
-        private productService: ProductService
+        private productService: ProductService,
+        @Inject(PLATFORM_ID) private platformId: Object
     ) {
-        // Background refresh on service initialization
-        this.refreshCache();
+        if (isPlatformBrowser(this.platformId)) {
+            this.categories.set(this.loadFromCache());
+            // Background refresh on service initialization
+            this.refreshCache();
+        }
     }
 
     /**
@@ -31,12 +36,15 @@ export class CategoryService {
      */
     clearCache() {
         this.productService.clearCache();
-        localStorage.removeItem(this.CACHE_KEY);
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.removeItem(this.CACHE_KEY);
+        }
         this.categories.set([]);
         this.refreshCache();
     }
 
     private loadFromCache(): Category[] {
+        if (!isPlatformBrowser(this.platformId)) return [];
         try {
             const cached = localStorage.getItem(this.CACHE_KEY);
             return cached ? JSON.parse(cached) : [];
@@ -50,7 +58,9 @@ export class CategoryService {
         this.getCategories().subscribe({
             next: (cats) => {
                 this.categories.set(cats);
-                localStorage.setItem(this.CACHE_KEY, JSON.stringify(cats));
+                if (isPlatformBrowser(this.platformId)) {
+                    localStorage.setItem(this.CACHE_KEY, JSON.stringify(cats));
+                }
             },
             error: (err) => console.error('CategoryService: Background refresh failed', err)
         });

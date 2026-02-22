@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface SiteConfig {
     siteName: string;
@@ -16,18 +17,20 @@ export class SiteConfigService {
         logoUrl: '' // Empty string means use text fallback
     });
 
-    constructor() {
+    constructor(@Inject(PLATFORM_ID) private platformId: Object) {
         this.loadConfig();
     }
 
     private loadConfig() {
-        const saved = localStorage.getItem(this.STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                this.siteConfig.set({ ...this.siteConfig(), ...parsed });
-            } catch (e) {
-                console.error('Failed to parse site config', e);
+        if (isPlatformBrowser(this.platformId)) {
+            const saved = localStorage.getItem(this.STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    this.siteConfig.set({ ...this.siteConfig(), ...parsed });
+                } catch (e) {
+                    console.error('Failed to parse site config', e);
+                }
             }
         }
     }
@@ -35,6 +38,8 @@ export class SiteConfigService {
     updateConfig(config: Partial<SiteConfig>) {
         const newConfig = { ...this.siteConfig(), ...config };
         this.siteConfig.set(newConfig);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newConfig));
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newConfig));
+        }
     }
 }

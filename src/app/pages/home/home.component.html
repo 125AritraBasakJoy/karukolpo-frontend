@@ -1,10 +1,12 @@
 <!-- ... existing content ... -->
 <div class="home-container">
     <!-- Hero Section -->
-    <div class="hero-section-fullscreen flex align-items-center justify-content-center text-center text-white"
-        [style.background-image]="'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(' + landingPageImage() + ')'"
-        style="background-size: cover; background-position: center;">
-        <div class="z-1">
+    <div
+        class="hero-section-fullscreen flex align-items-center justify-content-center text-center text-white relative overflow-hidden">
+        <img [ngSrc]="landingPageImage()" priority fill style="object-fit: cover; z-index: 0;"
+            alt="Karukolpo Hero Image">
+        <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
+        <div class="z-2">
             <h1 class="text-6xl font-bold mb-2">Karukolpo</h1>
             <p class="text-2xl">{{ landingPageTagline() }}</p>
             <div class="flex gap-3 justify-content-center mt-4">
@@ -15,7 +17,7 @@
             </div>
         </div>
         <!-- Scroll Down Indicator -->
-        <div class="scroll-down-indicator" (click)="scrollToCategories()">
+        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()">
             <i class="pi pi-chevron-down"></i>
         </div>
     </div>
@@ -68,12 +70,13 @@
                     }
 
                     <div class="relative mb-3 cursor-pointer" (click)="showProductDetails(product)">
-                        <img [src]="product.imageUrl" [alt]="product.name" class="w-full border-round"
-                            style="height: 200px; object-fit: cover;" loading="lazy">
+                        <img [ngSrc]="product.imageUrl" [alt]="product.name" class="w-full border-round" width="200"
+                            height="200" style="height: 200px; object-fit: cover;"
+                            [priority]="product.id === filteredProducts()[0].id || product.id === filteredProducts()[1].id">
                     </div>
                     <div class="flex-grow-1">
                         <div class="text-xl font-bold mb-2">{{ product.name }}</div>
-                        <div class="desc-clamp text-600 mb-3" [innerHTML]="sanitize(product.description)">
+                        <div class="desc-clamp text-600 mb-3" [innerHTML]="product.description | safeHtml">
                         </div>
                         <div class="text-primary text-xl font-bold">{{ product.price | currency:'BDT':'symbol-narrow' }}
                         </div>

@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { OrderService } from './order.service';
 import { ProductService } from './product.service';
@@ -28,32 +29,36 @@ export class NotificationService {
     private readonly NOTIF_STORAGE_KEY = 'admin_notifications';
     private orderSub: Subscription | undefined;
 
-    constructor() {
+    constructor(@Inject(PLATFORM_ID) private platformId: Object) {
         this.loadNotifications();
         // Start listening immediately to capture history
         this.startListening();
     }
 
     private loadNotifications() {
-        const saved = localStorage.getItem(this.NOTIF_STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                this.notifications = parsed.map((n: any) => ({
-                    ...n,
-                    time: new Date(n.time) // Re-hydrate Date object
-                }));
-            } catch (e) {
-                console.error('Error loading notifications', e);
+        if (isPlatformBrowser(this.platformId)) {
+            const saved = localStorage.getItem(this.NOTIF_STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    this.notifications = parsed.map((n: any) => ({
+                        ...n,
+                        time: new Date(n.time) // Re-hydrate Date object
+                    }));
+                } catch (e) {
+                    console.error('Failed to parse notifications', e);
+                }
             }
         }
     }
 
     private saveNotifications() {
-        try {
-            localStorage.setItem(this.NOTIF_STORAGE_KEY, JSON.stringify(this.notifications));
-        } catch (e) {
-            console.error('Error saving notifications', e);
+        if (isPlatformBrowser(this.platformId)) {
+            try {
+                localStorage.setItem(this.NOTIF_STORAGE_KEY, JSON.stringify(this.notifications));
+            } catch (e) {
+                console.error('Error saving notifications', e);
+            }
         }
     }
 
@@ -115,13 +120,13 @@ export class NotificationService {
     }
 
     requestNotificationPermission() {
-        if ('Notification' in window && Notification.permission !== 'granted') {
+        if (isPlatformBrowser(this.platformId) && 'Notification' in window && Notification.permission !== 'granted') {
             Notification.requestPermission();
         }
     }
 
     showBrowserNotification(title: string, body: string) {
-        if ('Notification' in window && Notification.permission === 'granted') {
+        if (isPlatformBrowser(this.platformId) && 'Notification' in window && Notification.permission === 'granted') {
             new Notification(title, { body, icon: 'assets/favicon.ico' });
         }
     }
@@ -137,14 +142,14 @@ export class NotificationService {
                         this.messageService.add({
                             severity: 'warn',
                             summary: 'Low Stock Alert',
-                            detail: `Low stock for: ${names}`,
+                            detail: `Low stock for: ${names} `,
                             life: 15000
                         });
                     }
-                    this.showBrowserNotification('Low Stock Alert', `Low stock for: ${names}`);
+                    this.showBrowserNotification('Low Stock Alert', `Low stock for: ${names} `);
                     this.addNotification({
                         title: 'Low Stock Alert',
-                        message: `Low stock: ${names}`,
+                        message: `Low stock: ${names} `,
                         time: new Date(),
                         type: 'stock'
                     });

@@ -1,6 +1,7 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule, CurrencyPipe, NgOptimizedImage } from '@angular/common';
+import { DomSanitizer, Title, Meta } from '@angular/platform-browser';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CategoryService } from '../../services/category.service';
 import { ProductService } from '../../services/product.service';
@@ -16,10 +17,11 @@ import { TooltipModule } from 'primeng/tooltip';
 @Component({
     selector: 'app-category-products',
     standalone: true,
-    imports: [CommonModule, ButtonModule, TooltipModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink],
+    imports: [CommonModule, ButtonModule, TooltipModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink, SafeHtmlPipe, NgOptimizedImage],
     providers: [MessageService],
     templateUrl: './category-products.component.html',
-    styleUrls: ['./category-products.component.scss']
+    styleUrls: ['./category-products.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryProductsComponent implements OnInit {
     category = signal<Category | null>(null);
@@ -33,13 +35,9 @@ export class CategoryProductsComponent implements OnInit {
         private productService: ProductService,
         public cartService: CartService,
         private messageService: MessageService,
-        private sanitizer: DomSanitizer
+        private titleService: Title,
+        private metaService: Meta
     ) { }
-
-    sanitize(html: string | undefined | null): SafeHtml {
-        if (!html) return '';
-        return this.sanitizer.bypassSecurityTrustHtml(html);
-    }
 
     ngOnInit() {
         this.route.params.subscribe(params => {
@@ -57,6 +55,7 @@ export class CategoryProductsComponent implements OnInit {
         this.categoryService.getCategoryById(id).subscribe(cat => {
             if (cat) {
                 this.category.set(cat);
+                this.updateSeo(cat);
             }
         });
 
@@ -72,6 +71,12 @@ export class CategoryProductsComponent implements OnInit {
                 this.loading.set(false);
             }
         });
+    }
+
+    updateSeo(category: Category) {
+        const title = `${category.name} | Karukolpo`;
+        this.titleService.setTitle(title);
+        this.metaService.updateTag({ name: 'description', content: `Browse our collection of ${category.name} handmade crafts.` });
     }
 
     showProductDetails(product: Product) {

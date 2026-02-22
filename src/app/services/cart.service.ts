@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CartItem } from '../models/cart.model';
 import { Product } from '../models/product.model';
 import { MessageService } from 'primeng/api';
@@ -12,20 +13,27 @@ export class CartService {
   totalItems = computed(() => this.cart().reduce((total, item) => total + item.quantity, 0));
   subTotal = computed(() => this.cart().reduce((total, item) => total + (item.product.price * item.quantity), 0));
 
-  constructor(private messageService: MessageService) {
+  constructor(
+    private messageService: MessageService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
     // Load cart from localStorage if needed (optional enhancement)
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        this.cart.set(JSON.parse(savedCart));
-      } catch (e) {
-        console.error('Failed to load cart', e);
+    if (isPlatformBrowser(this.platformId)) {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        try {
+          this.cart.set(JSON.parse(savedCart));
+        } catch (e) {
+          console.error('Failed to load cart', e);
+        }
       }
     }
   }
 
   private saveCart() {
-    localStorage.setItem('cart', JSON.stringify(this.cart()));
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('cart', JSON.stringify(this.cart()));
+    }
   }
 
   addToCart(product: Product) {

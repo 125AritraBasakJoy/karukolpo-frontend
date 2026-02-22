@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface ContactInfo {
     address: string;
@@ -18,24 +19,28 @@ export class ContactService {
         email: 'contact@karukolpo.com'
     });
 
-    constructor() {
+    constructor(@Inject(PLATFORM_ID) private platformId: Object) {
         this.loadContactInfo();
     }
 
     private loadContactInfo() {
-        const saved = localStorage.getItem(this.STORAGE_KEY);
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                this.contactInfo.set({ ...this.contactInfo(), ...parsed });
-            } catch (e) {
-                console.error('Failed to parse contact info', e);
+        if (isPlatformBrowser(this.platformId)) {
+            const saved = localStorage.getItem(this.STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    this.contactInfo.set({ ...this.contactInfo(), ...parsed });
+                } catch (e) {
+                    console.error('Failed to parse contact info', e);
+                }
             }
         }
     }
 
     updateContactInfo(info: ContactInfo) {
         this.contactInfo.set(info);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(info));
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(info));
+        }
     }
 }

@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
     providedIn: 'root'
@@ -6,13 +7,17 @@ import { Injectable, signal } from '@angular/core';
 export class ThemeService {
     currentTheme = signal<string>('dark'); // Changed default to dark
 
-    constructor() {
+    constructor(@Inject(PLATFORM_ID) private platformId: Object) {
         // Check local storage or system preference
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            this.setTheme(savedTheme);
+        if (isPlatformBrowser(this.platformId)) {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                this.setTheme(savedTheme);
+            } else {
+                this.setTheme('dark'); // Default to dark theme
+            }
         } else {
-            this.setTheme('dark'); // Default to dark theme
+            this.currentTheme.set('dark');
         }
     }
 
@@ -20,12 +25,15 @@ export class ThemeService {
         // Force dark theme regardless of input
         const enforcedTheme = 'dark';
         this.currentTheme.set(enforcedTheme);
-        localStorage.setItem('theme', enforcedTheme);
 
-        const element = document.querySelector('html');
-        if (element) {
-            // Always add dark-mode class
-            element.classList.add('dark-mode');
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem('theme', enforcedTheme);
+
+            const element = document.querySelector('html');
+            if (element) {
+                // Always add dark-mode class
+                element.classList.add('dark-mode');
+            }
         }
     }
 

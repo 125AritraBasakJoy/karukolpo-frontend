@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface DeliveryCharges {
     insideDhaka: number;
@@ -17,21 +18,30 @@ export class DeliveryService {
         outsideDhaka: 120
     });
 
-    constructor() {
+    constructor(
+        @Inject(PLATFORM_ID) private platformId: Object
+    ) {
         this.loadCharges();
     }
 
     private loadCharges() {
-        const saved = localStorage.getItem(this.STORAGE_KEY);
-        if (saved) {
-            this.charges.set(JSON.parse(saved));
+        if (isPlatformBrowser(this.platformId)) {
+            const saved = localStorage.getItem(this.STORAGE_KEY);
+            if (saved) {
+                try {
+                    this.charges.set(JSON.parse(saved));
+                } catch (e) {
+                    console.error('Failed to parse delivery charges', e);
+                }
+            }
         }
     }
 
-    updateCharges(inside: number, outside: number) {
-        const newCharges = { insideDhaka: inside, outsideDhaka: outside };
+    saveCharges(newCharges: DeliveryCharges) {
         this.charges.set(newCharges);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newCharges));
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(newCharges));
+        }
     }
 
     getCharges() {

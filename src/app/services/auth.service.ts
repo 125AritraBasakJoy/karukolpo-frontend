@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
@@ -9,26 +10,40 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class AuthService {
-  private isAdminLoggedInSubject = new BehaviorSubject<boolean>(this.hasToken());
+  private isAdminLoggedInSubject = new BehaviorSubject<boolean>(false);
   isAdminLoggedIn$ = this.isAdminLoggedInSubject.asObservable();
 
   constructor(
     private http: HttpClient,
-    private router: Router
-  ) { }
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    if (isPlatformBrowser(this.platformId)) {
+      this.isAdminLoggedInSubject.next(this.hasToken());
+    }
+  }
 
   private hasToken(): boolean {
-    return !!localStorage.getItem('adminToken');
+    if (isPlatformBrowser(this.platformId)) {
+      return !!localStorage.getItem('adminToken');
+    }
+    return false;
   }
 
   /** Get the current access token from storage */
   getAccessToken(): string | null {
-    return localStorage.getItem('adminToken');
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem('adminToken');
+    }
+    return null;
   }
 
   /** Get the current refresh token from storage */
   getRefreshToken(): string | null {
-    return localStorage.getItem('adminRefreshToken');
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem('adminRefreshToken');
+    }
+    return null;
   }
 
   /**
@@ -49,7 +64,7 @@ export class AuthService {
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     ).pipe(
       tap(response => {
-        if (response && response.access_token) {
+        if (response && response.access_token && isPlatformBrowser(this.platformId)) {
           localStorage.setItem('adminToken', response.access_token);
           if (response.refresh_token) {
             localStorage.setItem('adminRefreshToken', response.refresh_token);
@@ -76,7 +91,7 @@ export class AuthService {
       { refresh_token: refreshToken }
     ).pipe(
       tap(response => {
-        if (response && response.access_token) {
+        if (response && response.access_token && isPlatformBrowser(this.platformId)) {
           localStorage.setItem('adminToken', response.access_token);
           if (response.refresh_token) {
             localStorage.setItem('adminRefreshToken', response.refresh_token);
@@ -96,8 +111,10 @@ export class AuthService {
    * Clears both tokens from storage and redirects to login.
    */
   logout() {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminRefreshToken');
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminRefreshToken');
+    }
     this.isAdminLoggedInSubject.next(false);
     this.router.navigate(['/admin/login']);
   }

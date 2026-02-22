@@ -16,15 +16,15 @@
                     [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
                     <ng-template let-image pTemplate="item">
                         <div class="image-wrapper">
-                            <img [src]="image" [alt]="product()!.name" class="product-image"
-                                style="max-height: 500px; object-fit: contain;">
+                            <img [ngSrc]="image" [alt]="product()!.name" class="product-image" width="500" height="500"
+                                style="max-height: 500px; object-fit: contain;" priority>
                         </div>
                     </ng-template>
                 </p-carousel>
                 } @else {
                 <div class="image-wrapper solo">
-                    <img [src]="product()!.imageUrl" [alt]="product()!.name" class="product-image"
-                        style="max-height: 500px; object-fit: contain;">
+                    <img [ngSrc]="product()!.imageUrl" [alt]="product()!.name" class="product-image" width="500"
+                        height="500" style="max-height: 500px; object-fit: contain;" priority>
                 </div>
                 }
             </div>
@@ -43,7 +43,7 @@
             </div>
 
             <div class="rich-description text-700 text-lg line-height-3 mb-5"
-                [innerHTML]="safeHtml(product()!.description)">
+                [innerHTML]="product()!.description | safeHtml">
             </div>
 
             <div class="surface-border border-top-1 pt-5">
@@ -79,5 +79,38 @@
         <h2 class="text-2xl text-600">Product not found</h2>
         <button pButton label="Return Home" icon="pi pi-home" routerLink="/" class="mt-4"></button>
     </div>
+    }
+
+    <!-- Related Products with @defer -->
+    @if (!loading() && product()) {
+    @defer (on viewport) {
+    <div class="mt-8 pt-8 border-top-1 surface-border">
+        <h2 class="text-3xl font-bold mb-5">Related Products</h2>
+        <div class="grid">
+            @for (p of relatedProducts(); track p.id) {
+            <div class="col-6 sm:col-6 md:col-3">
+                <div class="product-card surface-card border-round shadow-1 p-3 cursor-pointer h-full"
+                    [routerLink]="['/products', p.id]">
+                    <img [ngSrc]="p.imageUrl" [alt]="p.name" class="w-full border-round mb-3" width="150" height="150"
+                        style="height: 150px; object-fit: cover;">
+                    <div class="font-bold text-lg mb-1">{{ p.name }}</div>
+                    <div class="text-primary font-bold">{{ p.price | currency:'BDT':'symbol-narrow' }}</div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    } @placeholder {
+    <div class="mt-8 pt-8 border-top-1 surface-border">
+        <h2 class="text-3xl font-bold mb-5">Related Products</h2>
+        <div class="grid">
+            @for (i of [1,2,3,4]; track i) {
+            <div class="col-6 sm:col-6 md:col-3">
+                <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
+            </div>
+            }
+        </div>
+    </div>
+    }
     }
 </div>

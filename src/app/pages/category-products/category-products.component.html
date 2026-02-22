@@ -39,12 +39,13 @@
                 }
 
                 <div class="relative mb-3 cursor-pointer" (click)="showProductDetails(product)">
-                    <img [src]="product.imageUrl" [alt]="product.name" class="w-full border-round"
-                        style="height: 200px; object-fit: cover;" loading="lazy">
+                    <img [ngSrc]="product.imageUrl" [alt]="product.name" class="w-full border-round" width="200"
+                        height="200" style="height: 200px; object-fit: cover;"
+                        [priority]="product.id === products()[0]?.id || product.id === products()[1]?.id">
                 </div>
                 <div class="flex-grow-1">
                     <div class="text-xl font-bold mb-2">{{ product.name }}</div>
-                    <div class="desc-clamp text-600 mb-3" [innerHTML]="sanitize(product.description)">
+                    <div class="desc-clamp text-600 mb-3" [innerHTML]="product.description | safeHtml">
                     </div>
                     <div class="text-primary text-xl font-bold">{{ product.price | currency:'BDT':'symbol-narrow' }}
                     </div>

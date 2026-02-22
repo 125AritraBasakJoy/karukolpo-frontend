@@ -7,6 +7,7 @@ import { loadingInterceptor } from './services/loading.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeuix/themes/lara';
 import { MessageService } from 'primeng/api';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,6 +26,6 @@ export const appConfig: ApplicationConfig = {
         }
       }
     }),
-    MessageService
+    MessageService, provideClientHydration(withEventReplay())
   ]
 };

@@ -1,6 +1,9 @@
-import { Component, OnInit, OnDestroy, signal, ViewChildren, QueryList } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Component, OnInit, OnDestroy, signal, ViewChildren, QueryList, ChangeDetectionStrategy, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Title, Meta } from '@angular/platform-browser';
+import { CommonModule, CurrencyPipe, DatePipe, NgOptimizedImage } from '@angular/common';
+import { DomSanitizer } from '@angular/platform-browser';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { forkJoin, map, catchError, of, lastValueFrom } from 'rxjs';
@@ -57,10 +60,13 @@ import { TooltipModule } from 'primeng/tooltip';
     TooltipModule,
     CurrencyPipe,
     DatePipe,
-    RouterLink
+    RouterLink,
+    SafeHtmlPipe,
+    NgOptimizedImage
   ],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private storageListener: (() => void) | null = null;
@@ -154,6 +160,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private productService: ProductService,
     private orderService: OrderService,
     private messageService: MessageService,
+    private titleService: Title,
+    private metaService: Meta,
     public contactService: ContactService,
     public themeService: ThemeService,
     public siteConfigService: SiteConfigService,
@@ -163,13 +171,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     public cartService: CartService,
     private route: ActivatedRoute,
     private router: Router,
-    private sanitizer: DomSanitizer
+    @Inject(PLATFORM_ID) private platformId: Object
   ) { }
-
-  sanitize(html: string | undefined | null): SafeHtml {
-    if (!html) return '';
-    return this.sanitizer.bypassSecurityTrustHtml(html);
-  }
 
   openPaymentModal(orderId: string) {
     // Deprecated
@@ -210,8 +213,16 @@ export class HomeComponent implements OnInit, OnDestroy {
         }, 100);
       }
     });
+
+    this.updateSeo();
   }
 
+  updateSeo() {
+    this.titleService.setTitle('Karukolpo | Premium Handmade Crafts');
+    this.metaService.updateTag({ name: 'description', content: 'Karukolpo offers a wide range of premium handmade crafts and products. Discover unique collections and hot deals.' });
+    this.metaService.updateTag({ property: 'og:title', content: 'Karukolpo | Premium Handmade Crafts' });
+    this.metaService.updateTag({ property: 'og:image', content: this.landingPageImage() });
+  }
 
   loadDeliveryCharges() {
     // Initial default set to 0 as requested
@@ -250,6 +261,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   loadLandingPageConfig() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     const load = () => {
       const config = localStorage.getItem('landingConfig');
       if (config) {
@@ -263,7 +277,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.storageListener) {
+    if (this.storageListener && isPlatformBrowser(this.platformId)) {
       window.removeEventListener('storage', this.storageListener);
     }
   }
@@ -327,6 +341,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   scrollToCategories() {
+    if (!isPlatformBrowser(this.platformId)) return;
     const categoriesSection = document.getElementById('categories');
     if (categoriesSection) {
       categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -437,7 +452,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.displayPaymentMethodModal = false;
             this.displayPaymentSuccessModal = true;
           },
-          error: (err) => {
+          error: (err: any) => {
             console.error('Payment confirmation failed', err);
 
             // Extract error message from backend response if available
@@ -474,7 +489,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     const methodToSend = this.selectedPaymentMethod === 'bKash' ? 'bkash' : 'cod';
 
     this.paymentService.createPayment(oid, methodToSend).subscribe({
-      next: (payment) => {
+      next: (payment: any) => {
 
 
         if (payment && payment.id) {
@@ -485,7 +500,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.showError('Payment initialization failed. Please try again.');
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Payment creation failed', err);
 
         this.showError('Failed to initiate payment. Please try again.');

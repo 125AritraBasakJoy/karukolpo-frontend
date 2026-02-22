@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS } from '../../core/api-endpoints';
 import { Observable } from 'rxjs';
@@ -11,12 +12,28 @@ export class PaymentService {
     private readonly QR_STORAGE_KEY = 'bkash_qr_code';
     qrCodeSignal = signal<string | null>(null);
 
-    constructor(private apiService: ApiService) {
+    constructor(
+        private apiService: ApiService,
+        @Inject(PLATFORM_ID) private platformId: Object
+    ) {
         this.loadQrCode();
     }
 
+    private getStoredQRCode(): string | null {
+        if (isPlatformBrowser(this.platformId)) {
+            return localStorage.getItem(this.QR_STORAGE_KEY);
+        }
+        return null;
+    }
+
+    private storeQRCode(base64Image: string) {
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.setItem(this.QR_STORAGE_KEY, base64Image);
+        }
+    }
+
     private loadQrCode() {
-        const stored = localStorage.getItem(this.QR_STORAGE_KEY);
+        const stored = this.getStoredQRCode();
         this.qrCodeSignal.set(stored);
     }
 
@@ -25,7 +42,7 @@ export class PaymentService {
     }
 
     saveQrCode(base64Image: string) {
-        localStorage.setItem(this.QR_STORAGE_KEY, base64Image);
+        this.storeQRCode(base64Image);
         this.qrCodeSignal.set(base64Image);
     }
 

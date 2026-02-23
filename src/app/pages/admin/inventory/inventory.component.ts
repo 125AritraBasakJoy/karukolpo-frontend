@@ -18,10 +18,12 @@ import { ConfirmationService } from 'primeng/api';
 import { ChartModule } from 'primeng/chart';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { FileUploadModule } from 'primeng/fileupload';
+import { DialogModule } from 'primeng/dialog';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { DropdownModule } from 'primeng/dropdown';
 import { forkJoin, map, catchError, of } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -40,7 +42,11 @@ import { Router } from '@angular/router';
     ProgressSpinnerModule,
     TagModule,
     SkeletonModule,
-    FileUploadModule
+    FileUploadModule,
+    DialogModule,
+    InputNumberModule,
+    DropdownModule,
+    FormsModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './inventory.component.html',
@@ -49,6 +55,15 @@ import { Router } from '@angular/router';
 export class InventoryComponent implements OnInit {
   products = signal<Product[]>([]);
   loading = signal<boolean>(false);
+  savingInventory = signal<boolean>(false);
+
+  // Dialog state
+  inventoryDialogVisible = false;
+  selectedProduct: Product | null = null;
+  inventoryForm = {
+    stock: 0,
+    manualStockStatus: 'AUTO' as 'AUTO' | 'IN_STOCK' | 'OUT_OF_STOCK'
+  };
 
   categories = this.categoryService.categories;
 
@@ -262,7 +277,43 @@ export class InventoryComponent implements OnInit {
   }
 
   manageInventory(product: Product) {
-    this.router.navigate(['/admin/dashboard/inventory/edit', product.id]);
+    this.selectedProduct = product;
+    this.inventoryForm.stock = product.stock || 0;
+    this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
+    this.inventoryDialogVisible = true;
+  }
+
+  saveInventoryUpdate() {
+    if (!this.selectedProduct) return;
+
+    this.savingInventory.set(true);
+    const productId = this.selectedProduct.id;
+
+    // Update both quantity and manual status
+    const updateInventory = this.productService.updateInventory(productId, this.inventoryForm.stock);
+    const updateProductDetails = this.productService.updateProduct({
+      ...this.selectedProduct,
+      manualStockStatus: this.inventoryForm.manualStockStatus
+    } as Product);
+
+    forkJoin([updateInventory, updateProductDetails]).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Inventory updated successfully' });
+        this.inventoryDialogVisible = false;
+        this.refreshProducts();
+        this.savingInventory.set(false);
+      },
+      error: (err) => {
+        console.error('Error updating inventory:', err);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to update inventory' });
+        this.savingInventory.set(false);
+      }
+    });
+  }
+
+  closeInventoryDialog() {
+    this.inventoryDialogVisible = false;
+    this.selectedProduct = null;
   }
 
 

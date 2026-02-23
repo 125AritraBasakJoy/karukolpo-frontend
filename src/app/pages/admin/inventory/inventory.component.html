@@ -162,5 +162,38 @@
 </div>
 
 
+<p-dialog [(visible)]="inventoryDialogVisible" [modal]="true" [header]="'Manage Inventory: ' + selectedProduct?.name"
+    [style]="{ width: '450px' }" styleClass="premium-dialog" appendTo="body" (onHide)="closeInventoryDialog()">
+    <div class="p-4">
+        <div class="field mb-4">
+            <label for="stock" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Available Quantity
+            </label>
+            <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal" styleClass="w-full"
+                inputStyleClass="w-full premium-input"></p-inputNumber>
+        </div>
+
+        <div class="field mb-5">
+            <label for="manualStockStatus"
+                class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Stock Display Mode
+            </label>
+            <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
+                [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
+                styleClass="w-full premium-dropdown" appendTo="body"></p-dropdown>
+            <small class="block mt-2 text-slate-500 italic">
+                Force "In Stock" or "Out of Stock" labels regardless of quantity.
+            </small>
+        </div>
+
+        <div class="flex justify-content-end gap-3 mt-4">
+            <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary"
+                (click)="closeInventoryDialog()"></button>
+            <button pButton label="Save Changes" icon="pi pi-check" class="premium-btn-primary px-4"
+                (click)="saveInventoryUpdate()" [loading]="savingInventory()"></button>
+        </div>
+    </div>
+</p-dialog>
+
 <p-confirmDialog [style]=" { width: '450px' } " styleClass="premium-confirm-dialog" appendTo="body"></p-confirmDialog>
 <p-toast></p-toast>

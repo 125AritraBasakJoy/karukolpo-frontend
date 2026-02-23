@@ -223,6 +223,16 @@
                                     required.</small>
                             </div>
 
+                            <div class="field">
+                                <label for="cart_email" class="text-slate-400 font-medium">Email Address <span
+                                        class="text-xs text-slate-500 ml-1">(Optional)</span></label>
+                                <input pInputText id="cart_email" [(ngModel)]="checkoutForm.email"
+                                    placeholder="Enter your email" #email="ngModel" [pattern]="emailRegex"
+                                    class="w-full premium-input">
+                                <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Please
+                                    enter a valid email address.</small>
+                            </div>
+
                             <div class="formgrid grid">
                                 <div class="field col-6">
                                     <label for="cart_district" class="text-slate-400 font-medium">District <span
@@ -245,6 +255,16 @@
                                         [required]="subDistricts.length > 0" styleClass="w-full premium-dropdown"
                                         [style]="{'width':'100%'}" [filter]="true"></p-dropdown>
                                 </div>
+                            </div>
+
+                            <div class="field">
+                                <label for="cart_postal" class="text-slate-400 font-medium">Postal Code <span
+                                        class="text-xs text-slate-500 ml-1">(Optional)</span></label>
+                                <input pInputText id="cart_postal" [(ngModel)]="checkoutForm.postalCode"
+                                    placeholder="Enter 4-digit postal code" maxlength="4" #postal="ngModel"
+                                    [pattern]="postalCodeRegex" class="w-full premium-input">
+                                <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Postal
+                                    code must be 4 digits.</small>
                             </div>
 
                             <div class="field">

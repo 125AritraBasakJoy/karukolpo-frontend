@@ -360,7 +360,8 @@ export class ProductService {
     return {
       name: product.name,
       price: product.price,
-      description: product.description || null
+      description: product.description || null,
+      manual_stock_status: product.manualStockStatus || 'AUTO'
     };
   }
 }

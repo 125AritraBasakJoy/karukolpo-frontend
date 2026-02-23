@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { CartItem } from '../models/cart.model';
 import { Product } from '../models/product.model';
 import { MessageService } from 'primeng/api';
+import { ProductService } from './product.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +16,7 @@ export class CartService {
 
   constructor(
     private messageService: MessageService,
+    private productService: ProductService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     // Load cart from localStorage if needed (optional enhancement)
@@ -23,11 +25,36 @@ export class CartService {
       if (savedCart) {
         try {
           this.cart.set(JSON.parse(savedCart));
+          this.refreshCartProducts();
         } catch (e) {
           console.error('Failed to load cart', e);
         }
       }
     }
+  }
+
+  refreshCartProducts() {
+    if (this.cart().length === 0) return;
+
+    this.productService.getProducts().subscribe({
+      next: (products) => {
+        let cartUpdated = false;
+        const updatedItems = this.cart().map(item => {
+          const freshProduct = products.find(p => p.id === item.product.id);
+          if (freshProduct && JSON.stringify(freshProduct) !== JSON.stringify(item.product)) {
+            cartUpdated = true;
+            return { ...item, product: freshProduct };
+          }
+          return item;
+        });
+
+        if (cartUpdated) {
+          this.cart.set(updatedItems);
+          this.saveCart();
+        }
+      },
+      error: (err) => console.error('Failed to refresh cart products', err)
+    });
   }
 
   private saveCart() {

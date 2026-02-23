@@ -223,15 +223,41 @@
                 [panelStyle]="{'width':'100%'}" panelStyleClass="w-full" appendTo="body"></p-dropdown>
         </div>
 
-        <div class="field">
-            <label class="block mb-2">Product Image</label>
+        <div class="field" *ngIf="!isNewProduct && existingImages.length > 0">
+            <label class="block mb-2 text-primary font-medium">Existing Images</label>
+            <div class="flex flex-wrap gap-3 mt-2">
+                <div *ngFor="let img of existingImages" class="relative p-2 border-round transition-all"
+                    [ngClass]="{'border-primary border-2 bg-primary-reverse': isImagePrimary(img), 'surface-100': !isImagePrimary(img)}">
+                    <img [src]="img.image_thumb || img.image_path"
+                        class="w-6rem h-6rem border-round shadow-1 object-cover block">
+
+                    <div class="absolute top-0 right-0 flex gap-1 p-1">
+                        <button *ngIf="!isImagePrimary(img)" pButton icon="pi pi-star"
+                            class="p-button-rounded p-button-success p-button-sm"
+                            style="width: 2rem; height: 2rem; padding: 0" (click)="setAsPrimary(img)"
+                            pTooltip="Set Primary"></button>
+
+                        <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
+                            style="width: 2rem; height: 2rem; padding: 0" (click)="removeExistingImage(img)"
+                            pTooltip="Remove"></button>
+                    </div>
+                    <div class="absolute bottom-0 left-0 w-full text-center pb-2" *ngIf="isImagePrimary(img)">
+                        <p-tag value="Primary" severity="success" styleClass="text-xs"></p-tag>
+                    </div>
+                </div>
+            </div>
+            <small class="block mt-2 text-500">Select an image to be primary or remove unused ones.</small>
+        </div>
+
+        <div class="field" *ngIf="isNewProduct">
+            <label class="block mb-2">Main Product Image</label>
             <div class="flex flex-column gap-2">
                 <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="hidden" />
 
                 <button pButton type="button" label="Choose Main Image" icon="pi pi-image"
                     class="premium-btn-secondary w-full" (click)="fileInput.click()"></button>
 
-                <div *ngIf="productForm.imageUrl"
+                <div *ngIf="selectedMainImage && productForm.imageUrl"
                     class="surface-card p-3 border-round shadow-2 w-full text-center mt-2">
                     <img [src]="productForm.imageUrl" alt="Preview"
                         style="max-height: 200px; max-width: 100%; object-fit: contain;" loading="lazy">
@@ -240,15 +266,16 @@
         </div>
 
         <div class="field">
-            <label class="block mb-2">Additional Images (Gallery)</label>
+            <label class="block mb-2">{{ isNewProduct ? 'Additional Images (Gallery)' : 'Upload New Images' }}</label>
             <div class="flex flex-column gap-2">
                 <input type="file" #additionalFilesInput (change)="onAdditionalFilesSelected($event)" accept="image/*"
                     multiple class="hidden" />
 
-                <button pButton type="button" label="Add Additional Images" icon="pi pi-images"
-                    class="premium-btn-secondary w-full" (click)="additionalFilesInput.click()"></button>
+                <button pButton type="button" [label]="isNewProduct ? 'Add Additional Images' : 'Add New Images'"
+                    icon="pi pi-images" class="premium-btn-secondary w-full"
+                    (click)="additionalFilesInput.click()"></button>
 
-                <div *ngIf="productForm.images && productForm.images.length > 0" class="flex flex-wrap gap-2 mt-2">
+                <div *ngIf="selectedAdditionalImages.length > 0" class="flex flex-wrap gap-2 mt-2">
                     <div *ngFor="let img of productForm.images; let i = index" class="relative">
                         <img [src]="img" class="w-8rem h-8rem border-round shadow-2 object-cover block">
                         <button pButton icon="pi pi-times"

@@ -92,7 +92,7 @@ export class ApiService {
 
   patch<T>(endpoint: string, body: any, options: { skipAuth?: boolean } = {}): Observable<T> {
     const isFormData = body instanceof FormData;
-    const contentType = isFormData ? null : 'application/json';
+    const contentType = (isFormData || body === null) ? null : 'application/json';
 
     return this.http.patch<T>(`${this.baseUrl}/${endpoint}`, body, { headers: this.getHeaders(options.skipAuth, contentType) })
       .pipe(catchError(error => this.handleError(error, () => this.patch<T>(endpoint, body, options))));

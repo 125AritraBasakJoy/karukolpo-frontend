@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, forkJoin } from 'rxjs';
 import { map, tap, catchError, switchMap } from 'rxjs/operators';
-import { Product } from '../models/product.model';
+import { Product, ProductImage } from '../models/product.model';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 
@@ -203,7 +203,44 @@ export class ProductService {
    * PATCH /products/{productId}/images/{imageId}/set-primary
    */
   setPrimaryImage(productId: number | string, imageId: number | string): Observable<any> {
-    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.SET_PRIMARY_IMAGE(productId, imageId), {});
+    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.SET_PRIMARY_IMAGE(productId, imageId), null);
+  }
+
+  /**
+   * Batch update images
+   * PATCH /products/{productId}/images/batch?new_primary_id={newPrimaryId}
+   */
+  batchUpdateImages(
+    productId: number | string,
+    newPrimaryId?: number | string | null,
+    newPrimaryFile?: File,
+    newGalleryFiles?: File[],
+    deleteImageIds?: (number | string)[]
+  ): Observable<any[]> {
+    const formData = new FormData();
+
+    if (newPrimaryFile) {
+      formData.append('primary_image', newPrimaryFile);
+    }
+
+    if (newGalleryFiles && newGalleryFiles.length > 0) {
+      newGalleryFiles.forEach(file => {
+        formData.append('gallery_images', file);
+      });
+    }
+
+    if (deleteImageIds && deleteImageIds.length > 0) {
+      deleteImageIds.forEach(id => {
+        formData.append('delete_image_ids', String(id));
+      });
+    }
+
+    let url = API_ENDPOINTS.PRODUCTS.BATCH_UPDATE_IMAGES(productId);
+    if (newPrimaryId !== undefined && newPrimaryId !== null) {
+      url += `?new_primary_id=${newPrimaryId}`;
+    }
+
+    return this.apiService.patch<any[]>(url, formData);
   }
 
   /**
@@ -267,12 +304,12 @@ export class ProductService {
 
       if (primaryImage) {
         // Enforce image_medium for home/list cards for optimal loading/quality balance
-        mainImageUrl = primaryImage.image_medium || primaryImage.image_large || primaryImage.image_thumb || mainImageUrl;
+        mainImageUrl = primaryImage.image_medium || primaryImage.image_large || primaryImage.image_thumb || primaryImage.image_path || mainImageUrl;
       }
 
       // 2. Map all image records to their high-quality 'large' variant for the product details carousel
       galleryImages = data.images
-        .map((img: any) => img.image_large || img.image_medium || img.image_thumb)
+        .map((img: any) => img.image_large || img.image_medium || img.image_thumb || img.image_path)
         .filter(Boolean);
 
     } else if (data.image) {
@@ -288,6 +325,7 @@ export class ProductService {
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
       imageUrl: mainImageUrl,
       images: galleryImages,
+      imageObjects: data.images || [],
       categoryId: data.category_id?.toString() ||
         (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : 'uncategorized'),
       categories: data.categories || [],

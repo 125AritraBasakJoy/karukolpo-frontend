@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { ValidationMessageComponent } from '../../../components/validation-message/validation-message.component';
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { ProductService } from '../../../services/product.service';
-import { Product } from '../../../models/product.model';
+import { Product, ProductImage } from '../../../models/product.model';
 import { CategoryService } from '../../../services/category.service';
 import { Category } from '../../../models/category.model';
 import { OrderService } from '../../../services/order.service';
@@ -82,6 +82,12 @@ export class InventoryComponent implements OnInit {
   // File storage for uploads
   selectedMainImage: File | null = null;
   selectedAdditionalImages: File[] = [];
+
+  // For editing existing images
+  existingImages: ProductImage[] = [];
+  deletedImageIds: number[] = [];
+  initialPrimaryId: number | null = null;
+  newPrimaryImageId: number | null = null;
 
   chartData: any;
   chartOptions: any;
@@ -297,6 +303,9 @@ export class InventoryComponent implements OnInit {
     this.inventoryForm.manualStockStatus = 'AUTO';
     this.selectedMainImage = null;
     this.selectedAdditionalImages = [];
+    this.existingImages = [];
+    this.deletedImageIds = [];
+    this.newPrimaryImageId = null;
 
     // Start Step 1
     this.displayStep1 = true;
@@ -313,10 +322,15 @@ export class InventoryComponent implements OnInit {
     this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
     this.selectedMainImage = null;
     this.selectedAdditionalImages = [];
+    this.existingImages = product.imageObjects ? [...product.imageObjects] : [];
+    this.deletedImageIds = [];
+    const currentPrimary = this.existingImages.find(img => img.is_primary);
+    this.initialPrimaryId = currentPrimary ? Number(currentPrimary.id) : null;
+    this.newPrimaryImageId = null;
 
-    if (!this.productForm.images) {
-      this.productForm.images = [];
-    }
+    // Clear preview images to ensure they don't mix with existing ones
+    this.productForm.images = [];
+    this.productForm.imageUrl = product.imageUrl;
 
     // Explicitly fetch product categories to ensure pre-selection
     const productId = product.id;
@@ -409,16 +423,41 @@ export class InventoryComponent implements OnInit {
         }
       }
 
-      // 2. Handle Bulk Image Upload (same flow as AddProduct)
-      if (this.selectedMainImage) {
-        console.log('Uploading images in bulk...');
-        const uploadedImages = await firstValueFrom(
-          this.productService.bulkUploadImages(productId, this.selectedMainImage, this.selectedAdditionalImages)
-        );
-        console.log('Bulk upload complete:', uploadedImages);
-      } else if (this.selectedAdditionalImages.length > 0) {
-        this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Main image is required for bulk upload' });
-        return;
+      // 2. Handle Image Upload/Update
+      if (this.isNewProduct) {
+        if (this.selectedMainImage) {
+          console.log('Uploading images in bulk...');
+          const uploadedImages = await firstValueFrom(
+            this.productService.bulkUploadImages(productId, this.selectedMainImage, this.selectedAdditionalImages)
+          );
+          console.log('Bulk upload complete:', uploadedImages);
+        } else if (this.selectedAdditionalImages.length > 0) {
+          this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Main image is required for bulk upload' });
+          return;
+        }
+      } else {
+        // Edit Mode Image Handling
+        const hasNewImages = this.selectedMainImage !== null || this.selectedAdditionalImages.length > 0;
+        const hasDeletes = this.deletedImageIds.length > 0;
+        const hasNewPrimary = this.newPrimaryImageId !== null && this.newPrimaryImageId !== this.initialPrimaryId;
+
+        if (hasNewImages || hasDeletes || hasNewPrimary) {
+          // STRICT RULE: Use set-primary ONLY if ONLY the primary changed on existing images
+          if (!hasNewImages && !hasDeletes && hasNewPrimary) {
+            console.log('Setting primary image:', this.newPrimaryImageId);
+            await firstValueFrom(this.productService.setPrimaryImage(productId, this.newPrimaryImageId!));
+          } else {
+            // Use batch for everything else
+            console.log('Batch updating images...');
+            await firstValueFrom(this.productService.batchUpdateImages(
+              productId,
+              hasNewPrimary ? this.newPrimaryImageId : undefined,
+              this.selectedMainImage || undefined,
+              this.selectedAdditionalImages.length > 0 ? this.selectedAdditionalImages : undefined,
+              this.deletedImageIds.length > 0 ? this.deletedImageIds : undefined
+            ));
+          }
+        }
       }
 
       this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Category & Images Saved. Proceed to Inventory.' });
@@ -511,6 +550,18 @@ export class InventoryComponent implements OnInit {
     });
   }
 
+  setAsPrimary(img: ProductImage) {
+    this.newPrimaryImageId = img.id;
+  }
+
+  removeExistingImage(img: ProductImage) {
+    this.deletedImageIds.push(img.id);
+    this.existingImages = this.existingImages.filter(i => i.id !== img.id);
+    if (this.newPrimaryImageId === img.id) {
+      this.newPrimaryImageId = null;
+    }
+  }
+
   onFileSelected(event: any) {
     // Support both native file input (event.target.files) and PrimeNG (event.files)
     const file = event?.target?.files?.[0] || event?.files?.[0];
@@ -548,10 +599,15 @@ export class InventoryComponent implements OnInit {
   removeAdditionalImage(index: number) {
     this.productForm.images?.splice(index, 1);
     // Also remove from selected files if it was a new file
-    // Note: This logic is imperfect if we are editing existing images mixed with new ones.
-    // For simplicity in this wizard flow (new product), index matches.
     if (index < this.selectedAdditionalImages.length) {
       this.selectedAdditionalImages.splice(index, 1);
     }
+  }
+
+  isImagePrimary(img: ProductImage): boolean {
+    if (this.newPrimaryImageId !== null) {
+      return this.newPrimaryImageId === img.id;
+    }
+    return !!img.is_primary;
   }
 }

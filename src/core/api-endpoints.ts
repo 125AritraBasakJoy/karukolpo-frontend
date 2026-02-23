@@ -33,6 +33,7 @@ export const PRODUCTS_API = {
     // Product Images
     ADD_IMAGE: (productId: number | string) => `products/${productId}/images`,
     BULK_UPLOAD_IMAGES: (productId: number | string) => `products/${productId}/images/bulk`,
+    BATCH_UPDATE_IMAGES: (productId: number | string) => `products/${productId}/images/batch`,
     REMOVE_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}`,
     SET_PRIMARY_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}/set-primary`,
 } as const;

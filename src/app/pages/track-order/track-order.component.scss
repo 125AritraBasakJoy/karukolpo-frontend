@@ -3,6 +3,7 @@
   color: var(--text-color);
   min-height: 100vh;
   width: 100%;
+  padding-bottom: 4rem;
 }
 
 .track-order-container {
@@ -11,25 +12,51 @@
   margin: 0 auto;
 }
 
+.search-card {
+  margin-top: 2rem;
+}
+
 .search-section {
   text-align: center;
-  margin-bottom: 2rem;
 
-  h2 {
-    color: var(--primary-color);
+  h1 {
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.premium-input {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  padding: 1rem 1.5rem !important;
+  color: white !important;
+  font-size: 1.1rem !important;
+  transition: all 0.3s ease !important;
+
+  &:focus {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15) !important;
+  }
+
+  &::placeholder {
+    color: #64748b !important;
   }
 }
 
 .premium-card {
-  border: 1px solid var(--surface-border);
-  box-shadow: var(--card-shadow);
-  border-radius: 1.5rem;
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 28px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
   overflow: hidden;
-  background: var(--surface-card);
 
   ::ng-deep .p-card-body {
-    padding: 2.5rem;
+    padding: 3rem !important;
   }
 }
 
@@ -37,50 +64,46 @@
   h4 {
     margin-top: 0;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
   }
 }
 
 .info-content {
   p {
-    line-height: 1.5;
+    line-height: 1.6;
   }
 }
 
 .items-list {
-  background: var(--surface-hover);
-  border: 1px solid var(--surface-border);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 
   &::-webkit-scrollbar {
     width: 6px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--surface-300);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
   }
 }
 
 .item-row {
-  transition: background 0.2s;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(var(--primary-color-rgb), 0.05);
+    background: rgba(255, 255, 255, 0.03);
+    padding-left: 0.5rem;
   }
 }
 
 .item-badge {
   min-width: 2.5rem;
   text-align: center;
+  font-weight: 600;
 }
-
-// Emerald/Teal overrides for specific elements
-.text-emerald-500 {
-  color: #10b981;
-}
-
-/* Global tags are handled in styles.scss */
 
 @media screen and (max-width: 768px) {
   .track-order-container {
@@ -88,6 +111,10 @@
   }
 
   .premium-card ::ng-deep .p-card-body {
-    padding: 1.5rem;
+    padding: 1.5rem !important;
+  }
+
+  .search-section h1 {
+    font-size: 2.5rem !important;
   }
 }

@@ -10,8 +10,12 @@
 }
 
 .cart-header h1 {
-    font-size: 2rem;
-    color: var(--text-color);
+    font-size: 2.5rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .cart-item-image {
@@ -21,14 +25,15 @@
     flex-shrink: 0;
 }
 
-.cart-item {
-    transition: background-color 0.2s;
+.cart-item-premium {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-        background-color: var(--surface-hover);
-        border-radius: 8px;
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
+        background-color: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        transform: scale(1.01);
     }
 }
 
@@ -42,33 +47,34 @@
 
 // Payment cards
 .payment-method-card {
-    border: 2px solid var(--surface-border);
-    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
     padding: 1.5rem;
     cursor: pointer;
-    background: var(--surface-card);
+    background: rgba(255, 255, 255, 0.02);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 
     &:hover {
-        border-color: var(--primary-color);
-        background: var(--surface-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: var(--accent-color);
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     }
 
     &.active {
         border-color: var(--accent-color);
-        background: var(--surface-hover);
+        background: rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 
         &::after {
             content: '\e909';
             font-family: 'primeicons';
             position: absolute;
-            top: 10px;
-            right: 10px;
-            color: var(--primary-color);
+            top: 15px;
+            right: 15px;
+            color: var(--accent-color);
             font-size: 1.2rem;
         }
     }

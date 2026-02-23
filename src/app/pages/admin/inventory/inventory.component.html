@@ -79,9 +79,9 @@
             <ng-template pTemplate="header">
                 <tr>
                     <th pSortableColumn="id" style="width: 120px">ID <p-sortIcon field="id"></p-sortIcon></th>
+                    <th>Product Image</th>
                     <th pSortableColumn="name" style="min-width: 15rem">Product Name <p-sortIcon
                             field="name"></p-sortIcon></th>
-                    <th>Image</th>
                     <th pSortableColumn="price">Price <p-sortIcon field="price"></p-sortIcon></th>
                     <th pSortableColumn="stock">Status <p-sortIcon field="stock"></p-sortIcon></th>
                     <th class="text-right">Actions</th>
@@ -94,12 +94,12 @@
                         <code class="id-tag">#{{ product.id }}</code>
                     </td>
                     <td>
-                        <span class="font-semibold text-white">{{ product.name }}</span>
-                    </td>
-                    <td>
                         <div class="product-img-container">
                             <img [src]="product.imageUrl" [alt]="product.name" class="product-img" loading="lazy" />
                         </div>
+                    </td>
+                    <td>
+                        <span class="font-semibold text-white">{{ product.name }}</span>
                     </td>
                     <td>
                         <span class="price-value font-medium">{{ product.price | currency:'BDT':'symbol-narrow'
@@ -140,8 +140,8 @@
             <ng-template pTemplate="header">
                 <tr>
                     <th style="width: 120px">ID</th>
+                    <th>Product Image</th>
                     <th style="min-width: 15rem">Product Name</th>
-                    <th>Image</th>
                     <th>Price</th>
                     <th>Status</th>
                     <th class="text-right">Actions</th>
@@ -150,8 +150,8 @@
             <ng-template pTemplate="body">
                 <tr>
                     <td><p-skeleton width="60px"></p-skeleton></td>
-                    <td><p-skeleton width="150px"></p-skeleton></td>
                     <td><p-skeleton width="50px" height="50px" borderRadius="12px"></p-skeleton></td>
+                    <td><p-skeleton width="150px"></p-skeleton></td>
                     <td><p-skeleton width="80px"></p-skeleton></td>
                     <td><p-skeleton width="100px" height="24px" borderRadius="20px"></p-skeleton></td>
                     <td class="text-right"><p-skeleton width="100px" height="32px"></p-skeleton></td>

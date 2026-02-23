@@ -102,43 +102,44 @@
         <div *ngIf="!orderConfirmed">
 
             <!-- Header -->
-            <div class="cart-header flex justify-content-between align-items-center mb-5">
-                <h1 class="m-0 flex align-items-center gap-3">
-                    <i class="pi pi-shopping-cart text-primary"></i>
+            <div class="cart-header flex justify-content-between align-items-center mb-5 fadein animation-duration-500">
+                <h1 class="m-0 flex align-items-center gap-3 text-white">
+                    <i class="pi pi-shopping-cart text-blue-400"></i>
                     Your Cart
                     <p-tag *ngIf="cartService.cart().length > 0" [value]="cartService.totalItems() + ' items'"
-                        severity="info" [rounded]="true"></p-tag>
+                        severity="info" [rounded]="true" styleClass="px-3"></p-tag>
                 </h1>
-                <button pButton label="Continue Shopping" icon="pi pi-arrow-left"
-                    class="p-button-text p-button-secondary" (click)="goBack()"></button>
+                <button pButton label="Continue Shopping" icon="pi pi-arrow-left" class="premium-btn-secondary"
+                    (click)="goBack()"></button>
             </div>
 
             <!-- Empty Cart -->
-            <div *ngIf="cartService.cart().length === 0" class="empty-cart text-center py-8">
-                <div class="surface-card border-round-xl shadow-2 p-6 mx-auto" style="max-width: 500px;">
-                    <i class="pi pi-shopping-cart text-6xl text-400 mb-4 block"></i>
-                    <h2 class="text-color-secondary mb-3">Your cart is empty</h2>
-                    <p class="text-500 mb-5">Browse our products and add something you love!</p>
-                    <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg"
+            <div *ngIf="cartService.cart().length === 0"
+                class="empty-cart text-center py-8 fadein animation-duration-500">
+                <div class="glass-card p-6 mx-auto" style="max-width: 500px;">
+                    <i class="pi pi-shopping-cart text-6xl text-slate-500 mb-4 block"></i>
+                    <h2 class="text-white mb-3">Your cart is empty</h2>
+                    <p class="text-slate-400 mb-5 text-lg">Browse our products and add something you love!</p>
+                    <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="premium-btn-primary px-6"
                         (click)="goBack()"></button>
                 </div>
             </div>
 
             <!-- Cart + Checkout -->
-            <div *ngIf="cartService.cart().length > 0" class="grid">
+            <div *ngIf="cartService.cart().length > 0" class="grid fadein animation-duration-500">
 
                 <!-- Left: Cart Items -->
                 <div class="col-12 lg:col-7">
-                    <div class="surface-card border-round-xl shadow-2 p-4 mb-4">
-                        <h3 class="mt-0 mb-4 flex align-items-center gap-2">
-                            <i class="pi pi-list"></i> Cart Items
+                    <div class="glass-card p-4 mb-4">
+                        <h3 class="mt-0 mb-4 flex align-items-center gap-2 text-white">
+                            <i class="pi pi-list text-blue-400"></i> Cart Items
                         </h3>
 
                         <div *ngFor="let item of cartService.cart(); let last = last"
-                            class="cart-item flex align-items-center gap-4 py-3" [class.border-bottom-1]="!last"
-                            [class.surface-border]="!last">
+                            class="cart-item-premium flex align-items-center gap-4 py-3" [class.border-bottom-1]="!last"
+                            [class.border-white-alpha-10]="!last">
                             <img [src]="item.product.imageUrl" [alt]="item.product.name"
-                                class="cart-item-image border-round shadow-1" loading="lazy">
+                                class="cart-item-image border-round-xl shadow-4" loading="lazy">
 
                             <div class="flex-grow-1">
                                 <div class="font-bold text-lg mb-1">{{ item.product.name }}</div>
@@ -167,19 +168,23 @@
                         </div>
 
                         <!-- Price Summary -->
-                        <div class="mt-4 pt-3 border-top-1 surface-border">
+                        <div class="mt-4 pt-4 border-top-1 border-white-alpha-10">
                             <div class="flex justify-content-between mb-2">
-                                <span class="text-color-secondary">Subtotal</span>
-                                <span class="font-semibold">{{ getSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
-                            </div>
-                            <div class="flex justify-content-between mb-2">
-                                <span class="text-color-secondary">Delivery Charge</span>
-                                <span class="font-semibold">{{ currentDeliveryCharge | currency:'BDT':'symbol-narrow'
+                                <span class="text-slate-400">Subtotal</span>
+                                <span class="font-semibold text-white">{{ getSubTotal() | currency:'BDT':'symbol-narrow'
                                     }}</span>
                             </div>
-                            <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl">
-                                <span class="font-bold">Total</span>
-                                <span class="font-bold text-primary">{{ getTotalPrice() | currency:'BDT':'symbol-narrow'
+                            <div class="flex justify-content-between mb-2">
+                                <span class="text-slate-400">Delivery Charge</span>
+                                <span class="font-semibold text-white">{{ currentDeliveryCharge |
+                                    currency:'BDT':'symbol-narrow'
+                                    }}</span>
+                            </div>
+                            <div
+                                class="flex justify-content-between mt-3 pt-3 border-top-1 border-white-alpha-10 text-xl">
+                                <span class="font-bold text-white">Total</span>
+                                <span class="font-bold text-blue-400">{{ getTotalPrice() |
+                                    currency:'BDT':'symbol-narrow'
                                     }}</span>
                             </div>
                         </div>
@@ -190,115 +195,98 @@
                 <div class="col-12 lg:col-5">
 
                     <!-- Shipping Form (hidden when payment section is shown) -->
-                    <div *ngIf="!showPaymentSection" class="surface-card border-round-xl shadow-2 p-4 mb-4">
-                        <h3 class="mt-0 mb-4 flex align-items-center gap-2">
-                            <i class="pi pi-truck"></i> Shipping Details
+                    <div *ngIf="!showPaymentSection" class="glass-card p-4 mb-4">
+                        <h3 class="mt-0 mb-4 flex align-items-center gap-2 text-white">
+                            <i class="pi pi-truck text-blue-400"></i> Shipping Details
                         </h3>
 
                         <div class="p-fluid">
                             <div class="field">
-                                <label for="cart_fullname">Full Name <span class="text-red-500">*</span></label>
+                                <label for="cart_fullname" class="text-slate-400 font-medium">Full Name <span
+                                        class="text-red-500">*</span></label>
                                 <input pInputText id="cart_fullname" [(ngModel)]="checkoutForm.fullName"
-                                    placeholder="Enter your name" required #fullName="ngModel" class="w-full">
+                                    placeholder="Enter your name" required #fullName="ngModel"
+                                    class="w-full premium-input">
                                 <small class="p-error"
                                     *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full Name is
                                     required.</small>
                             </div>
 
                             <div class="field">
-                                <label for="cart_phone">Phone Number <span class="text-red-500">*</span></label>
+                                <label for="cart_phone" class="text-slate-400 font-medium">Phone Number <span
+                                        class="text-red-500">*</span></label>
                                 <input pInputText id="cart_phone" [(ngModel)]="checkoutForm.phoneNumber"
                                     placeholder="017..." maxlength="11" required #phone="ngModel"
-                                    pattern="^(?:\+88|88)?(01[3-9]\d{8})$" class="w-full">
+                                    pattern="^(?:\+88|88)?(01[3-9]\d{8})$" class="w-full premium-input">
                                 <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid
                                     Phone Number is
                                     required.</small>
                             </div>
 
-                            <div class="field">
-                                <label for="cart_email">Email <span
-                                        class="text-color-secondary text-xs font-normal">(Optional)</span></label>
-                                <input pInputText id="cart_email" [(ngModel)]="checkoutForm.email"
-                                    placeholder="example@email.com" email #email="ngModel" class="w-full">
-                                <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Please
-                                    enter a valid email address.</small>
-                            </div>
-
                             <div class="formgrid grid">
                                 <div class="field col-6">
-                                    <label for="cart_district">District <span class="text-red-500">*</span></label>
+                                    <label for="cart_district" class="text-slate-400 font-medium">District <span
+                                            class="text-red-500">*</span></label>
                                     <p-dropdown inputId="cart_district" [options]="districts" optionLabel="name"
                                         optionValue="name" [(ngModel)]="checkoutForm.district"
                                         (onChange)="onDistrictChange($event)" placeholder="Select District"
-                                        appendTo="body" required #district="ngModel" styleClass="w-full"
-                                        [style]="{'width':'100%'}" [filter]="true" filterBy="name"></p-dropdown>
+                                        appendTo="body" required #district="ngModel"
+                                        styleClass="w-full premium-dropdown" [style]="{'width':'100%'}" [filter]="true"
+                                        filterBy="name"></p-dropdown>
                                     <small class="p-error"
                                         *ngIf="district.invalid && (district.dirty || district.touched)">District is
                                         required.</small>
                                 </div>
                                 <div class="field col-6">
-                                    <label>Sub-District <span class="text-red-500"
+                                    <label class="text-slate-400 font-medium">Sub-District <span class="text-red-500"
                                             *ngIf="subDistricts.length > 0">*</span></label>
                                     <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
                                         placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
-                                        [required]="subDistricts.length > 0" styleClass="w-full"
+                                        [required]="subDistricts.length > 0" styleClass="w-full premium-dropdown"
                                         [style]="{'width':'100%'}" [filter]="true"></p-dropdown>
                                 </div>
                             </div>
 
                             <div class="field">
-                                <label for="cart_postal">Postal Code</label>
-                                <input pInputText id="cart_postal" [(ngModel)]="checkoutForm.postalCode"
-                                    placeholder="1234" maxlength="4" pattern="\d{4}" #postal="ngModel" class="w-full">
-                                <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Valid
-                                    Postal Code is
-                                    required.</small>
-                            </div>
-
-                            <div class="field">
-                                <label for="cart_address">Full Address <span class="text-red-500">*</span></label>
+                                <label for="cart_address" class="text-slate-400 font-medium">Full Address <span
+                                        class="text-red-500">*</span></label>
                                 <textarea pInputTextarea id="cart_address" [(ngModel)]="checkoutForm.fullAddress"
                                     rows="2" placeholder="House, Road, Area..." required #address="ngModel"
-                                    class="w-full"></textarea>
+                                    class="w-full premium-input"></textarea>
                                 <small class="p-error"
                                     *ngIf="address.invalid && (address.dirty || address.touched)">Full Address is
                                     required.</small>
                             </div>
 
-                            <div class="field">
-                                <label for="cart_info">Additional Info (Optional)</label>
-                                <textarea pInputTextarea id="cart_info" [(ngModel)]="checkoutForm.additionalInfo"
-                                    rows="2" placeholder="Landmarks, special instructions..." class="w-full"></textarea>
-                            </div>
-
                             <button pButton label="Proceed to Payment" icon="pi pi-arrow-right"
-                                class="w-full p-button-lg mt-3" (click)="proceedToPayment()" [loading]="loading()"
-                                *ngIf="!showPaymentSection"></button>
+                                class="premium-btn-primary w-full mt-3" (click)="proceedToPayment()"
+                                [loading]="loading()" *ngIf="!showPaymentSection"></button>
                         </div>
                     </div>
 
                     <!-- Payment Section (shown after form validation, replaces shipping form) -->
-                    <div *ngIf="showPaymentSection" id="payment-section"
-                        class="surface-card border-round-xl shadow-2 p-4 payment-appear">
+                    <div *ngIf="showPaymentSection" id="payment-section" class="glass-card p-4 payment-appear">
 
                         <!-- Shipping Summary -->
-                        <div class="surface-ground border-round-lg p-3 mb-4 border-1 surface-border">
+                        <div class="bg-white-alpha-5 border-round-xl p-3 mb-4 border-1 border-white-alpha-10">
                             <div class="flex justify-content-between align-items-center mb-2">
-                                <span class="font-bold text-color flex align-items-center gap-2">
-                                    <i class="pi pi-truck"></i> Shipping To
+                                <span class="font-bold text-white flex align-items-center gap-2">
+                                    <i class="pi pi-truck text-blue-400"></i> Shipping To
                                 </span>
-                                <button pButton label="Edit" icon="pi pi-pencil" class="p-button-text p-button-sm"
+                                <button pButton label="Edit" icon="pi pi-pencil"
+                                    class="p-button-text p-button-sm text-blue-400"
                                     (click)="showPaymentSection = false"></button>
                             </div>
-                            <div class="text-color-secondary text-sm line-height-3">
-                                <div>{{ checkoutForm.fullName }} &bull; {{ checkoutForm.phoneNumber }}</div>
+                            <div class="text-slate-400 text-sm line-height-3">
+                                <div class="text-white font-medium">{{ checkoutForm.fullName }} &bull; {{
+                                    checkoutForm.phoneNumber }}</div>
                                 <div>{{ checkoutForm.fullAddress }}, {{ checkoutForm.subDistrict ?
                                     checkoutForm.subDistrict + ', ' : '' }}{{ checkoutForm.district }}</div>
                             </div>
                         </div>
 
-                        <h3 class="mt-0 mb-4 flex align-items-center gap-2">
-                            <i class="pi pi-wallet"></i> Payment Method
+                        <h3 class="mt-0 mb-4 flex align-items-center gap-2 text-white">
+                            <i class="pi pi-wallet text-blue-400"></i> Payment Method
                         </h3>
 
                         <div class="grid mb-4">

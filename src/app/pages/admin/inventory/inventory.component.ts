@@ -1,7 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { ValidationMessageComponent } from '../../../components/validation-message/validation-message.component';
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { ProductService } from '../../../services/product.service';
 import { Product, ProductImage } from '../../../models/product.model';
@@ -11,10 +10,6 @@ import { OrderService } from '../../../services/order.service';
 import { Order } from '../../../models/order.model';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { EditorModule } from 'primeng/editor';
 import { FormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -38,19 +33,11 @@ import { Router } from '@angular/router';
     NotificationButtonComponent,
     TableModule,
     ButtonModule,
-    DialogModule,
-    InputTextModule,
-    InputNumberModule,
-    EditorModule,
-    FormsModule,
+    CardModule,
     ToastModule,
     ConfirmDialogModule,
     ChartModule,
-    CardModule,
-    CardModule,
     ProgressSpinnerModule,
-    ValidationMessageComponent,
-    DropdownModule,
     TagModule,
     SkeletonModule,
     FileUploadModule
@@ -63,31 +50,7 @@ export class InventoryComponent implements OnInit {
   products = signal<Product[]>([]);
   loading = signal<boolean>(false);
 
-  // Dialog States for 3-Step Wizard
-  displayStep1 = false; // Basic Details
-  displayStep2 = false; // Media & Category
-  displayStep3 = false; // Inventory
-
-  isNewProduct = true;
-  selectedProduct: Product | null = null;
-  createdProduct: Product | null = null; // Store product created in step 1
   categories = this.categoryService.categories;
-
-  productForm: Partial<Product> = {};
-  inventoryForm: { stock: number; manualStockStatus: 'AUTO' | 'IN_STOCK' | 'OUT_OF_STOCK' } = {
-    stock: 0,
-    manualStockStatus: 'AUTO'
-  };
-
-  // File storage for uploads
-  selectedMainImage: File | null = null;
-  selectedAdditionalImages: File[] = [];
-
-  // For editing existing images
-  existingImages: ProductImage[] = [];
-  deletedImageIds: number[] = [];
-  initialPrimaryId: number | null = null;
-  newPrimaryImageId: number | null = null;
 
   chartData: any;
   chartOptions: any;
@@ -292,244 +255,16 @@ export class InventoryComponent implements OnInit {
   }
 
 
-  openNew() {
-    this.isNewProduct = true;
-    this.createdProduct = null;
-    this.productForm = {
-      images: [],
-      manualStockStatus: 'AUTO'
-    };
-    this.inventoryForm.stock = 0;
-    this.inventoryForm.manualStockStatus = 'AUTO';
-    this.selectedMainImage = null;
-    this.selectedAdditionalImages = [];
-    this.existingImages = [];
-    this.deletedImageIds = [];
-    this.newPrimaryImageId = null;
-
-    // Start Step 1
-    this.displayStep1 = true;
-    this.displayStep2 = false;
-    this.displayStep3 = false;
-  }
 
 
   editProduct(product: Product) {
-    this.isNewProduct = false;
-    this.createdProduct = product; // Store current product
-    this.productForm = { ...product };
-    this.inventoryForm.stock = product.stock || 0;
-    this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
-    this.selectedMainImage = null;
-    this.selectedAdditionalImages = [];
-    this.existingImages = product.imageObjects ? [...product.imageObjects] : [];
-    this.deletedImageIds = [];
-    const currentPrimary = this.existingImages.find(img => img.is_primary);
-    this.initialPrimaryId = currentPrimary ? Number(currentPrimary.id) : null;
-    this.newPrimaryImageId = null;
-
-    // Clear preview images to ensure they don't mix with existing ones
-    this.productForm.images = [];
-    this.productForm.imageUrl = product.imageUrl;
-
-    // Explicitly fetch product categories to ensure pre-selection
-    const productId = product.id;
-    this.productService.listProductCategories(productId).subscribe({
-      next: (productCategories) => {
-        if (productCategories && productCategories.length > 0) {
-          // Take the first category ID
-          const firstCat = productCategories[0];
-          const catId = typeof firstCat === 'object' ? firstCat.id?.toString() : firstCat.toString();
-
-          this.productForm.categoryId = catId;
-          // Also update createdProduct so subsequent steps have the categoryId
-          if (this.createdProduct) {
-            this.createdProduct.categoryId = catId;
-          }
-        }
-      },
-      error: (err) => console.error('Error fetching product categories:', err)
-    });
-
-    this.displayStep1 = true;
-    this.displayStep2 = false;
-    this.displayStep3 = false;
+    this.router.navigate(['/admin/dashboard/inventory/edit', product.id]);
   }
 
   manageInventory(product: Product) {
-    this.createdProduct = product;
-    this.inventoryForm.stock = product.stock || 0;
-    this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
-    this.displayStep3 = true; // Open Step 3 directly
+    this.router.navigate(['/admin/dashboard/inventory/edit', product.id]);
   }
 
-  // Step 1: Basic Details (Name, Description, Price)
-  saveProductStep1() {
-    if (!this.productForm.name?.trim()) {
-      this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Product Name is required' });
-      return;
-    }
-    if (this.productForm.price === undefined || this.productForm.price === null) {
-      this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Price is required' });
-      return;
-    }
-
-    if (this.isNewProduct) {
-      this.productService.addProduct(this.productForm as Product).subscribe({
-        next: (createdProduct) => {
-          this.createdProduct = createdProduct;
-          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product Created. Proceed to Category & Images.' });
-
-          // Move to Step 2
-          this.displayStep1 = false;
-          this.displayStep2 = true;
-        },
-        error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
-        }
-      });
-    } else {
-      this.productService.updateProduct(this.productForm as Product).subscribe({
-        next: (updatedProduct) => {
-          this.createdProduct = updatedProduct;
-          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product Updated.' });
-
-          // Move to Step 2
-          this.displayStep1 = false;
-          this.displayStep2 = true;
-        },
-        error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message });
-        }
-      });
-    }
-  }
-
-  // Step 2: Media & Category
-  async saveProductStep2() {
-    if (!this.createdProduct) return;
-    const productId = this.createdProduct.id;
-
-    try {
-      // 1. Handle Category Linking
-      if (this.productForm.categoryId) {
-        try {
-          await firstValueFrom(
-            this.productService.addCategoryToProduct(productId, parseInt(this.productForm.categoryId, 10))
-          );
-          console.log('Category linked successfully');
-        } catch (err) {
-          console.error('Category linking failed:', err);
-        }
-      }
-
-      // 2. Handle Image Upload/Update
-      if (this.isNewProduct) {
-        if (this.selectedMainImage) {
-          console.log('Uploading images in bulk...');
-          const uploadedImages = await firstValueFrom(
-            this.productService.bulkUploadImages(productId, this.selectedMainImage, this.selectedAdditionalImages)
-          );
-          console.log('Bulk upload complete:', uploadedImages);
-        } else if (this.selectedAdditionalImages.length > 0) {
-          this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Main image is required for bulk upload' });
-          return;
-        }
-      } else {
-        // Edit Mode Image Handling
-        const hasNewImages = this.selectedMainImage !== null || this.selectedAdditionalImages.length > 0;
-        const hasDeletes = this.deletedImageIds.length > 0;
-        const hasNewPrimary = this.newPrimaryImageId !== null && this.newPrimaryImageId !== this.initialPrimaryId;
-
-        if (hasNewImages || hasDeletes || hasNewPrimary) {
-          // STRICT RULE: Use set-primary ONLY if ONLY the primary changed on existing images
-          if (!hasNewImages && !hasDeletes && hasNewPrimary) {
-            console.log('Setting primary image:', this.newPrimaryImageId);
-            await firstValueFrom(this.productService.setPrimaryImage(productId, this.newPrimaryImageId!));
-          } else {
-            // Use batch for everything else
-            console.log('Batch updating images...');
-            await firstValueFrom(this.productService.batchUpdateImages(
-              productId,
-              hasNewPrimary ? this.newPrimaryImageId : undefined,
-              this.selectedMainImage || undefined,
-              this.selectedAdditionalImages.length > 0 ? this.selectedAdditionalImages : undefined,
-              this.deletedImageIds.length > 0 ? this.deletedImageIds : undefined
-            ));
-          }
-        }
-      }
-
-      this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Category & Images Saved. Proceed to Inventory.' });
-      this.displayStep2 = false;
-      this.displayStep3 = true;
-
-    } catch (err) {
-      console.error('Error in Step 2:', err);
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save images. Please try again.' });
-    }
-  }
-
-  // Step 3: Inventory
-  saveInventory() {
-    if (!this.createdProduct) return;
-
-    const productId = this.createdProduct.id;
-    const quantity = this.inventoryForm.stock;
-    const manualStatus = this.inventoryForm.manualStockStatus;
-
-    // 1. Update Inventory Quantity
-    const inventoryObs = this.productService.updateInventory(productId, quantity).pipe(
-      catchError(err => {
-        // Don't swallow 401 — let ApiService handle token refresh
-        if (err.status === 401) {
-          throw err;
-        }
-        console.error('Inventory update error:', err);
-        return of({ error: true, msg: 'Failed to update quantity', status: err.status });
-      })
-    );
-
-    // 2. Update Product Status (Manual Stock Status)
-    const productUpdate: Product = {
-      ...this.createdProduct,
-      manualStockStatus: manualStatus
-    };
-
-    const statusObs = this.productService.updateProduct(productUpdate).pipe(
-      catchError(err => {
-        // Don't swallow 401 — let ApiService handle token refresh
-        if (err.status === 401) {
-          throw err;
-        }
-        console.error('Status update error:', err);
-        return of({ error: true, msg: 'Failed to update stock status', status: err.status });
-      })
-    );
-
-    forkJoin([inventoryObs, statusObs]).subscribe({
-      next: (results: any[]) => {
-        const errors = results.filter(r => r && r.error);
-
-        if (errors.length > 0) {
-          this.messageService.add({ severity: 'warn', summary: 'Partial Update', detail: 'Some updates failed. Please check.' });
-        } else {
-          this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Inventory & Status Updated.' });
-        }
-        this.displayStep3 = false;
-        this.refreshProducts();
-      },
-      error: (err) => {
-        console.error('Error in Step 3:', err);
-        if (err.status === 401) {
-          this.messageService.add({ severity: 'error', summary: 'Session Expired', detail: 'Please log in again.' });
-          this.router.navigate(['/admin/login']);
-        } else {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Unexpected error occurred.' });
-        }
-      }
-    });
-  }
 
   deleteProduct(product: Product) {
     this.confirmationService.confirm({
@@ -550,64 +285,7 @@ export class InventoryComponent implements OnInit {
     });
   }
 
-  setAsPrimary(img: ProductImage) {
-    this.newPrimaryImageId = img.id;
-  }
-
-  removeExistingImage(img: ProductImage) {
-    this.deletedImageIds.push(img.id);
-    this.existingImages = this.existingImages.filter(i => i.id !== img.id);
-    if (this.newPrimaryImageId === img.id) {
-      this.newPrimaryImageId = null;
-    }
-  }
-
-  onFileSelected(event: any) {
-    // Support both native file input (event.target.files) and PrimeNG (event.files)
-    const file = event?.target?.files?.[0] || event?.files?.[0];
-    if (file) {
-      this.selectedMainImage = file;
-      // Preview
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.productForm.imageUrl = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  onAdditionalFilesSelected(event: any) {
-    // Support both native file input (event.target.files) and PrimeNG (event.files)
-    const files = event?.target?.files || event?.files;
-    if (files && files.length > 0) {
-      if (!this.productForm.images) {
-        this.productForm.images = [];
-      }
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        this.selectedAdditionalImages.push(file);
-        // Preview
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.productForm.images!.push(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-  }
-
-  removeAdditionalImage(index: number) {
-    this.productForm.images?.splice(index, 1);
-    // Also remove from selected files if it was a new file
-    if (index < this.selectedAdditionalImages.length) {
-      this.selectedAdditionalImages.splice(index, 1);
-    }
-  }
-
   isImagePrimary(img: ProductImage): boolean {
-    if (this.newPrimaryImageId !== null) {
-      return this.newPrimaryImageId === img.id;
-    }
     return !!img.is_primary;
   }
 }

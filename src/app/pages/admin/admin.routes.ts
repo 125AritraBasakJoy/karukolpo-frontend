@@ -46,6 +46,10 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'products/add',
         loadComponent: () => import('./products/add-product/add-product.component').then(m => m.AddProductComponent)
+      },
+      {
+        path: 'inventory/edit/:id',
+        loadComponent: () => import('./products/edit-product/edit-product.component').then(m => m.EditProductComponent)
       }
     ]
   }

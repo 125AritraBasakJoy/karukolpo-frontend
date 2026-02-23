@@ -1,0 +1,204 @@
+<div class="edit-product-container p-4 min-h-screen">
+    <div class="header-section mb-6">
+        <div class="flex align-items-center gap-3 mb-2">
+            <button pButton icon="pi pi-arrow-left" class="p-button-rounded p-button-text text-white"
+                (click)="cancel()"></button>
+            <h1 class="text-4xl font-bold m-0 tracking-tight text-white">Edit Product</h1>
+        </div>
+        <p class="text-slate-400 m-0 text-lg ml-7">Update the details of your masterpiece.</p>
+    </div>
+
+    <div *ngIf="loading()" class="flex flex-column align-items-center justify-content-center py-8">
+        <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
+        <p class="text-slate-400 mt-4">Loading product details...</p>
+    </div>
+
+    <div *ngIf="!loading() && productForm" class="grid fadein animation-duration-500">
+        <!-- Left Column: Basic Info & Description -->
+        <div class="col-12 lg:col-8">
+            <div class="glass-card p-5 mb-5">
+                <h3 class="text-xl font-bold text-white mb-4 border-bottom-1 border-white-alpha-10 pb-2">Basic
+                    Information</h3>
+                <div class="grid">
+                    <div class="col-12 md:col-8 field">
+                        <label for="name"
+                            class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Product
+                            Name</label>
+                        <input type="text" pInputText id="name" [(ngModel)]="productForm.name" required
+                            placeholder="Enter product name" class="w-full premium-input" #name="ngModel">
+                        <app-validation-message [control]="name.control"></app-validation-message>
+                    </div>
+
+                    <div class="col-12 md:col-4 field">
+                        <label for="price"
+                            class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Price
+                            (BDT)</label>
+                        <p-inputNumber id="price" [(ngModel)]="productForm.price" mode="currency" currency="BDT"
+                            locale="en-US" styleClass="w-full" inputStyleClass="w-full premium-input"
+                            [style]="{'width':'100%'}" #price="ngModel" required></p-inputNumber>
+                        <app-validation-message [control]="price.control"></app-validation-message>
+                    </div>
+
+                    <div class="col-12 field mt-3">
+                        <label for="description"
+                            class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Description</label>
+                        <p-editor id="description" [(ngModel)]="productForm.description" [style]="{'height': '200px'}"
+                            styleClass="premium-editor w-full">
+                            <ng-template pTemplate="header">
+                                <span class="ql-formats">
+                                    <button class="ql-bold" title="Bold"></button>
+                                    <button class="ql-italic" title="Italic"></button>
+                                    <button class="ql-underline" title="Underline"></button>
+                                </span>
+                                <span class="ql-formats">
+                                    <button class="ql-list" value="ordered" title="Ordered List"></button>
+                                    <button class="ql-list" value="bullet" title="Bullet List"></button>
+                                </span>
+                                <span class="ql-formats">
+                                    <button class="ql-clean" title="Remove Formatting"></button>
+                                </span>
+                            </ng-template>
+                        </p-editor>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-5 mb-5">
+                <h3 class="text-xl font-bold text-white mb-4 border-bottom-1 border-white-alpha-10 pb-2">Media
+                    Management</h3>
+
+                <!-- Existing Images -->
+                <div class="field mb-5" *ngIf="existingImages.length > 0">
+                    <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Existing
+                        Gallery</label>
+                    <div class="flex flex-wrap gap-4">
+                        <div *ngFor="let img of existingImages"
+                            class="image-item-wrapper relative border-round-xl overflow-hidden shadow-4 transition-all duration-300"
+                            [ngClass]="{'is-primary': isImagePrimary(img), 'border-1 border-white-alpha-10': !isImagePrimary(img)}">
+                            <img [src]="img.image_thumb || img.image_path" class="w-8rem h-8rem object-cover block">
+
+                            <!-- Corner Actions -->
+                            <div class="image-actions-container">
+                                <button class="image-action-btn star-btn absolute top-0 left-0 m-2"
+                                    [ngClass]="{'is-active': isImagePrimary(img)}" (click)="setAsPrimary(img)"
+                                    [pTooltip]="isImagePrimary(img) ? 'Primary Image' : 'Set as Primary'"
+                                    tooltipPosition="top">
+                                    <i [class]="isImagePrimary(img) ? 'pi pi-star-fill' : 'pi pi-star'"></i>
+                                </button>
+
+                                <button class="image-action-btn delete-btn absolute top-0 right-0 m-2"
+                                    (click)="removeExistingImage(img)" pTooltip="Remove Image" tooltipPosition="top">
+                                    <i class="pi pi-trash"></i>
+                                </button>
+                            </div>
+
+                            <div class="primary-indicator-badge absolute bottom-0 left-0 w-full text-center pb-1"
+                                *ngIf="isImagePrimary(img)">
+                                <p-tag value="Primary" severity="success" styleClass="text-xs"></p-tag>
+                            </div>
+                        </div>
+                    </div>
+                    <small class="block mt-3 text-slate-500 italic">
+                        <i class="pi pi-star-fill text-yellow-500 mr-1" style="font-size: 0.8rem"></i>
+                        Star an image to make it the primary product photo.
+                    </small>
+                </div>
+
+                <!-- New Uploads -->
+                <div class="grid">
+                    <div class="col-12 md:col-6 field">
+                        <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Replace
+                            Primary Image</label>
+                        <div class="flex flex-column gap-3">
+                            <input type="file" #mainFileInput (change)="onMainImageSelected($event)" accept="image/*"
+                                class="hidden" />
+                            <button pButton type="button" label="Choose New Primary" icon="pi pi-image"
+                                class="p-button-outlined premium-btn-secondary w-full"
+                                (click)="mainFileInput.click()"></button>
+
+                            <div *ngIf="selectedMainImage"
+                                class="relative border-round-xl border-1 border-white-alpha-10 overflow-hidden surface-card h-10rem flex align-items-center justify-content-center">
+                                <img [src]="mainImagePreview" class="max-w-full h-full object-contain">
+                                <button pButton icon="pi pi-times"
+                                    class="p-button-rounded p-button-danger p-button-text absolute top-0 right-0"
+                                    (click)="selectedMainImage = null; mainImagePreview = product()?.imageUrl || null"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 md:col-6 field">
+                        <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Add to
+                            Gallery</label>
+                        <div class="flex flex-column gap-3">
+                            <input type="file" #addFileInput (change)="onAdditionalImagesSelected($event)"
+                                accept="image/*" multiple class="hidden" />
+                            <button pButton type="button" label="Upload Multiples" icon="pi pi-images"
+                                class="p-button-outlined premium-btn-secondary w-full"
+                                (click)="addFileInput.click()"></button>
+
+                            <div *ngIf="additionalImagesPreviews.length"
+                                class="flex flex-wrap gap-2 p-2 border-round-xl border-1 border-white-alpha-10 surface-section">
+                                <div *ngFor="let img of additionalImagesPreviews; let i = index" class="relative group">
+                                    <img [src]="img" class="w-4rem h-4rem border-round shadow-2 object-cover block">
+                                    <button pButton icon="pi pi-times"
+                                        class="p-button-rounded p-button-danger p-button-text absolute top-0 right-0 w-1rem h-1rem"
+                                        style="font-size: 0.7rem" (click)="removeNewAdditionalImage(i)"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Category & Inventory -->
+        <div class="col-12 lg:col-4">
+            <div class="glass-card p-5 mb-5">
+                <h3 class="text-xl font-bold text-white mb-4 border-bottom-1 border-white-alpha-10 pb-2">Categorization
+                </h3>
+                <div class="field">
+                    <label for="category"
+                        class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Primary
+                        Category</label>
+                    <p-dropdown id="category" [options]="categories()" optionLabel="name" optionValue="id"
+                        [(ngModel)]="productForm.categoryId" placeholder="Select a Category" [showClear]="true"
+                        [filter]="true" filterBy="name" styleClass="w-full premium-dropdown"
+                        appendTo="body"></p-dropdown>
+                </div>
+            </div>
+
+            <div class="glass-card p-5 mb-5">
+                <h3 class="text-xl font-bold text-white mb-4 border-bottom-1 border-white-alpha-10 pb-2">Inventory
+                    Control</h3>
+                <div class="field mb-4">
+                    <label for="stock"
+                        class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Available
+                        Quantity</label>
+                    <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal"
+                        styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                </div>
+
+                <div class="field">
+                    <label for="manualStockStatus"
+                        class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Stock Display
+                        Mode</label>
+                    <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
+                        [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
+                        styleClass="w-full premium-dropdown" appendTo="body"></p-dropdown>
+                    <small class="block mt-2 text-slate-500 italic">Force "In Stock" or "Out of Stock" labels regardless
+                        of quantity.</small>
+                </div>
+            </div>
+
+            <div class="sticky-action-bar">
+                <button pButton label="Save Changes" icon="pi pi-check"
+                    class="premium-btn-primary w-full py-3 shadow-6 mb-3" (click)="saveAndFinish()"
+                    [loading]="saving()"></button>
+                <button pButton label="Discard & Exit" icon="pi pi-times"
+                    class="p-button-text p-button-secondary w-full" (click)="cancel()"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p-toast></p-toast>

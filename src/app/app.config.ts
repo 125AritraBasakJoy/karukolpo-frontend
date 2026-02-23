@@ -11,7 +11,10 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled' })),
+    provideRouter(routes, withInMemoryScrolling({
+      anchorScrolling: 'enabled',
+      scrollPositionRestoration: 'top'
+    })),
     provideAnimations(),
     provideHttpClient(withInterceptors([loadingInterceptor])),
     providePrimeNG({

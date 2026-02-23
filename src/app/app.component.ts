@@ -20,11 +20,7 @@ import { filter } from 'rxjs/operators';
       <div class="main-content">
         <router-outlet></router-outlet>
       </div>
-      @defer (on viewport) {
-        <app-footer *ngIf="!isAdminRoute"></app-footer>
-      } @placeholder {
-        <div class="footer-placeholder" style="height: 100px;"></div>
-      }
+      <app-footer *ngIf="!isAdminRoute"></app-footer>
       <p-toast position="top-right"></p-toast>
     </div>
   `,

@@ -20,12 +20,15 @@ import { CartService } from '../../services/cart.service';
           class="p-button-text header-btn hidden sm:inline-flex" 
           routerLink="/track-order"></button>
           
-        <button pButton icon="pi pi-shopping-cart" 
-          class="p-button-rounded p-button-text header-cart-btn relative overflow-visible" 
-          (click)="openCart()">
-          <p-badge *ngIf="cartService.totalItems() > 0" [value]="cartService.totalItems().toString()" 
-            severity="danger" class="cart-badge"></p-badge>
-        </button>
+        <div class="relative flex align-items-center">
+          <button pButton icon="pi pi-shopping-cart" 
+            class="p-button-rounded p-button-text header-cart-btn" 
+            (click)="openCart()">
+          </button>
+          <span *ngIf="cartService.totalItems() > 0" class="cart-badge-new">
+            {{ cartService.totalItems() }}
+          </span>
+        </div>
       </div>
     </div>
   `,
@@ -92,20 +95,25 @@ import { CartService } from '../../services/cart.service';
       }
     }
 
-    .cart-badge {
+    .cart-badge-new {
       position: absolute;
-      top: -6px;
-      right: -6px;
-      z-index: 10;
-      
-      ::ng-deep .p-badge {
-        background: var(--accent-color) !important;
-        min-width: 1.25rem;
-        height: 1.25rem;
-        line-height: 1.25rem;
-        font-size: 0.7rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      }
+      top: -2px;
+      right: -2px;
+      background: #ef4444;
+      color: white;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 1.5px solid #0f172a;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      z-index: 100;
+      pointer-events: none;
     }
   `]
 })

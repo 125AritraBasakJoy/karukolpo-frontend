@@ -64,6 +64,7 @@ export class CartService {
   }
 
   addToCart(product: Product) {
+    console.log('CartService: Adding product to cart', product.name);
     // Check global stock first
     if (this.isOutOfStock(product)) {
       this.messageService.add({ severity: 'error', summary: 'Out of Stock', detail: 'This product is out of stock' });

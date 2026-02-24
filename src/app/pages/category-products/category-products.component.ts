@@ -43,6 +43,7 @@ export class CategoryProductsComponent implements OnInit {
         this.route.params.subscribe(params => {
             const id = params['id'];
             if (id) {
+                window.scrollTo({ top: 0, behavior: 'instant' });
                 this.loadCategoryAndProducts(id);
             }
         });

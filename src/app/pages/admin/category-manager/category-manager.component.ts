@@ -353,6 +353,7 @@ export class CategoryManagerComponent implements OnInit {
     }
 
     ngOnInit() {
+        window.scrollTo({ top: 0, behavior: 'instant' });
         // Initial load will be triggered by onLazyLoad
         // If not, we can call this.loadCategories() manually with default event
     }

@@ -23,6 +23,8 @@ export class AuthService {
     }
   }
 
+  private baseUrl = environment.baseUrl;
+
   private hasToken(): boolean {
     if (isPlatformBrowser(this.platformId)) {
       return !!localStorage.getItem('adminToken');
@@ -59,7 +61,7 @@ export class AuthService {
     };
 
     return this.http.post<{ access_token: string; refresh_token?: string; token_type: string }>(
-      `${environment.apiUrl}/${API_ENDPOINTS.ADMIN.LOGIN}`,
+      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.LOGIN}`,
       payload,
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     ).pipe(
@@ -87,7 +89,7 @@ export class AuthService {
     }
 
     return this.http.post<any>(
-      `${environment.apiUrl}/${API_ENDPOINTS.ADMIN.REFRESH}`,
+      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.REFRESH}`,
       { refresh_token: refreshToken }
     ).pipe(
       tap(response => {
@@ -129,7 +131,7 @@ export class AuthService {
    */
   forgotPassword(email: string): Observable<any> {
     return this.http.post<any>(
-      `${environment.apiUrl}/${API_ENDPOINTS.ADMIN.FORGOT_PASSWORD}`,
+      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.FORGOT_PASSWORD}`,
       { email },
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     );
@@ -141,7 +143,7 @@ export class AuthService {
    */
   resetPassword(token: string, newPassword: string): Observable<any> {
     return this.http.post<any>(
-      `${environment.apiUrl}/${API_ENDPOINTS.ADMIN.RESET_PASSWORD}`,
+      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.RESET_PASSWORD}`,
       { token, new_password: newPassword },
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     );

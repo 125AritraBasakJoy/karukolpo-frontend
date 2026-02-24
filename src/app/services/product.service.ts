@@ -7,7 +7,7 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 
 /**
  * ProductService - Backend API Integration
- * Connects to: https://api.karukolpocrafts.com/products
+ * URL configured in src/environments/environment.ts
  */
 @Injectable({
   providedIn: 'root'

@@ -18,7 +18,7 @@ export interface PaymentConfirm {
 
 /**
  * OrderService - Backend API Integration
- * Connects to: https://api.karukolpocrafts.com/orders
+ * URL configured in src/environments/environment.ts
  */
 @Injectable({
   providedIn: 'root'

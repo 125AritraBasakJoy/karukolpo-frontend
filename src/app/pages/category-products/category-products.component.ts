@@ -52,24 +52,47 @@ export class CategoryProductsComponent implements OnInit {
     loadCategoryAndProducts(id: string) {
         this.loading.set(true);
 
-        // Fetch Category Name
-        this.categoryService.getCategoryById(id).subscribe(cat => {
-            if (cat) {
-                this.category.set(cat);
-                this.updateSeo(cat);
-            }
-        });
+        // Fetch Category which now includes its products (source of truth)
+        this.categoryService.getCategoryById(id).subscribe({
+            next: (cat) => {
+                if (cat) {
+                    this.category.set(cat);
+                    this.updateSeo(cat);
 
-        // Fetch products for this category with a single API call
-        this.categoryService.getProductsByCategory(id).subscribe({
-            next: (products) => {
-                this.products.set(products);
-                this.loading.set(false);
+                    // Use products directly from the category API response
+                    if (cat.products) {
+                        this.products.set(cat.products);
+                    } else {
+                        // Fallback to separate fetch if needed (though the API should have them)
+                        this.fetchProductsSeparately(id);
+                    }
+                    this.loading.set(false);
+                } else {
+                    this.loading.set(false);
+                }
             },
             error: (err) => {
-                console.error('Error fetching category products', err);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load products' });
+                console.error('Error fetching category', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load category' });
                 this.loading.set(false);
+            }
+        });
+    }
+
+    private fetchProductsSeparately(id: string) {
+        this.categoryService.getProductsByCategory(id).subscribe({
+            next: (products) => {
+                // Keep the safeguard just in case
+                const filtered = products.filter(p => {
+                    const categoryMatch = p.categoryId === id.toString();
+                    const categoriesMatch = p.categories && p.categories.some(c => {
+                        const cId = (c.id || c.categoryId || c).toString();
+                        return cId === id.toString();
+                    });
+                    return categoryMatch || categoriesMatch;
+                });
+
+                this.products.set(filtered);
             }
         });
     }

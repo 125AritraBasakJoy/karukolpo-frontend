@@ -60,11 +60,11 @@
         <div class="grid">
             @for (product of filteredProducts(); track product.id) {
             <div class="col-6 sm:col-6 md:col-4 lg:col-3">
-                <div class="product-card surface-card border-round shadow-2 p-3 h-full flex flex-column relative">
+                <div class="product-card surface-card shadow-2 p-3 h-full flex flex-column relative">
                     <!-- Out of Stock Overlay -->
                     @if (isOutOfStock(product)) {
                     <div
-                        class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center border-round">
+                        class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center">
                         <span class="bg-red-500 text-white px-3 py-1 border-round font-bold">Out of Stock</span>
                     </div>
                     }

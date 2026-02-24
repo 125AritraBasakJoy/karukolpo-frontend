@@ -235,11 +235,19 @@ export class CategoryService {
      * Map backend category format to frontend format
      */
     private mapBackendToFrontend(backendCategory: any): Category {
-        return {
+        const category: Category = {
             id: backendCategory.id?.toString() || '',
             name: backendCategory.name,
             slug: backendCategory.slug || this.generateSlug(backendCategory.name)
         };
+
+        if (backendCategory.products && Array.isArray(backendCategory.products)) {
+            category.products = backendCategory.products.map((p: any) =>
+                this.productService.mapBackendToFrontend(p)
+            );
+        }
+
+        return category;
     }
 
     /**

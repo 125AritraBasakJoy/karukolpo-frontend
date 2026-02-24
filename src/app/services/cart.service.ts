@@ -24,7 +24,24 @@ export class CartService {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
         try {
-          this.cart.set(JSON.parse(savedCart));
+          const items = JSON.parse(savedCart);
+          // Normalize loaded data for robustness
+          const normalizedItems = items.map((item: any) => {
+            if (item.product) {
+              // Ensure manualStockStatus is uppercase
+              if (typeof item.product.manualStockStatus === 'string') {
+                item.product.manualStockStatus = item.product.manualStockStatus.toUpperCase();
+              }
+              // Force recalculate isInStock if it's missing or if stock logic changed
+              if (item.product.isInStock === undefined) {
+                const stock = parseInt(String(item.product.stock || 0), 10);
+                const status = item.product.manualStockStatus;
+                item.product.isInStock = status === 'IN_STOCK' ? true : (status === 'OUT_OF_STOCK' ? false : stock > 0);
+              }
+            }
+            return item;
+          });
+          this.cart.set(normalizedItems);
           this.refreshCartProducts();
         } catch (e) {
           console.error('Failed to load cart', e);
@@ -76,8 +93,11 @@ export class CartService {
 
     if (existingItem) {
       const isForcedInStock = product.manualStockStatus === 'IN_STOCK';
-      if (!isForcedInStock && existingItem.quantity + 1 > (product.stock || 0)) {
-        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${product.stock} items` });
+      const availableStock = product.stock || 0;
+
+      // Only enforce limit if we have a positive stock count and not forced
+      if (!isForcedInStock && availableStock > 0 && existingItem.quantity + 1 > availableStock) {
+        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${availableStock} items` });
         return;
       }
       // Create new array reference for signal update
@@ -86,8 +106,10 @@ export class CartService {
       ));
     } else {
       const isForcedInStock = product.manualStockStatus === 'IN_STOCK';
-      if (!isForcedInStock && 1 > (product.stock || 0)) {
-        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${product.stock} items` });
+      const availableStock = product.stock || 0;
+
+      if (!isForcedInStock && availableStock > 0 && 1 > availableStock) {
+        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${availableStock} items` });
         return;
       }
       this.cart.update(items => [...items, { product, quantity: 1 }]);
@@ -116,8 +138,9 @@ export class CartService {
 
     // Check max stock when increasing
     const isForcedInStock = targetItem.product.manualStockStatus === 'IN_STOCK';
-    if (change > 0 && !isForcedInStock && newQuantity > (targetItem.product.stock || 0)) {
-      this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Only ${targetItem.product.stock} items available` });
+    const availableStock = targetItem.product.stock || 0;
+    if (change > 0 && !isForcedInStock && availableStock > 0 && newQuantity > availableStock) {
+      this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Only ${availableStock} items available` });
       return;
     }
 

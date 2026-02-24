@@ -9,6 +9,7 @@ import { HeaderComponent } from './components/header/header.component';
 import { CommonModule } from '@angular/common';
 import { LoadingComponent } from './components/loading/loading.component';
 import { filter } from 'rxjs/operators';
+import { VersionService } from './services/version.service';
 
 @Component({
   selector: 'app-root',
@@ -45,10 +46,13 @@ export class AppComponent implements OnInit {
     private orderService: OrderService,
     private messageService: MessageService,
     private _notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    private versionService: VersionService
   ) { }
 
   ngOnInit() {
+    this.versionService.checkForUpdates();
+
     // Check if current route is admin
     this.checkRoute(this.router.url);
 

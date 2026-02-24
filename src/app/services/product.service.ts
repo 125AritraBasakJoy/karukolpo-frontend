@@ -288,7 +288,7 @@ export class ProductService {
    */
   public mapBackendToFrontend(data: any): Product {
     // Collect potential stock fields
-    const stockQty = data.stock_quantity ?? data.available_quantity ?? data.stock;
+    const stockQty = data.stock_quantity ?? data.available_quantity ?? data.quantity ?? data.stock;
     const stock = stockQty !== undefined ? parseInt(String(stockQty), 10) : 0;
 
     // Normalize manual status (handle lowercase from some API versions)

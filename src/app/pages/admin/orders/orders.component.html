@@ -115,7 +115,7 @@
                                     (click)="viewOrder(order)" pTooltip="View Details" tooltipPosition="top"></button>
 
                                 <!-- Status Actions -->
-                                @if (order.status === 'Pending') {
+                                @if (order.status === 'Pending' && order.paymentMethod?.toLowerCase() !== 'bkash') {
                                 <button pButton icon="pi pi-check"
                                     class="action-btn p-button-rounded p-button-text p-button-success success-btn"
                                     (click)="updateStatus(order, 'Confirmed')" pTooltip="Confirm Order"
@@ -393,7 +393,7 @@
                 (click)="adminConfirmPayment(selectedOrder)"></button>
             }
 
-            @if (selectedOrder.status === 'Pending') {
+            @if (selectedOrder.status === 'Pending' && selectedOrder.paymentMethod?.toLowerCase() !== 'bkash') {
             <button pButton label="Confirm Order" icon="pi pi-check"
                 class="premium-btn-primary bg-blue-500 border-none hover:bg-blue-600"
                 (click)="updateStatus(selectedOrder, 'Confirmed')"></button>

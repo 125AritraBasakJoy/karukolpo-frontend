@@ -1,6 +1,6 @@
 [build]
   # This should match the "outputPath" in your angular.json
-  publish = "dist/karukolpo-frontend/browser"
+  publish = "dist/karukolpo-frontend"
   command = "npm run build"
 
 [[redirects]]

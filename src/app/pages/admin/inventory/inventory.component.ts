@@ -48,7 +48,7 @@ import { Router } from '@angular/router';
     DropdownModule,
     FormsModule
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [ConfirmationService],
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })

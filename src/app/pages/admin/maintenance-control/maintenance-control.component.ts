@@ -10,19 +10,19 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { SiteConfigService } from '../../../services/site-config.service';
 
 @Component({
-    selector: 'app-maintenance-control',
-    standalone: true,
-    imports: [
-        CommonModule,
-        FormsModule,
-        CardModule,
-        ButtonModule,
-        ToggleSwitchModule,
-        ToastModule,
-        ConfirmDialogModule
-    ],
-    providers: [ConfirmationService, MessageService],
-    template: `
+  selector: 'app-maintenance-control',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    CardModule,
+    ButtonModule,
+    ToggleSwitchModule,
+    ToastModule,
+    ConfirmDialogModule
+  ],
+  providers: [ConfirmationService],
+  template: `
     <div class="maintenance-control-container p-4">
       <div class="flex flex-column gap-4 max-w-30rem mx-auto">
         <h1 class="text-3xl font-bold text-white mb-2">System Controls</h1>
@@ -53,9 +53,8 @@ import { SiteConfigService } from '../../../services/site-config.service';
     </div>
 
     <p-confirmDialog [style]="{width: '450px'}" appendTo="body" styleClass="premium-confirm-dialog"></p-confirmDialog>
-    <p-toast></p-toast>
   `,
-    styles: [`
+  styles: [`
     .bg-orange-900-soft { background: rgba(124, 45, 18, 0.2); border: 1px solid rgba(251, 146, 60, 0.2); }
     .bg-green-900-soft { background: rgba(20, 83, 45, 0.2); border: 1px solid rgba(74, 222, 128, 0.2); }
     
@@ -68,42 +67,42 @@ import { SiteConfigService } from '../../../services/site-config.service';
   `]
 })
 export class MaintenanceControlComponent {
-    siteConfigService = inject(SiteConfigService);
-    private confirmationService = inject(ConfirmationService);
-    private messageService = inject(MessageService);
+  siteConfigService = inject(SiteConfigService);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
 
-    isMaintenanceMode = this.siteConfigService.siteConfig().isMaintenanceMode;
+  isMaintenanceMode = this.siteConfigService.siteConfig().isMaintenanceMode;
 
-    onToggleChange(event: any) {
-        const newValue = event.checked;
+  onToggleChange(event: any) {
+    const newValue = event.checked;
 
-        // Prevent immediate UI change if turning ON, we want confirmation
-        // However, [(ngModel)] already updated it. Let's revert if cancelled.
+    // Prevent immediate UI change if turning ON, we want confirmation
+    // However, [(ngModel)] already updated it. Let's revert if cancelled.
 
-        this.confirmationService.confirm({
-            message: newValue
-                ? 'Are you sure you want to trigger Maintenance Mode? Customers will no longer be able to browse the shop.'
-                : 'Are you sure you want to disable Maintenance Mode and go LIVE?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
-            acceptIcon: 'pi pi-check mr-2',
-            rejectIcon: 'pi pi-times mr-2',
-            acceptLabel: 'Yes',
-            rejectLabel: 'No',
-            acceptButtonStyleClass: newValue ? 'p-button-danger' : 'p-button-success',
-            rejectButtonStyleClass: 'p-button-text p-button-secondary',
-            accept: () => {
-                this.siteConfigService.updateConfig({ isMaintenanceMode: newValue });
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Updated',
-                    detail: `Maintenance Mode is now ${newValue ? 'ON' : 'OFF'}`
-                });
-            },
-            reject: () => {
-                // Revert the toggle state
-                this.isMaintenanceMode = !newValue;
-            }
+    this.confirmationService.confirm({
+      message: newValue
+        ? 'Are you sure you want to trigger Maintenance Mode? Customers will no longer be able to browse the shop.'
+        : 'Are you sure you want to disable Maintenance Mode and go LIVE?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      acceptIcon: 'pi pi-check mr-2',
+      rejectIcon: 'pi pi-times mr-2',
+      acceptLabel: 'Yes',
+      rejectLabel: 'No',
+      acceptButtonStyleClass: newValue ? 'p-button-danger' : 'p-button-success',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => {
+        this.siteConfigService.updateConfig({ isMaintenanceMode: newValue });
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Updated',
+          detail: `Maintenance Mode is now ${newValue ? 'ON' : 'OFF'}`
         });
-    }
+      },
+      reject: () => {
+        // Revert the toggle state
+        this.isMaintenanceMode = !newValue;
+      }
+    });
+  }
 }

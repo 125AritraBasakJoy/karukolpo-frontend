@@ -33,7 +33,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
         DialogModule,
         InventoryModalComponent
     ],
-    providers: [MessageService],
+
     styleUrl: './add-product.component.scss',
     template: `
     <div class="add-product-container p-4 min-h-screen">
@@ -180,7 +180,6 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
         (saved)="onInventorySaved()">
     </app-inventory-modal>
     
-    <p-toast></p-toast>
     `
 })
 export class AddProductComponent {

@@ -21,7 +21,7 @@ interface SidebarMenuItem {
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule],
-  providers: [MessageService],
+
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

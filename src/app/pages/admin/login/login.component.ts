@@ -18,7 +18,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, PasswordModule, CardModule, ToastModule, ProgressSpinnerModule, DialogModule, FloatLabelModule],
-  providers: [MessageService],
+
   template: `
     <div class="login-split">
       <!-- Left: Image Panel -->
@@ -88,7 +88,6 @@ import { FloatLabelModule } from 'primeng/floatlabel';
           </div>
       </ng-template>
     </p-dialog>
-    <p-toast></p-toast>
   `,
   styles: [`
     .login-split {

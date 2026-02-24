@@ -18,7 +18,7 @@ import { SiteConfigService } from '../../../services/site-config.service';
         ButtonModule,
         ToastModule
     ],
-    providers: [MessageService],
+
     templateUrl: './landing-page-manager.component.html',
     styles: [`
     :host {

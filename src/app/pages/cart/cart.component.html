@@ -1,8 +1,5 @@
 <div class="cart-page">
-    <p-toast></p-toast>
-
     <div class="cart-container">
-
         <!-- Cash Memo / Order Receipt -->
         <div *ngIf="orderConfirmed" class="success-section py-6">
             <div class="surface-card border-round-xl shadow-4 p-5 mx-auto" style="max-width: 600px;">
@@ -208,7 +205,8 @@
                                     placeholder="Enter your name" required #fullName="ngModel"
                                     class="w-full premium-input">
                                 <small class="p-error"
-                                    *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full Name is
+                                    *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full
+                                    Name is
                                     required.</small>
                             </div>
 
@@ -274,7 +272,8 @@
                                     rows="2" placeholder="House, Road, Area..." required #address="ngModel"
                                     class="w-full premium-input"></textarea>
                                 <small class="p-error"
-                                    *ngIf="address.invalid && (address.dirty || address.touched)">Full Address is
+                                    *ngIf="address.invalid && (address.dirty || address.touched)">Full
+                                    Address is
                                     required.</small>
                             </div>
 

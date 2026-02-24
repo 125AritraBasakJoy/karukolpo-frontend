@@ -38,7 +38,7 @@ import { ValidationMessageComponent } from '../../../../components/validation-me
         ValidationMessageComponent,
         TooltipModule
     ],
-    providers: [MessageService],
+
     templateUrl: './edit-product.component.html',
     styleUrls: ['./edit-product.component.scss']
 })

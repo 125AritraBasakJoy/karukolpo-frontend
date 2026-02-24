@@ -34,7 +34,7 @@ import { Product, ProductImage } from '../../../../models/product.model';
         ProgressSpinnerModule,
         TooltipModule
     ],
-    providers: [MessageService],
+
     templateUrl: './product-form.component.html',
     styleUrls: ['./product-form.component.scss']
 })

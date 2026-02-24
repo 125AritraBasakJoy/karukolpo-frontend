@@ -43,7 +43,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
         TagModule,
         MultiSelectModule
     ],
-    providers: [MessageService, ConfirmationService],
+    providers: [ConfirmationService],
     template: `
     <div class="category-manager-container p-4 min-h-screen">
         <div class="header-section mb-6">

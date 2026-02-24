@@ -8,12 +8,15 @@
         <p class="text-slate-400 m-0 text-lg ml-7">Update the details of your masterpiece.</p>
     </div>
 
-    <div *ngIf="loading()" class="flex flex-column align-items-center justify-content-center py-8">
+    @if (loading()) {
+    <div class="flex flex-column align-items-center justify-content-center py-8">
         <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
         <p class="text-slate-400 mt-4">Loading product details...</p>
     </div>
+    }
 
-    <div *ngIf="!loading() && productForm" class="grid fadein animation-duration-500">
+    @if (!loading() && productForm) {
+    <div class="grid fadein animation-duration-500">
         <!-- Left Column: Basic Info & Description -->
         <div class="col-12 lg:col-8">
             <div class="glass-card p-5 mb-5">
@@ -68,7 +71,8 @@
                     Management</h3>
 
                 <!-- Existing Images -->
-                <div class="field mb-5" *ngIf="existingImages.length > 0">
+                @if (existingImages.length > 0) {
+                <div class="field mb-5">
                     <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Existing
                         Gallery</label>
                     <div class="flex flex-wrap gap-4">
@@ -92,10 +96,11 @@
                                 </button>
                             </div>
 
-                            <div class="primary-indicator-badge absolute bottom-0 left-0 w-full text-center pb-1"
-                                *ngIf="isImagePrimary(img)">
+                            @if (isImagePrimary(img)) {
+                            <div class="primary-indicator-badge absolute bottom-0 left-0 w-full text-center pb-1">
                                 <p-tag value="Primary" severity="success" styleClass="text-xs"></p-tag>
                             </div>
+                            }
                         </div>
                     </div>
                     <small class="block mt-3 text-slate-500 italic">
@@ -103,6 +108,7 @@
                         Star an image to make it the primary product photo.
                     </small>
                 </div>
+                }
 
                 <!-- New Uploads -->
                 <div class="grid">
@@ -116,13 +122,15 @@
                                 class="p-button-outlined premium-btn-secondary w-full"
                                 (click)="mainFileInput.click()"></button>
 
-                            <div *ngIf="selectedMainImage"
+                            @if (selectedMainImage) {
+                            <div
                                 class="relative border-round-xl border-1 border-white-alpha-10 overflow-hidden surface-card h-10rem flex align-items-center justify-content-center">
                                 <img [src]="mainImagePreview" class="max-w-full h-full object-contain">
                                 <button pButton icon="pi pi-times"
                                     class="p-button-rounded p-button-danger p-button-text absolute top-0 right-0"
                                     (click)="selectedMainImage = null; mainImagePreview = product()?.imageUrl || null"></button>
                             </div>
+                            }
                         </div>
                     </div>
 
@@ -136,7 +144,8 @@
                                 class="p-button-outlined premium-btn-secondary w-full"
                                 (click)="addFileInput.click()"></button>
 
-                            <div *ngIf="additionalImagesPreviews.length"
+                            @if (additionalImagesPreviews.length) {
+                            <div
                                 class="flex flex-wrap gap-2 p-2 border-round-xl border-1 border-white-alpha-10 surface-section">
                                 <div *ngFor="let img of additionalImagesPreviews; let i = index" class="relative group">
                                     <img [src]="img" class="w-4rem h-4rem border-round shadow-2 object-cover block">
@@ -145,6 +154,7 @@
                                         style="font-size: 0.7rem" (click)="removeNewAdditionalImage(i)"></button>
                                 </div>
                             </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -199,6 +209,5 @@
             </div>
         </div>
     </div>
+    }
 </div>
-
-<p-toast></p-toast>

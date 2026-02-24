@@ -31,7 +31,7 @@ import { districts, District } from '../../data/bangladesh-data';
     ],
     templateUrl: './cart.component.html',
     styleUrls: ['./cart.component.scss'],
-    providers: [MessageService]
+
 })
 export class CartComponent {
     loading = signal<boolean>(false);

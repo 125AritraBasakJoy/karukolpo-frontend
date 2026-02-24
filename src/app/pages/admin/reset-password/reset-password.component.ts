@@ -13,15 +13,15 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { FloatLabelModule } from 'primeng/floatlabel';
 
 @Component({
-    selector: 'app-reset-password',
-    standalone: true,
-    imports: [
-        CommonModule, FormsModule, InputTextModule, ButtonModule,
-        PasswordModule, CardModule, ToastModule, ProgressSpinnerModule,
-        FloatLabelModule
-    ],
-    providers: [MessageService],
-    template: `
+  selector: 'app-reset-password',
+  standalone: true,
+  imports: [
+    CommonModule, FormsModule, InputTextModule, ButtonModule,
+    PasswordModule, CardModule, ToastModule, ProgressSpinnerModule,
+    FloatLabelModule
+  ],
+
+  template: `
     <div class="reset-container">
       <!-- No token → error state -->
       <p-card *ngIf="!token" header="Invalid Link" styleClass="shadow-4 max-w-26rem mx-auto">
@@ -112,9 +112,8 @@ import { FloatLabelModule } from 'primeng/floatlabel';
         </div>
       </p-card>
     </div>
-    <p-toast></p-toast>
   `,
-    styles: [`
+  styles: [`
     .reset-container {
       display: flex;
       justify-content: center;
@@ -127,77 +126,77 @@ import { FloatLabelModule } from 'primeng/floatlabel';
   `]
 })
 export class ResetPasswordComponent implements OnInit {
-    token: string | null = null;
-    newPassword = '';
-    confirmPassword = '';
-    saving = signal<boolean>(false);
-    resetSuccess = false;
+  token: string | null = null;
+  newPassword = '';
+  confirmPassword = '';
+  saving = signal<boolean>(false);
+  resetSuccess = false;
 
-    passwordRules = {
-        length: false,
-        upper: false,
-        lower: false,
-        number: false,
-        special: false
-    };
+  passwordRules = {
+    length: false,
+    upper: false,
+    lower: false,
+    number: false,
+    special: false
+  };
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private authService: AuthService,
-        private messageService: MessageService
-    ) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private authService: AuthService,
+    private messageService: MessageService
+  ) { }
 
-    ngOnInit() {
-        this.token = this.route.snapshot.queryParamMap.get('token');
+  ngOnInit() {
+    this.token = this.route.snapshot.queryParamMap.get('token');
+  }
+
+  checkPasswordStrength() {
+    const p = this.newPassword;
+    this.passwordRules.length = p.length >= 6;
+    this.passwordRules.upper = /[A-Z]/.test(p);
+    this.passwordRules.lower = /[a-z]/.test(p);
+    this.passwordRules.number = /\d/.test(p);
+    this.passwordRules.special = /[@$!%*?&]/.test(p);
+  }
+
+  resetPassword() {
+    if (!this.newPassword || !this.confirmPassword) {
+      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Both fields are required' });
+      return;
     }
 
-    checkPasswordStrength() {
-        const p = this.newPassword;
-        this.passwordRules.length = p.length >= 6;
-        this.passwordRules.upper = /[A-Z]/.test(p);
-        this.passwordRules.lower = /[a-z]/.test(p);
-        this.passwordRules.number = /\d/.test(p);
-        this.passwordRules.special = /[@$!%*?&]/.test(p);
+    this.checkPasswordStrength();
+    const r = this.passwordRules;
+    if (!(r.length && r.upper && r.lower && r.number && r.special)) {
+      this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please satisfy all password requirements' });
+      return;
     }
 
-    resetPassword() {
-        if (!this.newPassword || !this.confirmPassword) {
-            this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Both fields are required' });
-            return;
-        }
+    if (this.newPassword !== this.confirmPassword) {
+      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Passwords do not match' });
+      return;
+    }
 
-        this.checkPasswordStrength();
-        const r = this.passwordRules;
-        if (!(r.length && r.upper && r.lower && r.number && r.special)) {
-            this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Please satisfy all password requirements' });
-            return;
-        }
-
-        if (this.newPassword !== this.confirmPassword) {
-            this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Passwords do not match' });
-            return;
-        }
-
-        this.saving.set(true);
-        this.authService.resetPassword(this.token!, this.newPassword).subscribe({
-            next: () => {
-                this.saving.set(false);
-                this.resetSuccess = true;
-            },
-            error: (error) => {
-                console.error('Reset password error:', error);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Reset Failed',
-                    detail: error.error?.detail || 'The reset link may be expired or invalid. Please request a new one.'
-                });
-                this.saving.set(false);
-            }
+    this.saving.set(true);
+    this.authService.resetPassword(this.token!, this.newPassword).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.resetSuccess = true;
+      },
+      error: (error) => {
+        console.error('Reset password error:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Reset Failed',
+          detail: error.error?.detail || 'The reset link may be expired or invalid. Please request a new one.'
         });
-    }
+        this.saving.set(false);
+      }
+    });
+  }
 
-    goToLogin() {
-        this.router.navigate(['/admin/login']);
-    }
+  goToLogin() {
+    this.router.navigate(['/admin/login']);
+  }
 }

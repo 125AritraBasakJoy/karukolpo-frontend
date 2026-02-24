@@ -18,7 +18,7 @@ import { TooltipModule } from 'primeng/tooltip';
     selector: 'app-category-products',
     standalone: true,
     imports: [CommonModule, ButtonModule, TooltipModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink, SafeHtmlPipe, NgOptimizedImage],
-    providers: [MessageService],
+
     templateUrl: './category-products.component.html',
     styleUrls: ['./category-products.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

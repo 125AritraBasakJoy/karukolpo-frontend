@@ -23,7 +23,7 @@ import { ConfirmationService } from 'primeng/api';
   selector: 'app-track-order',
   standalone: true,
   imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, ThemeToggleComponent, ConfirmDialogModule],
-  providers: [MessageService, ConfirmationService],
+  providers: [ConfirmationService],
   templateUrl: './track-order.component.html',
   styleUrls: ['./track-order.component.scss']
 })

@@ -89,7 +89,6 @@ export class CategoryProductsComponent implements OnInit {
     }
 
     isOutOfStock(product: Product): boolean {
-        if (product.isInStock !== undefined) return !product.isInStock;
         if (product.manualStockStatus === 'OUT_OF_STOCK') return true;
         if (product.manualStockStatus === 'IN_STOCK') return false;
         return (product.stock || 0) <= 0;

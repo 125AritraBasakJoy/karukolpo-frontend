@@ -10,12 +10,6 @@
   force = true
 
 [[redirects]]
-from = "/admin/*"
-to = "https://api.karukolpocrafts.com/admin/:splat"
-status = 200
-force = true
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

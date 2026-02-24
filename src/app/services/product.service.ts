@@ -287,12 +287,19 @@ export class ProductService {
    * FIX: Added URL deduplication to prevent duplicate images in gallery
    */
   public mapBackendToFrontend(data: any): Product {
-    const stock = data.stock_quantity ?? (
-      data.available_quantity !== undefined ? data.available_quantity :
-        (data.stock !== undefined ? data.stock : 0)
-    );
+    // Collect potential stock fields
+    const stockQty = data.stock_quantity ?? data.available_quantity ?? data.stock;
+    const stock = stockQty !== undefined ? parseInt(String(stockQty), 10) : 0;
 
-    const manualStatus = data.stock_status || data.manual_stock_status || data.manualStockStatus || 'AUTO';
+    // Normalize manual status (handle lowercase from some API versions)
+    let rawStatus = data.stock_status || data.manual_stock_status || data.manualStockStatus || 'AUTO';
+    if (typeof rawStatus === 'string') {
+      rawStatus = rawStatus.toUpperCase();
+      // Handle common variations
+      if (rawStatus === 'INSTOCK') rawStatus = 'IN_STOCK';
+      if (rawStatus === 'OUTOFSTOCK') rawStatus = 'OUT_OF_STOCK';
+    }
+    const manualStatus = rawStatus as 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO';
 
     // Map Images
     let mainImageUrl = data.primary_image_url || data.imageUrl || 'assets/images/placeholder.jpg';
@@ -317,6 +324,18 @@ export class ProductService {
       galleryImages = [data.image];
     }
 
+    // Determine final in-stock status
+    let isInStock = false;
+    if (data.is_in_stock !== undefined) {
+      isInStock = !!data.is_in_stock;
+    } else if (manualStatus === 'IN_STOCK') {
+      isInStock = true;
+    } else if (manualStatus === 'OUT_OF_STOCK') {
+      isInStock = false;
+    } else {
+      isInStock = stock > 0;
+    }
+
     return {
       id: data.id?.toString() || '',
       code: data.code || `PROD-${data.id}`,
@@ -329,9 +348,9 @@ export class ProductService {
       categoryId: data.category_id?.toString() ||
         (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : 'uncategorized'),
       categories: data.categories || [],
-      stock: parseInt(String(stock), 10),
+      stock: stock,
       manualStockStatus: manualStatus,
-      isInStock: data.is_in_stock !== undefined ? !!data.is_in_stock : (manualStatus === 'IN_STOCK' ? true : (manualStatus === 'OUT_OF_STOCK' ? false : parseInt(String(stock), 10) > 0))
+      isInStock: isInStock
     };
   }
 

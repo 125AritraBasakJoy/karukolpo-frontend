@@ -643,9 +643,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   isOutOfStock(product: Product): boolean {
-    if (product.manualStockStatus === 'OUT_OF_STOCK') return true;
-    if (product.manualStockStatus === 'IN_STOCK') return false;
-    return (product.stock || 0) <= 0;
+    return !product.isInStock;
   }
 
 

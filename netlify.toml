@@ -30,4 +30,3 @@
 [build.environment]
   NODE_VERSION = "20" # Match your local Node version
   NPM_FLAGS = "--legacy-peer-deps"
-  NETLIFY_SKIP_ANGULAR_SSR = "true"

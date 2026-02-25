@@ -1,10 +1,11 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID, Injector } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
 import { API_ENDPOINTS } from '../../core/api-endpoints';
 import { environment } from '../../environments/environment';
+import { CategoryService } from './category.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,7 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private injector: Injector,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     if (isPlatformBrowser(this.platformId)) {
@@ -72,6 +74,10 @@ export class AuthService {
             localStorage.setItem('adminRefreshToken', response.refresh_token);
           }
           this.isAdminLoggedInSubject.next(true);
+          // Clear caches to ensure fresh data for the newly logged-in admin
+          // Use injector to get CategoryService to avoid circular dependency
+          const categoryService = this.injector.get(CategoryService);
+          categoryService.clearCache();
         }
       })
     );
@@ -118,6 +124,10 @@ export class AuthService {
       localStorage.removeItem('adminRefreshToken');
     }
     this.isAdminLoggedInSubject.next(false);
+    // Clear caches when logging out
+    // Use injector to get CategoryService to avoid circular dependency
+    const categoryService = this.injector.get(CategoryService);
+    categoryService.clearCache();
     this.router.navigate(['/admin/login']);
   }
 

@@ -8,9 +8,14 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
 
     loadingService.setLoading(true);
 
-    return next(req).pipe(
-        finalize(() => {
-            loadingService.setLoading(false);
-        })
-    );
+    try {
+        return next(req).pipe(
+            finalize(() => {
+                loadingService.setLoading(false);
+            })
+        );
+    } catch (error) {
+        loadingService.setLoading(false);
+        throw error;
+    }
 };

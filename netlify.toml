@@ -1,6 +1,6 @@
 [build]
   # This matches the local build output confirmed via local build
-  publish = "dist/karukolpo-frontend"
+  publish = "dist/karukolpo-frontend/browser"
   command = "npm run build"
 
 [[redirects]]
@@ -31,6 +31,6 @@
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
   # Backup flags to ensure static mode is detected
-  NETLIFY_SKIP_ANGULAR_SSR = "true"
-  NETLIFY_ANGULAR_IS_STATIC = "true"
-  NETLIFY_SKIP_ANGULAR_RUNTIME = "true"
+  NETLIFY_SKIP_ANGULAR_SSR = "1"
+  NETLIFY_ANGULAR_IS_STATIC = "1"
+  NETLIFY_SKIP_ANGULAR_RUNTIME = "1"

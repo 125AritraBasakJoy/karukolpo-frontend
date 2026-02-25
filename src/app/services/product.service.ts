@@ -50,7 +50,7 @@ export class ProductService {
         return backendProducts.map(p => this.mapBackendToFrontend(p));
       }),
       tap(products => {
-        if (!categoryId && skip === 0) {
+        if (!categoryId && skip === 0 && isPlatformBrowser(this.platformId)) {
           this.productsCache = products;
         }
       })

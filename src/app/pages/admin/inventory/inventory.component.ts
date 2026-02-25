@@ -1,5 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { ProductService } from '../../../services/product.service';
@@ -93,7 +93,8 @@ export class InventoryComponent implements OnInit {
     private categoryService: CategoryService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private router: Router
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
   ngOnInit() {
@@ -103,6 +104,10 @@ export class InventoryComponent implements OnInit {
 
 
   loadProducts(event?: TableLazyLoadEvent) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.loading.set(true);
 
     const lazyEvent = event || this.lastLazyLoadEvent || { first: 0, rows: 10 };

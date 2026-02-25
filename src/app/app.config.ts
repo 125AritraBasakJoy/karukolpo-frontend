@@ -4,6 +4,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { loadingInterceptor } from './services/loading.interceptor';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeuix/themes/lara';
 import { MessageService } from 'primeng/api';
@@ -16,7 +17,7 @@ export const appConfig: ApplicationConfig = {
       scrollPositionRestoration: 'top'
     })),
     provideAnimations(),
-    provideHttpClient(withInterceptors([loadingInterceptor]), withFetch()),
+    provideHttpClient(withInterceptors([loadingInterceptor, authInterceptor]), withFetch()),
     providePrimeNG({
       theme: {
         preset: Lara,

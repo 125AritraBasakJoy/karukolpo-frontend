@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, of, from } from 'rxjs';
-import { map, catchError, tap, switchMap, mergeMap, toArray } from 'rxjs/operators';
+import { map, catchError, tap, switchMap, mergeMap, toArray, shareReplay, finalize } from 'rxjs/operators';
 import { Category } from '../models/category.model';
 import { Product } from '../models/product.model';
 import { ApiService } from './api.service';
@@ -18,6 +18,7 @@ import { isPlatformBrowser } from '@angular/common';
 export class CategoryService {
     private readonly CACHE_KEY = 'karukolpo_categories_cache';
     public categories = signal<Category[]>([]);
+    private pendingCategoriesRequest: Observable<Category[]> | null = null;
 
     constructor(
         private apiService: ApiService,
@@ -25,9 +26,13 @@ export class CategoryService {
         @Inject(PLATFORM_ID) private platformId: Object
     ) {
         if (isPlatformBrowser(this.platformId)) {
-            this.categories.set(this.loadFromCache());
-            // Background refresh on service initialization
-            this.refreshCache();
+            const cached = this.loadFromCache();
+            this.categories.set(cached);
+
+            // Background refresh only if cache is empty or on service boot
+            if (cached.length === 0) {
+                this.refreshCache();
+            }
         }
     }
 
@@ -71,10 +76,19 @@ export class CategoryService {
      * GET /categories
      */
     getCategories(skip = 0, limit = 100): Observable<Category[]> {
+        if (this.pendingCategoriesRequest) {
+            return this.pendingCategoriesRequest;
+        }
+
         const query = buildListQuery(skip, limit);
-        return this.apiService.get<any[]>(`${API_ENDPOINTS.CATEGORIES.LIST}${query}`).pipe(
-            map(categories => categories.map(cat => this.mapBackendToFrontend(cat)))
+        const request = this.apiService.get<any[]>(`${API_ENDPOINTS.CATEGORIES.LIST}${query}`).pipe(
+            map(categories => categories.map(cat => this.mapBackendToFrontend(cat))),
+            shareReplay(1),
+            finalize(() => this.pendingCategoriesRequest = null)
         );
+
+        this.pendingCategoriesRequest = request;
+        return request;
     }
 
     /**

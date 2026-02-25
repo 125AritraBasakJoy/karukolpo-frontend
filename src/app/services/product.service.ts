@@ -1,7 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable, of, forkJoin } from 'rxjs';
-import { map, tap, catchError, switchMap } from 'rxjs/operators';
+import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import { Product, ProductImage } from '../models/product.model';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
@@ -17,6 +17,7 @@ export class ProductService {
   private productsCache: Product[] | null = null;
   private productCategoriesCache = new Map<string | number, any[]>();
   private productMap = new Map<string | number, Product>();
+  private pendingProductsRequest: Observable<Product[]> | null = null;
 
   constructor(
     private apiService: ApiService,
@@ -41,11 +42,17 @@ export class ProductService {
       return of(this.productsCache);
     }
 
+    // Deduplicate simultaneous requests for the same base list
+    if (!forceRefresh && !categoryId && skip === 0 && this.pendingProductsRequest) {
+      return this.pendingProductsRequest;
+    }
+
     let query = buildListQuery(skip, limit);
     if (categoryId) {
       query += `&category_id=${categoryId}`;
     }
-    return this.apiService.get<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${query}`).pipe(
+
+    const request = this.apiService.get<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${query}`).pipe(
       map(backendProducts => {
         return backendProducts.map(p => this.mapBackendToFrontend(p));
       }),
@@ -53,8 +60,20 @@ export class ProductService {
         if (!categoryId && skip === 0 && isPlatformBrowser(this.platformId)) {
           this.productsCache = products;
         }
+      }),
+      shareReplay(1),
+      finalize(() => {
+        if (!categoryId && skip === 0) {
+          this.pendingProductsRequest = null;
+        }
       })
     );
+
+    if (!categoryId && skip === 0) {
+      this.pendingProductsRequest = request;
+    }
+
+    return request;
   }
 
   /**

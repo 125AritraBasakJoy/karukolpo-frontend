@@ -3,12 +3,9 @@
   publish = "dist/karukolpo-frontend/browser"
   command = "npm run build"
 
-# Explicitly disable the Angular plugin via plugin-specific inputs
+# Keep the plugin entry but REMOVE the [plugins.inputs] block
 [[plugins]]
-  package = "@netlify/angular-runtime"
-  [plugins.inputs]
-    handle_ssg = false
-    handle_ssr = false
+package = "@netlify/angular-runtime"
 
 [[redirects]]
   from = "/api/*"

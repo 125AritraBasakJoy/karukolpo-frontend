@@ -2,7 +2,7 @@ import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { loadingInterceptor } from './services/loading.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeuix/themes/lara';
@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
       scrollPositionRestoration: 'top'
     })),
     provideAnimations(),
-    provideHttpClient(withInterceptors([loadingInterceptor])),
+    provideHttpClient(withInterceptors([loadingInterceptor]), withFetch()),
     providePrimeNG({
       theme: {
         preset: Lara,

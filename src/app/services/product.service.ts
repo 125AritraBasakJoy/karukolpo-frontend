@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Observable, of, forkJoin } from 'rxjs';
 import { map, tap, catchError, switchMap } from 'rxjs/operators';
 import { Product, ProductImage } from '../models/product.model';
@@ -17,7 +18,10 @@ export class ProductService {
   private productCategoriesCache = new Map<string | number, any[]>();
   private productMap = new Map<string | number, Product>();
 
-  constructor(private apiService: ApiService) { }
+  constructor(
+    private apiService: ApiService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) { }
 
   /**
    * Clear all in-memory caches
@@ -362,14 +366,26 @@ export class ProductService {
    */
   private decodeHtml(html: string): string {
     if (!html) return '';
-    try {
-      const txt = document.createElement("textarea");
-      txt.innerHTML = html;
-      return txt.value;
-    } catch (e) {
-      console.warn('HTML decoding failed:', e);
-      return html;
+
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = html;
+        return txt.value;
+      } catch (e) {
+        console.warn('HTML decoding failed:', e);
+        return html;
+      }
     }
+
+    // SSR fallback: basic entity decoding
+    return html
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
   }
 
   /**

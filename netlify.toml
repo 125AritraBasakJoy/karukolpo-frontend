@@ -1,6 +1,6 @@
 [build]
   # This matches the local build output confirmed via local build
-  publish = "dist/karukolpo-frontend/browser"
+  publish = "dist/karukolpo-frontend"
   command = "npm run build"
 
 [[redirects]]

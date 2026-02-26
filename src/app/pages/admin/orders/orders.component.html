@@ -142,7 +142,7 @@
                                     tooltipPosition="top"></button>
                                 }
 
-                                @if (order.status !== 'Cancelled' && order.status !== 'Completed') {
+                                @if (order.status === 'Pending') {
                                 <button pButton icon="pi pi-times"
                                     class="action-btn p-button-rounded p-button-text p-button-danger danger-btn"
                                     (click)="updateStatus(order, 'Cancelled')" pTooltip="Cancel Order"

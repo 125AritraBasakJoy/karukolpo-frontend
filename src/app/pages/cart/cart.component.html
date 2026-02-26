@@ -2,95 +2,105 @@
     <div class="cart-container">
         <!-- Cash Memo / Order Receipt -->
         <div *ngIf="orderConfirmed" class="success-section py-6">
-            <div class="surface-card border-round-xl shadow-4 p-5 mx-auto" style="max-width: 600px;">
+            <div class="surface-card border-round-xl shadow-4 p-5 mx-auto" style="max-width: 800px;">
 
                 <!-- Header -->
-                <div class="text-center mb-4 pb-4 border-bottom-2 border-primary">
-                    <h2 class="m-0 mb-1 text-primary font-bold text-3xl">Karukolpo</h2>
-                    <p class="text-color-secondary text-sm m-0">Order Receipt</p>
-                </div>
-
-                <!-- Order Info -->
-                <div class="flex justify-content-between mb-3">
-                    <div>
-                        <div class="text-xs text-color-secondary">Order ID</div>
-                        <div class="font-bold text-lg text-primary">#{{ placedOrderId }}</div>
+                <div id="receipt-content" class="receipt-card p-5">
+                    <div class="text-center mb-5 pb-5">
+                        <img src="assets/logo.png" alt="Karukolpo Logo" height="120" class="mb-4">
+                        <p class="text-slate-400 text-sm m-0 uppercase tracking-widest font-semibold"
+                            style="letter-spacing: 0.2em;">Official Order Receipt</p>
                     </div>
-                    <div class="text-right">
-                        <div class="text-xs text-color-secondary">Date</div>
-                        <div class="font-semibold">{{ today | date:'mediumDate' }}</div>
-                    </div>
-                </div>
 
-                <!-- Customer Info -->
-                <div class="surface-ground border-round-lg p-3 mb-4 border-1 surface-border">
-                    <div class="grid">
+                    <!-- Order Info -->
+                    <div class="grid mb-5">
                         <div class="col-6">
-                            <div class="text-xs text-color-secondary mb-1">Customer</div>
-                            <div class="font-semibold">{{ orderFormSnapshot.fullName }}</div>
+                            <div class="text-xs text-color-secondary uppercase tracking-wider mb-1">Order ID</div>
+                            <div class="font-bold text-2xl text-primary">#{{ placedOrderId }}</div>
                         </div>
-                        <div class="col-6">
-                            <div class="text-xs text-color-secondary mb-1">Phone</div>
-                            <div class="font-semibold">{{ orderFormSnapshot.phoneNumber }}</div>
+                        <div class="col-6 text-right">
+                            <div class="text-xs text-color-secondary uppercase tracking-wider mb-1">Date Issued</div>
+                            <div class="font-bold text-xl text-white">{{ today | date:'mediumDate' }}</div>
                         </div>
-                        <div class="col-12 mt-2" *ngIf="orderFormSnapshot.fullAddress">
-                            <div class="text-xs text-color-secondary mb-1">Address</div>
-                            <div class="text-sm">{{ orderFormSnapshot.fullAddress }},
-                                {{ orderFormSnapshot.subDistrict ? orderFormSnapshot.subDistrict + ', ' : '' }}{{
-                                orderFormSnapshot.district }}
+                    </div>
+
+
+                    <!-- Customer Info -->
+                    <div class="mb-5">
+                        <div class="grid">
+                            <div class="col-6">
+                                <div class="text-xs text-color-secondary uppercase tracking-widest mb-1">Customer</div>
+                                <div class="font-bold text-xl text-white">{{ orderFormSnapshot.fullName }}</div>
+                            </div>
+                            <div class="col-6 text-right">
+                                <div class="text-xs text-color-secondary uppercase tracking-widest mb-1">Phone</div>
+                                <div class="font-bold text-xl text-white">{{ orderFormSnapshot.phoneNumber }}</div>
+                            </div>
+                            <div class="col-12 mt-4" *ngIf="orderFormSnapshot.fullAddress">
+                                <div class="text-xs text-color-secondary uppercase tracking-widest mb-1">Shipping
+                                    Address</div>
+                                <div class="text-sm text-slate-300 leading-relaxed">{{ orderFormSnapshot.fullAddress
+                                    }},<br>
+                                    {{ orderFormSnapshot.subDistrict ? orderFormSnapshot.subDistrict + ', ' : '' }}{{
+                                    orderFormSnapshot.district }}
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Items Table -->
+                    <div class="mb-4">
+                        <div class="grid font-bold text-xs text-color-secondary pb-4 mb-2 uppercase tracking-widest">
+                            <div class="flex-grow-1">Product</div>
+                            <div class="w-4rem text-center">Qty</div>
+                            <div class="w-6rem text-right">Price</div>
+                            <div class="w-6rem text-right">Total</div>
+                        </div>
+                        <div *ngFor="let item of orderedItems" class="grid align-items-center py-2 text-sm">
+                            <div class="flex-grow-1 font-medium">{{ item.product.name }}</div>
+                            <div class="w-4rem text-center">{{ item.quantity }}</div>
+                            <div class="w-6rem text-right">{{ item.product.price | currency:'BDT':'symbol-narrow' }}
+                            </div>
+                            <div class="w-6rem text-right font-semibold">{{ item.product.price * item.quantity |
+                                currency:'BDT':'symbol-narrow' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="mt-5 pt-4">
+                        <div class="flex justify-content-between mb-2 text-sm">
+                            <span class="text-color-secondary uppercase tracking-widest">Subtotal</span>
+                            <span class="font-bold text-white">{{ getOrderSubTotal() | currency:'BDT':'symbol-narrow'
+                                }}</span>
+                        </div>
+                        <div class="flex justify-content-between mb-4 text-sm">
+                            <span class="text-color-secondary uppercase tracking-widest">Delivery Charge</span>
+                            <span class="font-bold text-white">{{ orderDeliveryCharge | currency:'BDT':'symbol-narrow'
+                                }}</span>
+                        </div>
+                        <div
+                            class="flex justify-content-between align-items-center pt-5 border-top-1 border-white-alpha-10">
+                            <span class="font-bold text-2xl text-white uppercase tracking-widest">Grand Total</span>
+                            <span class="font-bold text-4xl text-primary">{{ orderTotal |
+                                currency:'BDT':'symbol-narrow' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="mt-5 p-4 text-center border-top-1 border-white-alpha-10">
+                        <span class="text-color-secondary text-xs uppercase tracking-widest mr-3">Payment Method</span>
+                        <span class="font-bold text-primary text-lg">{{ orderPaymentMethod }}</span>
+                    </div>
+
                 </div>
 
-                <!-- Items Table -->
-                <div class="mb-4">
-                    <div
-                        class="flex font-bold text-xs text-color-secondary pb-2 border-bottom-1 surface-border mb-2 uppercase">
-                        <div class="flex-grow-1">Product</div>
-                        <div class="w-4rem text-center">Qty</div>
-                        <div class="w-6rem text-right">Price</div>
-                        <div class="w-6rem text-right">Total</div>
-                    </div>
-                    <div *ngFor="let item of orderedItems"
-                        class="flex align-items-center py-2 border-bottom-1 surface-border text-sm">
-                        <div class="flex-grow-1 font-medium">{{ item.product.name }}</div>
-                        <div class="w-4rem text-center">{{ item.quantity }}</div>
-                        <div class="w-6rem text-right">{{ item.product.price | currency:'BDT':'symbol-narrow' }}</div>
-                        <div class="w-6rem text-right font-semibold">{{ item.product.price * item.quantity |
-                            currency:'BDT':'symbol-narrow' }}</div>
-                    </div>
-                </div>
+                <!-- Actions (Outside PDF area) -->
+                <div class="flex flex-column gap-3 mt-5 px-3">
+                    <button pButton label="Download Receipt PDF" icon="pi pi-download"
+                        class="premium-btn-primary p-button-lg w-full" (click)="downloadReceipt()"></button>
 
-                <!-- Totals -->
-                <div class="border-top-2 surface-border pt-3">
-                    <div class="flex justify-content-between mb-2 text-sm">
-                        <span class="text-color-secondary">Subtotal</span>
-                        <span class="font-semibold">{{ getOrderSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
-                    </div>
-                    <div class="flex justify-content-between mb-2 text-sm">
-                        <span class="text-color-secondary">Delivery Charge</span>
-                        <span class="font-semibold">{{ orderDeliveryCharge | currency:'BDT':'symbol-narrow' }}</span>
-                    </div>
-                    <div class="flex justify-content-between mt-3 pt-3 border-top-2 border-primary">
-                        <span class="font-bold text-xl">Grand Total</span>
-                        <span class="font-bold text-xl text-primary">{{ orderTotal |
-                            currency:'BDT':'symbol-narrow' }}</span>
-                    </div>
-                </div>
-
-                <!-- Payment Method -->
-                <div class="mt-4 surface-ground border-round-lg p-3 border-1 surface-border text-center">
-                    <span class="text-color-secondary text-sm">Payment Method: </span>
-                    <span class="font-bold text-primary">{{ orderPaymentMethod }}</span>
-                </div>
-
-                <!-- Action -->
-                <div class="text-center mt-5">
-                    <p class="text-color-secondary mb-4 text-sm">Thank you for your order! Our team will process it
-                        soon.</p>
-                    <button pButton label="Continue Shopping" icon="pi pi-shopping-bag" class="p-button-lg"
-                        (click)="continueShopping()"></button>
+                    <button pButton label="Continue Shopping" icon="pi pi-shopping-bag"
+                        class="premium-btn-secondary p-button-lg w-full" (click)="continueShopping()"></button>
                 </div>
             </div>
         </div>
@@ -168,7 +178,8 @@
                         <div class="mt-4 pt-4 border-top-1 border-white-alpha-10">
                             <div class="flex justify-content-between mb-2">
                                 <span class="text-slate-400">Subtotal</span>
-                                <span class="font-semibold text-white">{{ getSubTotal() | currency:'BDT':'symbol-narrow'
+                                <span class="font-semibold text-white">{{ getSubTotal() |
+                                    currency:'BDT':'symbol-narrow'
                                     }}</span>
                             </div>
                             <div class="flex justify-content-between mb-2">
@@ -363,7 +374,8 @@
                         <!-- COD Confirm -->
                         <div *ngIf="selectedPaymentMethod === 'COD'" class="payment-appear">
                             <div class="surface-ground p-3 border-round-lg mb-4 text-center border-1 surface-border">
-                                <p class="text-color-secondary m-0">You will pay the total amount to the delivery person
+                                <p class="text-color-secondary m-0">You will pay the total amount to the delivery
+                                    person
                                     when your
                                     package arrives.</p>
                             </div>

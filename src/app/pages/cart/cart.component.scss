@@ -115,3 +115,37 @@
         height: 60px;
     }
 }
+
+// Receipt Styles
+.receipt-card {
+    background: #0b1120; // Slightly darker for more premium feel
+    border-radius: 20px;
+    color: #e2e8f0;
+    padding: 3rem !important; // Ensure generous internal padding
+    overflow: hidden; // Prevent text overflow
+    width: 100%;
+
+
+    .text-primary {
+        color: #60a5fa !important; // Softer blue for dark background
+    }
+
+    .text-color-secondary {
+        color: #94a3b8 !important;
+    }
+
+    .surface-ground {
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+}
+
+.success-section {
+    overflow-x: hidden; // Protect against mobile overflow
+
+    .surface-card {
+        width: 100%;
+        background: rgba(15, 23, 42, 0.4) !important; // Darker backdrop
+        border-radius: 24px;
+        backdrop-filter: blur(24px);
+    }
+}

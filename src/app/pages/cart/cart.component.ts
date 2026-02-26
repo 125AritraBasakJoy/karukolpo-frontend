@@ -1,4 +1,4 @@
-import { Component, signal, ViewChildren, QueryList } from '@angular/core';
+import { Component, signal, ViewChildren, QueryList, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,6 +15,8 @@ import { OrderService } from '../../services/order.service';
 import { ProductService } from '../../services/product.service';
 import { CartItem } from '../../models/cart.model';
 import { districts, District } from '../../data/bangladesh-data';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 @Component({
     selector: 'app-cart',
@@ -33,7 +35,7 @@ import { districts, District } from '../../data/bangladesh-data';
     styleUrls: ['./cart.component.scss'],
 
 })
-export class CartComponent {
+export class CartComponent implements OnInit {
     loading = signal<boolean>(false);
     today = new Date();
 
@@ -82,6 +84,10 @@ export class CartComponent {
         private messageService: MessageService,
         private router: Router
     ) { }
+
+    ngOnInit() {
+        window.scrollTo(0, 0);
+    }
 
     updateQuantity(item: CartItem, change: number) {
         this.cartService.updateQuantity(item, change);
@@ -186,6 +192,7 @@ export class CartComponent {
 
             this.saveCashMemoData('Cash on Delivery');
             this.orderConfirmed = true;
+            window.scrollTo(0, 0);
 
             const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearCart();
@@ -236,6 +243,7 @@ export class CartComponent {
 
             this.saveCashMemoData('bKash');
             this.orderConfirmed = true;
+            window.scrollTo(0, 0);
 
             const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearCart();
@@ -277,5 +285,46 @@ export class CartComponent {
     continueShopping() {
         this.orderConfirmed = false;
         this.router.navigate(['/']);
+    }
+
+    async downloadReceipt() {
+        const data = document.getElementById('receipt-content');
+        if (!data) return;
+
+        const receiptBg = '#0b1120'; // Exact receipt background color
+        this.loading.set(true);
+        try {
+            const canvas = await html2canvas(data, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: receiptBg
+            });
+
+            const imgWidth = 210;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            const contentDataURL = canvas.toDataURL('image/png');
+
+            const pdf = new jsPDF({
+                orientation: 'p',
+                unit: 'mm',
+                format: [imgWidth, imgHeight]
+            });
+
+            // Fill PDF background to match receipt (hides square white corners)
+            pdf.setFillColor(receiptBg);
+            pdf.rect(0, 0, imgWidth, imgHeight, 'F');
+
+            pdf.addImage(contentDataURL, 'PNG', 0, 0, imgWidth, imgHeight);
+            pdf.save(`Receipt_#${this.placedOrderId}.pdf`);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Download Failed',
+                detail: 'Could not generate receipt PDF. Please try again.'
+            });
+        } finally {
+            this.loading.set(false);
+        }
     }
 }

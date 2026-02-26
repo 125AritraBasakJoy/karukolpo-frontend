@@ -155,11 +155,12 @@
     margin: 0 1.5rem;
     max-width: 600px;
 
-    @media screen and (max-width: 991px) {
+    @media screen and (max-width: 1199px) {
+        // lg breakpoint
         margin: 1rem 0;
         width: 100%;
         max-width: none;
-        order: 3; // Move search below header text and buttons on mobile if needed
+        order: 3;
     }
 
     @media screen and (max-width: 576px) {
@@ -252,6 +253,25 @@
                     font-size: 1.25rem !important;
                 }
             }
+        }
+    }
+}
+
+.custom-scrollbar {
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
     }
 }

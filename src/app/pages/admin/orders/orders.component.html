@@ -2,8 +2,8 @@
     <div class="glass-card p-4">
         <!-- Header Section -->
         <div
-            class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 gap-3">
-            <div>
+            class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center mb-5 gap-4">
+            <div class="header-title">
                 <h1 class="text-3xl font-bold m-0 text-white flex align-items-center gap-2">
                     <i class="pi pi-shopping-bag text-primary text-2xl"></i>
                     Orders
@@ -24,21 +24,22 @@
                 <button pButton label="Search" (click)="onSearch()" class="premium-btn-primary search-btn"></button>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
                 <app-notification-button></app-notification-button>
 
                 <p-button icon="pi pi-file-excel" label="Export" (onClick)="downloadOrders()"
-                    styleClass="premium-btn-secondary surface-card border-none" pTooltip="Download Excel"
-                    tooltipPosition="bottom"></p-button>
+                    styleClass="premium-btn-secondary surface-card border-none flex-grow-1 sm:flex-grow-0"
+                    pTooltip="Download Excel" tooltipPosition="bottom"></p-button>
 
-                <p-button icon="pi pi-refresh" (onClick)="refreshOrders()" styleClass="premium-btn-primary"
-                    pTooltip="Refresh Orders" tooltipPosition="bottom"></p-button>
+                <p-button icon="pi pi-refresh" (onClick)="refreshOrders()"
+                    styleClass="premium-btn-primary flex-grow-1 sm:flex-grow-0" pTooltip="Refresh Orders"
+                    tooltipPosition="bottom"></p-button>
             </div>
         </div>
 
         @if (loading()) {
-        <div class="border-round-2xl overflow-hidden">
-            <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '50rem' }">
+        <div class="border-round-2xl overflow-hidden overflow-x-auto">
+            <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '60rem' }">
                 <ng-template pTemplate="header">
                     <tr>
                         <th>Order ID</th>
@@ -76,7 +77,7 @@
         }
 
         @if (!loading() || totalRecords() > 0) {
-        <div class="border-round-2xl overflow-hidden">
+        <div class="border-round-2xl overflow-hidden overflow-x-auto custom-scrollbar">
             <p-table [value]="orders()" [tableStyle]="{'min-width': '60rem'}" [paginator]="true" [rows]="10"
                 [rowsPerPageOptions]="[10, 25, 50, 100]" [lazy]="true" (onLazyLoad)="loadOrders($event)"
                 [totalRecords]="totalRecords()" [showCurrentPageReport]="true"

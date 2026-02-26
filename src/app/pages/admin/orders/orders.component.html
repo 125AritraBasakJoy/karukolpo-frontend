@@ -11,6 +11,19 @@
                 <p class="text-gray-400 mt-2 mb-0">Manage customer orders and track status</p>
             </div>
 
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-wrapper">
+                    <i class="pi pi-search search-icon"></i>
+                    <input type="text" pInputText placeholder="Search Order ID or Phone..." [(ngModel)]="searchQuery"
+                        (keyup.enter)="onSearch()" class="search-input" />
+                    @if (searchQuery()) {
+                    <i class="pi pi-times clear-icon" (click)="clearSearch()"></i>
+                    }
+                </div>
+                <button pButton label="Search" (click)="onSearch()" class="premium-btn-primary search-btn"></button>
+            </div>
+
             <div class="flex gap-3">
                 <app-notification-button></app-notification-button>
 

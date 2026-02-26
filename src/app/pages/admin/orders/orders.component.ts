@@ -54,6 +54,10 @@ export class OrdersComponent implements OnInit {
   loadingDetails = false;
   lastLazyLoadEvent: TableLazyLoadEvent | null = null;
 
+  // Search state
+  searchQuery = signal<string>('');
+  isSearching = signal<boolean>(false);
+
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
@@ -110,6 +114,9 @@ export class OrdersComponent implements OnInit {
   readonly BUFFER_SIZE = 100;
 
   loadOrders(event?: TableLazyLoadEvent) {
+    if (this.isSearching()) {
+      return; // Table pagination handled by search results
+    }
     this.loading.set(true);
 
     // Check if event is provided, otherwise use default or last event
@@ -188,6 +195,65 @@ export class OrdersComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  onSearch() {
+    const query = this.searchQuery().trim();
+    if (!query) {
+      this.clearSearch();
+      return;
+    }
+
+    this.loading.set(true);
+    this.isSearching.set(true);
+
+    // Try to determine if it's an ID or Phone
+    const isNumber = /^\d+$/.test(query);
+
+    if (isNumber && query.length < 10) {
+      // Likely an ID
+      this.orderService.getOrderById(query).subscribe({
+        next: (order) => {
+          if (order) {
+            this.orders.set([order]);
+            this.totalRecords.set(1);
+          } else {
+            // If not found by ID, try phone just in case
+            this.searchByPhone(query);
+          }
+          this.loading.set(false);
+        },
+        error: () => {
+          this.searchByPhone(query);
+        }
+      });
+    } else {
+      // Likely a phone number
+      this.searchByPhone(query);
+    }
+  }
+
+  private searchByPhone(phone: string) {
+    this.orderService.trackOrdersByPhone(phone).subscribe({
+      next: (orders) => {
+        this.orders.set(orders || []);
+        this.totalRecords.set(orders ? orders.length : 0);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Search by phone failed', err);
+        this.orders.set([]);
+        this.totalRecords.set(0);
+        this.loading.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to search orders' });
+      }
+    });
+  }
+
+  clearSearch() {
+    this.searchQuery.set('');
+    this.isSearching.set(false);
+    this.refreshOrders();
   }
 
   refreshOrders() {

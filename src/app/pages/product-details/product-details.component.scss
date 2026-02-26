@@ -1,6 +1,11 @@
 .container {
     max-width: 1200px;
     margin: 0 auto;
+
+    @media screen and (max-width: 768px) {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
 }
 
 // Premium Product Gallery Styling
@@ -15,6 +20,17 @@
     position: relative;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
+    // Maintain a premium aspect ratio
+    aspect-ratio: 4 / 5;
+    display: flex;
+    flex-direction: column;
+
+    @media screen and (max-width: 768px) {
+        border-radius: 16px;
+        aspect-ratio: 1 / 1.1;
+        margin-bottom: 2rem;
+    }
+
     &:hover {
         border-color: rgba(255, 255, 255, 0.15);
         box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
@@ -24,20 +40,31 @@
 
 .image-wrapper {
     width: 100%;
-    padding: 1rem;
+    height: 100%;
+    padding: 1.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
 
+    @media screen and (max-width: 768px) {
+        padding: 0.75rem;
+    }
+
     &.solo {
         padding: 2rem;
+
+        @media screen and (max-width: 768px) {
+            padding: 1rem;
+        }
     }
 }
 
 .product-image {
     width: 100%;
-    border-radius: 16px;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     transform-origin: center;
 
@@ -60,27 +87,44 @@
         top: 50% !important;
         transform: translateY(-50%) !important;
         z-index: 10 !important;
-        width: 3.5rem !important;
-        height: 3.5rem !important;
-        background: rgba(255, 255, 255, 0.05) !important;
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
+        width: 3rem !important;
+        height: 3rem !important;
+        background: rgba(15, 23, 42, 0.4) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 50% !important;
         color: white !important;
-        transition: all 0.3s ease !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         margin: 0 1rem !important;
+        opacity: 0; // Hide by default
 
-        &:hover {
-            background: rgba(255, 255, 255, 0.15) !important;
-            border-color: rgba(59, 130, 246, 0.5) !important;
-            transform: translateY(-50%) scale(1.1) !important;
-            color: #3b82f6 !important;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+        @media screen and (max-width: 768px) {
+            opacity: 0.6; // Show slightly on mobile
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            margin: 0 0.5rem !important;
         }
 
-        .p-icon {
-            font-size: 1.25rem !important;
+        &:hover {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border-color: rgba(59, 130, 246, 0.5) !important;
+            transform: translateY(-50%) scale(1.1) !important;
+            color: #60a5fa !important;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4) !important;
+            opacity: 1 !important;
+        }
+
+        .pi {
+            font-size: 0.875rem !important;
+        }
+    }
+
+    .product-gallery-container:hover {
+
+        .p-carousel-prev,
+        .p-carousel-next {
+            opacity: 1;
         }
     }
 
@@ -92,29 +136,51 @@
         right: 0 !important;
     }
 
-    // Pagination
+    // Pagination (Minimalist Dots)
     .p-carousel-indicators {
-        padding: 1.5rem 0 !important;
-        gap: 0.75rem !important;
+        padding: 1rem 0 !important;
+        gap: 0.5rem !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        backdrop-filter: blur(8px) !important;
+        width: fit-content !important;
+        margin: 0 auto !important;
+        border-radius: 50px !important;
+        padding: 0.5rem 1.25rem !important;
+        position: absolute !important;
+        bottom: 1.5rem !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
 
         .p-carousel-indicator {
             button {
-                width: 2rem !important;
-                height: 0.35rem !important;
-                background: rgba(255, 255, 255, 0.1) !important;
-                border-radius: 10px !important;
-                transition: all 0.4s ease !important;
+                width: 6px !important;
+                height: 6px !important;
+                background: rgba(255, 255, 255, 0.2) !important;
+                border-radius: 50% !important;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
                 border: none !important;
+                padding: 0 !important;
+
+                @media screen and (max-width: 768px) {
+                    width: 5px !important;
+                    height: 5px !important;
+                }
 
                 &:hover {
-                    background: rgba(255, 255, 255, 0.2) !important;
+                    background: rgba(255, 255, 255, 0.4) !important;
                 }
             }
 
             &.p-highlight button {
-                width: 3.5rem !important;
-                background: linear-gradient(90deg, #3b82f6, #2563eb) !important;
-                box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
+                width: 20px !important;
+                background: #3b82f6 !important;
+                border-radius: 10px !important;
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.6) !important;
+
+                @media screen and (max-width: 768px) {
+                    width: 15px !important;
+                }
             }
         }
     }

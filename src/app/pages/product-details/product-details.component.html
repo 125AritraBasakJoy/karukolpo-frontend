@@ -9,14 +9,14 @@
     <div class="grid">
         <!-- Left Column: Product Image/Carousel -->
         <div class="col-12 md:col-6">
-            <div class="product-gallery-container p-3">
+            <div class="product-gallery-container">
                 @if (product()!.images && product()!.images!.length > 0) {
                 <p-carousel [value]="product()!.images!" [numVisible]="1" [numScroll]="1" [circular]="true"
-                    [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
+                    [responsiveOptions]="responsiveOptions" [autoplayInterval]="4000">
                     <ng-template let-image pTemplate="item">
                         <div class="image-wrapper">
-                            <img [ngSrc]="image" [alt]="product()!.name" class="product-image" width="500" height="500"
-                                style="max-height: 500px; object-fit: contain;" priority>
+                            <img [ngSrc]="image" [alt]="product()!.name" class="product-image" width="600" height="600"
+                                style="max-height: 600px; object-fit: contain;" priority>
                         </div>
                     </ng-template>
                 </p-carousel>

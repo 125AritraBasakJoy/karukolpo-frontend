@@ -186,6 +186,13 @@ export class CartComponent implements OnInit {
         return this.orderedItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
     }
 
+    getInvoiceNo(): string {
+        if (!this.placedOrderId) return '';
+        const year = new Date().getFullYear();
+        const paddedId = this.placedOrderId.toString().padStart(5, '0');
+        return `INV-${year}-${paddedId}`;
+    }
+
     async confirmCOD() {
         this.loading.set(true);
         const orderData = this.prepareOrderData('COD');
@@ -300,13 +307,18 @@ export class CartComponent implements OnInit {
         const data = document.getElementById('receipt-content');
         if (!data) return;
 
-        const receiptBg = '#0b1120'; // Exact receipt background color
         this.loading.set(true);
+        // Apply B&W theme for download
+        data.classList.add('download-bw');
+
         try {
+            // Wait a small bit for styles to apply
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             const canvas = await html2canvas(data, {
                 scale: 2,
                 useCORS: true,
-                backgroundColor: receiptBg
+                backgroundColor: '#ffffff'
             });
 
             const imgWidth = 210;
@@ -319,12 +331,8 @@ export class CartComponent implements OnInit {
                 format: [imgWidth, imgHeight]
             });
 
-            // Fill PDF background to match receipt (hides square white corners)
-            pdf.setFillColor(receiptBg);
-            pdf.rect(0, 0, imgWidth, imgHeight, 'F');
-
             pdf.addImage(contentDataURL, 'PNG', 0, 0, imgWidth, imgHeight);
-            pdf.save(`Receipt_#${this.placedOrderId}.pdf`);
+            pdf.save(`Invoice_${this.getInvoiceNo()}.pdf`);
         } catch (error) {
             console.error('Error generating PDF:', error);
             this.messageService.add({
@@ -333,6 +341,7 @@ export class CartComponent implements OnInit {
                 detail: 'Could not generate receipt PDF. Please try again.'
             });
         } finally {
+            data.classList.remove('download-bw');
             this.loading.set(false);
         }
     }

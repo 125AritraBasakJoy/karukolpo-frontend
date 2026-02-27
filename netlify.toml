@@ -30,3 +30,8 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
+
+# Backup flags to ensure static mode is detected
+  NETLIFY_SKIP_ANGULAR_SSR = "1"
+  NETLIFY_ANGULAR_IS_STATIC = "1"
+  NETLIFY_SKIP_ANGULAR_RUNTIME = "1"

@@ -1,5 +1,5 @@
-import { Component, signal, ViewChildren, QueryList, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, ViewChildren, QueryList, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -82,11 +82,14 @@ export class CartComponent implements OnInit {
         private orderService: OrderService,
         private productService: ProductService,
         private messageService: MessageService,
-        private router: Router
+        private router: Router,
+        @Inject(PLATFORM_ID) private platformId: Object
     ) { }
 
     ngOnInit() {
-        window.scrollTo(0, 0);
+        if (isPlatformBrowser(this.platformId)) {
+            window.scrollTo(0, 0);
+        }
     }
 
     updateQuantity(item: CartItem, change: number) {
@@ -150,9 +153,11 @@ export class CartComponent implements OnInit {
         this.placedOrderId = '';
 
         // Scroll to payment section
-        setTimeout(() => {
-            document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        if (isPlatformBrowser(this.platformId)) {
+            setTimeout(() => {
+                document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
     }
 
     private prepareOrderData(paymentMethod: 'COD' | 'bKash'): any {
@@ -192,7 +197,9 @@ export class CartComponent implements OnInit {
 
             this.saveCashMemoData('Cash on Delivery');
             this.orderConfirmed = true;
-            window.scrollTo(0, 0);
+            if (isPlatformBrowser(this.platformId)) {
+                window.scrollTo(0, 0);
+            }
 
             const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearCart();
@@ -243,7 +250,9 @@ export class CartComponent implements OnInit {
 
             this.saveCashMemoData('bKash');
             this.orderConfirmed = true;
-            window.scrollTo(0, 0);
+            if (isPlatformBrowser(this.platformId)) {
+                window.scrollTo(0, 0);
+            }
 
             const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearCart();

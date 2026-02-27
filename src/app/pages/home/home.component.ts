@@ -9,42 +9,42 @@ import {
     signal,
     ViewChildren
 } from '@angular/core';
-import {CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgOptimizedImage} from '@angular/common';
-import {Meta, Title} from '@angular/platform-browser';
-import {SafeHtmlPipe} from '../../pipes/safe-html.pipe';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ButtonModule} from 'primeng/button';
-import {lastValueFrom} from 'rxjs';
-import {DialogModule} from 'primeng/dialog';
-import {DataViewModule} from 'primeng/dataview';
-import {InputNumberModule} from 'primeng/inputnumber';
-import {FormsModule, NgModel} from '@angular/forms';
-import {InputTextModule} from 'primeng/inputtext';
-import {TextareaModule} from 'primeng/textarea';
-import {ToastModule} from 'primeng/toast';
-import {MessageService} from 'primeng/api';
-import {ProductService} from '../../services/product.service';
-import {OrderService} from '../../services/order.service';
-import {Product} from '../../models/product.model';
-import {CartItem} from '../../models/cart.model';
-import {ProgressSpinnerModule} from 'primeng/progressspinner';
-import {GalleriaModule} from 'primeng/galleria';
-import {ContactService} from '../../services/contact.service';
-import {DropdownModule} from 'primeng/dropdown';
-import {District, districts} from '../../data/bangladesh-data';
-import {ThemeService} from '../../services/theme.service';
-import {PaymentService} from '../../services/payment.service';
-import {DeliveryService} from '../../services/delivery.service';
-import {SiteConfigService} from '../../services/site-config.service';
-import {CategoryService} from '../../services/category.service';
-import {Category} from '../../models/category.model';
-import {RadioButtonModule} from 'primeng/radiobutton';
-import {SkeletonModule} from 'primeng/skeleton';
-import {BadgeModule} from 'primeng/badge';
-import {TagModule} from 'primeng/tag';
-import {Order} from '../../models/order.model';
-import {CartService} from '../../services/cart.service';
-import {TooltipModule} from 'primeng/tooltip';
+import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
+import { Meta, Title } from '@angular/platform-browser';
+import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { lastValueFrom } from 'rxjs';
+import { DialogModule } from 'primeng/dialog';
+import { DataViewModule } from 'primeng/dataview';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { FormsModule, NgModel } from '@angular/forms';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { ProductService } from '../../services/product.service';
+import { OrderService } from '../../services/order.service';
+import { Product } from '../../models/product.model';
+import { CartItem } from '../../models/cart.model';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { GalleriaModule } from 'primeng/galleria';
+import { ContactService } from '../../services/contact.service';
+import { DropdownModule } from 'primeng/dropdown';
+import { District, districts } from '../../data/bangladesh-data';
+import { ThemeService } from '../../services/theme.service';
+import { PaymentService } from '../../services/payment.service';
+import { DeliveryService } from '../../services/delivery.service';
+import { SiteConfigService } from '../../services/site-config.service';
+import { CategoryService } from '../../services/category.service';
+import { Category } from '../../models/category.model';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { SkeletonModule } from 'primeng/skeleton';
+import { BadgeModule } from 'primeng/badge';
+import { TagModule } from 'primeng/tag';
+import { Order } from '../../models/order.model';
+import { CartService } from '../../services/cart.service';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-home',
@@ -179,7 +179,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     get isCheckoutFormValid(): boolean {
-        const {fullName, email, phoneNumber, district, postalCode, fullAddress, subDistrict} = this.checkoutForm;
+        const { fullName, email, phoneNumber, district, postalCode, fullAddress, subDistrict } = this.checkoutForm;
 
         // Basic existence check (Removed postalCode form strict requirements)
         const basicValidation = fullName && email && phoneNumber && district && fullAddress;
@@ -241,8 +241,8 @@ export class HomeComponent implements OnInit, OnDestroy {
             name: 'description',
             content: 'Karukolpo offers a wide range of premium handmade crafts and products. Discover unique collections and hot deals.'
         });
-        this.metaService.updateTag({property: 'og:title', content: 'Karukolpo | Premium Handmade Crafts'});
-        this.metaService.updateTag({property: 'og:image', content: this.landingPageImage()});
+        this.metaService.updateTag({ property: 'og:title', content: 'Karukolpo | Premium Handmade Crafts' });
+        this.metaService.updateTag({ property: 'og:image', content: this.landingPageImage() });
     }
 
     loadDeliveryCharges() {
@@ -329,9 +329,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     scrollToProducts() {
+        if (!isPlatformBrowser(this.platformId)) return;
         const productsSection = document.getElementById('products');
         if (productsSection) {
-            productsSection.scrollIntoView({behavior: 'smooth', block: 'start'});
+            productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 
@@ -339,7 +340,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (!isPlatformBrowser(this.platformId)) return;
         const categoriesSection = document.getElementById('categories');
         if (categoriesSection) {
-            categoriesSection.scrollIntoView({behavior: 'smooth', block: 'start'});
+            categoriesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 
@@ -349,7 +350,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     openCheckout() {
         if (this.cartService.cart().length === 0) {
-            this.messageService.add({severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first'});
+            this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
             return;
         }
         // Reset payment method to default to ensure modal logic works
@@ -525,7 +526,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             }
         }
         const summary = status ? `Error (${status})` : 'Validation Error';
-        this.messageService.add({severity: 'error', summary: summary, detail: detail});
+        this.messageService.add({ severity: 'error', summary: summary, detail: detail });
     }
 
     resetCheckoutForm() {

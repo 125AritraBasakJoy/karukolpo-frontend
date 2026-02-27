@@ -1,5 +1,5 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule, CurrencyPipe, NgOptimizedImage } from '@angular/common';
+import { Component, OnInit, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, CurrencyPipe, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, Title, Meta } from '@angular/platform-browser';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -36,14 +36,17 @@ export class CategoryProductsComponent implements OnInit {
         public cartService: CartService,
         private messageService: MessageService,
         private titleService: Title,
-        private metaService: Meta
+        private metaService: Meta,
+        @Inject(PLATFORM_ID) private platformId: Object
     ) { }
 
     ngOnInit() {
         this.route.params.subscribe(params => {
             const id = params['id'];
             if (id) {
-                window.scrollTo({ top: 0, behavior: 'instant' });
+                if (isPlatformBrowser(this.platformId)) {
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                }
                 this.loadCategoryAndProducts(id);
             }
         });

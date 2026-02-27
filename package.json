@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "analyze": "ng build --stats-json && npx webpack-bundle-analyzer dist/karukolpo-frontend/stats.json"
+    "analyze": "ng build --stats-json && npx webpack-bundle-analyzer dist/karukolpo-frontend/stats.json",
+    "serve:ssr:karukolpo-frontend": "node dist/karukolpo-frontend/server/server.mjs"
   },
   "private": true,
   "dependencies": {
@@ -18,12 +19,15 @@
     "@angular/forms": "^20.3.16",
     "@angular/platform-browser": "^20.3.16",
     "@angular/platform-browser-dynamic": "^20.3.16",
+    "@angular/platform-server": "^20.3.16",
     "@angular/router": "^20.3.16",
+    "@angular/ssr": "^20.3.16",
     "@primeuix/themes": "^2.0.3",
     "@types/jsbarcode": "^3.11.4",
     "ag-grid-angular": "^35.0.1",
     "ag-grid-community": "^35.0.1",
     "chart.js": "^4.5.1",
+    "express": "^5.1.0",
     "html2canvas": "^1.4.1",
     "jsbarcode": "^3.12.1",
     "jspdf": "^4.2.0",

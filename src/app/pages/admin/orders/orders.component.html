@@ -28,6 +28,7 @@
                 <app-notification-button></app-notification-button>
 
                 <p-button icon="pi pi-file-excel" label="Export" (onClick)="downloadOrders()"
+                    [loading]="exportLoading()"
                     styleClass="premium-btn-secondary surface-card border-none flex-grow-1 sm:flex-grow-0"
                     pTooltip="Download Excel" tooltipPosition="bottom"></p-button>
 

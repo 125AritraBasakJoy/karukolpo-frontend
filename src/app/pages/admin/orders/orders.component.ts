@@ -53,6 +53,7 @@ export class OrdersComponent implements OnInit {
   orders = signal<Order[]>([]);
   totalRecords = signal<number>(0); // Initialize to 0, will grow as we fetch
   loading = signal<boolean>(false);
+  exportLoading = signal<boolean>(false);
   downloadingOrderId = signal<string | null>(null);
   selectedOrder: Order | null = null;
   displayOrderDialog = false;
@@ -535,31 +536,49 @@ export class OrdersComponent implements OnInit {
   }
 
   downloadOrders() {
-    const orders = this.orders();
-    if (orders.length === 0) {
-      this.messageService.add({ severity: 'warn', summary: 'No Data', detail: 'No orders to export' });
-      return;
-    }
+    this.exportLoading.set(true);
+    this.messageService.add({ severity: 'info', summary: 'Export Started', detail: 'Fetching all orders for export...' });
 
-    const data = orders.map(order => ({
-      'Order ID': order.id,
-      'Customer Name': order.fullName,
-      'Phone': order.phoneNumber,
-      'District': order.district,
-      'Date': new Date(order.orderDate).toLocaleDateString(),
-      'Total Amount': order.totalAmount,
-      'Payment Status': order.paymentStatus || 'Pending',
-      'Order Status': order.status
-    }));
+    // Fetch all orders (using a large limit to reasonably cover "all")
+    this.orderService.getOrders(0, 10000, true).subscribe({
+      next: (allOrders) => {
+        if (!allOrders || allOrders.length === 0) {
+          this.messageService.add({ severity: 'warn', summary: 'No Data', detail: 'No orders available to export' });
+          this.exportLoading.set(false);
+          return;
+        }
 
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
-    const wscols = [
-      { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 15 }
-    ];
-    ws['!cols'] = wscols;
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Orders');
-    XLSX.writeFile(wb, 'orders_export.xlsx');
+        const data = allOrders.map(order => ({
+          'Order ID': order.id,
+          'Customer Name': order.fullName,
+          'Phone': order.phoneNumber,
+          'District': order.district,
+          'Date': new Date(order.orderDate).toLocaleDateString(),
+          'Subtotal': order.subtotal ?? 0,
+          'Delivery': order.deliveryCharge ?? 0,
+          'Total Amount': order.totalAmount,
+          'Payment Status': order.paymentStatus || 'Pending',
+          'Order Status': order.status
+        }));
+
+        const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+        const wscols = [
+          { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 15 }
+        ];
+        ws['!cols'] = wscols;
+        const wb: XLSX.WorkBook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+        XLSX.writeFile(wb, 'all_orders_export.xlsx');
+
+        this.exportLoading.set(false);
+        this.messageService.add({ severity: 'success', summary: 'Export Success', detail: 'All orders exported successfully' });
+      },
+      error: (err) => {
+        console.error('Failed to export all orders:', err);
+        this.messageService.add({ severity: 'error', summary: 'Export Failed', detail: 'An error occurred while fetching orders for export' });
+        this.exportLoading.set(false);
+      }
+    });
   }
 
   downloadAdminInvoice(order: Order) {

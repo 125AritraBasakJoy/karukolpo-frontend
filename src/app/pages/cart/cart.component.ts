@@ -1,6 +1,7 @@
 import { Component, signal, ViewChildren, QueryList, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
+import { InvoiceComponent } from '../../components/invoice/invoice.component';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,8 +16,6 @@ import { OrderService } from '../../services/order.service';
 import { ProductService } from '../../services/product.service';
 import { CartItem } from '../../models/cart.model';
 import { districts, District } from '../../data/bangladesh-data';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 @Component({
     selector: 'app-cart',
@@ -30,6 +29,7 @@ import html2canvas from 'html2canvas';
         DropdownModule,
         ToastModule,
         TagModule,
+        InvoiceComponent,
     ],
     templateUrl: './cart.component.html',
     styleUrls: ['./cart.component.scss'],
@@ -182,17 +182,6 @@ export class CartComponent implements OnInit {
         this.orderTotal = this.getTotalPrice();
     }
 
-    getOrderSubTotal(): number {
-        return this.orderedItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-    }
-
-    getInvoiceNo(): string {
-        if (!this.placedOrderId) return '';
-        const year = new Date().getFullYear();
-        const paddedId = this.placedOrderId.toString().padStart(5, '0');
-        return `INV-${year}-${paddedId}`;
-    }
-
     async confirmCOD() {
         this.loading.set(true);
         const orderData = this.prepareOrderData('COD');
@@ -301,48 +290,5 @@ export class CartComponent implements OnInit {
     continueShopping() {
         this.orderConfirmed = false;
         this.router.navigate(['/']);
-    }
-
-    async downloadReceipt() {
-        const data = document.getElementById('receipt-content');
-        if (!data) return;
-
-        this.loading.set(true);
-        // Apply B&W theme for download
-        data.classList.add('download-bw');
-
-        try {
-            // Wait a small bit for styles to apply
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            const canvas = await html2canvas(data, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            });
-
-            const imgWidth = 210;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            const contentDataURL = canvas.toDataURL('image/png');
-
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: [imgWidth, imgHeight]
-            });
-
-            pdf.addImage(contentDataURL, 'PNG', 0, 0, imgWidth, imgHeight);
-            pdf.save(`Invoice_${this.getInvoiceNo()}.pdf`);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Download Failed',
-                detail: 'Could not generate receipt PDF. Please try again.'
-            });
-        } finally {
-            data.classList.remove('download-bw');
-            this.loading.set(false);
-        }
     }
 }

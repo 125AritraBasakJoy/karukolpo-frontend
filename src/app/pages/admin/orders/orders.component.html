@@ -16,12 +16,12 @@
                 <div class="search-wrapper">
                     <i class="pi pi-search search-icon"></i>
                     <input type="text" pInputText placeholder="Search Order ID or Phone..." [(ngModel)]="searchQuery"
-                        (keyup.enter)="onSearch()" class="search-input" />
+                        (ngModelChange)="onSearch()" (keyup.enter)="onSearch(true)" class="search-input" />
                     @if (searchQuery()) {
                     <i class="pi pi-times clear-icon" (click)="clearSearch()"></i>
                     }
                 </div>
-                <button pButton label="Search" (click)="onSearch()" class="premium-btn-primary search-btn"></button>
+                <button pButton label="Search" (click)="onSearch(true)" class="premium-btn-primary search-btn"></button>
             </div>
 
             <div class="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
@@ -127,6 +127,12 @@
                                 <button pButton icon="pi pi-eye"
                                     class="action-btn p-button-rounded p-button-text p-button-secondary info-btn"
                                     (click)="viewOrder(order)" pTooltip="View Details" tooltipPosition="top"></button>
+
+                                <button pButton type="button" icon="pi pi-download"
+                                    [loading]="downloadingOrderId() === (order.id || '').toString()"
+                                    class="action-btn p-button-rounded p-button-text p-button-info info-btn"
+                                    (click)="$event.preventDefault(); $event.stopPropagation(); downloadAdminInvoice(order)"
+                                    pTooltip="Download Invoice" tooltipPosition="top"></button>
 
                                 <!-- Status Actions -->
                                 @if (order.status === 'Pending' && order.paymentMethod?.toLowerCase() !== 'bkash') {
@@ -424,3 +430,12 @@
     }
 </p-dialog>
 <p-confirmDialog appendTo="body" styleClass="premium-confirm-dialog"></p-confirmDialog>
+
+<!-- Hidden Invoice for PDF Generation -->
+<!-- Note: We avoid visibility:hidden as it can cause blank captures in html2canvas -->
+<!-- We use a fixed width and remove height/overflow constraints to optimize rendering speed -->
+<div style="position: fixed; left: -9999px; top: 0; width: 800px; pointer-events: none; opacity: 0;">
+    <app-invoice #adminInvoice [orderedItems]="invoiceOrderData.items" [orderFormSnapshot]="invoiceOrderData.snapshot"
+        [orderPaymentMethod]="invoiceOrderData.method" [orderDeliveryCharge]="invoiceOrderData.deliveryCharge"
+        [orderTotal]="invoiceOrderData.total" [placedOrderId]="invoiceOrderData.id"></app-invoice>
+</div>

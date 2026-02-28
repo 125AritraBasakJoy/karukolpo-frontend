@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrderService } from '../../../services/order.service';
 import { ProductService } from '../../../services/product.service';
@@ -21,6 +21,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import { NotificationService } from '../../../services/notification.service';
+import { InvoiceComponent } from '../../../components/invoice/invoice.component';
 
 @Component({
   selector: 'app-orders',
@@ -37,7 +38,8 @@ import { NotificationService } from '../../../services/notification.service';
     TooltipModule,
     InputTextModule,
     FormsModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    InvoiceComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './orders.component.html',
@@ -45,18 +47,32 @@ import { NotificationService } from '../../../services/notification.service';
   styleUrls: ['./orders.component.scss']
 })
 export class OrdersComponent implements OnInit {
+  @ViewChild('adminInvoice') adminInvoice!: InvoiceComponent;
+
   // ... signals remain same ...
   orders = signal<Order[]>([]);
   totalRecords = signal<number>(0); // Initialize to 0, will grow as we fetch
   loading = signal<boolean>(false);
+  downloadingOrderId = signal<string | null>(null);
   selectedOrder: Order | null = null;
   displayOrderDialog = false;
   loadingDetails = false;
   lastLazyLoadEvent: TableLazyLoadEvent | null = null;
 
+  // Invoice Mapping State
+  invoiceOrderData: any = {
+    items: [],
+    snapshot: {},
+    method: '',
+    deliveryCharge: 0,
+    total: 0,
+    id: ''
+  };
+
   // Search state
   searchQuery = signal<string>('');
   isSearching = signal<boolean>(false);
+  private searchTimeout: any;
 
   constructor(
     private orderService: OrderService,
@@ -197,13 +213,28 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  onSearch() {
+  onSearch(immediate: boolean = false) {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
     const query = this.searchQuery().trim();
+
     if (!query) {
       this.clearSearch();
       return;
     }
 
+    if (!immediate) {
+      this.searchTimeout = setTimeout(() => {
+        this.performSearch(query);
+      }, 500); // 500ms debounce
+    } else {
+      this.performSearch(query);
+    }
+  }
+
+  private performSearch(query: string) {
     this.loading.set(true);
     this.isSearching.set(true);
 
@@ -529,5 +560,50 @@ export class OrdersComponent implements OnInit {
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Orders');
     XLSX.writeFile(wb, 'orders_export.xlsx');
+  }
+
+  downloadAdminInvoice(order: Order) {
+    if (!order) return;
+
+    const orderIdStr = order.id ? order.id.toString() : '';
+    this.downloadingOrderId.set(orderIdStr);
+
+    // Map order data to common invoice format
+    this.invoiceOrderData = {
+      items: order.items || [],
+      snapshot: {
+        fullName: order.address?.full_name || order.fullName,
+        phoneNumber: order.address?.phone || order.phoneNumber,
+        fullAddress: order.address?.address_line || order.fullAddress,
+        subDistrict: order.address?.subdistrict || order.subDistrict,
+        district: order.address?.district || order.district,
+        postalCode: order.postalCode || '',
+        email: order.email || ''
+      },
+      method: order.paymentMethod || 'COD',
+      deliveryCharge: order.deliveryCharge || 0,
+      total: order.totalAmount || 0,
+      id: orderIdStr
+    };
+
+    // Use a small timeout to let Angular update the inputs on the hidden app-invoice
+    setTimeout(() => {
+      this.adminInvoice.downloadReceipt().then(() => {
+        this.downloadingOrderId.set(null);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Invoice for Order #${order.id} downloaded.`
+        });
+      }).catch(err => {
+        console.error('Admin Invoice download failed:', err);
+        this.downloadingOrderId.set(null);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to generate PDF.'
+        });
+      });
+    }, 200);
   }
 }

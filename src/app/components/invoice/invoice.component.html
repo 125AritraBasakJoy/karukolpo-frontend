@@ -1,146 +1,244 @@
-<!-- ===== INVOICE AREA (captured for PDF) ===== -->
-<div #invoiceArea class="invoice-area">
-    <div class="invoice-page">
+<!-- ===== CUSTOMER-FACING: ORDER DETAILS (visible on screen) ===== -->
+<div class="order-details-view">
+    <div class="order-details-card">
 
-        <!-- Header: Logo + Invoice No -->
-        <div class="invoice-header">
-            <div class="logo-section">
-                <img src="assets/invoice-logo-mandala.jpg" alt="Karukolpo" class="invoice-logo" />
-            </div>
-            <div class="invoice-meta">
-                <span class="meta-label">INVOICE NO</span>
-                <span class="meta-value invoice-number">{{ invoiceNumber }}</span>
-                <span class="meta-label" style="margin-top: 12px;">ORDER ID</span>
-                <span class="meta-value order-id">#{{ placedOrderId }}</span>
-            </div>
+        <!-- Logo -->
+        <div class="od-logo-section">
+            <img src="assets/invoice-logo-mandala.jpg" alt="Karukolpo" class="od-logo" />
         </div>
 
         <!-- Title -->
-        <h1 class="invoice-title">INVOICE</h1>
+        <h2 class="od-title">ORDER DETAILS</h2>
 
-        <hr class="divider" />
-
-        <!-- Date / Payment Info Row -->
-        <div class="info-row">
-            <div class="info-left">
-                <div class="info-item">
-                    <span class="info-label">DATE ISSUED:</span>
-                    <span class="info-value">{{ formattedDate }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">ORDER TIME:</span>
-                    <span class="info-value">{{ formattedTime }}</span>
-                </div>
+        <!-- Order ID + Date -->
+        <div class="od-info-row">
+            <div>
+                <span class="od-label">ORDER ID</span>
+                <div class="od-value od-order-id">#{{ placedOrderId }}</div>
             </div>
-            <div class="info-right">
-                <div class="info-item">
-                    <span class="info-label">PAYMENT METHOD:</span>
-                    <span class="info-value payment-method">{{ paymentMethodDisplay }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">PAYMENT STATUS:</span>
-                    <span class="info-value" [class.status-paid]="paymentStatus === 'Paid'"
-                        [class.status-unpaid]="paymentStatus === 'Unpaid'">{{ paymentStatus }}</span>
-                </div>
+            <div class="od-text-right">
+                <span class="od-label">DATE ISSUED</span>
+                <div class="od-value">{{ formattedDate }}</div>
             </div>
         </div>
 
-        <!-- Three Address Cards -->
-        <div class="address-row">
-            <div class="address-card">
-                <div class="address-card-header">SELLER</div>
-                <div class="address-card-body">
-                    <strong>Karukolpo</strong><br />
-                    Pathrail, Tangail-1912,<br />
-                    Bangladesh.<br />
-                    Dhaka, Bangladesh<br /><br />
-                    Phone: 01675-718846<br />
-                    Email: support&#64;karukolpo.com
-                </div>
+        <!-- Customer + Phone -->
+        <div class="od-info-row">
+            <div>
+                <span class="od-label">CUSTOMER</span>
+                <div class="od-value od-customer-name">{{ orderFormSnapshot.fullName || '—' }}</div>
             </div>
-            <div class="address-card">
-                <div class="address-card-header">BILL TO</div>
-                <div class="address-card-body">
-                    <strong>{{ orderFormSnapshot.fullName || '—' }}</strong><br />
-                    <span *ngIf="orderFormSnapshot.phoneNumber">Phone: {{ orderFormSnapshot.phoneNumber }}<br /></span>
-                    <span *ngIf="orderFormSnapshot.email">Email: {{ orderFormSnapshot.email }}<br /></span>
-                </div>
+            <div class="od-text-right">
+                <span class="od-label">PHONE</span>
+                <div class="od-value">{{ orderFormSnapshot.phoneNumber || '—' }}</div>
             </div>
-            <div class="address-card address-card-accent">
-                <div class="address-card-header">SHIPPING ADDRESS</div>
-                <div class="address-card-body">
-                    {{ orderFormSnapshot.fullAddress || '—' }}<br />
-                    <span *ngIf="orderFormSnapshot.subDistrict">{{ orderFormSnapshot.subDistrict }}<br /></span>
-                    <span *ngIf="orderFormSnapshot.district">{{ orderFormSnapshot.district }}<br /></span>
-                    <span *ngIf="orderFormSnapshot.postalCode">Postal Code: {{ orderFormSnapshot.postalCode }}</span>
-                </div>
+        </div>
+
+        <!-- Shipping Address -->
+        <div class="od-address-section">
+            <span class="od-label">SHIPPING ADDRESS</span>
+            <div class="od-address-text">
+                {{ orderFormSnapshot.fullAddress || '—' }}<span *ngIf="orderFormSnapshot.subDistrict">, {{
+                    orderFormSnapshot.subDistrict }}</span><span *ngIf="orderFormSnapshot.district">, {{
+                    orderFormSnapshot.district }}</span><span *ngIf="orderFormSnapshot.postalCode">, {{
+                    orderFormSnapshot.postalCode }}</span>
             </div>
         </div>
 
         <!-- Products Table -->
-        <table class="products-table">
+        <table class="od-table">
             <thead>
                 <tr>
-                    <th class="col-name">PRODUCT NAME</th>
-                    <th class="col-qty">QTY</th>
-                    <th class="col-price">UNIT PRICE</th>
-                    <th class="col-total">LINE TOTAL</th>
+                    <th class="od-col-name">PRODUCT</th>
+                    <th class="od-col-qty">QTY</th>
+                    <th class="od-col-price">PRICE</th>
+                    <th class="od-col-total">TOTAL</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let item of orderedItems">
-                    <td class="col-name">{{ item.product?.name || 'Product' }}</td>
-                    <td class="col-qty">{{ item.quantity }}</td>
-                    <td class="col-price">৳{{ item.product?.price | number:'1.0-0' }}</td>
-                    <td class="col-total">৳{{ (item.product?.price || 0) * (item.quantity || 0) | number:'1.0-0' }}</td>
+                    <td class="od-col-name">{{ item.product?.name || 'Product' }}</td>
+                    <td class="od-col-qty">{{ item.quantity }}</td>
+                    <td class="od-col-price">৳{{ item.product?.price | number:'1.2-2' }}</td>
+                    <td class="od-col-total">৳{{ (item.product?.price || 0) * (item.quantity || 0) | number:'1.2-2' }}
+                    </td>
                 </tr>
             </tbody>
         </table>
 
-        <!-- Footer Section -->
-        <div class="invoice-footer">
-            <!-- Notes -->
-            <div class="notes-section">
-                <div class="notes-title">NOTES:</div>
-                <ul class="notes-list">
-                    <li>This is a system-generated invoice.</li>
-                    <li>No signature required.</li>
-                    <li>For support, contact support&#64;karukolpo.com</li>
-                </ul>
+        <!-- Totals -->
+        <div class="od-totals">
+            <div class="od-total-row">
+                <span>SUBTOTAL</span>
+                <span>৳{{ subtotal | number:'1.2-2' }}</span>
             </div>
-
-            <!-- Totals -->
-            <div class="totals-section">
-                <div class="total-row">
-                    <span>Subtotal:</span>
-                    <span>৳{{ subtotal | number:'1.0-0' }}</span>
-                </div>
-                <div class="total-row">
-                    <span>Delivery Fee:</span>
-                    <span>৳{{ orderDeliveryCharge | number:'1.0-0' }}</span>
-                </div>
-
-                <div class="grand-total-row">
-                    <span class="grand-total-label">GRAND TOTAL</span>
-                    <span class="grand-total-value">৳{{ grandTotal | number:'1.0-0' }}</span>
-                </div>
-
-                <div class="amount-due-box">
-                    <span class="amount-due-label">AMOUNT DUE</span>
-                    <span class="amount-due-value">৳{{ grandTotal | number:'1.0-0' }}</span>
-                </div>
+            <div class="od-total-row">
+                <span>DELIVERY CHARGE</span>
+                <span>৳{{ orderDeliveryCharge | number:'1.2-2' }}</span>
+            </div>
+            <div class="od-grand-total-row">
+                <span>GRAND TOTAL</span>
+                <span class="od-grand-total-value">৳{{ grandTotal | number:'1.2-2' }}</span>
             </div>
         </div>
 
+        <!-- Payment Method -->
+        <div class="od-payment-row">
+            <span class="od-label">PAYMENT METHOD</span>
+            <span class="od-payment-value">{{ paymentMethodDisplay }}</span>
+        </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="od-actions">
+        <button class="btn-download-invoice" (click)="downloadReceipt()">
+            <i class="pi pi-download"></i> Download Invoice
+        </button>
+        <button class="btn-continue-shopping" (click)="continueShopping()">
+            <i class="pi pi-shopping-bag"></i> Continue Shopping
+        </button>
     </div>
 </div>
 
-<!-- ===== Action Buttons (NOT captured in PDF) ===== -->
-<div class="invoice-actions">
-    <button class="btn-download" (click)="downloadReceipt()">
-        <i class="pi pi-download"></i> Download Invoice
-    </button>
-    <button class="btn-continue" (click)="continueShopping()">
-        <i class="pi pi-shopping-bag"></i> Continue Shopping
-    </button>
+<!-- ===== HIDDEN: Professional Invoice for PDF capture ===== -->
+<div class="invoice-capture-wrapper">
+    <div #invoiceArea class="invoice-area">
+        <div class="invoice-page">
+
+            <!-- Header: Logo + Invoice No -->
+            <div class="invoice-header">
+                <div class="logo-section">
+                    <img src="assets/invoice-logo-mandala.jpg" alt="Karukolpo" class="invoice-logo" />
+                </div>
+                <div class="invoice-meta">
+                    <span class="meta-label">INVOICE NO</span>
+                    <span class="meta-value invoice-number">{{ invoiceNumber }}</span>
+                    <span class="meta-label" style="margin-top: 12px;">ORDER ID</span>
+                    <span class="meta-value order-id">#{{ placedOrderId }}</span>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <h1 class="invoice-title">INVOICE</h1>
+
+            <hr class="divider" />
+
+            <!-- Date / Payment Info Row -->
+            <div class="info-row">
+                <div class="info-left">
+                    <div class="info-item">
+                        <span class="info-label">DATE ISSUED:</span>
+                        <span class="info-value">{{ formattedDate }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">ORDER TIME:</span>
+                        <span class="info-value">{{ formattedTime }}</span>
+                    </div>
+                </div>
+                <div class="info-right">
+                    <div class="info-item">
+                        <span class="info-label">PAYMENT METHOD:</span>
+                        <span class="info-value payment-method">{{ paymentMethodDisplay }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">PAYMENT STATUS:</span>
+                        <span class="info-value" [class.status-paid]="paymentStatus === 'Paid'"
+                            [class.status-unpaid]="paymentStatus === 'Unpaid'">{{ paymentStatus }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Three Address Cards -->
+            <div class="address-row">
+                <div class="address-card">
+                    <div class="address-card-header">SELLER</div>
+                    <div class="address-card-body">
+                        <strong>Karukolpo</strong><br />
+                        Pathrail, Tangail-1912,<br />
+                        Bangladesh.<br />
+                        Dhaka, Bangladesh<br /><br />
+                        Phone: 01675-718846<br />
+                        Email: support&#64;karukolpo.com
+                    </div>
+                </div>
+                <div class="address-card">
+                    <div class="address-card-header">BILL TO</div>
+                    <div class="address-card-body">
+                        <strong>{{ orderFormSnapshot.fullName || '—' }}</strong><br />
+                        <span *ngIf="orderFormSnapshot.phoneNumber">Phone: {{ orderFormSnapshot.phoneNumber
+                            }}<br /></span>
+                        <span *ngIf="orderFormSnapshot.email">Email: {{ orderFormSnapshot.email }}<br /></span>
+                    </div>
+                </div>
+                <div class="address-card address-card-accent">
+                    <div class="address-card-header">SHIPPING ADDRESS</div>
+                    <div class="address-card-body">
+                        {{ orderFormSnapshot.fullAddress || '—' }}<br />
+                        <span *ngIf="orderFormSnapshot.subDistrict">{{ orderFormSnapshot.subDistrict }}<br /></span>
+                        <span *ngIf="orderFormSnapshot.district">{{ orderFormSnapshot.district }}<br /></span>
+                        <span *ngIf="orderFormSnapshot.postalCode">Postal Code: {{ orderFormSnapshot.postalCode
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Table -->
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th class="col-name">PRODUCT NAME</th>
+                        <th class="col-qty">QTY</th>
+                        <th class="col-price">UNIT PRICE</th>
+                        <th class="col-total">LINE TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of orderedItems">
+                        <td class="col-name">{{ item.product?.name || 'Product' }}</td>
+                        <td class="col-qty">{{ item.quantity }}</td>
+                        <td class="col-price">৳{{ item.product?.price | number:'1.0-0' }}</td>
+                        <td class="col-total">৳{{ (item.product?.price || 0) * (item.quantity || 0) | number:'1.0-0' }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Footer Section -->
+            <div class="invoice-footer">
+                <!-- Notes -->
+                <div class="notes-section">
+                    <div class="notes-title">NOTES:</div>
+                    <ul class="notes-list">
+                        <li>This is a system-generated invoice.</li>
+                        <li>No signature required.</li>
+                        <li>For support, contact support&#64;karukolpo.com</li>
+                    </ul>
+                </div>
+
+                <!-- Totals -->
+                <div class="totals-section">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span>৳{{ subtotal | number:'1.0-0' }}</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Delivery Fee:</span>
+                        <span>৳{{ orderDeliveryCharge | number:'1.0-0' }}</span>
+                    </div>
+
+                    <div class="grand-total-row">
+                        <span class="grand-total-label">GRAND TOTAL</span>
+                        <span class="grand-total-value">৳{{ grandTotal | number:'1.0-0' }}</span>
+                    </div>
+
+                    <div class="amount-due-box">
+                        <span class="amount-due-label">AMOUNT DUE</span>
+                        <span class="amount-due-value">৳{{ grandTotal | number:'1.0-0' }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>

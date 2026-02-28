@@ -87,14 +87,20 @@ export class InvoiceComponent {
         const el = this.invoiceArea?.nativeElement;
         if (!el) return;
 
+        // Yield to the browser so the UI can update before heavy canvas work
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+
         const canvas = await html2canvas(el, {
-            scale: 3,
+            scale: 2,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
             logging: false,
             imageTimeout: 0
         });
+
+        // Yield again so browser can repaint after canvas capture
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 0));
 
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const imgWidth = canvas.width;
@@ -106,11 +112,13 @@ export class InvoiceComponent {
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
-            format: [pdfWidth, Math.max(pdfHeight, 297)],
-            compress: false
+            format: [pdfWidth, Math.max(pdfHeight, 297)]
         });
 
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'NONE');
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         pdf.save(`Invoice-${this.invoiceNumber}.pdf`);
+
+        // Ensure cursor resets after download
+        document.body.style.cursor = '';
     }
 }

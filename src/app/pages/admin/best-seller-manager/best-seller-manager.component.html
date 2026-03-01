@@ -1,0 +1,86 @@
+<div class="best-selling-container p-4">
+    <div class="header-section mb-5">
+        <div class="flex flex-column sm:flex-row sm:align-items-center justify-content-between gap-3">
+            <div>
+                <h1 class="page-title m-0 mb-1 flex align-items-center gap-2">
+                    <i class="pi pi-star text-yellow-400"></i>
+                    Best Selling Products
+                </h1>
+                <p class="text-slate-400 m-0 text-sm">Select products to highlight in the Customer End "Best Selling"
+                    section.</p>
+            </div>
+            <div class="flex gap-3">
+                <button pButton label="Cancel" icon="pi pi-times"
+                    class="p-button-text p-button-secondary premium-btn-secondary" (click)="onCancel()"
+                    [disabled]="loading()"></button>
+                <button pButton label="Save Best Selling" icon="pi pi-check" class="premium-btn-primary px-4"
+                    (click)="onSave()" [disabled]="loading()"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card fadein animation-duration-500">
+        <p-table #dt [value]="products()" [selection]="selectedProducts()"
+            (selectionChange)="selectedProducts.set($event)" [rows]="10" [paginator]="true"
+            [globalFilterFields]="['name', 'code']" [rowsPerPageOptions]="[10, 25, 50, 100]"
+            [tableStyle]="{'min-width': '60rem'}" styleClass="premium-table-v2" [rowHover]="true" [loading]="loading()"
+            [showCurrentPageReport]="true" dataKey="id">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 4rem">
+                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                    </th>
+                    <th pSortableColumn="name">Product <p-sortIcon field="name"></p-sortIcon></th>
+                    <th pSortableColumn="code" style="width: 15rem">Code <p-sortIcon field="code"></p-sortIcon></th>
+                    <th pSortableColumn="price" style="width: 12rem">Price <p-sortIcon field="price"></p-sortIcon></th>
+                    <th pSortableColumn="stock" style="width: 10rem">Stock <p-sortIcon field="stock"></p-sortIcon></th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-product>
+                <tr class="table-row">
+                    <td>
+                        <p-tableCheckbox [value]="product"></p-tableCheckbox>
+                    </td>
+                    <td>
+                        <div class="flex align-items-center gap-3 py-2">
+                            <div class="product-img-container">
+                                <img [src]="product.imageUrl" [alt]="product.name" class="product-img" loading="lazy" />
+                            </div>
+                            <span class="font-semibold text-white">{{ product.name }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <code class="id-tag">#{{ product.code }}</code>
+                    </td>
+                    <td>
+                        <span class="price-value font-medium">{{ product.price | currency:'BDT':'symbol-narrow'
+                            }}</span>
+                    </td>
+                    <td>
+                        <div class="status-badge-container">
+                            <p-tag [value]="product.manualStockStatus === 'IN_STOCK' ? 'In Stock (Forced)' : 
+                                           (product.manualStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock (Forced)' : 
+                                           (product.stock > 0 ? 'In Stock (' + product.stock + ')' : 'Out of Stock'))"
+                                [severity]="product.manualStockStatus === 'IN_STOCK' ? 'success' : 
+                                               (product.manualStockStatus === 'OUT_OF_STOCK' ? 'danger' : 
+                                               (product.stock > 0 ? 'success' : 'danger'))"
+                                styleClass="custom-stock-tag"></p-tag>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="5" class="text-center p-5 text-slate-500">
+                        <i class="pi pi-info-circle mr-2"></i> No products found.
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
+
+<p-toast></p-toast>

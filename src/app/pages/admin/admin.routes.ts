@@ -31,6 +31,14 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard],
     children: [
+      {
+        path: 'hot-deals',
+        loadComponent: () => import('./hot-deals-manager/hot-deals-manager.component').then(m => m.HotDealsManagerComponent)
+      },
+      {
+        path: 'best-selling',
+        loadComponent: () => import('./best-seller-manager/best-seller-manager.component').then(m => m.BestSellerManagerComponent)
+      },
       { path: '', redirectTo: 'inventory', pathMatch: 'full' },
       { path: 'inventory', loadComponent: () => import('./inventory/inventory.component').then(m => m.InventoryComponent) },
       { path: 'orders', loadComponent: () => import('./orders/orders.component').then(m => m.OrdersComponent) },

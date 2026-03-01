@@ -9,6 +9,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { EditorModule } from 'primeng/editor';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
@@ -30,6 +31,7 @@ import { ValidationMessageComponent } from '../../../../components/validation-me
         InputTextModule,
         EditorModule,
         InputNumberModule,
+        MultiSelectModule,
         DropdownModule,
         ButtonModule,
         ToastModule,
@@ -49,6 +51,7 @@ export class EditProductComponent implements OnInit {
     saving = signal<boolean>(false);
 
     productForm: Partial<Product> = {};
+    selectedCategoryIds: any[] = [];
     inventoryForm = {
         stock: 0,
         manualStockStatus: 'AUTO' as 'AUTO' | 'IN_STOCK' | 'OUT_OF_STOCK'
@@ -112,8 +115,11 @@ export class EditProductComponent implements OnInit {
                 this.productService.listProductCategories(this.productId!).subscribe({
                     next: (productCategories) => {
                         if (productCategories && productCategories.length > 0) {
-                            const firstCat = productCategories[0];
-                            this.productForm.categoryId = typeof firstCat === 'object' ? firstCat.id?.toString() : firstCat.toString();
+                            this.selectedCategoryIds = productCategories.map(cat =>
+                                (typeof cat === 'object' ? cat.id : cat).toString()
+                            );
+                        } else {
+                            this.selectedCategoryIds = [];
                         }
                     },
                     error: (err) => console.error('Error fetching product categories:', err)
@@ -201,8 +207,9 @@ export class EditProductComponent implements OnInit {
             } as Product));
 
             // 2. Handle Category Linking
-            if (this.productForm.categoryId) {
-                await firstValueFrom(this.productService.addCategoryToProduct(productId, parseInt(this.productForm.categoryId, 10)));
+            if (this.selectedCategoryIds && this.selectedCategoryIds.length >= 0) {
+                const categoryIds = this.selectedCategoryIds.map(id => parseInt(id.toString(), 10)).filter(id => !isNaN(id));
+                await firstValueFrom(this.productService.updateProductCategories(productId, categoryIds));
             }
 
             // 3. Handle Images

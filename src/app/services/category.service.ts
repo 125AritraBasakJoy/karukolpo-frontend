@@ -163,7 +163,7 @@ export class CategoryService {
                 return from(products).pipe(
                     mergeMap(product => {
                         const pId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
-                        return this.productService.listProductCategories(pId).pipe(
+                        return this.productService.listProductCategories(pId, true).pipe(
                             map(categories => {
                                 // Populate the categories array on the product object
                                 product.categories = categories || [];

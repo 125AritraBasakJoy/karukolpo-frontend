@@ -53,14 +53,14 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.versionService.checkForUpdates();
 
-    // Check if current route is admin
-    this.checkRoute(this.router.url);
+    // Check if current route is admin - using window.location.pathname for initial load robustness
+    this.isAdminRoute = window.location.pathname.startsWith('/admin');
 
     // Listen to route changes
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      this.checkRoute(event.url);
+      this.checkRoute(event.urlAfterRedirects || event.url);
     });
 
     this.orderService.newOrderNotification$.subscribe(orderId => {
@@ -75,6 +75,6 @@ export class AppComponent implements OnInit {
 
   private checkRoute(url: string): void {
     // Hide footer/header on admin routes
-    this.isAdminRoute = url.startsWith('/admin');
+    this.isAdminRoute = url.includes('/admin');
   }
 }

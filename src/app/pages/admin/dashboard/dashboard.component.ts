@@ -45,6 +45,7 @@ export class DashboardComponent implements OnInit {
     { label: 'Categories', icon: 'pi pi-tags', route: 'category-manager', section: 'Main' },
     { label: 'Maintenance Control', icon: 'pi pi-cog', route: 'maintenance-control', section: 'Main' },
     { label: 'Add Product', icon: 'pi pi-plus-circle', route: 'products/add', section: 'Products' },
+    { label: 'Control Hot Deals', icon: 'pi pi-bolt', route: 'hot-deals', section: 'Main' },
     { label: 'Landing Page', icon: 'pi pi-image', route: 'manage-landing', section: 'Settings' }
   ];
 

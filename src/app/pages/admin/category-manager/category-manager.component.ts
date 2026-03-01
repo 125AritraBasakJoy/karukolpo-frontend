@@ -545,15 +545,13 @@ export class CategoryManagerComponent implements OnInit {
                     // After junction table DELETE, fetch the real remaining categories
                     switchMap(() => this.productService.listProductCategories(product.id, true)),
                     // PUT the remaining list back so backend fully settles the state
-                    // (if empty, backend will treat the product as truly uncategorized)
                     switchMap((remaining: any[]) => {
                         const remainingIds = remaining
-                            .map((c: any) => (typeof c === 'object' ? (c.id ?? c.categoryId) : c)?.toString())
+                            .map((c: any) => (typeof c === 'object' ? (c.id ?? (c.categoryId || c.id)) : c)?.toString())
                             .filter(Boolean);
                         return this.productService.updateProductCategories(product.id, remainingIds);
                     }),
                     catchError(err => {
-                        // If the follow-up sync fails, still treat the removal as done
                         console.warn('Category sync after removal had an issue:', err);
                         return of(null);
                     })
@@ -561,9 +559,16 @@ export class CategoryManagerComponent implements OnInit {
                     next: () => {
                         this.productService.clearCache();
                         this.categoryService.clearCache();
+
+                        // Remove from current list
                         this.categoryProducts = this.categoryProducts.filter(p => p.id !== product.id);
+
                         this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Product removed from category', life: 3000 });
-                        this.cdr.detectChanges();
+
+                        // If we are viewing a specific category and it becomes empty, or just to be safe
+                        if (this.categoryProducts.length === 0) {
+                            this.cdr.detectChanges();
+                        }
                     },
                     error: (err) => {
                         this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'Failed to remove product', life: 3000 });

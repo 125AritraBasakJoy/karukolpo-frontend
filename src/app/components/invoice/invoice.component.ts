@@ -333,7 +333,7 @@ export class InvoiceComponent {
         y += 7;
 
         text('GRAND TOTAL', totalsX, y, { size: 13, color: darkNavy, bold: true });
-        text(`BDT ${this.grandTotal.toLocaleString()}`, totalsX + totalsW, y, { size: 20, color: red, bold: true, align: 'right' });
+        text(`BDT ${this.grandTotal.toLocaleString()}`, totalsX + totalsW, y, { size: 20, color: darkNavy, bold: true, align: 'right' });
 
         // Amount Due Box
         y += 12;

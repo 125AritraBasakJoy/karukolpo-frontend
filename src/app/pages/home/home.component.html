@@ -40,8 +40,8 @@
     </div>
 
     <!-- Products Grid -->
-    <div id="products" class="container px-4 pb-8">
-        <h2 class="text-3xl font-bold mb-5">{{ selectedCategory ? selectedCategory.name : 'Hot Deals' }}</h2>
+    <div id="products" class="container px-4 pb-4">
+        <h2 class="text-3xl font-bold mb-5">{{ selectedCategory ? selectedCategory.name : 'All Products' }}</h2>
         @if (loading()) {
         <div class="grid">
             @for (i of [1,2,3,4]; track i) {
@@ -94,6 +94,40 @@
         </div>
         }
     </div>
+
+    <!-- Crafted by Hands Section -->
+    <section class="crafted-section py-4 px-4">
+        <div class="container">
+            <div class="grid align-items-center">
+                <div class="col-12 md:col-4 mb-4 md:mb-0">
+                    <div class="crafted-image-wrapper">
+                        <img [ngSrc]="'assets/artisan-weaving.png'" width="380" height="250" alt="Artisan weaving"
+                            class="border-round-xl shadow-4 crafted-image">
+                    </div>
+                </div>
+                <div class="col-12 md:col-8 md:pl-6">
+                    <div class="crafted-content">
+                        <span class="text-primary font-bold uppercase tracking-widest text-sm mb-3 block">Our
+                            Heritage</span>
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
+                        </h2>
+                        <p class="text-lg text-600 mb-4 line-height-3">
+                            Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage. We believe
+                            that every handcrafted item tells a story – a story of tradition, skill, and dedication
+                            passed down through generations.
+                        </p>
+                        <p class="text-lg text-600 mb-5 line-height-3">
+                            Every product you purchase directly supports local craftspeople and their families, helping
+                            to sustain their livelihoods and keep ancient traditions alive.
+                        </p>
+                        <button pButton label="Learn Our Story" icon="pi pi-arrow-right" pButton iconPos="right"
+                            class="p-button-lg p-button-primary p-button-rounded shadow-3 transition-all transition-duration-300"
+                            (click)="goToAboutUs()"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 
 <!-- Product Details Modal (Keep for legacy or remove? Keeping it doesn't hurt but we navigate now) -->

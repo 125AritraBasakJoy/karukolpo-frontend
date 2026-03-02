@@ -30,11 +30,14 @@
     // Hero Section
     .hero-section {
         position: relative;
-        height: 400px;
+        height: 85vh;
+        min-height: 500px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, var(--surface-section) 0%, var(--surface-card) 100%);
+        background-image: url('../../../assets/about-hero.png');
+        background-size: cover;
+        background-position: center;
         overflow: hidden;
 
         &::before {
@@ -44,10 +47,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
-            background-repeat: no-repeat;
-            background-position: bottom;
-            background-size: cover;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.7) 100%);
+            z-index: 1;
         }
     }
 
@@ -59,17 +60,19 @@
     }
 
     .hero-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 1rem;
-        color: var(--text-color);
+        font-size: 5rem;
+        font-weight: 900;
+        margin-bottom: 1.5rem;
+        color: #ffffff;
+        text-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
     }
 
     .hero-subtitle {
-        font-size: 1.25rem;
-        color: #e2e8f0;
-        max-width: 600px;
+        font-size: 1.5rem;
+        color: #f1f5f9;
+        max-width: 800px;
         margin: 0 auto;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
     // Story Section

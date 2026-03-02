@@ -320,3 +320,59 @@
     padding-bottom: 2px;
   }
 }
+
+// Crafted by Hands Section
+.crafted-section {
+  background: var(--surface-card);
+  overflow: hidden;
+
+  .crafted-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+      pointer-events: none;
+    }
+  }
+
+  .crafted-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  .crafted-content {
+    h2 {
+      color: var(--text-color);
+      margin-top: 0;
+    }
+
+    .tracking-widest {
+      letter-spacing: 0.2em;
+    }
+  }
+
+  @media screen and (max-width: 991px) {
+    .crafted-content {
+      padding-top: 2rem;
+    }
+
+    h2 {
+      font-size: 2.5rem;
+    }
+  }
+}

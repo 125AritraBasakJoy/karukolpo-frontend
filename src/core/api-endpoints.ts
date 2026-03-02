@@ -36,6 +36,12 @@ export const PRODUCTS_API = {
     BATCH_UPDATE_IMAGES: (productId: number | string) => `products/${productId}/images/batch`,
     REMOVE_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}`,
     SET_PRIMARY_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}/set-primary`,
+
+    // Special Sections
+    HOT_DEALS: 'products/hot-deals',
+    HOT_DEALS_DELETE: (productId: number | string) => `products/hot-deals/${productId}`,
+    BEST_SELLERS: 'products/best-sellers',
+    BEST_SELLERS_DELETE: (productId: number | string) => `products/best-sellers/${productId}`,
 } as const;
 
 /**

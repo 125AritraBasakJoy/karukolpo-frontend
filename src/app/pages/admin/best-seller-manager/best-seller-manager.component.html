@@ -10,11 +10,14 @@
                     section.</p>
             </div>
             <div class="flex gap-3">
+                <button pButton label="Clear All" icon="pi pi-trash"
+                    class="p-button-text p-button-danger premium-btn-secondary" (click)="onClearAll()"
+                    [disabled]="loading() || selectedProducts().length === 0"></button>
                 <button pButton label="Cancel" icon="pi pi-times"
                     class="p-button-text p-button-secondary premium-btn-secondary" (click)="onCancel()"
                     [disabled]="loading()"></button>
                 <button pButton label="Save Best Selling" icon="pi pi-check" class="premium-btn-primary px-4"
-                    (click)="onSave()" [disabled]="loading()"></button>
+                    (click)="onSave()" [disabled]="loading() || selectedProducts().length === 0"></button>
             </div>
         </div>
     </div>

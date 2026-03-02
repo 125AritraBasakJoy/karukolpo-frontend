@@ -36,7 +36,7 @@ export class BestSellerManagerComponent implements OnInit {
             .subscribe({
                 next: (products) => {
                     this.products.set(products);
-                    this.loadSavedBestSelling(products);
+                    this.loadSavedBestSelling();
                 },
                 error: (err) => {
                     console.error('Failed to load products', err);
@@ -49,39 +49,76 @@ export class BestSellerManagerComponent implements OnInit {
             });
     }
 
-    loadSavedBestSelling(allProducts: Product[]) {
-        const saved = localStorage.getItem('admin_best_selling_ids');
-        if (saved) {
-            try {
-                const savedIds = new Set(JSON.parse(saved) as string[]);
-                const preSelected = allProducts.filter(p => savedIds.has(p.id.toString()));
-                this.selectedProducts.set(preSelected);
-            } catch (e) {
-                console.error('Failed to parse saved best selling deals', e);
-            }
-        }
+    loadSavedBestSelling() {
+        this.loading.set(true);
+        this.productService.getBestSellers()
+            .pipe(finalize(() => this.loading.set(false)))
+            .subscribe({
+                next: (bestSellers) => {
+                    this.selectedProducts.set(bestSellers);
+                },
+                error: (err) => {
+                    console.error('Failed to load best sellers', err);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to load existing best sellers'
+                    });
+                }
+            });
     }
 
     onSave() {
-        const selectedIds = this.selectedProducts().map(p => p.id.toString());
-        localStorage.setItem('admin_best_selling_ids', JSON.stringify(selectedIds));
+        const selectedIds = this.selectedProducts().map(p => Number(p.id));
+        this.loading.set(true);
 
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Saved Successfully',
-            detail: `${selectedIds.length} products are now marked as Best Sellers.`
-        });
+        this.productService.replaceBestSellers(selectedIds)
+            .pipe(finalize(() => this.loading.set(false)))
+            .subscribe({
+                next: () => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Saved Successfully',
+                        detail: `${selectedIds.length} products are now marked as Best Sellers.`
+                    });
+                },
+                error: (err) => {
+                    console.error('Failed to save best sellers', err);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Save Failed',
+                        detail: 'Backend rejected the update.'
+                    });
+                }
+            });
+    }
+
+    onClearAll() {
+        this.loading.set(true);
+        this.productService.clearBestSellers()
+            .pipe(finalize(() => this.loading.set(false)))
+            .subscribe({
+                next: () => {
+                    this.selectedProducts.set([]);
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Cleared Successfully',
+                        detail: 'All products removed from Best Sellers.'
+                    });
+                },
+                error: (err) => {
+                    console.error('Failed to clear best sellers', err);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Clear Failed',
+                        detail: 'Backend rejected the clear request.'
+                    });
+                }
+            });
     }
 
     onCancel() {
-        const saved = localStorage.getItem('admin_best_selling_ids');
-        if (saved) {
-            const savedIds = new Set(JSON.parse(saved) as string[]);
-            const preSelected = this.products().filter(p => savedIds.has(p.id.toString()));
-            this.selectedProducts.set(preSelected);
-        } else {
-            this.selectedProducts.set([]);
-        }
+        this.loadSavedBestSelling();
         this.messageService.add({
             severity: 'info',
             summary: 'Cancelled',

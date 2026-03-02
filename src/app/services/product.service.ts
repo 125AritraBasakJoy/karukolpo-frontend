@@ -297,6 +297,98 @@ export class ProductService {
   }
 
   /**
+   * Get all hot deal products
+   * GET /products/hot-deals
+   */
+  getHotDeals(): Observable<Product[]> {
+    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p)))
+    );
+  }
+
+  /**
+   * Set products as hot deals
+   * POST /products/hot-deals
+   */
+  setHotDeals(productIds: number[]): Observable<Product[]> {
+    return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS, productIds).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p)))
+    );
+  }
+
+  /**
+   * Replace all hot deal products
+   * PUT /products/hot-deals
+   */
+  replaceHotDeals(productIds: number[]): Observable<Product[]> {
+    return this.apiService.put<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS, productIds).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p)))
+    );
+  }
+
+  /**
+   * Clear all hot deal products
+   * DELETE /products/hot-deals
+   */
+  clearHotDeals(): Observable<void> {
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.HOT_DEALS);
+  }
+
+  /**
+   * Remove specific product from hot deals
+   * DELETE /products/hot-deals/{productId}
+   */
+  removeFromHotDeals(productId: number | string): Observable<void> {
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.HOT_DEALS_DELETE(productId));
+  }
+
+  /**
+   * Get all best seller products
+   * GET /products/best-sellers
+   */
+  getBestSellers(): Observable<Product[]> {
+    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p)))
+    );
+  }
+
+  /**
+   * Set products as best sellers
+   * POST /products/best-sellers
+   */
+  setBestSellers(productIds: number[]): Observable<Product[]> {
+    return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS, productIds).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p)))
+    );
+  }
+
+  /**
+   * Replace all best seller products
+   * PUT /products/best-sellers
+   */
+  replaceBestSellers(productIds: number[]): Observable<Product[]> {
+    return this.apiService.put<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS, productIds).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p)))
+    );
+  }
+
+  /**
+   * Clear all best seller products
+   * DELETE /products/best-sellers
+   */
+  clearBestSellers(): Observable<void> {
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS);
+  }
+
+  /**
+   * Remove specific product from best sellers
+   * DELETE /products/best-sellers/{productId}
+   */
+  removeFromBestSellers(productId: number | string): Observable<void> {
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS_DELETE(productId));
+  }
+
+  /**
    * Get products with low stock
    */
   getLowStockProducts(threshold = 5): Observable<Product[]> {

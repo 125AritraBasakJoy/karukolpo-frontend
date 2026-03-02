@@ -10,8 +10,8 @@
 }
 
 .category-section-fullscreen {
-  min-height: 100vh;
-  padding: 4rem 1rem;
+  min-height: auto;
+  padding: 2rem 1rem;
   box-sizing: border-box;
 
   .category-grid {
@@ -376,3 +376,117 @@
     }
   }
 }
+
+// ── Special Sections Styling ────────────────────────────────────
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.4, 1) infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: .8;
+    transform: scale(1.05);
+  }
+}
+
+#hot-deals,
+#best-selling {
+  scroll-margin-top: 100px;
+}
+
+.surface-ground {
+  background-color: var(--surface-ground);
+}
+
+.glass-badge {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-color) !important;
+  padding: 0.6rem 1.4rem;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  i {
+    color: var(--accent-color);
+    font-size: 1rem;
+    filter: drop-shadow(0 0 5px var(--accent-color));
+  }
+}
+
+// ── Carousel Overrides ──────────────────────────────────────────
+:host ::ng-deep .p-carousel {
+  .p-carousel-indicators {
+    padding: 0.75rem 0 !important;
+    justify-content: center !important;
+
+    .p-carousel-indicator {
+      margin: 0 5px !important;
+
+      .p-carousel-indicator-button {
+        width: 35px !important;
+        height: 10px !important;
+        border-radius: 100px !important;
+        background: #e2e8f0 !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border: none !important;
+        outline: none !important;
+        cursor: pointer !important;
+        opacity: 0.8 !important;
+        padding: 0 !important;
+        display: block !important;
+
+        &:hover {
+          background: #cbd5e1 !important;
+          opacity: 1 !important;
+        }
+      }
+
+      // v18 active class or aria-current
+      &.p-carousel-indicator-active .p-carousel-indicator-button,
+      &.p-highlight .p-carousel-indicator-button,
+      .p-carousel-indicator-button[aria-current="page"] {
+        width: 65px !important;
+        background: #000000 !important;
+        opacity: 1 !important;
+        box-shadow: none !important;
+      }
+    }
+  }
+
+  .p-carousel-prev,
+  .p-carousel-next {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    margin: 0 0.5rem;
+
+    &:hover:not(.p-disabled) {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+  }
+}
+
+// Product card refinements are global in styles.scss

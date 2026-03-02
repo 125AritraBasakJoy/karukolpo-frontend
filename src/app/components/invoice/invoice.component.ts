@@ -228,7 +228,6 @@ export class InvoiceComponent {
         text('Karukolpo', cardX[0] + 4, bodyY, { size: 9, color: black, bold: true });
         text('Pathrail, Tangail-1912,', cardX[0] + 4, bodyY + 5, { size: 8, color: midGray });
         text('Bangladesh.', cardX[0] + 4, bodyY + 9, { size: 8, color: midGray });
-        text('Dhaka, Bangladesh', cardX[0] + 4, bodyY + 13, { size: 8, color: midGray });
         text('Phone: 01675-718846', cardX[0] + 4, bodyY + 20, { size: 8, color: midGray });
         text('Email: support@karukolpo.com', cardX[0] + 4, bodyY + 24, { size: 8, color: midGray });
 

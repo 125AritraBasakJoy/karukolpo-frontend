@@ -163,13 +163,13 @@
 .od-grand-total-row span:first-child {
     font-size: 16px;
     font-weight: 800;
-    color: #1e293b;
+    color: #94a3b8;
 }
 
 .od-grand-total-value {
     font-size: 28px;
     font-weight: 800;
-    color: #000000;
+    color: var(--accent-color);
 }
 
 /* Payment method */

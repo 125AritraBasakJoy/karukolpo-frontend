@@ -325,6 +325,11 @@
 .crafted-section {
   background: var(--surface-card);
   overflow: hidden;
+  margin-bottom: 5rem;
+  margin-top: 2rem;
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 
   .crafted-image-wrapper {
     position: relative;

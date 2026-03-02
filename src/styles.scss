@@ -1083,7 +1083,6 @@ textarea,
 .product-card {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: var(--surface-card);
-    border: 1px solid var(--surface-border);
     border-radius: 16px;
     overflow: hidden;
     display: flex;
@@ -1093,7 +1092,6 @@ textarea,
     &:hover {
         transform: translateY(-4px);
         box-shadow: var(--card-shadow-hover) !important;
-        border-color: rgba(59, 130, 246, 0.3);
     }
 
     /* Description Clamp Logic */

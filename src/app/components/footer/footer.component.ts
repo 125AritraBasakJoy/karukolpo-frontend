@@ -26,7 +26,7 @@ export class FooterComponent {
     contactInfo = {
         email: 'contact@karukolpocrafts.com',
         phone: '01675-718846',
-        address: 'Dhaka, Bangladesh'
+        address: 'Pathrail, Tangail-1912, Bangladesh.'
     };
 
     navigateAndScroll(route: string) {

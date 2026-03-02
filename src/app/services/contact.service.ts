@@ -14,7 +14,7 @@ export class ContactService {
     private readonly STORAGE_KEY = 'contactConfig';
 
     contactInfo = signal<ContactInfo>({
-        address: '123 Handicraft Lane, Dhaka, Bangladesh',
+        address: 'Pathrail, Tangail-1912, Bangladesh.',
         phone: '+880 1234 567890',
         email: 'contact@karukolpo.com'
     });

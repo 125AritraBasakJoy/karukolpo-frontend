@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
-import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { lastValueFrom } from 'rxjs';
@@ -45,6 +44,7 @@ import { TagModule } from 'primeng/tag';
 import { Order } from '../../models/order.model';
 import { CartService } from '../../services/cart.service';
 import { TooltipModule } from 'primeng/tooltip';
+import { CarouselModule } from 'primeng/carousel';
 
 @Component({
     selector: 'app-home',
@@ -66,9 +66,9 @@ import { TooltipModule } from 'primeng/tooltip';
         BadgeModule,
         TagModule,
         TooltipModule,
+        CarouselModule,
         CurrencyPipe,
         DatePipe,
-        SafeHtmlPipe,
         NgOptimizedImage
     ],
     templateUrl: './home.component.html',
@@ -130,19 +130,39 @@ export class HomeComponent implements OnInit, OnDestroy {
     categories = this.categoryService.categories;
     selectedCategory: Category | null = null;
     filteredProducts = signal<Product[]>([]);
+    hotDeals = signal<Product[]>([]);
+    bestSelling = signal<Product[]>([]);
     dropdownOpen = false;
     responsiveOptions: any[] = [
         {
-            breakpoint: '1024px',
-            numVisible: 5
+            breakpoint: '1400px',
+            numVisible: 6,
+            numScroll: 1
         },
         {
-            breakpoint: '768px',
-            numVisible: 3
+            breakpoint: '1191px',
+            numVisible: 5,
+            numScroll: 1
+        },
+        {
+            breakpoint: '991px',
+            numVisible: 4,
+            numScroll: 1
+        },
+        {
+            breakpoint: '767px',
+            numVisible: 3,
+            numScroll: 1
         },
         {
             breakpoint: '560px',
-            numVisible: 1
+            numVisible: 2,
+            numScroll: 1
+        },
+        {
+            breakpoint: '320px',
+            numVisible: 1,
+            numScroll: 1
         }
     ];
     isPaymentSelected = false;
@@ -279,6 +299,30 @@ export class HomeComponent implements OnInit, OnDestroy {
                 this.loading.set(false);
             }
         });
+
+        this.loadSpecialSections();
+    }
+
+    private loadSpecialSections() {
+        // Fetch Hot Deals from Backend
+        this.productService.getHotDeals().subscribe({
+            next: (products) => {
+                this.hotDeals.set(products || []);
+            },
+            error: (err) => {
+                console.error('Error fetching hot deals', err);
+            }
+        });
+
+        // Fetch Best Sellers from Backend
+        this.productService.getBestSellers().subscribe({
+            next: (products) => {
+                this.bestSelling.set(products || []);
+            },
+            error: (err) => {
+                console.error('Error fetching best sellers', err);
+            }
+        });
     }
 
     loadLandingPageConfig() {
@@ -336,6 +380,14 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
     }
 
+    scrollToHotDeals() {
+        if (!isPlatformBrowser(this.platformId)) return;
+        const hotDealsSection = document.getElementById('hot-deals');
+        if (hotDealsSection) {
+            hotDealsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
     scrollToCategories() {
         if (!isPlatformBrowser(this.platformId)) return;
         const categoriesSection = document.getElementById('categories');
@@ -346,6 +398,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     goToAboutUs() {
         this.router.navigate(['/about']);
+    }
+
+    viewAllProducts() {
+        this.router.navigate(['/all-products']);
     }
 
     openCheckout() {

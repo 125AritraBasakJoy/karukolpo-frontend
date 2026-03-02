@@ -37,7 +37,7 @@ export class HotDealsManagerComponent implements OnInit {
             .subscribe({
                 next: (products) => {
                     this.products.set(products);
-                    this.loadSavedHotDeals(products);
+                    this.loadSavedHotDeals();
                 },
                 error: (err) => {
                     console.error('Failed to load products', err);
@@ -50,38 +50,80 @@ export class HotDealsManagerComponent implements OnInit {
             });
     }
 
-    loadSavedHotDeals(allProducts: Product[]) {
-        const saved = localStorage.getItem('admin_hot_deals_ids');
-        if (saved) {
-            try {
-                const savedIds = new Set(JSON.parse(saved) as string[]);
-                const preSelected = allProducts.filter(p => savedIds.has(p.id.toString()));
-                this.selectedProducts.set(preSelected);
-            } catch (e) {
-                console.error('Failed to parse saved hot deals', e);
-            }
-        }
+    loadSavedHotDeals() {
+        this.loading.set(true);
+        this.productService.getHotDeals()
+            .pipe(finalize(() => this.loading.set(false)))
+            .subscribe({
+                next: (hotDeals) => {
+                    this.selectedProducts.set(hotDeals);
+                },
+                error: (err) => {
+                    console.error('Failed to load hot deals', err);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to load existing hot deals'
+                    });
+                }
+            });
     }
 
     onSave() {
-        const selectedIds = this.selectedProducts().map(p => p.id.toString());
-        localStorage.setItem('admin_hot_deals_ids', JSON.stringify(selectedIds));
+        const selectedIds = this.selectedProducts().map(p => Number(p.id));
+        this.loading.set(true);
 
-        console.log('Selected products for Hot Deals saved:', selectedIds);
+        this.productService.replaceHotDeals(selectedIds)
+            .pipe(finalize(() => this.loading.set(false)))
+            .subscribe({
+                next: () => {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Saved Successfully',
+                        detail: `${selectedIds.length} products are now marked for Hot Deals.`
+                    });
+                },
+                error: (err) => {
+                    console.error('Failed to save hot deals', err);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Save Failed',
+                        detail: 'Backend rejected the update.'
+                    });
+                }
+            });
+    }
 
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Saved Successfully',
-            detail: `${selectedIds.length} products are now marked for Hot Deals.`
-        });
+    onClearAll() {
+        this.loading.set(true);
+        this.productService.clearHotDeals()
+            .pipe(finalize(() => this.loading.set(false)))
+            .subscribe({
+                next: () => {
+                    this.selectedProducts.set([]);
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Cleared Successfully',
+                        detail: 'All products removed from Hot Deals.'
+                    });
+                },
+                error: (err) => {
+                    console.error('Failed to clear hot deals', err);
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Clear Failed',
+                        detail: 'Backend rejected the clear request.'
+                    });
+                }
+            });
     }
 
     onCancel() {
-        this.selectedProducts.set([]);
+        this.loadSavedHotDeals();
         this.messageService.add({
             severity: 'info',
             summary: 'Cancelled',
-            detail: 'Selection cleared'
+            detail: 'Selection reset to last saved state'
         });
     }
 }

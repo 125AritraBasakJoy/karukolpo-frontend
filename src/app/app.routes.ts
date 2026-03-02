@@ -42,6 +42,11 @@ export const routes: Routes = [
     canActivate: [maintenanceGuard]
   },
   {
+    path: 'all-products',
+    loadComponent: () => import('./pages/all-products/all-products.component').then(m => m.AllProductsComponent),
+    canActivate: [maintenanceGuard]
+  },
+  {
     path: '**',
     loadComponent: () => import('./pages/not-found/not-found.component').then(m => m.NotFoundComponent),
     canActivate: [maintenanceGuard]

@@ -1,0 +1,59 @@
+<div class="container px-3 md:px-4 py-4 md:py-6">
+    <div class="flex align-items-center gap-2 md:gap-3 mb-4 md:mb-5">
+        <button pButton icon="pi pi-arrow-left" class="glass-pill p-button-sm md:p-button-lg"
+            (click)="goBack()"></button>
+        <h1 class="text-2xl md:text-4xl font-bold m-0">Our Collection</h1>
+    </div>
+
+    @if (loading()) {
+    <div class="grid g-2 md:g-3">
+        @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-3">
+            <div class="p-4 surface-card border-round">
+                <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
+                <p-skeleton width="50%" styleClass="mb-2"></p-skeleton>
+                <p-skeleton width="25%" styleClass="mb-2"></p-skeleton>
+            </div>
+        </div>
+        }
+    </div>
+    }
+
+    @if (!loading()) {
+    <div class="grid g-2 md:g-3">
+        @for (product of products(); track product.id) {
+        <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-3">
+            <div class="product-card surface-card shadow-2 p-2 md:p-3 h-full flex flex-column relative">
+                @if (isOutOfStock(product)) {
+                <div
+                    class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center">
+                    <span class="bg-red-500 text-white px-2 py-1 border-round font-bold text-xs md:text-sm">Out of
+                        Stock</span>
+                </div>
+                }
+
+                <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
+                    <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="200">
+                </div>
+                <div class="flex-grow-1">
+                    <div class="product-title">{{ product.name }}</div>
+                    <div class="desc-clamp" [innerHTML]="product.description | safeHtml">
+                    </div>
+                    <div class="product-price">{{ product.price | currency:'BDT':'symbol-narrow' }}
+                    </div>
+                </div>
+                <div class="mt-2 md:mt-3 flex gap-1 md:gap-2">
+                    <button pButton label="View" icon="pi pi-eye"
+                        class="p-button-outlined flex-1 p-button-sm md:p-button-md"
+                        (click)="showProductDetails(product)"></button>
+                    @if (!isOutOfStock(product)) {
+                    <button pButton icon="pi pi-shopping-cart" class="p-button-primary p-button-sm md:p-button-md"
+                        pTooltip="Add to Cart" tooltipPosition="top" (click)="addToCart(product)"></button>
+                    }
+                </div>
+            </div>
+        </div>
+        }
+    </div>
+    }
+</div>

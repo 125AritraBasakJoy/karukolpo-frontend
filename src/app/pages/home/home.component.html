@@ -17,15 +17,57 @@
             </div>
         </div>
         <!-- Scroll Down Indicator -->
-        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()">
+        <div class="scroll-down-indicator z-2" (click)="scrollToHotDeals()">
             <i class="pi pi-chevron-down"></i>
         </div>
     </div>
 
+    <!-- Hot Deals Section -->
+    @if (hotDeals().length > 0) {
+    <div id="hot-deals" class="container px-4 py-4">
+        <div class="flex align-items-center justify-content-between mb-4">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Hot Deals</h2>
+            <span class="glass-badge animate-pulse">
+                <i class="pi pi-clock mr-2"></i>
+                Limited Time
+            </span>
+        </div>
+
+        <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="1" [circular]="true"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
+            <ng-template let-product pTemplate="item">
+                <div class="px-1 h-full">
+                    <div class="product-card small-card surface-card shadow-1 p-2 h-full flex flex-column relative">
+                        <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                            <div class="absolute top-0 right-0 m-2">
+                                <p-tag value="Hot" severity="danger" class="shadow-2"></p-tag>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="product-title">{{ product.name }}</div>
+                            <div class="product-price text-primary font-bold">{{ product.price |
+                                currency:'BDT':'symbol-narrow' }}</div>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <button pButton label="View" icon="pi pi-eye" class="p-button-outlined flex-1 p-button-sm"
+                                (click)="showProductDetails(product)"></button>
+                            @if (product.isInStock) {
+                            <button pButton icon="pi pi-shopping-cart" class="p-button-primary p-button-sm"
+                                (click)="addToCart(product)"></button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </p-carousel>
+    </div>
+    }
+
     <!-- Category Section -->
     <div id="categories"
         class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
-        <h2 class="text-3xl font-bold text-center mb-5">Browse Categories</h2>
+        <h2 class="text-3xl font-bold text-center mb-4">Browse Categories</h2>
         <div class="category-grid w-full">
             @for (cat of categories(); track cat.id) {
             <div class="category-card" (click)="selectCategory(cat)"
@@ -39,14 +81,54 @@
         </div>
     </div>
 
-    <!-- Products Grid -->
-    <div id="products" class="container px-4 pb-8">
-        <h2 class="text-3xl font-bold mb-5">{{ selectedCategory ? selectedCategory.name : 'Hot Deals' }}</h2>
+    <!-- Best Selling Section -->
+    @if (bestSelling().length > 0) {
+    <div id="best-selling" class="container px-4 py-4 surface-ground">
+        <div class="flex align-items-center mb-4">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Best Sellers</h2>
+        </div>
+
+        <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="1" [circular]="true"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="4000">
+            <ng-template let-product pTemplate="item">
+                <div class="px-1 h-full">
+                    <div
+                        class="product-card small-card surface-card shadow-1 p-2 h-full flex flex-column relative hover:shadow-4 transition-all">
+                        <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="product-title">{{ product.name }}</div>
+                            <div class="product-price">{{ product.price | currency:'BDT':'symbol-narrow' }}</div>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <button pButton label="View" icon="pi pi-eye" class="p-button-outlined flex-1 p-button-sm"
+                                (click)="showProductDetails(product)"></button>
+                            @if (product.isInStock) {
+                            <button pButton icon="pi pi-shopping-cart" class="p-button-primary p-button-sm"
+                                (click)="addToCart(product)"></button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </p-carousel>
+    </div>
+    }
+
+    <!-- Our Collection Section -->
+    <div id="products" class="container px-4 pb-4 pt-2">
+        <div class="flex align-items-center justify-content-between mb-4">
+            <h2 class="text-3xl font-bold m-0">Our Collection</h2>
+            <button pButton label="View all" icon="pi pi-th-large" class="glass-pill"
+                (click)="viewAllProducts()"></button>
+        </div>
+
         @if (loading()) {
         <div class="grid">
             @for (i of [1,2,3,4]; track i) {
             <div class="col-6 sm:col-6 md:col-4 lg:col-3">
-                <div class="p-4 border-1 surface-border surface-card border-round">
+                <div class="p-4 surface-card border-round">
                     <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
                     <p-skeleton width="50%" styleClass="mb-2"></p-skeleton>
                     <p-skeleton width="25%" styleClass="mb-2"></p-skeleton>
@@ -57,43 +139,78 @@
         }
 
         @if (!loading()) {
-        <div class="grid">
-            @for (product of filteredProducts(); track product.id) {
-            <div class="col-6 sm:col-6 md:col-4 lg:col-3">
-                <div class="product-card surface-card shadow-2 p-3 h-full flex flex-column relative">
-                    <!-- Out of Stock Overlay -->
-                    @if (isOutOfStock(product)) {
+        <p-carousel [value]="products()" [numVisible]="6" [numScroll]="1" [circular]="true"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="5000">
+            <ng-template let-product pTemplate="item">
+                <div class="px-1 h-full">
                     <div
-                        class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center">
-                        <span class="bg-red-500 text-white px-3 py-1 border-round font-bold">Out of Stock</span>
-                    </div>
-                    }
-
-                    <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                        <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="200"
-                            [priority]="product.id === filteredProducts()[0].id || product.id === filteredProducts()[1].id">
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="product-title">{{ product.name }}</div>
-                        <div class="desc-clamp" [innerHTML]="product.description | safeHtml">
+                        class="product-card small-card surface-card shadow-2 p-2 h-full flex flex-column relative hover:shadow-4 transition-all">
+                        <!-- Out of Stock Overlay -->
+                        @if (isOutOfStock(product)) {
+                        <div
+                            class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center">
+                            <span class="bg-red-500 text-white px-2 py-1 border-round font-bold text-xs">Out of
+                                Stock</span>
                         </div>
-                        <div class="product-price">{{ product.price | currency:'BDT':'symbol-narrow' }}
-                        </div>
-                    </div>
-                    <div class="mt-3 flex gap-2">
-                        <button pButton label="View Product" icon="pi pi-eye" class="p-button-outlined flex-1"
-                            (click)="showProductDetails(product)"></button>
-                        @if (!isOutOfStock(product)) {
-                        <button pButton icon="pi pi-shopping-cart" class="p-button-primary" pTooltip="Add to Cart"
-                            tooltipPosition="top" (click)="addToCart(product)"></button>
                         }
+
+                        <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="product-title text-sm md:text-base font-bold">{{ product.name }}</div>
+                            <div class="product-price text-sm md:text-base">{{ product.price |
+                                currency:'BDT':'symbol-narrow' }}
+                            </div>
+                        </div>
+                        <div class="mt-3 flex gap-2">
+                            <button pButton label="View" icon="pi pi-eye" class="p-button-outlined flex-1 p-button-sm"
+                                (click)="showProductDetails(product)"></button>
+                            @if (!isOutOfStock(product)) {
+                            <button pButton icon="pi pi-shopping-cart" class="p-button-primary p-button-sm"
+                                (click)="addToCart(product)"></button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </p-carousel>
+        }
+    </div>
+
+    <!-- Crafted by Hands Section -->
+    <section class="crafted-section py-4 px-4">
+        <div class="container">
+            <div class="grid align-items-center">
+                <div class="col-12 md:col-4 mb-4 md:mb-0">
+                    <div class="crafted-image-wrapper">
+                        <img [ngSrc]="'assets/artisan-weaving.png'" width="380" height="250" alt="Artisan weaving"
+                            class="border-round-xl shadow-4 crafted-image">
+                    </div>
+                </div>
+                <div class="col-12 md:col-8 md:pl-6">
+                    <div class="crafted-content">
+                        <span class="text-primary font-bold uppercase tracking-widest text-sm mb-3 block">Our
+                            Heritage</span>
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
+                        </h2>
+                        <p class="text-lg text-600 mb-4 line-height-3">
+                            Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage. We believe
+                            that every handcrafted item tells a story – a story of tradition, skill, and dedication
+                            passed down through generations.
+                        </p>
+                        <p class="text-lg text-600 mb-5 line-height-3">
+                            Every product you purchase directly supports local craftspeople and their families, helping
+                            to sustain their livelihoods and keep ancient traditions alive.
+                        </p>
+                        <button pButton label="Learn Our Story" icon="pi pi-arrow-right" pButton iconPos="right"
+                            class="p-button-lg p-button-primary p-button-rounded shadow-3 transition-all transition-duration-300"
+                            (click)="goToAboutUs()"></button>
                     </div>
                 </div>
             </div>
-            }
         </div>
-        }
-    </div>
+    </section>
 </div>
 
 <!-- Product Details Modal (Keep for legacy or remove? Keeping it doesn't hurt but we navigate now) -->

@@ -136,29 +136,30 @@
     font-size: 0.9rem;
   }
 
-  .footer-bottom-links {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
-
-    @media (min-width: 768px) {
-      margin-top: 0;
-    }
-  }
-
-  .footer-bottom-link {
-    color: #94a3b8;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.3s ease;
-
-    &:hover {
-      color: #3b82f6;
-    }
-  }
-
-  .separator {
+  .developer-credits {
     color: #64748b;
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    .dev-link {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+      padding: 0 2px;
+
+      &:hover {
+        color: #3b82f6;
+        text-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+      }
+    }
+
+    .separator {
+      margin: 0 0.5rem;
+      opacity: 0.5;
+    }
   }
+
+
 }

@@ -1266,27 +1266,34 @@ textarea,
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   FINAL MATTE TOAST OVERRIDES
+   RESPONSIVE TOAST OVERRIDES (KEEPING THEME COLORS AND GLASS)
    ────────────────────────────────────────────────────────────────────────── */
-:host ::v-deep .p-toast,
 .p-toast {
     opacity: 1 !important;
+    z-index: 9999 !important;
+
+    @media screen and (max-width: 768px) {
+        width: fit-content !important;
+        max-width: 90vw !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        right: auto !important;
+    }
 
     .p-toast-message {
-        background: #1e293b !important;
-        /* Solid matte navy */
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-        border-radius: 12px !important;
-        width: fit-content !important;
-        min-width: 280px !important;
+        width: auto !important;
+        min-width: 250px !important;
         max-width: 400px !important;
         margin: 0 auto !important;
 
+        @media screen and (max-width: 768px) {
+            width: fit-content !important;
+            min-width: 250px !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+        }
+
         .p-toast-message-content {
-            background: transparent !important;
             padding: 0.6rem 0.8rem !important;
             /* Smaller padding */
             gap: 0.5rem !important;
@@ -1297,14 +1304,12 @@ textarea,
             }
 
             .p-toast-summary {
-                color: #ffffff !important;
                 font-weight: 700 !important;
                 font-size: 0.85rem !important;
                 /* Smaller font */
             }
 
             .p-toast-detail {
-                color: #94a3b8 !important;
                 margin-top: 2px !important;
                 font-size: 0.75rem !important;
                 /* Smaller font */
@@ -1313,45 +1318,6 @@ textarea,
             .p-toast-icon-close {
                 width: 1.5rem !important;
                 height: 1.5rem !important;
-                color: #ffffff !important;
-                opacity: 0.6;
-
-                &:hover {
-                    opacity: 1;
-                    background: rgba(255, 255, 255, 0.05);
-                }
-            }
-        }
-
-        &.p-toast-message-success {
-            border-left: 4px solid #10b981 !important;
-
-            .p-toast-message-icon {
-                color: #10b981 !important;
-            }
-        }
-
-        &.p-toast-message-info {
-            border-left: 4px solid #3b82f6 !important;
-
-            .p-toast-message-icon {
-                color: #3b82f6 !important;
-            }
-        }
-
-        &.p-toast-message-warn {
-            border-left: 4px solid #f59e0b !important;
-
-            .p-toast-message-icon {
-                color: #f59e0b !important;
-            }
-        }
-
-        &.p-toast-message-error {
-            border-left: 4px solid #ef4444 !important;
-
-            .p-toast-message-icon {
-                color: #ef4444 !important;
             }
         }
     }

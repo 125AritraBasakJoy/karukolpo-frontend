@@ -287,10 +287,19 @@
   }
 
   .category-info {
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 2;
     text-align: center;
     color: white;
+    width: 90%; // prevent text from touching edges
+    height: 100%; // Take full height to allow absolute positioning of child
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .category-name {
@@ -299,7 +308,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 2px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0; // Remove bottom margin to perfectly center
     transition: transform 0.3s ease;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 
@@ -310,6 +319,8 @@
   }
 
   .category-link {
+    position: absolute;
+    bottom: 25%; // Position it a quarter way up from the bottom
     display: block;
     font-size: 0.9rem;
     text-transform: uppercase;

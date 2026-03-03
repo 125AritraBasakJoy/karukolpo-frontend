@@ -60,7 +60,7 @@ import { SiteConfigService } from '../../../services/site-config.service';
     
     :host ::ng-deep .premium-card {
       background: rgba(15, 23, 42, 0.6) !important;
-      backdrop-filter: blur(12px);
+      
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 1.5rem;
     }
@@ -93,7 +93,7 @@ export class MaintenanceControlComponent {
       rejectButtonStyleClass: 'p-button-text p-button-secondary',
       accept: () => {
         this.siteConfigService.updateConfig({ isMaintenanceMode: newValue });
-        this.messageService.add({
+        this.messageService.add({ life: 2000,
           severity: 'success',
           summary: 'Updated',
           detail: `Maintenance Mode is now ${newValue ? 'ON' : 'OFF'}`

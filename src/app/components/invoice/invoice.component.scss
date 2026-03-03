@@ -11,10 +11,15 @@
 }
 
 .order-details-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 32px 28px;
+    max-width: 600px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
 }
 
 /* Logo */
@@ -92,6 +97,8 @@
     color: #94a3b8;
     line-height: 1.6;
     margin-top: 4px;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
 }
 
 /* Products table */
@@ -134,6 +141,23 @@
     text-align: right;
 }
 
+@media (max-width: 480px) {
+
+    .od-table td,
+    .od-table th {
+        font-size: 11px;
+    }
+
+    .od-col-qty {
+        width: 30px;
+    }
+
+    .od-col-price,
+    .od-col-total {
+        white-space: nowrap;
+    }
+}
+
 /* Totals */
 .od-totals {
     margin-top: 20px;
@@ -144,8 +168,8 @@
 .od-total-row {
     display: flex;
     justify-content: space-between;
-    padding: 4px 0;
-    font-size: 12px;
+    padding: 6px 0;
+    font-size: 13px;
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -161,15 +185,30 @@
 }
 
 .od-grand-total-row span:first-child {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 800;
     color: #94a3b8;
+    white-space: nowrap;
+
+    @media (max-width: 380px) {
+        font-size: 12px;
+    }
 }
 
 .od-grand-total-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     color: var(--accent-color);
+    white-space: nowrap;
+    line-height: 1.2;
+
+    @media (max-width: 576px) {
+        font-size: 18px;
+    }
+
+    @media (max-width: 380px) {
+        font-size: 16px;
+    }
 }
 
 /* Payment method */

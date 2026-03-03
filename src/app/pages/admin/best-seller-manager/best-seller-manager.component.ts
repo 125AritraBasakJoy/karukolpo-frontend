@@ -40,7 +40,7 @@ export class BestSellerManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to load products', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Error',
                         detail: 'Failed to load products from API'
@@ -59,7 +59,7 @@ export class BestSellerManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to load best sellers', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Error',
                         detail: 'Failed to load existing best sellers'
@@ -76,7 +76,7 @@ export class BestSellerManagerComponent implements OnInit {
             .pipe(finalize(() => this.loading.set(false)))
             .subscribe({
                 next: () => {
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'success',
                         summary: 'Saved Successfully',
                         detail: `${selectedIds.length} products are now marked as Best Sellers.`
@@ -84,7 +84,7 @@ export class BestSellerManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to save best sellers', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Save Failed',
                         detail: 'Backend rejected the update.'
@@ -100,7 +100,7 @@ export class BestSellerManagerComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.selectedProducts.set([]);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'success',
                         summary: 'Cleared Successfully',
                         detail: 'All products removed from Best Sellers.'
@@ -108,7 +108,7 @@ export class BestSellerManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to clear best sellers', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Clear Failed',
                         detail: 'Backend rejected the clear request.'
@@ -119,7 +119,7 @@ export class BestSellerManagerComponent implements OnInit {
 
     onCancel() {
         this.loadSavedBestSelling();
-        this.messageService.add({
+        this.messageService.add({ life: 2000,
             severity: 'info',
             summary: 'Cancelled',
             detail: 'Selection reset to last saved state'

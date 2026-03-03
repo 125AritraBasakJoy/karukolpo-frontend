@@ -295,6 +295,7 @@ export class LoginComponent {
       error: (error) => {
         console.error('Login error:', error);
         this.messageService.add({
+          life: 2000,
           severity: 'error',
           summary: 'Login Failed',
           detail: error.error?.detail || 'Invalid credentials'
@@ -322,7 +323,7 @@ export class LoginComponent {
           severity: 'success',
           summary: 'Email Sent',
           detail: 'If this account exists, a password reset link has been sent to your email.',
-          life: 6000
+          life: 2000
         });
         this.forgotPasswordLoading.set(false);
         this.displayForgotPasswordModal = false;
@@ -330,6 +331,7 @@ export class LoginComponent {
       error: (error) => {
         console.error('Forgot password error:', error);
         this.messageService.add({
+          life: 2000,
           severity: 'error',
           summary: 'Error',
           detail: error.error?.detail || 'Something went wrong. Please try again.'

@@ -11,63 +11,28 @@
             <p class="text-2xl">{{ landingPageTagline() }}</p>
             <div class="flex gap-3 justify-content-center mt-4">
                 <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg glass-button"
-                    (click)="scrollToProducts()"></button>
+                    routerLink="/all-products"></button>
                 <button pButton label="About Us" icon="pi pi-info-circle" class="p-button-lg glass-button"
                     (click)="goToAboutUs()"></button>
             </div>
         </div>
         <!-- Scroll Down Indicator -->
-        <div class="scroll-down-indicator z-2" (click)="scrollToHotDeals()">
+        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()">
             <i class="pi pi-chevron-down"></i>
         </div>
     </div>
 
-    <!-- Hot Deals Section -->
-    @if (hotDeals().length > 0) {
-    <div id="hot-deals" class="container px-4 py-4">
-        <div class="flex align-items-center justify-content-between mb-4">
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">Hot Deals</h2>
-            <span class="glass-badge animate-pulse">
-                <i class="pi pi-clock mr-2"></i>
-                Limited Time
-            </span>
-        </div>
 
-        <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="1" [circular]="true"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000">
-            <ng-template let-product pTemplate="item">
-                <div class="px-1 h-full">
-                    <div class="product-card small-card surface-card shadow-1 p-2 h-full flex flex-column relative">
-                        <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
-                            <div class="absolute top-0 right-0 m-2">
-                                <p-tag value="Hot" severity="danger" class="shadow-2"></p-tag>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="product-title">{{ product.name }}</div>
-                            <div class="product-price text-primary font-bold">{{ product.price |
-                                currency:'BDT':'symbol-narrow' }}</div>
-                        </div>
-                        <div class="mt-3 flex gap-2">
-                            <button pButton label="View" icon="pi pi-eye" class="p-button-outlined flex-1 p-button-sm"
-                                (click)="showProductDetails(product)"></button>
-                            @if (product.isInStock) {
-                            <button pButton icon="pi pi-shopping-cart" class="p-button-primary p-button-sm"
-                                (click)="addToCart(product)"></button>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </ng-template>
-        </p-carousel>
-    </div>
-    }
 
     <!-- Category Section -->
     <div id="categories"
         class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
-        <h2 class="text-3xl font-bold text-center mb-4">Browse Categories</h2>
+        <p-divider align="center" styleClass="w-full mb-4">
+            <div class="elegant-header px-4">
+                <span class="subtitle text-primary">Shop By</span>
+                <h2 class="title m-0">Category</h2>
+            </div>
+        </p-divider>
         <div class="category-grid w-full">
             @for (cat of categories(); track cat.id) {
             <div class="category-card" (click)="selectCategory(cat)"
@@ -84,12 +49,15 @@
     <!-- Best Selling Section -->
     @if (bestSelling().length > 0) {
     <div id="best-selling" class="container px-4 py-4 surface-ground">
-        <div class="flex align-items-center mb-4">
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">Best Sellers</h2>
-        </div>
+        <p-divider align="center" styleClass="mb-4">
+            <div class="elegant-header px-4">
+                <span class="subtitle text-primary">Curated Collection</span>
+                <h2 class="title m-0">Best Selling</h2>
+            </div>
+        </p-divider>
 
-        <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="1" [circular]="true"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="4000">
+        <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="3" [circular]="true"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="2000" [showNavigators]="false">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
                     <div
@@ -99,7 +67,7 @@
                         </div>
                         <div class="flex-grow-1">
                             <div class="product-title">{{ product.name }}</div>
-                            <div class="product-price">{{ product.price | currency:'BDT':'symbol-narrow' }}</div>
+                            <div class="product-price">{{ product.price | currency:'BDT':'৳' }}</div>
                         </div>
                         <div class="mt-3 flex gap-2">
                             <button pButton label="View" icon="pi pi-eye" class="p-button-outlined flex-1 p-button-sm"
@@ -116,57 +84,37 @@
     </div>
     }
 
-    <!-- Our Collection Section -->
-    <div id="products" class="container px-4 pb-4 pt-2">
-        <div class="flex align-items-center justify-content-between mb-4">
-            <h2 class="text-3xl font-bold m-0">Our Collection</h2>
-            <button pButton label="View all" icon="pi pi-th-large" class="glass-pill"
-                (click)="viewAllProducts()"></button>
-        </div>
 
-        @if (loading()) {
-        <div class="grid">
-            @for (i of [1,2,3,4]; track i) {
-            <div class="col-6 sm:col-6 md:col-4 lg:col-3">
-                <div class="p-4 surface-card border-round">
-                    <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
-                    <p-skeleton width="50%" styleClass="mb-2"></p-skeleton>
-                    <p-skeleton width="25%" styleClass="mb-2"></p-skeleton>
-                </div>
+    <!-- Hot Deals Section -->
+    @if (hotDeals().length > 0) {
+    <div id="hot-deals" class="container px-4 py-6">
+        <p-divider align="center" styleClass="mb-4">
+            <div class="elegant-header px-4">
+                <span class="subtitle text-primary">Special Offers</span>
+                <h2 class="title m-0">Hot Deals</h2>
             </div>
-            }
-        </div>
-        }
+        </p-divider>
 
-        @if (!loading()) {
-        <p-carousel [value]="products()" [numVisible]="6" [numScroll]="1" [circular]="true"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="5000">
+        <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="3" [circular]="true"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="2000" [showNavigators]="false">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
-                    <div
-                        class="product-card small-card surface-card shadow-2 p-2 h-full flex flex-column relative hover:shadow-4 transition-all">
-                        <!-- Out of Stock Overlay -->
-                        @if (isOutOfStock(product)) {
-                        <div
-                            class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1 flex align-items-center justify-content-center">
-                            <span class="bg-red-500 text-white px-2 py-1 border-round font-bold text-xs">Out of
-                                Stock</span>
-                        </div>
-                        }
-
+                    <div class="product-card small-card surface-card shadow-1 p-2 h-full flex flex-column relative">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                             <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                            <div class="absolute top-0 right-0 m-2">
+                                <p-tag value="Hot" severity="danger" class="shadow-2"></p-tag>
+                            </div>
                         </div>
                         <div class="flex-grow-1">
-                            <div class="product-title text-sm md:text-base font-bold">{{ product.name }}</div>
-                            <div class="product-price text-sm md:text-base">{{ product.price |
-                                currency:'BDT':'symbol-narrow' }}
-                            </div>
+                            <div class="product-title">{{ product.name }}</div>
+                            <div class="product-price text-primary font-bold">{{ product.price |
+                                currency:'BDT':'৳' }}</div>
                         </div>
                         <div class="mt-3 flex gap-2">
                             <button pButton label="View" icon="pi pi-eye" class="p-button-outlined flex-1 p-button-sm"
                                 (click)="showProductDetails(product)"></button>
-                            @if (!isOutOfStock(product)) {
+                            @if (product.isInStock) {
                             <button pButton icon="pi pi-shopping-cart" class="p-button-primary p-button-sm"
                                 (click)="addToCart(product)"></button>
                             }
@@ -175,12 +123,18 @@
                 </div>
             </ng-template>
         </p-carousel>
-        }
     </div>
+    }
 
     <!-- Crafted by Hands Section -->
     <section class="crafted-section py-4 px-4">
         <div class="container">
+            <p-divider align="center" styleClass="mb-5">
+                <div class="elegant-header px-4">
+                    <span class="subtitle text-primary">Our Story</span>
+                    <h2 class="title m-0">Our Heritage</h2>
+                </div>
+            </p-divider>
             <div class="grid align-items-center">
                 <div class="col-12 md:col-4 mb-4 md:mb-0">
                     <div class="crafted-image-wrapper">
@@ -190,8 +144,6 @@
                 </div>
                 <div class="col-12 md:col-8 md:pl-6">
                     <div class="crafted-content">
-                        <span class="text-primary font-bold uppercase tracking-widest text-sm mb-3 block">Our
-                            Heritage</span>
                         <h2 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
                         </h2>
                         <p class="text-lg text-600 mb-4 line-height-3">
@@ -206,6 +158,74 @@
                         <button pButton label="Learn Our Story" icon="pi pi-arrow-right" pButton iconPos="right"
                             class="p-button-lg p-button-primary p-button-rounded shadow-3 transition-all transition-duration-300"
                             (click)="goToAboutUs()"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- New Handcrafted Contact Section -->
+    <section id="contact" class="surface-ground pt-6">
+        <div class="container px-4">
+            <p-divider align="center" styleClass="mb-5">
+                <div class="elegant-header px-4">
+                    <span class="subtitle text-primary">Get In Touch</span>
+                    <h2 class="title m-0">Need Help?</h2>
+                </div>
+            </p-divider>
+        </div>
+
+        <div class="support-section relative w-full overflow-hidden surface-ground">
+            <!-- Background Image Area (Left side on desktop, full background on mobile) -->
+            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full bg-cover bg-left md:bg-center"
+                style="background-image: url('assets/handcrafted_heritage_bg.png');">
+                <!-- Fade gradient to surface-ground -->
+                <div class="absolute top-0 left-0 w-full h-full bg-gradient-fade"></div>
+            </div>
+
+            <div class="container relative z-1 py-6 px-4 flex flex-column md:flex-row align-items-center min-h-screen">
+                <!-- Left Side Content (Empty space to maintain layout for the right side form) -->
+                <div class="col-12 md:col-6 hidden md:block">
+                </div>
+
+                <!-- Right Side Form Card -->
+                <div class="col-12 md:col-6 md:pl-6">
+                    <div class="form-glass-card p-5 md:p-6 border-round-3xl relative">
+                        <h3 class="text-4xl font-normal mb-3 mt-0 text-900"
+                            style="font-family: 'Playfair Display', serif;">
+                            Leave us a message</h3>
+                        <p class="text-600 mb-6 line-height-3 text-sm">Whether it's a custom request, feedback, or a
+                            simple
+                            hello, we'd love to hear from you. Our team will get back to you shortly.</p>
+
+                        <div class="p-fluid">
+                            <div class="field mb-5 relative">
+                                <label for="contactName" class="text-xs font-bold uppercase letter-spacing-1 block mb-2"
+                                    style="color: var(--accent-color);">Your Name</label>
+                                <input pInputText id="contactName" [(ngModel)]="contactForm.name"
+                                    placeholder="Enter your full name" class="w-full contact-input">
+                            </div>
+                            <div class="field mb-5 relative">
+                                <label for="contactInfo" class="text-xs font-bold uppercase letter-spacing-1 block mb-2"
+                                    style="color: var(--accent-color);">Phone Number or Email</label>
+                                <input pInputText id="contactInfo" [(ngModel)]="contactForm.contactInfo"
+                                    placeholder="How can we reach you?" class="w-full contact-input">
+                            </div>
+                            <div class="field mb-6 relative">
+                                <label for="contactMessage"
+                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2"
+                                    style="color: var(--accent-color);">Message</label>
+                                <textarea pInputTextarea id="contactMessage" [(ngModel)]="contactForm.message" rows="1"
+                                    placeholder="Tell us about your inquiry..." class="w-full contact-input"
+                                    style="resize: none;"></textarea>
+                            </div>
+
+                            <button pButton label="SEND MESSAGE" icon="pi pi-send"
+                                class="p-button-lg w-full font-bold letter-spacing-1 border-none text-sm transition-colors transition-duration-300 hover:bg-blue-600"
+                                style="background: var(--accent-color); border-radius: 8px;"
+                                (click)="submitContactForm()"
+                                [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message"></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -233,7 +253,7 @@
                                 loading="lazy">
                             <div>
                                 <div class="font-bold">{{ item.product.name }}</div>
-                                <div class="text-sm text-600">{{ item.product.price | currency:'BDT':'symbol-narrow' }}
+                                <div class="text-sm text-600">{{ item.product.price | currency:'BDT':'৳' }}
                                     x {{
                                     item.quantity }}</div>
                             </div>
@@ -249,15 +269,15 @@
                     }
                     <div class="flex justify-content-between mt-3">
                         <span>Subtotal</span>
-                        <span class="font-bold">{{ getSubTotal() | currency:'BDT':'symbol-narrow' }}</span>
+                        <span class="font-bold">{{ getSubTotal() | currency:'BDT':'৳' }}</span>
                     </div>
                     <div class="flex justify-content-between mt-2">
                         <span>Delivery Charge</span>
-                        <span class="font-bold">{{ currentDeliveryCharge | currency:'BDT':'symbol-narrow' }}</span>
+                        <span class="font-bold">{{ currentDeliveryCharge | currency:'BDT':'৳' }}</span>
                     </div>
                     <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl font-bold">
                         <span>Total</span>
-                        <span class="text-primary">{{ getTotalPrice() | currency:'BDT':'symbol-narrow' }}</span>
+                        <span class="text-primary">{{ getTotalPrice() | currency:'BDT':'৳' }}</span>
                     </div>
                 </div>
             </div>
@@ -379,7 +399,7 @@
                     {{ order.orderDate | date:'medium' }}
                 </div>
                 <div class="flex justify-content-between align-items-center">
-                    <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'symbol-narrow' }}</span>
+                    <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'৳' }}</span>
 
                     <!-- Payment Button -->
                     @if (order.status === 'Confirmed' && order.paymentStatus !== 'Paid') {

@@ -41,6 +41,7 @@ export class ProductDetailsComponent implements OnInit {
   relatedProducts = signal<Product[]>([]);
   loading = signal<boolean>(true);
   loadingRelated = signal<boolean>(false);
+  activeImageIndex = 0;
   responsiveOptions = [
     {
       breakpoint: '1024px',
@@ -169,5 +170,17 @@ export class ProductDetailsComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/']);
+  }
+
+  prevImage() {
+    const images = this.product()?.images;
+    if (!images || images.length <= 1) return;
+    this.activeImageIndex = this.activeImageIndex === 0 ? images.length - 1 : this.activeImageIndex - 1;
+  }
+
+  nextImage() {
+    const images = this.product()?.images;
+    if (!images || images.length <= 1) return;
+    this.activeImageIndex = this.activeImageIndex === images.length - 1 ? 0 : this.activeImageIndex + 1;
   }
 }

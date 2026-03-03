@@ -105,7 +105,7 @@ export class NotificationService {
                     severity: 'info',
                     summary: 'New Order Received',
                     detail: `Order #${orderId} has been placed.`,
-                    life: 10000
+                    life: 2000
                 });
             }
 
@@ -143,7 +143,7 @@ export class NotificationService {
                             severity: 'warn',
                             summary: 'Low Stock Alert',
                             detail: `Low stock for: ${names} `,
-                            life: 15000
+                            life: 2000
                         });
                     }
                     this.showBrowserNotification('Low Stock Alert', `Low stock for: ${names} `);

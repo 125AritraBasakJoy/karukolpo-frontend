@@ -7,7 +7,7 @@
     height: 3rem;
     transition: all 0.3s ease;
     background: rgba(var(--primary-500), 0.1) !important;
-    backdrop-filter: blur(10px);
+    
 
     &:hover {
         transform: rotate(180deg);

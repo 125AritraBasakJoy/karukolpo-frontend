@@ -22,7 +22,7 @@ import { VersionService } from './services/version.service';
         <router-outlet></router-outlet>
       </div>
       <app-footer *ngIf="!isAdminRoute"></app-footer>
-      <p-toast position="top-right"></p-toast>
+      <p-toast position="top-center"></p-toast>
     </div>
   `,
   styles: [`
@@ -68,7 +68,7 @@ export class AppComponent implements OnInit {
         severity: 'info',
         summary: 'New Order Placed',
         detail: `Order ID: ${orderId} has been created.`,
-        life: 5000
+        life: 2000
       });
     });
   }

@@ -204,7 +204,7 @@ export class OrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading orders in component:', err);
-        this.messageService.add({
+        this.messageService.add({ life: 2000,
           severity: 'error',
           summary: 'Error',
           detail: 'Failed to load orders.'
@@ -609,7 +609,7 @@ export class OrdersComponent implements OnInit {
     setTimeout(() => {
       this.adminInvoice.downloadReceipt().then(() => {
         this.downloadingOrderId.set(null);
-        this.messageService.add({
+        this.messageService.add({ life: 2000,
           severity: 'success',
           summary: 'Success',
           detail: `Invoice for Order #${order.id} downloaded.`
@@ -617,7 +617,7 @@ export class OrdersComponent implements OnInit {
       }).catch(err => {
         console.error('Admin Invoice download failed:', err);
         this.downloadingOrderId.set(null);
-        this.messageService.add({
+        this.messageService.add({ life: 2000,
           severity: 'error',
           summary: 'Error',
           detail: 'Failed to generate PDF.'

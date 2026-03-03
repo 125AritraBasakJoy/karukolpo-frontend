@@ -5,14 +5,16 @@
 // ── Full-screen sections ────────────────────────────────────────
 .hero-section-fullscreen {
   position: relative;
-  height: 100vh;
+  height: calc(100vh - 80px);
   width: 100%;
 }
 
 .category-section-fullscreen {
-  min-height: auto;
-  padding: 2rem 1rem;
+  padding: 4rem 1rem;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 
   .category-grid {
     flex: 1;
@@ -323,13 +325,16 @@
 
 // Crafted by Hands Section
 .crafted-section {
-  background: var(--surface-card);
+  background: transparent;
   overflow: hidden;
-  margin-bottom: 5rem;
-  margin-top: 2rem;
-  border-radius: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0;
+  margin-top: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
 
   .crafted-image-wrapper {
     position: relative;
@@ -382,6 +387,82 @@
   }
 }
 
+// Support / Contact Section
+.support-section {
+  position: relative;
+  min-height: 100vh;
+  margin: 0 !important;
+
+  .bg-gradient-fade {
+    background: linear-gradient(90deg, transparent 0%, transparent 40%, var(--surface-ground) 70%, var(--surface-ground) 100%);
+  }
+
+  .letter-spacing-1 {
+    letter-spacing: 1px;
+  }
+
+  .letter-spacing-2 {
+    letter-spacing: 2px;
+  }
+
+  .form-glass-card {
+    background: var(--surface-card);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--surface-border);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.03;
+      pointer-events: none;
+      border-radius: inherit;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+  }
+
+  .contact-input {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--surface-border) !important;
+    border-radius: 0 !important;
+    padding: 0.5rem 0 !important;
+    box-shadow: none !important;
+    color: var(--text-color) !important;
+    transition: border-color 0.3s ease;
+    font-size: 1rem;
+
+    &::placeholder {
+      color: var(--text-color-secondary);
+      font-weight: 400;
+      font-size: 0.95rem;
+    }
+
+    &:focus,
+    &:hover {
+      border-bottom-color: #c05c24 !important;
+      outline: none !important;
+    }
+  }
+
+  // Mobile adjustments
+  @media screen and (max-width: 991px) {
+    min-height: auto;
+
+    .support-bg {
+      height: 100%;
+      background-position: center;
+
+      .bg-gradient-fade {
+        background: linear-gradient(180deg, rgba(var(--surface-ground-rgb), 0.6) 0%, var(--surface-ground) 45%, var(--surface-ground) 100%);
+      }
+    }
+  }
+}
+
 // ── Special Sections Styling ────────────────────────────────────
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.4, 1) infinite;
@@ -403,7 +484,12 @@
 
 #hot-deals,
 #best-selling {
-  scroll-margin-top: 100px;
+  max-height: 35rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 !important;
+  scroll-margin-top: 0;
 }
 
 .surface-ground {
@@ -411,10 +497,8 @@
 }
 
 .glass-badge {
-  background: rgba(255, 255, 255, 0.03) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: var(--text-color) !important;
   padding: 0.6rem 1.4rem;
   border-radius: 100px;
@@ -434,63 +518,83 @@
   }
 }
 
+.elegant-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.5rem;
+
+  .subtitle {
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.2rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-color);
+    font-family: 'Playfair Display', 'Merriweather', 'Times New Roman', serif;
+  }
+
+  @media (max-width: 768px) {
+    .title {
+      font-size: 2rem;
+    }
+  }
+}
+
+:host ::ng-deep .p-divider-content {
+  background: var(--surface-ground) !important;
+}
+
 // ── Carousel Overrides ──────────────────────────────────────────
 :host ::ng-deep .p-carousel {
+  padding: 0;
+
+  .p-carousel-items-container {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important; // Faster transition
+  }
+
   .p-carousel-indicators {
-    padding: 0.75rem 0 !important;
-    justify-content: center !important;
+    padding: 1.2rem 0 !important;
+    gap: 0.4rem !important;
 
     .p-carousel-indicator {
-      margin: 0 5px !important;
-
       .p-carousel-indicator-button {
-        width: 35px !important;
-        height: 10px !important;
-        border-radius: 100px !important;
-        background: #e2e8f0 !important;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 20px !important;
+        height: 3px !important;
+        border-radius: 4px !important;
+        background: #334155 !important;
+        transition: all 0.3s ease !important;
         border: none !important;
-        outline: none !important;
-        cursor: pointer !important;
-        opacity: 0.8 !important;
-        padding: 0 !important;
-        display: block !important;
+        opacity: 0.3 !important;
+        margin: 0 !important;
 
         &:hover {
-          background: #cbd5e1 !important;
-          opacity: 1 !important;
+          opacity: 0.6 !important;
         }
       }
 
-      // v18 active class or aria-current
       &.p-carousel-indicator-active .p-carousel-indicator-button,
       &.p-highlight .p-carousel-indicator-button,
       .p-carousel-indicator-button[aria-current="page"] {
-        width: 65px !important;
-        background: #000000 !important;
+        width: 40px !important;
+        background: #3b82f6 !important;
         opacity: 1 !important;
-        box-shadow: none !important;
       }
     }
   }
 
+  // Navigators hidden in HTML, but ensuring they don't impact layout
   .p-carousel-prev,
   .p-carousel-next {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-color);
-    transition: all 0.3s ease;
-    margin: 0 0.5rem;
-
-    &:hover:not(.p-disabled) {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
-      transform: scale(1.1);
-    }
+    display: none !important;
   }
 }
 

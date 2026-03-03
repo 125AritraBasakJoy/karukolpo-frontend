@@ -40,11 +40,9 @@ import { CartService } from '../../services/cart.service';
 
     .header-glass {
       height: 80px;
-      background: rgba(15, 23, 42, 0.8) !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
+      background: #0f172a !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
 
     .header-logo {

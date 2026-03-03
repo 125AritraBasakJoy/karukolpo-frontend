@@ -37,7 +37,7 @@
         <!-- Shipping Address -->
         <div class="od-address-section">
             <span class="od-label">SHIPPING ADDRESS</span>
-            <div class="od-address-text">
+            <div class="od-address-text break-word">
                 {{ orderFormSnapshot.fullAddress || '—' }}<span *ngIf="orderFormSnapshot.subDistrict">, {{
                     orderFormSnapshot.subDistrict }}</span><span *ngIf="orderFormSnapshot.district">, {{
                     orderFormSnapshot.district }}</span><span *ngIf="orderFormSnapshot.postalCode">, {{
@@ -59,8 +59,8 @@
                 <tr *ngFor="let item of orderedItems">
                     <td class="od-col-name">{{ item.product?.name || 'Product' }}</td>
                     <td class="od-col-qty">{{ item.quantity }}</td>
-                    <td class="od-col-price">৳{{ item.product?.price | number:'1.2-2' }}</td>
-                    <td class="od-col-total">৳{{ (item.product?.price || 0) * (item.quantity || 0) | number:'1.2-2' }}
+                    <td class="od-col-price">৳ {{ item.product?.price | number:'1.2-2' }}</td>
+                    <td class="od-col-total">৳ {{ (item.product?.price || 0) * (item.quantity || 0) | number:'1.2-2' }}
                     </td>
                 </tr>
             </tbody>
@@ -70,16 +70,15 @@
         <div class="od-totals">
             <div class="od-total-row">
                 <span>SUBTOTAL</span>
-                <span>৳{{ subtotal | number:'1.2-2' }}</span>
+                <span>৳ {{ subtotal | number:'1.2-2' }}</span>
             </div>
             <div class="od-total-row">
                 <span>DELIVERY CHARGE</span>
-                <span>৳{{ orderDeliveryCharge | number:'1.2-2' }}</span>
+                <span>৳ {{ orderDeliveryCharge | number:'1.2-2' }}</span>
             </div>
             <div class="od-grand-total-row">
                 <span>GRAND TOTAL</span>
-                <span class="od-grand-total-value">BDT {{
-                    grandTotal | number:'1.2-2' }}</span>
+                <span class="od-grand-total-value">৳ {{ grandTotal | number:'1.2-2' }}</span>
             </div>
         </div>
 

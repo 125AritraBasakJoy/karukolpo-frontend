@@ -36,7 +36,7 @@
                 <i class="pi pi-wallet"></i>
             </div>
             <span class="stat-label">Total Revenue</span>
-            <h2 class="stat-value revenue">{{ totalRevenue() | currency:'BDT':'symbol-narrow':'1.0-0' }}</h2>
+            <h2 class="stat-value revenue">{{ totalRevenue() | currency:'BDT':'৳':'1.0-0' }}</h2>
         </div>
 
         <div class="stat-card glass-card">
@@ -102,7 +102,7 @@
                         <span class="font-semibold text-white">{{ product.name }}</span>
                     </td>
                     <td>
-                        <span class="price-value font-medium">{{ product.price | currency:'BDT':'symbol-narrow'
+                        <span class="price-value font-medium">{{ product.price | currency:'BDT':'৳'
                             }}</span>
                     </td>
                     <td>

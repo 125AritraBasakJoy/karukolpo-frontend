@@ -354,7 +354,7 @@ export class InvoiceComponent {
 
         text('AMOUNT DUE', boxX + boxW / 2, y + 6, { size: 7, color: lightGray, align: 'center' });
         const amountDue = this.paymentStatus === 'Paid' ? 0 : this.grandTotal;
-        text(`৳ ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 13, { size: 16, color: blue, bold: true, align: 'center' });
+        text(`BDT ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 13, { size: 16, color: blue, bold: true, align: 'center' });
 
         // =====================
         //  SAVE

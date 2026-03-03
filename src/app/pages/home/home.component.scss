@@ -453,12 +453,27 @@
     min-height: auto;
 
     .support-bg {
-      height: 100%;
+      position: relative !important;
+      width: 100% !important;
+      height: 350px !important;
       background-position: center;
 
       .bg-gradient-fade {
-        background: linear-gradient(180deg, rgba(var(--surface-ground-rgb), 0.6) 0%, var(--surface-ground) 45%, var(--surface-ground) 100%);
+        background: linear-gradient(180deg, transparent 0%, transparent 60%, var(--surface-ground) 100%);
       }
+    }
+
+    .support-content-container {
+      padding-top: 0 !important;
+      padding-bottom: 2rem !important;
+      margin-top: -3rem; // Slight overlap of form over the image
+    }
+
+    .form-glass-card {
+      width: 90%;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem !important;
     }
   }
 }

@@ -510,12 +510,11 @@
 
 #hot-deals,
 #best-selling {
-  max-height: 35rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   margin: 0 !important;
-  scroll-margin-top: 0;
+  scroll-margin-top: 2rem;
 }
 
 .surface-ground {

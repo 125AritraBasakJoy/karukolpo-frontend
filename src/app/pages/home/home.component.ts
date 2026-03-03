@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { lastValueFrom } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
@@ -45,6 +45,7 @@ import { Order } from '../../models/order.model';
 import { CartService } from '../../services/cart.service';
 import { TooltipModule } from 'primeng/tooltip';
 import { CarouselModule } from 'primeng/carousel';
+import { DividerModule } from 'primeng/divider';
 
 @Component({
     selector: 'app-home',
@@ -67,9 +68,11 @@ import { CarouselModule } from 'primeng/carousel';
         TagModule,
         TooltipModule,
         CarouselModule,
+        DividerModule,
         CurrencyPipe,
         DatePipe,
-        NgOptimizedImage
+        NgOptimizedImage,
+        RouterModule
     ],
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.scss'],
@@ -109,6 +112,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     trackedOrders: Order[] = [];
     trackingLoading = false;
     hasSearched = false;
+    // Contact Form
+    contactForm = {
+        name: '',
+        contactInfo: '',
+        message: ''
+    };
     // Delivery Logic
     deliveryLocation: 'Inside Dhaka' | 'Outside Dhaka' = 'Inside Dhaka';
     currentDeliveryCharge = 0;
@@ -137,30 +146,25 @@ export class HomeComponent implements OnInit, OnDestroy {
         {
             breakpoint: '1400px',
             numVisible: 6,
-            numScroll: 1
+            numScroll: 3
         },
         {
             breakpoint: '1191px',
-            numVisible: 5,
-            numScroll: 1
+            numVisible: 4,
+            numScroll: 2
         },
         {
             breakpoint: '991px',
-            numVisible: 4,
-            numScroll: 1
+            numVisible: 3,
+            numScroll: 2
         },
         {
             breakpoint: '767px',
-            numVisible: 3,
-            numScroll: 1
-        },
-        {
-            breakpoint: '560px',
             numVisible: 2,
-            numScroll: 1
+            numScroll: 2
         },
         {
-            breakpoint: '320px',
+            breakpoint: '480px',
             numVisible: 1,
             numScroll: 1
         }
@@ -228,6 +232,22 @@ export class HomeComponent implements OnInit, OnDestroy {
     selectPaymentMethod(method: 'COD' | 'bKash') {
         this.selectedPaymentMethod = method;
         this.isPaymentSelected = true;
+    }
+
+    submitContactForm() {
+        if (!this.contactForm.name || !this.contactForm.contactInfo || !this.contactForm.message) {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Please fill out all fields.' });
+            return;
+        }
+
+        // Handle via frontend for now (per instruction). Reset form and show success toast.
+        this.messageService.add({ severity: 'success', summary: 'Message Sent', detail: 'Thank you for reaching out! We will get back to you soon.', life: 3000 });
+
+        this.contactForm = {
+            name: '',
+            contactInfo: '',
+            message: ''
+        };
     }
 
     ngOnInit() {
@@ -372,14 +392,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         return this.cartService.totalItems();
     }
 
-    scrollToProducts() {
-        if (!isPlatformBrowser(this.platformId)) return;
-        const productsSection = document.getElementById('products');
-        if (productsSection) {
-            productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-
     scrollToHotDeals() {
         if (!isPlatformBrowser(this.platformId)) return;
         const hotDealsSection = document.getElementById('hot-deals');
@@ -419,6 +431,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         // Order creation is handled by submitBkashPayment() or confirmCOD().
         if (!this.isCheckoutFormValid) {
             this.messageService.add({
+                life: 2000,
                 severity: 'error',
                 summary: 'Validation Error',
                 detail: 'Please fill all required fields correctly.'
@@ -505,6 +518,7 @@ export class HomeComponent implements OnInit, OnDestroy {
                 this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
                     next: () => {
                         this.messageService.add({
+                            life: 2000,
                             severity: 'success',
                             summary: 'Payment Submitted',
                             detail: 'Waiting for admin verification.'
@@ -532,6 +546,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             } else {
                 // COD - Just finish
                 this.messageService.add({
+                    life: 2000,
                     severity: 'success',
                     summary: 'COD Selected',
                     detail: 'Waiting for admin verification.'
@@ -613,6 +628,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
             // Since it's COD, we can directly show success
             this.messageService.add({
+                life: 2000,
                 severity: 'success',
                 summary: 'Order Confirmed',
                 detail: 'Your COD order has been placed successfully.'
@@ -675,6 +691,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
             // Success Logic
             this.messageService.add({
+                life: 2000,
                 severity: 'success',
                 summary: 'Payment Submitted',
                 detail: 'Your payment has been submitted for verification.'

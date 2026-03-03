@@ -41,7 +41,7 @@ export class HotDealsManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to load products', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Error',
                         detail: 'Failed to load products from API'
@@ -60,7 +60,7 @@ export class HotDealsManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to load hot deals', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Error',
                         detail: 'Failed to load existing hot deals'
@@ -77,7 +77,7 @@ export class HotDealsManagerComponent implements OnInit {
             .pipe(finalize(() => this.loading.set(false)))
             .subscribe({
                 next: () => {
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'success',
                         summary: 'Saved Successfully',
                         detail: `${selectedIds.length} products are now marked for Hot Deals.`
@@ -85,7 +85,7 @@ export class HotDealsManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to save hot deals', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Save Failed',
                         detail: 'Backend rejected the update.'
@@ -101,7 +101,7 @@ export class HotDealsManagerComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.selectedProducts.set([]);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'success',
                         summary: 'Cleared Successfully',
                         detail: 'All products removed from Hot Deals.'
@@ -109,7 +109,7 @@ export class HotDealsManagerComponent implements OnInit {
                 },
                 error: (err) => {
                     console.error('Failed to clear hot deals', err);
-                    this.messageService.add({
+                    this.messageService.add({ life: 2000,
                         severity: 'error',
                         summary: 'Clear Failed',
                         detail: 'Backend rejected the clear request.'
@@ -120,7 +120,7 @@ export class HotDealsManagerComponent implements OnInit {
 
     onCancel() {
         this.loadSavedHotDeals();
-        this.messageService.add({
+        this.messageService.add({ life: 2000,
             severity: 'info',
             summary: 'Cancelled',
             detail: 'Selection reset to last saved state'

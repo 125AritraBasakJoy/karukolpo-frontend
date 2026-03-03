@@ -186,7 +186,7 @@ export class ResetPasswordComponent implements OnInit {
       },
       error: (error) => {
         console.error('Reset password error:', error);
-        this.messageService.add({
+        this.messageService.add({ life: 2000,
           severity: 'error',
           summary: 'Reset Failed',
           detail: error.error?.detail || 'The reset link may be expired or invalid. Please request a new one.'

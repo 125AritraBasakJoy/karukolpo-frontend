@@ -101,7 +101,7 @@ export class TrackOrderComponent {
               this.loading.set(false);
             });
           } else {
-            this.messageService.add({
+            this.messageService.add({ life: 2000,
               severity: 'info',
               summary: 'Not Found',
               detail: 'No orders found for this phone number'
@@ -112,7 +112,7 @@ export class TrackOrderComponent {
         error: (err) => {
           console.error('Phone tracking error:', err);
           this.loading.set(false);
-          this.messageService.add({
+          this.messageService.add({ life: 2000,
             severity: 'error',
             summary: 'Error',
             detail: err.error?.detail || 'Failed to track order by phone number'
@@ -129,7 +129,7 @@ export class TrackOrderComponent {
               this.loading.set(false);
             });
           } else {
-            this.messageService.add({
+            this.messageService.add({ life: 2000,
               severity: 'error',
               summary: 'Not Found',
               detail: 'Order not found'
@@ -140,7 +140,7 @@ export class TrackOrderComponent {
         error: (err) => {
           console.error('Order ID tracking error:', err);
           this.loading.set(false);
-          this.messageService.add({
+          this.messageService.add({ life: 2000,
             severity: 'error',
             summary: 'Not Found',
             detail: 'Order not found'
@@ -210,7 +210,7 @@ export class TrackOrderComponent {
           next: (updatedOrder) => {
             this.order.set(updatedOrder);
             this.loading.set(false);
-            this.messageService.add({
+            this.messageService.add({ life: 2000,
               severity: 'success',
               summary: 'Cancelled',
               detail: 'Your order has been cancelled successfully'
@@ -219,7 +219,7 @@ export class TrackOrderComponent {
           error: (err) => {
             console.error('Cancellation error:', err);
             this.loading.set(false);
-            this.messageService.add({
+            this.messageService.add({ life: 2000,
               severity: 'error',
               summary: 'Error',
               detail: err.error?.detail || 'Failed to cancel order'

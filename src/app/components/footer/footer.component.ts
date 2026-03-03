@@ -19,6 +19,7 @@ export class FooterComponent {
 
     quickLinks = [
         { label: 'Home', route: '/' },
+        { label: 'Shop Now', route: '/all-products' },
         { label: 'About Us', route: '/about' },
         { label: 'Track Order', route: '/track-order' }
     ];

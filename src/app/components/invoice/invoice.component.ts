@@ -221,6 +221,20 @@ export class InvoiceComponent {
             text(headers[i], cardX[i] + 4, y + 5, { size: 7, color: [255, 255, 255], bold: true });
         }
 
+        // Helper to force-break extremely long words for PDF
+        const forceBreak = (textStr: string, maxChars = 25) => {
+            if (!textStr) return '';
+            return textStr.split(' ').map(word => {
+                if (word.length <= maxChars) return word;
+                // Force a break every maxChars
+                let result = '';
+                for (let i = 0; i < word.length; i += maxChars) {
+                    result += word.substring(i, i + maxChars) + ' ';
+                }
+                return result.trim();
+            }).join(' ');
+        };
+
         // Card body content
         const bodyY = y + headerH + 5;
 
@@ -235,7 +249,7 @@ export class InvoiceComponent {
         const custName = this.orderFormSnapshot.fullName || '—';
         const custPhone = this.orderFormSnapshot.phoneNumber || '';
         const custEmail = this.orderFormSnapshot.email || '';
-        text(custName, cardX[1] + 4, bodyY, { size: 9, color: black, bold: true });
+        text(forceBreak(custName), cardX[1] + 4, bodyY, { size: 9, color: black, bold: true, maxW: cardW - 8 });
         if (custPhone) text(`Phone: ${custPhone}`, cardX[1] + 4, bodyY + 5, { size: 8, color: midGray });
         if (custEmail) text(`Email: ${custEmail}`, cardX[1] + 4, bodyY + 10, { size: 8, color: midGray, maxW: cardW - 8 });
 
@@ -244,15 +258,10 @@ export class InvoiceComponent {
         const subDist = this.orderFormSnapshot.subDistrict || '';
         const dist = this.orderFormSnapshot.district || '';
         const postal = this.orderFormSnapshot.postalCode || '';
-        const addrLines = pdf.splitTextToSize(addr, cardW - 8);
-        let addrY = bodyY;
-        addrLines.forEach((line: string) => {
-            text(line, cardX[2] + 4, addrY, { size: 8, color: midGray });
-            addrY += 4;
-        });
-        if (subDist) { text(subDist, cardX[2] + 4, addrY, { size: 8, color: midGray }); addrY += 4; }
-        if (dist) { text(dist, cardX[2] + 4, addrY, { size: 8, color: midGray }); addrY += 4; }
-        if (postal) { text(`Postal Code: ${postal}`, cardX[2] + 4, addrY, { size: 8, color: midGray }); }
+
+        // Combine into one flow for better wrapping
+        const combinedAddr = [addr, subDist, dist, postal ? `Postal Code: ${postal}` : ''].filter(s => !!s).join(', ');
+        text(forceBreak(combinedAddr), cardX[2] + 4, bodyY, { size: 8, color: midGray, maxW: cardW - 8 });
 
         y += cardH + 8;
 
@@ -270,7 +279,7 @@ export class InvoiceComponent {
         autoTable(pdf, {
             startY: y,
             margin: { left: margin, right: margin },
-            head: [['PRODUCT NAME', 'QTY', 'UNIT PRICE', 'LINE TOTAL']],
+            head: [['PRODUCT', 'QTY', 'PRICE', 'LINE TOTAL']],
             body: tableBody,
             styles: {
                 fontSize: 9,
@@ -345,7 +354,7 @@ export class InvoiceComponent {
 
         text('AMOUNT DUE', boxX + boxW / 2, y + 6, { size: 7, color: lightGray, align: 'center' });
         const amountDue = this.paymentStatus === 'Paid' ? 0 : this.grandTotal;
-        text(`BDT ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 13, { size: 16, color: blue, bold: true, align: 'center' });
+        text(`৳ ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 13, { size: 16, color: blue, bold: true, align: 'center' });
 
         // =====================
         //  SAVE

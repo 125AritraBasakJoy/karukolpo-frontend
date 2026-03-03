@@ -170,7 +170,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
                             </div>
                         </td>
                         <td>
-                            <span class="price-badge">{{product.price | currency:'BDT':'symbol-narrow'}}</span>
+                            <span class="price-badge">{{product.price | currency:'BDT':'৳'}}</span>
                         </td>
                         <td class="text-right">
                             <div class="flex justify-content-end gap-2">
@@ -451,10 +451,10 @@ export class CategoryManagerComponent implements OnInit {
                     next: () => {
                         this.categories.update(vals => vals.filter((val: Category) => val.id !== category.id));
                         this.refreshCategories(); // Refresh to update buffer logic
-                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Category Deleted', life: 3000 });
+                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Category Deleted', life: 2000 });
                     },
                     error: (err) => {
-                        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message, life: 3000 });
+                        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message, life: 2000 });
                     }
                 });
             }
@@ -504,7 +504,7 @@ export class CategoryManagerComponent implements OnInit {
             },
             error: (err) => {
                 console.error('Failed to load uncategorized products', err);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load products', life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load products' });
                 this.loadingProducts = false;
                 this.cdr.detectChanges();
             }
@@ -520,7 +520,7 @@ export class CategoryManagerComponent implements OnInit {
             },
             error: (err) => {
                 console.error('Fallback product fetch failed', err);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load products', life: 3000 });
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load products' });
                 this.loadingProducts = false;
                 this.cdr.detectChanges();
             }
@@ -563,7 +563,7 @@ export class CategoryManagerComponent implements OnInit {
                         // Remove from current list
                         this.categoryProducts = this.categoryProducts.filter(p => p.id !== product.id);
 
-                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Product removed from category', life: 3000 });
+                        this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Product removed from category', life: 2000 });
 
                         // If we are viewing a specific category and it becomes empty, or just to be safe
                         if (this.categoryProducts.length === 0) {
@@ -571,7 +571,7 @@ export class CategoryManagerComponent implements OnInit {
                         }
                     },
                     error: (err) => {
-                        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'Failed to remove product', life: 3000 });
+                        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'Failed to remove product', life: 2000 });
                     }
                 });
             }
@@ -651,7 +651,7 @@ export class CategoryManagerComponent implements OnInit {
                     severity: 'error',
                     summary: 'Error',
                     detail: detail,
-                    life: 5000
+                    life: 2000
                 });
             }
         });
@@ -669,7 +669,7 @@ export class CategoryManagerComponent implements OnInit {
             severity: 'success',
             summary: 'Successful',
             detail: isAssign ? `Product assigned to ${targetNames}` : `Product moved to ${targetNames}`,
-            life: 3000
+            life: 2000
         });
         this.moveDialog = false;
         this.selectedProductForMove = null;
@@ -697,7 +697,7 @@ export class CategoryManagerComponent implements OnInit {
                         severity: 'success',
                         summary: 'Successful',
                         detail: `Category "${updated.name}" Updated`,
-                        life: 3000
+                        life: 2000
                     });
                     this.loadCategories();
                     this.hideDialog();
@@ -710,10 +710,10 @@ export class CategoryManagerComponent implements OnInit {
                         errorMessage = err.message;
                     }
                     this.messageService.add({
+                        life: 2000,
                         severity: 'error',
                         summary: 'Error',
                         detail: errorMessage,
-                        life: 5000
                     });
                 }
             });
@@ -725,7 +725,7 @@ export class CategoryManagerComponent implements OnInit {
                         severity: 'success',
                         summary: 'Successful',
                         detail: `Category "${createdCategory.name}" Created`,
-                        life: 3000
+                        life: 2000
                     });
                     this.loadCategories();
                     this.hideDialog();
@@ -738,10 +738,10 @@ export class CategoryManagerComponent implements OnInit {
                         errorMessage = err.message;
                     }
                     this.messageService.add({
+                        life: 2000,
                         severity: 'error',
                         summary: 'Error',
                         detail: errorMessage,
-                        life: 5000
                     });
                 }
             });

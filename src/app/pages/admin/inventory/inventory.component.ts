@@ -330,7 +330,7 @@ export class InventoryComponent implements OnInit {
       accept: () => {
         this.productService.deleteProduct(product.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
+            this.messageService.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 2000 });
             this.refreshProducts(); // Refresh list to update cache
           },
           error: (err) => {

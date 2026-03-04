@@ -11,6 +11,13 @@ export interface PaymentCreate {
   transaction_id?: string;
 }
 
+export type OrderNotificationType = 'new' | 'update' | 'cancel';
+
+export interface OrderNotification {
+  id: string;
+  type: OrderNotificationType;
+}
+
 export interface PaymentConfirm {
   transaction_id: string;
   gateway_response?: any;
@@ -24,7 +31,7 @@ export interface PaymentConfirm {
   providedIn: 'root'
 })
 export class OrderService {
-  private newOrderSubject = new Subject<string>();
+  private newOrderSubject = new Subject<OrderNotification>();
   newOrderNotification$ = this.newOrderSubject.asObservable();
   private ordersCache: Order[] | null = null;
 
@@ -51,7 +58,7 @@ export class OrderService {
       map(response => {
         const orderId = response.id?.toString() || '';
         // Notify admin of new order
-        this.notifyAdmin(orderId);
+        this.notifyAdmin(orderId, 'new');
         return orderId;
       })
     );
@@ -146,7 +153,7 @@ export class OrderService {
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.CANCEL(id), {}).pipe(
       tap(() => {
         this.clearCache();
-        this.notifyAdmin(id.toString());
+        this.notifyAdmin(id.toString(), 'cancel');
       }),
       map(order => this.mapBackendToFrontend(order))
     );
@@ -269,7 +276,7 @@ export class OrderService {
       tap(() => {
         this.clearCache();
         // Trigger a notification so components can reload
-        this.notifyAdmin(id);
+        this.notifyAdmin(id, status === 'Cancelled' ? 'cancel' : 'update');
       }),
       map(() => void 0)
     );
@@ -288,10 +295,10 @@ export class OrderService {
   }
 
   /**
-   * Notify admin of new order
+   * Notify admin of order event
    */
-  notifyAdmin(orderId: string): void {
-    this.newOrderSubject.next(orderId);
+  notifyAdmin(orderId: string, type: OrderNotificationType): void {
+    this.newOrderSubject.next({ id: orderId, type });
   }
 
   /**

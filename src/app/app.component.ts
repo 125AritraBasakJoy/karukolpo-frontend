@@ -63,14 +63,7 @@ export class AppComponent implements OnInit {
       this.checkRoute(event.urlAfterRedirects || event.url);
     });
 
-    this.orderService.newOrderNotification$.subscribe(orderId => {
-      this.messageService.add({
-        severity: 'info',
-        summary: 'New Order Placed',
-        detail: `Order ID: ${orderId} has been created.`,
-        life: 2000
-      });
-    });
+    // Notification logic consolidated in NotificationService
   }
 
   private checkRoute(url: string): void {

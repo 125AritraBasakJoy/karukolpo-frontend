@@ -85,32 +85,36 @@ export class NotificationService {
 
         this.requestNotificationPermission();
 
-        this.orderSub = this.orderService.newOrderNotification$.subscribe(orderId => {
+        this.orderSub = this.orderService.newOrderNotification$.subscribe(notification => {
+            const { id: orderId, type } = notification;
 
-            // 1. Add to Notification Center (Always)
-            this.addNotification({
-                title: 'New Order',
-                message: `Order #${orderId} placed.`,
-                time: new Date(),
-                type: 'order',
-                data: { orderId }
-            });
-
-            // 2. Browser Notification (Always if allowed)
-            this.showBrowserNotification('New Order Received', `Order #${orderId} has been placed.`);
-
-            // 3. App Toast (Only if MessageService is available)
-            if (this.messageService) {
-                this.messageService.add({
-                    severity: 'info',
-                    summary: 'New Order Received',
-                    detail: `Order #${orderId} has been placed.`,
-                    life: 2000
+            // Only process 'new' order notifications for global toasts and history
+            if (type === 'new') {
+                // 1. Add to Notification Center (Always)
+                this.addNotification({
+                    title: 'New Order',
+                    message: `Order #${orderId} placed.`,
+                    time: new Date(),
+                    type: 'order',
+                    data: { orderId }
                 });
-            }
 
-            // 4. Low Stock Check
-            this.checkLowStock();
+                // 2. Browser Notification (Always if allowed)
+                this.showBrowserNotification('New Order Received', `Order #${orderId} has been placed.`);
+
+                // 3. App Toast (Only if MessageService is available)
+                if (this.messageService) {
+                    this.messageService.add({
+                        severity: 'info',
+                        summary: 'New Order Received',
+                        detail: `Order #${orderId} has been placed.`,
+                        life: 2000
+                    });
+                }
+
+                // 4. Low Stock Check
+                this.checkLowStock();
+            }
         });
     }
 

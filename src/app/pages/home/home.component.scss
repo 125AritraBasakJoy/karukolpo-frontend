@@ -277,11 +277,6 @@
     }
 
     .category-name {
-      transform: translateY(-5px);
-    }
-
-    .category-link {
-      opacity: 1;
       transform: translateY(0);
     }
   }
@@ -316,21 +311,6 @@
       font-size: 2rem;
       letter-spacing: 4px;
     }
-  }
-
-  .category-link {
-    position: absolute;
-    bottom: 25%; // Position it a quarter way up from the bottom
-    display: block;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.3s ease;
-    font-weight: 500;
-    border-bottom: 2px solid white;
-    padding-bottom: 2px;
   }
 }
 

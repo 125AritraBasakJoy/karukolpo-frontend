@@ -55,8 +55,8 @@
             </div>
         </p-divider>
 
-        <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="3" [circular]="true"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="2000" [showNavigators]="false">
+        <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="1" [circular]="true"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
                     <div
@@ -94,8 +94,8 @@
             </div>
         </p-divider>
 
-        <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="3" [circular]="true"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="2000" [showNavigators]="false">
+        <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="1" [circular]="true"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
                     <div class="product-card small-card surface-card shadow-1 p-2 h-full flex flex-column relative">
@@ -200,20 +200,22 @@
 
                         <div class="p-fluid">
                             <div class="field mb-5 relative">
-                                <label for="contactName" class="text-xs font-bold uppercase letter-spacing-1 block mb-2"
+                                <label for="contactName"
+                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
                                     style="color: var(--accent-color);">Your Name</label>
                                 <input pInputText id="contactName" [(ngModel)]="contactForm.name"
                                     placeholder="Enter your full name" class="w-full contact-input">
                             </div>
                             <div class="field mb-5 relative">
-                                <label for="contactInfo" class="text-xs font-bold uppercase letter-spacing-1 block mb-2"
+                                <label for="contactInfo"
+                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
                                     style="color: var(--accent-color);">Phone Number or Email</label>
                                 <input pInputText id="contactInfo" [(ngModel)]="contactForm.contactInfo"
                                     placeholder="How can we reach you?" class="w-full contact-input">
                             </div>
                             <div class="field mb-6 relative">
                                 <label for="contactMessage"
-                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2"
+                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
                                     style="color: var(--accent-color);">Message</label>
                                 <textarea pInputTextarea id="contactMessage" [(ngModel)]="contactForm.message" rows="1"
                                     placeholder="Tell us about your inquiry..." class="w-full contact-input"

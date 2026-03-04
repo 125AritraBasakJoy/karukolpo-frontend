@@ -433,8 +433,21 @@
 
     &:focus,
     &:hover {
-      border-bottom-color: #c05c24 !important;
+      border-bottom-color: var(--accent-color) !important;
       outline: none !important;
+      background: linear-gradient(to top, rgba(59, 130, 246, 0.05), transparent) !important;
+    }
+
+    &:focus {
+      border-bottom-width: 2px !important;
+      padding-bottom: Calc(0.5rem - 1px) !important;
+    }
+  }
+
+  .field:focus-within {
+    label {
+      filter: brightness(1.2);
+      transform: translateX(4px);
     }
   }
 
@@ -562,7 +575,10 @@
   padding: 0;
 
   .p-carousel-items-container {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important; // Faster transition
+    will-change: transform;
+    /* Tells the browser to prep the GPU */
+    backface-visibility: hidden;
+    /* Fixes rare flickering in Chrome/Safari */
   }
 
   .p-carousel-indicators {

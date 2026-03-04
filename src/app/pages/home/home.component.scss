@@ -343,9 +343,8 @@
   border-radius: 0;
   border: none;
   box-shadow: none;
-  min-height: calc(100vh - 80px);
-  display: flex;
-  align-items: center;
+  min-height: auto;
+  display: block;
 
   .crafted-image-wrapper {
     position: relative;
@@ -401,7 +400,7 @@
 // Support / Contact Section
 .support-section {
   position: relative;
-  min-height: 100vh;
+  min-height: auto;
   margin: 0 !important;
 
   .bg-gradient-fade {

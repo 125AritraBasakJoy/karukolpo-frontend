@@ -79,7 +79,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
     </div>
 
     <!-- Forgot Password Modal -->
-    <p-dialog [(visible)]="displayForgotPasswordModal" [modal]="true" [style]="{width: '450px'}" styleClass="premium-dialog forgot-password-dialog" [draggable]="false" [resizable]="false">
+    <p-dialog [(visible)]="displayForgotPasswordModal" [modal]="true" [style]="{width: '450px'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}" styleClass="premium-dialog forgot-password-dialog" [draggable]="false" [resizable]="false">
       <ng-template pTemplate="header">
         <div class="flex align-items-center gap-3">
           <div class="header-icon-wrapper">
@@ -428,11 +428,27 @@ import { FloatLabelModule } from 'primeng/floatlabel';
     }
 
     /* Responsive: Keep same layout, just adapt sizing */
-    @media (max-width: 768px) {
+
+    /* Responsive: Adaptive layouts for all screens */
+    @media (max-width: 1024px) {
+      .login-form-panel {
+        width: 480px;
+        min-width: 400px;
+        padding: 3rem;
+      }
+      
+      .brand-title {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 850px) {
       .login-form-panel {
         width: 100%;
         min-width: unset;
-        padding: 2rem;
+        padding: 3rem;
+        background: #0f172a;
+        border-left: none;
       }
 
       .login-image-panel {
@@ -440,53 +456,42 @@ import { FloatLabelModule } from 'primeng/floatlabel';
       }
 
       .login-form-inner {
-        max-width: 100%;
-      }
-
-      .login-heading {
-        font-size: 1.35rem;
-      }
-
-      .login-subtitle {
-        font-size: 0.85rem;
-      }
-
-      .form-label {
-        font-size: 0.8rem;
-      }
-
-      .brand-title {
-        font-size: 1.75rem;
-      }
-
-      .brand-tagline {
-        font-size: 0.9rem;
-      }
-
-      .login-image-content {
-        bottom: 1.5rem;
-        left: 1.5rem;
+        max-width: 450px;
+        margin: 0 auto;
       }
     }
 
     @media (max-width: 480px) {
       .login-form-panel {
-        width: 260px;
-        min-width: 220px;
-        padding: 1.25rem;
+        padding: 1.5rem;
       }
 
-      .login-heading {
-        font-size: 1.15rem;
+      .login-brand-header {
+        gap: 1rem;
+        margin-bottom: 2rem !important;
       }
 
-      .brand-title {
+      .brand-icon-circle {
+        width: 48px;
+        height: 48px;
         font-size: 1.25rem;
       }
 
-      .login-image-content {
-        bottom: 1rem;
-        left: 1rem;
+      .login-heading {
+        font-size: 1.5rem;
+      }
+
+      .login-subtitle {
+        font-size: 0.75rem;
+      }
+
+      .premium-form-inputgroup .p-inputgroup-addon {
+        padding: 0 1rem !important;
+      }
+      
+      .premium-login-btn {
+        padding: 0.9rem !important;
+        font-size: 0.95rem !important;
       }
     }
   `]

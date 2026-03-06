@@ -111,12 +111,12 @@ import { FloatLabelModule } from 'primeng/floatlabel';
       </div>
       <ng-template pTemplate="footer">
           <div class="flex justify-content-end gap-3 mt-2">
-              <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary p-button-sm cancel-btn" (click)="displayForgotPasswordModal=false"></button>
+              <button pButton label="Cancel" icon="pi pi-times" class="p-button-text cancel-btn" (click)="displayForgotPasswordModal=false"></button>
               <button
                   pButton
-                  label="Send Password Reset Link"
+                  label="Send Reset Link"
                   icon="pi pi-send"
-                  class="premium-btn-primary reset-btn"
+                  class="reset-btn"
                   (click)="sendForgotPassword()"
                   [disabled]="forgotPasswordLoading()"
                   *ngIf="!forgotPasswordLoading()">
@@ -382,24 +382,48 @@ import { FloatLabelModule } from 'primeng/floatlabel';
       }
 
       .p-dialog-footer {
-        padding: 1.5rem 2rem 2rem !important;
+        padding: 1rem 2rem 2.5rem !important;
         border-top: none !important;
         background: transparent !important;
       }
 
       .cancel-btn {
         color: #94a3b8 !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
+        padding: 1rem 1.5rem !important;
+        border-radius: 14px !important;
+        height: 52px !important;
+        transition: all 0.3s ease !important;
+        
         &:hover {
           background: rgba(255, 255, 255, 0.05) !important;
           color: white !important;
+          transform: translateY(-1px);
         }
       }
 
       .reset-btn {
-        padding: 0.9rem 1.8rem !important;
-        border-radius: 12px !important;
-        font-weight: 600 !important;
+        padding: 1rem 2rem !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        height: 52px !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border: none !important;
+        box-shadow: 0 8px 20px -5px rgba(37, 99, 235, 0.45) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        flex: 1 !important;
+        justify-content: center !important;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px) !important;
+          box-shadow: 0 12px 25px -5px rgba(37, 99, 235, 0.55) !important;
+          filter: brightness(1.1);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed !important;
+        }
       }
     }
 

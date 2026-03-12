@@ -25,6 +25,7 @@
 
 
     <!-- Category Section -->
+    @if (categories().length > 0) {
     <div id="categories"
         class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
         <p-divider align="center" styleClass="w-full mb-4">
@@ -44,6 +45,7 @@
             }
         </div>
     </div>
+    }
 
     <!-- Best Selling Section -->
     @if (bestSelling().length > 0) {

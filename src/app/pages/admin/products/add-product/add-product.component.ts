@@ -194,7 +194,7 @@ export class AddProductComponent {
     isPriceFocused = false;
     loading = signal(false);
     productCreated = false;
-    createdProductId: number | null = null;
+    createdProductId: string | null = null;
     showInventoryModal = false;
 
     // Image handling
@@ -272,14 +272,14 @@ export class AddProductComponent {
             // 1. Create Product Metadata
             const productPayload: any = { ...this.product };
             const createdProduct = await firstValueFrom(this.productService.addProduct(productPayload));
-            this.createdProductId = parseInt(createdProduct.id);
+            this.createdProductId = createdProduct.id;
             const productId = this.createdProductId;
 
             console.log('Product Created with ID:', productId);
 
             // 2. Add Category Links
             if (this.selectedCategories && this.selectedCategories.length > 0) {
-                const categoryIds = this.selectedCategories.map(c => parseInt(c.toString(), 10)).filter(id => !isNaN(id));
+                const categoryIds = this.selectedCategories.map(c => c.toString());
                 if (categoryIds.length > 0) {
                     await firstValueFrom(this.productService.addMultipleCategoriesToProduct(productId, categoryIds));
                     console.log('Categories linked');

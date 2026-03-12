@@ -15,33 +15,33 @@ export const API_CONFIG = {
 export const PRODUCTS_API = {
     LIST: 'products',
     CREATE: 'products',
-    GET_BY_ID: (productId: number | string) => `products/${productId}`,
-    UPDATE: (productId: number | string) => `products/${productId}`,
-    DELETE: (productId: number | string) => `products/${productId}`,
+    GET_BY_ID: (productId: string) => `products/${productId}`,
+    UPDATE: (productId: string) => `products/${productId}`,
+    DELETE: (productId: string) => `products/${productId}`,
 
     // Product Categories
-    LIST_CATEGORIES: (productId: number | string) => `products/${productId}/categories`,
-    ADD_CATEGORY: (productId: number | string, categoryId: number | string) => `products/${productId}/categories/${categoryId}`,
-    REMOVE_CATEGORY: (productId: number | string, categoryId: number | string) => `products/${productId}/categories/${categoryId}`,
-    ADD_MULTIPLE_CATEGORIES: (productId: number | string) => `products/${productId}/categories`,
-    UPDATE_CATEGORIES: (productId: number | string) => `products/${productId}/categories`,
+    LIST_CATEGORIES: (productId: string) => `products/${productId}/categories`,
+    ADD_CATEGORY: (productId: string, categoryId: string) => `products/${productId}/categories/${categoryId}`,
+    REMOVE_CATEGORY: (productId: string, categoryId: string) => `products/${productId}/categories/${categoryId}`,
+    ADD_MULTIPLE_CATEGORIES: (productId: string) => `products/${productId}/categories`,
+    UPDATE_CATEGORIES: (productId: string) => `products/${productId}/categories`,
 
     // Product Inventory
-    GET_INVENTORY: (productId: number | string) => `products/${productId}/inventory`,
-    UPDATE_INVENTORY: (productId: number | string) => `products/${productId}/inventory`,
+    GET_INVENTORY: (productId: string) => `products/${productId}/inventory`,
+    UPDATE_INVENTORY: (productId: string) => `products/${productId}/inventory`,
 
     // Product Images
-    ADD_IMAGE: (productId: number | string) => `products/${productId}/images`,
-    BULK_UPLOAD_IMAGES: (productId: number | string) => `products/${productId}/images/bulk`,
-    BATCH_UPDATE_IMAGES: (productId: number | string) => `products/${productId}/images/batch`,
-    REMOVE_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}`,
-    SET_PRIMARY_IMAGE: (productId: number | string, image_id: number | string) => `products/${productId}/images/${image_id}/set-primary`,
+    ADD_IMAGE: (productId: string) => `products/${productId}/images`,
+    BULK_UPLOAD_IMAGES: (productId: string) => `products/${productId}/images/bulk`,
+    BATCH_UPDATE_IMAGES: (productId: string) => `products/${productId}/images/batch`,
+    REMOVE_IMAGE: (productId: string, image_id: string) => `products/${productId}/images/${image_id}`,
+    SET_PRIMARY_IMAGE: (productId: string, image_id: string) => `products/${productId}/images/${image_id}/set-primary`,
 
     // Special Sections
     HOT_DEALS: 'products/hot-deals',
-    HOT_DEALS_DELETE: (productId: number | string) => `products/hot-deals/${productId}`,
+    HOT_DEALS_DELETE: (productId: string) => `products/hot-deals/${productId}`,
     BEST_SELLERS: 'products/best-sellers',
-    BEST_SELLERS_DELETE: (productId: number | string) => `products/best-sellers/${productId}`,
+    BEST_SELLERS_DELETE: (productId: string) => `products/best-sellers/${productId}`,
 } as const;
 
 /**

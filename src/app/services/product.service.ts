@@ -80,16 +80,15 @@ export class ProductService {
    * Get product by ID with caching
    * GET /products/{id}
    */
-  getProductById(id: number | string, forceRefresh = false): Observable<Product | undefined> {
-    const stringId = id.toString();
-    if (!forceRefresh && this.productMap.has(stringId)) {
-      return of(this.productMap.get(stringId));
+  getProductById(id: string, forceRefresh = false): Observable<Product | undefined> {
+    if (!forceRefresh && this.productMap.has(id)) {
+      return of(this.productMap.get(id));
     }
 
     return this.apiService.get<any>(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id)).pipe(
       map(p => {
         const product = this.mapBackendToFrontend(p);
-        this.productMap.set(stringId, product);
+        this.productMap.set(id, product);
         return product;
       }),
       catchError(() => of(undefined))
@@ -123,7 +122,7 @@ export class ProductService {
    * Delete product
    * DELETE /products/{id} (requires auth)
    */
-  deleteProduct(id: number | string): Observable<void> {
+  deleteProduct(id: string): Observable<void> {
     return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.DELETE(id));
   }
 
@@ -131,7 +130,7 @@ export class ProductService {
    * Get product inventory
    * GET /products/{id}/inventory (requires auth)
    */
-  getInventory(productId: number | string): Observable<{ product_id: number; quantity: number }> {
+  getInventory(productId: string): Observable<{ product_id: string; quantity: number }> {
     return this.apiService.get(API_ENDPOINTS.PRODUCTS.GET_INVENTORY(productId));
   }
 
@@ -139,7 +138,7 @@ export class ProductService {
    * Update product inventory
    * PATCH /products/{id}/inventory (requires auth)
    */
-  updateInventory(productId: number | string, quantity: number): Observable<any> {
+  updateInventory(productId: string, quantity: number): Observable<any> {
     const payload = { quantity: parseInt(String(quantity)) };
 
     return this.apiService.patch(API_ENDPOINTS.PRODUCTS.UPDATE_INVENTORY(productId), payload);
@@ -149,7 +148,7 @@ export class ProductService {
    * Add category to product
    * POST /products/{productId}/categories/{categoryId}
    */
-  addCategoryToProduct(productId: number | string, categoryId: number | string): Observable<any> {
+  addCategoryToProduct(productId: string, categoryId: string): Observable<any> {
     return this.apiService.post(API_ENDPOINTS.PRODUCTS.ADD_CATEGORY(productId, categoryId), {});
   }
 
@@ -157,7 +156,7 @@ export class ProductService {
    * Remove category from product
    * DELETE /products/{productId}/categories/{categoryId}
    */
-  removeCategoryFromProduct(productId: number | string, categoryId: number | string): Observable<any> {
+  removeCategoryFromProduct(productId: string, categoryId: string): Observable<any> {
     return this.apiService.delete(API_ENDPOINTS.PRODUCTS.REMOVE_CATEGORY(productId, categoryId));
   }
 
@@ -165,7 +164,7 @@ export class ProductService {
    * Add multiple categories to product
    * POST /products/{productId}/categories
    */
-  addMultipleCategoriesToProduct(productId: number | string, categoryIds: (number | string)[]): Observable<any> {
+  addMultipleCategoriesToProduct(productId: string, categoryIds: string[]): Observable<any> {
     return this.apiService.post(API_ENDPOINTS.PRODUCTS.ADD_MULTIPLE_CATEGORIES(productId), categoryIds);
   }
 
@@ -173,7 +172,7 @@ export class ProductService {
    * Update product categories (replace all)
    * PUT /products/{productId}/categories
    */
-  updateProductCategories(productId: number | string, categoryIds: (number | string)[]): Observable<any> {
+  updateProductCategories(productId: string, categoryIds: string[]): Observable<any> {
     return this.apiService.put(API_ENDPOINTS.PRODUCTS.UPDATE_CATEGORIES(productId), categoryIds);
   }
 
@@ -181,7 +180,7 @@ export class ProductService {
    * List categories for a product
    * GET /products/{productId}/categories
    */
-  listProductCategories(productId: number | string, forceRefresh = false): Observable<any[]> {
+  listProductCategories(productId: string, forceRefresh = false): Observable<any[]> {
     if (!forceRefresh && this.productCategoriesCache.has(productId)) {
       return of(this.productCategoriesCache.get(productId)!);
     }
@@ -194,7 +193,7 @@ export class ProductService {
    * Add image to product
    * POST /products/{productId}/images
    */
-  addImage(productId: number | string, file: File): Observable<any> {
+  addImage(productId: string, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('image', file);
     return this.apiService.post(API_ENDPOINTS.PRODUCTS.ADD_IMAGE(productId), formData);
@@ -204,7 +203,7 @@ export class ProductService {
    * Bulk upload images to product
    * POST /products/{productId}/images/bulk
    */
-  bulkUploadImages(productId: number | string, primaryFile: File, additionalFiles: File[]): Observable<any[]> {
+  bulkUploadImages(productId: string, primaryFile: File, additionalFiles: File[]): Observable<any[]> {
     const formData = new FormData();
     formData.append('primary_image', primaryFile);
     additionalFiles.forEach(file => {
@@ -217,7 +216,7 @@ export class ProductService {
    * Remove image from product
    * DELETE /products/{productId}/images/{imageId}
    */
-  removeImage(productId: number | string, imageId: number | string): Observable<any> {
+  removeImage(productId: string, imageId: string): Observable<any> {
     return this.apiService.delete(API_ENDPOINTS.PRODUCTS.REMOVE_IMAGE(productId, imageId));
   }
 
@@ -225,7 +224,7 @@ export class ProductService {
    * Set primary image
    * PATCH /products/{productId}/images/{imageId}/set-primary
    */
-  setPrimaryImage(productId: number | string, imageId: number | string): Observable<any> {
+  setPrimaryImage(productId: string, imageId: string): Observable<any> {
     return this.apiService.patch(API_ENDPOINTS.PRODUCTS.SET_PRIMARY_IMAGE(productId, imageId), null);
   }
 
@@ -234,11 +233,11 @@ export class ProductService {
    * PATCH /products/{productId}/images/batch?new_primary_id={newPrimaryId}
    */
   batchUpdateImages(
-    productId: number | string,
-    newPrimaryId?: number | string | null,
+    productId: string,
+    newPrimaryId?: string | null,
     newPrimaryFile?: File,
     newGalleryFiles?: File[],
-    deleteImageIds?: (number | string)[]
+    deleteImageIds?: string[]
   ): Observable<any[]> {
     const formData = new FormData();
 
@@ -310,7 +309,7 @@ export class ProductService {
    * Set products as hot deals
    * POST /products/hot-deals
    */
-  setHotDeals(productIds: number[]): Observable<Product[]> {
+  setHotDeals(productIds: string[]): Observable<Product[]> {
     return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS, productIds).pipe(
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
@@ -320,7 +319,7 @@ export class ProductService {
    * Replace all hot deal products
    * PUT /products/hot-deals
    */
-  replaceHotDeals(productIds: number[]): Observable<Product[]> {
+  replaceHotDeals(productIds: string[]): Observable<Product[]> {
     return this.apiService.put<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS, productIds).pipe(
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
@@ -338,7 +337,7 @@ export class ProductService {
    * Remove specific product from hot deals
    * DELETE /products/hot-deals/{productId}
    */
-  removeFromHotDeals(productId: number | string): Observable<void> {
+  removeFromHotDeals(productId: string): Observable<void> {
     return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.HOT_DEALS_DELETE(productId));
   }
 
@@ -356,7 +355,7 @@ export class ProductService {
    * Set products as best sellers
    * POST /products/best-sellers
    */
-  setBestSellers(productIds: number[]): Observable<Product[]> {
+  setBestSellers(productIds: string[]): Observable<Product[]> {
     return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS, productIds).pipe(
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
@@ -366,7 +365,7 @@ export class ProductService {
    * Replace all best seller products
    * PUT /products/best-sellers
    */
-  replaceBestSellers(productIds: number[]): Observable<Product[]> {
+  replaceBestSellers(productIds: string[]): Observable<Product[]> {
     return this.apiService.put<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS, productIds).pipe(
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
@@ -384,7 +383,7 @@ export class ProductService {
    * Remove specific product from best sellers
    * DELETE /products/best-sellers/{productId}
    */
-  removeFromBestSellers(productId: number | string): Observable<void> {
+  removeFromBestSellers(productId: string): Observable<void> {
     return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS_DELETE(productId));
   }
 

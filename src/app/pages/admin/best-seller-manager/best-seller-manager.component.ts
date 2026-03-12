@@ -70,7 +70,7 @@ export class BestSellerManagerComponent implements OnInit {
     }
 
     onSave() {
-        const selectedIds = this.selectedProducts().map(p => Number(p.id));
+        const selectedIds = this.selectedProducts().map(p => p.id);
         this.loading.set(true);
 
         this.productService.replaceBestSellers(selectedIds)

@@ -95,9 +95,8 @@ export class CategoryService {
      * Get category by ID
      * GET /categories/{id}
      */
-    getCategoryById(id: number | string): Observable<Category | undefined> {
-        const categoryId = typeof id === 'string' ? parseInt(id, 10) : id;
-        return this.apiService.get<any>(API_ENDPOINTS.CATEGORIES.GET_BY_ID(categoryId)).pipe(
+    getCategoryById(id: string): Observable<Category | undefined> {
+        return this.apiService.get<any>(API_ENDPOINTS.CATEGORIES.GET_BY_ID(id)).pipe(
             map(cat => this.mapBackendToFrontend(cat)),
             catchError(() => {
                 return new Observable<Category | undefined>(observer => {
@@ -125,9 +124,8 @@ export class CategoryService {
      * PATCH /categories/{id} (requires auth)
      */
     updateCategory(category: Category): Observable<Category> {
-        const categoryId = typeof category.id === 'string' ? parseInt(category.id, 10) : category.id;
         const backendCategory = { name: category.name };
-        return this.apiService.patch<any>(API_ENDPOINTS.CATEGORIES.UPDATE(categoryId), backendCategory).pipe(
+        return this.apiService.patch<any>(API_ENDPOINTS.CATEGORIES.UPDATE(category.id), backendCategory).pipe(
             map(cat => this.mapBackendToFrontend(cat)),
             tap(() => this.refreshCache())
         );
@@ -137,9 +135,8 @@ export class CategoryService {
      * Delete category
      * DELETE /categories/{id} (requires auth)
      */
-    deleteCategory(id: number | string): Observable<void> {
-        const categoryId = typeof id === 'string' ? parseInt(id, 10) : id;
-        return this.apiService.delete<void>(API_ENDPOINTS.CATEGORIES.DELETE(categoryId)).pipe(
+    deleteCategory(id: string): Observable<void> {
+        return this.apiService.delete<void>(API_ENDPOINTS.CATEGORIES.DELETE(id)).pipe(
             tap(() => this.refreshCache())
         );
     }
@@ -152,9 +149,8 @@ export class CategoryService {
      * For a real category ID: fetches all products and checks each one's categories via
      * GET /products/{id}/categories so junction-table changes are immediately visible.
      */
-    getCategoryProducts(categoryId: number | string): Observable<Product[]> {
+    getCategoryProducts(categoryId: string): Observable<Product[]> {
         const isUncategorized = categoryId === 'uncategorized';
-        const id = isUncategorized ? -1 : (typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId);
 
         return this.productService.getProducts(0, 1000, undefined, true).pipe(
             switchMap(products => {
@@ -162,7 +158,7 @@ export class CategoryService {
 
                 return from(products).pipe(
                     mergeMap(product => {
-                        const pId = typeof product.id === 'string' ? parseInt(product.id, 10) : product.id;
+                        const pId = product.id;
                         return this.productService.listProductCategories(pId, true).pipe(
                             map(categories => {
                                 // Populate the categories array on the product object
@@ -174,7 +170,7 @@ export class CategoryService {
                                 }
 
                                 const belongsToCategory = product.categories.some((c: any) =>
-                                    (typeof c === 'object' ? (c.id || c.categoryId) : c) == id
+                                    (typeof c === 'object' ? (c.id || c.categoryId) : c).toString() === categoryId
                                 );
                                 return belongsToCategory ? product : null;
                             }),
@@ -201,24 +197,16 @@ export class CategoryService {
      * Uses GET /products?category_id={id} — fast, no per-product fetches.
      * Use this for the public-facing category products page only.
      */
-    getProductsByCategory(categoryId: number | string): Observable<Product[]> {
-        const id = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId;
-        return this.productService.getProducts(0, 1000, id);
+    getProductsByCategory(categoryId: string): Observable<Product[]> {
+        return this.productService.getProducts(0, 1000, categoryId);
     }
 
     /**
      * Remove product from category
      * DELETE /categories/{categoryId} (with productId)
      */
-    removeProductFromCategory(categoryId: number | string, productId: number | string): Observable<void> {
-        const cId = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId;
-        const pId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
-
-        if (isNaN(cId) || isNaN(pId)) {
-            console.error('CategoryService: Invalid IDs (NaN) provided!');
-        }
-
-        const endpoint = API_ENDPOINTS.PRODUCTS.REMOVE_CATEGORY(pId, cId);
+    removeProductFromCategory(categoryId: string, productId: string): Observable<void> {
+        const endpoint = API_ENDPOINTS.PRODUCTS.REMOVE_CATEGORY(productId, categoryId);
 
         return this.apiService.delete<void>(endpoint).pipe(
             tap({
@@ -234,14 +222,10 @@ export class CategoryService {
      * Move product to another category
      * PATCH /categories/{categoryId}
      */
-    moveProductToCategory(productId: number | string, oldCategoryId: number | string, newCategoryId: number | string): Observable<void> {
-        const oldCId = typeof oldCategoryId === 'string' ? parseInt(oldCategoryId, 10) : oldCategoryId;
-        const pId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
-        const newCId = typeof newCategoryId === 'string' ? parseInt(newCategoryId, 10) : newCategoryId;
-
-        return this.apiService.patch<void>(API_ENDPOINTS.CATEGORIES.UPDATE(oldCId), {
-            move_product_id: pId,
-            to_category_id: newCId
+    moveProductToCategory(productId: string, oldCategoryId: string, newCategoryId: string): Observable<void> {
+        return this.apiService.patch<void>(API_ENDPOINTS.CATEGORIES.UPDATE(oldCategoryId), {
+            move_product_id: productId,
+            to_category_id: newCategoryId
         });
     }
 

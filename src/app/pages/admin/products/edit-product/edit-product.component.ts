@@ -45,7 +45,7 @@ import { ValidationMessageComponent } from '../../../../components/validation-me
     styleUrls: ['./edit-product.component.scss']
 })
 export class EditProductComponent implements OnInit {
-    productId: number | null = null;
+    productId: string | null = null;
     product = signal<Product | null>(null);
     loading = signal<boolean>(false);
     saving = signal<boolean>(false);
@@ -71,9 +71,9 @@ export class EditProductComponent implements OnInit {
     additionalImagesPreviews: string[] = [];
 
     existingImages: ProductImage[] = [];
-    deletedImageIds: number[] = [];
-    initialPrimaryId: number | null = null;
-    newPrimaryImageId: number | null = null;
+    deletedImageIds: string[] = [];
+    initialPrimaryId: string | null = null;
+    newPrimaryImageId: string | null = null;
 
     constructor(
         private route: ActivatedRoute,
@@ -86,7 +86,7 @@ export class EditProductComponent implements OnInit {
     ngOnInit() {
         const idParam = this.route.snapshot.paramMap.get('id');
         if (idParam) {
-            this.productId = parseInt(idParam, 10);
+            this.productId = idParam;
             this.loadProductData();
         } else {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Invalid Product ID' });
@@ -107,7 +107,7 @@ export class EditProductComponent implements OnInit {
                 this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
                 this.existingImages = product.imageObjects ? [...product.imageObjects] : [];
                 const currentPrimary = this.existingImages.find(img => img.is_primary);
-                this.initialPrimaryId = currentPrimary ? Number(currentPrimary.id) : null;
+                this.initialPrimaryId = currentPrimary ? currentPrimary.id : null;
                 this.newPrimaryImageId = null;
                 this.mainImagePreview = product.imageUrl || null;
 
@@ -208,7 +208,7 @@ export class EditProductComponent implements OnInit {
 
             // 2. Handle Category Linking
             if (this.selectedCategoryIds && this.selectedCategoryIds.length >= 0) {
-                const categoryIds = this.selectedCategoryIds.map(id => parseInt(id.toString(), 10)).filter(id => !isNaN(id));
+                const categoryIds = this.selectedCategoryIds.map(id => id.toString());
                 await firstValueFrom(this.productService.updateProductCategories(productId, categoryIds));
             }
 

@@ -338,7 +338,7 @@ export class OrdersComponent implements OnInit {
       // Use ID as is, or parseInt if you are sure product IDs are numbers. 
       // Assuming product IDs are numbers for now, but let's be safe.
       // If product.id is string "123", parseInt works.
-      const productId = parseInt(item.product.id, 10);
+      const productId = item.product.id;
       return this.productService.getProductById(productId).pipe(
         map(product => ({ item, product })),
         catchError(err => {

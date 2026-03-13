@@ -166,7 +166,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
                         <td>
                             <div class="flex flex-column">
                                 <span class="font-bold text-gray-200">{{product.name}}</span>
-                                <small class="text-slate-500">ID: {{product.id}}</small>
+                                <small class="text-slate-500">ID: PROD-{{product.id.slice(-4)}}</small>
                             </div>
                         </td>
                         <td>

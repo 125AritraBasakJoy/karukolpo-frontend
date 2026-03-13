@@ -78,3 +78,4 @@ npm test
 *   [AG Grid](https://www.ag-grid.com/) - Data Grid
 *   [Chart.js](https://www.chartjs.org/) - Charting Library
 *   [XLSX](https://github.com/SheetJS/sheetjs) - Spreadsheet Parser and Writer
+*   [jspdf](https://www.npmjs.com/package/jspdf) - Invoice download as pdf

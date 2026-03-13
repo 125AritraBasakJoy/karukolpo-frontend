@@ -73,7 +73,7 @@ npm test
 
 ## Technologies Used
 
-*   [Angular](https://angular.io/)
+*   [Angular](https://angular.io/) - Framework
 *   [PrimeNG](https://primeng.org/) - UI Component Library
 *   [AG Grid](https://www.ag-grid.com/) - Data Grid
 *   [Chart.js](https://www.chartjs.org/) - Charting Library

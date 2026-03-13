@@ -395,7 +395,7 @@
             @for (order of trackedOrders; track order.id) {
             <div class="surface-card p-3 border-round shadow-1 mb-3">
                 <div class="flex justify-content-between align-items-center mb-2">
-                    <span class="font-bold">Order #{{ order.id }}</span>
+                    <span class="font-bold">Order #{{ order.orderNumber || order.id }}</span>
                     <p-tag [value]="order.status"
                         [severity]="order.status === 'Confirmed' ? 'success' : 'warning'"></p-tag>
                 </div>
@@ -523,7 +523,7 @@
     <div class="flex flex-column align-items-center text-center p-4">
         <i class="pi pi-thumbs-up text-6xl text-primary mb-3"></i>
         <h2 class="m-0 mb-2">Thank You!</h2>
-        <p class="text-600 mb-4">Your order <span class="font-bold text-primary">#{{ placedOrderId }}</span> and payment
+        <p class="text-600 mb-4">Your order <span class="font-bold text-primary">#{{ placedOrderNumber || placedOrderId }}</span> and payment
             information have been received. Our team will verify and process
             your order soon.</p>
         <button pButton label="Continue Shopping" styleClass="p-button-outlined"

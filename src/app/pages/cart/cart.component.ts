@@ -63,6 +63,7 @@ export class CartComponent implements OnInit {
     bkashTrxId = '';
     bkashPhone = '';
     placedOrderId = '';
+    placedOrderNumber = '';
     orderConfirmed = false;
 
     // Cash memo data — saved before cart is cleared
@@ -187,8 +188,9 @@ export class CartComponent implements OnInit {
         const orderData = this.prepareOrderData('COD');
 
         try {
-            const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
-            this.placedOrderId = orderId;
+            const order = await lastValueFrom(this.orderService.createOrder(orderData));
+            this.placedOrderId = order.id || '';
+            this.placedOrderNumber = order.orderNumber || this.placedOrderId;
             this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed successfully.' });
 
             this.saveCashMemoData('Cash on Delivery');
@@ -219,8 +221,9 @@ export class CartComponent implements OnInit {
         if (!this.placedOrderId) {
             const orderData = this.prepareOrderData('bKash');
             try {
-                const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
-                this.placedOrderId = orderId;
+                const order = await lastValueFrom(this.orderService.createOrder(orderData));
+                this.placedOrderId = order.id || '';
+                this.placedOrderNumber = order.orderNumber || this.placedOrderId;
             } catch (err) {
                 console.error('bKash Order creation failed', err);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to create order. Please try again.' });
@@ -229,7 +232,7 @@ export class CartComponent implements OnInit {
             }
         }
 
-        const oid = parseInt(this.placedOrderId, 10);
+        const oid = this.placedOrderId;
         let cleanPhone = this.bkashPhone.replace(/\D/g, '');
         if (cleanPhone.length > 11) {
             cleanPhone = cleanPhone.slice(-11);

@@ -429,7 +429,7 @@ export class OrdersComponent implements OnInit {
     // Construct payload for verification
     const verifyPayload = {
       id: order.paymentId || 0,
-      order_id: typeof orderId === 'string' ? parseInt(orderId, 10) : orderId,
+      order_id: orderId,
       status: 'paid', // Explicitly set status to paid
       transaction_id: order.transactionId || '',
       payment_method: order.paymentMethod ? order.paymentMethod.toLowerCase() : 'bkash'
@@ -549,9 +549,10 @@ export class OrdersComponent implements OnInit {
           return;
         }
 
-        const data = allOrders.map(order => ({
+        const csvData = allOrders.map(order => ({
+          'Order Number': order.orderNumber || order.id,
           'Order ID': order.id,
-          'Customer Name': order.fullName,
+          'Customer': order.fullName,
           'Phone': order.phoneNumber,
           'District': order.district,
           'Date': new Date(order.orderDate).toLocaleDateString(),
@@ -562,9 +563,9 @@ export class OrdersComponent implements OnInit {
           'Order Status': order.status
         }));
 
-        const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+        const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(csvData);
         const wscols = [
-          { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 15 }
+          { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 15 }
         ];
         ws['!cols'] = wscols;
         const wb: XLSX.WorkBook = XLSX.utils.book_new();
@@ -603,7 +604,8 @@ export class OrdersComponent implements OnInit {
       method: order.paymentMethod || 'COD',
       deliveryCharge: order.deliveryCharge || 0,
       total: order.totalAmount || 0,
-      id: orderIdStr
+      id: orderIdStr,
+      orderNumber: order.orderNumber || orderIdStr
     };
 
     // Use a small timeout to let Angular update the inputs on the hidden app-invoice

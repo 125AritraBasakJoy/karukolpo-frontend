@@ -2,6 +2,7 @@ import { CartItem } from './cart.model';
 
 export interface Order {
   id?: string;
+  orderNumber?: string;
   fullName: string;
   email: string;
   phoneNumber: string;

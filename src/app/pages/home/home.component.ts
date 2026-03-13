@@ -124,6 +124,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     districts: District[] = districts;
     subDistricts: string[] = [];
     placedOrderId = '';
+    placedOrderNumber = '';
     currentPaymentId: number | null = null;
     transactionId = '';
     landingPageImage = signal<string>('assets/landing-bg.jpg');
@@ -503,7 +504,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             }
         }
 
-        const oid = parseInt(this.placedOrderId, 10);
+        const oid = this.placedOrderId;
 
         // Helper to handle confirmation
         const handleConfirmation = (paymentId: number) => {
@@ -623,8 +624,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         const orderData = this.prepareOrderData('COD');
 
         try {
-            const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
-            this.placedOrderId = orderId;
+            const order = await lastValueFrom(this.orderService.createOrder(orderData));
+            this.placedOrderId = order.id || '';
+            this.placedOrderNumber = order.orderNumber || this.placedOrderId;
 
             // Since it's COD, we can directly show success
             this.messageService.add({
@@ -661,8 +663,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (!this.placedOrderId) {
             const orderData = this.prepareOrderData('bKash');
             try {
-                const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
-                this.placedOrderId = orderId;
+                const order = await lastValueFrom(this.orderService.createOrder(orderData));
+                this.placedOrderId = order.id || '';
+                this.placedOrderNumber = order.orderNumber || this.placedOrderId;
             } catch (err) {
                 console.error('bKash Order creation failed', err);
                 this.showError('Failed to create order before payment. Please try again.');
@@ -671,7 +674,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             }
         }
 
-        const oid = parseInt(this.placedOrderId, 10);
+        const oid = this.placedOrderId;
 
         // Sanitize phone number
         let cleanPhone = this.bkashPhone.replace(/\D/g, '');

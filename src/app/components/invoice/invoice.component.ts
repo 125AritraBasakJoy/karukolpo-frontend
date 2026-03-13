@@ -17,6 +17,7 @@ export class InvoiceComponent {
     @Input() orderDeliveryCharge: number = 0;
     @Input() orderTotal: number = 0;
     @Input() placedOrderId: string = '';
+    @Input() placedOrderNumber: string = '';
 
     @Output() continueShoppingClick = new EventEmitter<void>();
 
@@ -24,8 +25,9 @@ export class InvoiceComponent {
 
     get invoiceNumber(): string {
         const year = this.today.getFullYear();
-        const id = (this.placedOrderId || '0').padStart(5, '0');
-        return `INV-${year}-${id}`;
+        // Use orderNumber if available, otherwise fallback to id
+        const idPart = (this.placedOrderNumber || this.placedOrderId || '0').slice(-5);
+        return `INV-${year}-${idPart}`;
     }
 
     get formattedDate(): string {
@@ -163,9 +165,9 @@ export class InvoiceComponent {
         y += 5;
         text(this.invoiceNumber, pageW - margin, y, { size: 14, color: darkNavy, bold: true, align: 'right' });
         y += 6;
-        text('ORDER ID', pageW - margin, y, { size: 7, color: midGray, align: 'right' });
+        text('ORDER NUMBER', pageW - margin, y, { size: 7, color: midGray, align: 'right' });
         y += 5;
-        text(`#${this.placedOrderId}`, pageW - margin, y, { size: 16, color: darkNavy, bold: true, align: 'right' });
+        text(`#${this.placedOrderNumber || this.placedOrderId}`, pageW - margin, y, { size: 16, color: darkNavy, bold: true, align: 'right' });
 
         // =====================
         //  TITLE: INVOICE (positioned below the logo)

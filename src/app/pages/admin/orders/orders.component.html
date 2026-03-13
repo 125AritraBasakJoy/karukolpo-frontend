@@ -100,7 +100,7 @@
                 <ng-template pTemplate="body" let-order>
                     <tr>
                         <td>
-                            <span class="id-tag">#{{ order.id }}</span>
+                            <span class="id-tag">#{{ order.orderNumber || order.id }}</span>
                         </td>
                         <td>
                             <div class="font-medium text-white">{{ order.fullName }}</div>
@@ -187,7 +187,7 @@
             </div>
             <div>
                 <span class="text-2xl font-bold block">Order Details</span>
-                <span class="text-gray-400 font-mono text-base">#{{ selectedOrder?.id }}</span>
+                <span class="text-gray-400 font-mono text-base">#{{ selectedOrder?.orderNumber || selectedOrder?.id }}</span>
             </div>
         </div>
     </ng-template>
@@ -438,5 +438,5 @@
 <div style="position: fixed; left: -9999px; top: 0; width: 800px; pointer-events: none; opacity: 0;">
     <app-invoice #adminInvoice [orderedItems]="invoiceOrderData.items" [orderFormSnapshot]="invoiceOrderData.snapshot"
         [orderPaymentMethod]="invoiceOrderData.method" [orderDeliveryCharge]="invoiceOrderData.deliveryCharge"
-        [orderTotal]="invoiceOrderData.total" [placedOrderId]="invoiceOrderData.id"></app-invoice>
+        [orderTotal]="invoiceOrderData.total" [placedOrderId]="invoiceOrderData.id" [placedOrderNumber]="invoiceOrderData.orderNumber"></app-invoice>
 </div>

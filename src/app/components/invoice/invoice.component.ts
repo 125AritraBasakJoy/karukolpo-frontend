@@ -167,7 +167,7 @@ export class InvoiceComponent {
         y += 6;
         text('ORDER NUMBER', pageW - margin, y, { size: 7, color: midGray, align: 'right' });
         y += 5;
-        text(`#${this.placedOrderNumber || this.placedOrderId}`, pageW - margin, y, { size: 16, color: darkNavy, bold: true, align: 'right' });
+        text(`${this.placedOrderNumber || this.placedOrderId}`, pageW - margin, y, { size: 16, color: darkNavy, bold: true, align: 'right' });
 
         // =====================
         //  TITLE: INVOICE (positioned below the logo)

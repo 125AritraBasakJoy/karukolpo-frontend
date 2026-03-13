@@ -616,7 +616,7 @@ export class OrdersComponent implements OnInit {
           life: 2000,
           severity: 'success',
           summary: 'Success',
-          detail: `Invoice for Order #${order.id} downloaded.`
+          detail: `Invoice for Order ${order.id} downloaded.`
         });
       }).catch(err => {
         console.error('Admin Invoice download failed:', err);

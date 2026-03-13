@@ -458,24 +458,43 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     trackOrder() {
         if (!this.trackPhone) {
-            this.showError('Please enter a phone number');
+            this.showError('Please enter a phone number or order number');
             return;
         }
 
+        const input = this.trackPhone.trim().toUpperCase();
         this.trackingLoading = true;
         this.hasSearched = true;
-        this.orderService.trackOrdersByPhone(this.trackPhone).subscribe({
-            next: (orders) => {
-                // Sort by date descending
-                this.trackedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-                this.trackingLoading = false;
-            },
-            error: (err) => {
-                console.error('Tracking failed', err);
-                this.trackedOrders = [];
-                this.trackingLoading = false;
-            }
-        });
+
+        if (input.startsWith('ORD-')) {
+            // Track by order number
+            this.orderService.trackOrderByNumber(input).subscribe({
+                next: (order) => {
+                    this.trackedOrders = order ? [order] : [];
+                    this.trackingLoading = false;
+                },
+                error: (err) => {
+                    console.error('Tracking by number failed', err);
+                    this.trackedOrders = [];
+                    this.trackingLoading = false;
+                    this.showError('Order number not found.');
+                }
+            });
+        } else {
+            // Track by phone
+            this.orderService.trackOrdersByPhone(this.trackPhone).subscribe({
+                next: (orders) => {
+                    // Sort by date descending
+                    this.trackedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+                    this.trackingLoading = false;
+                },
+                error: (err) => {
+                    console.error('Tracking failed', err);
+                    this.trackedOrders = [];
+                    this.trackingLoading = false;
+                }
+            });
+        }
     }
 
     openPaymentForOrder(orderId: string | undefined) {

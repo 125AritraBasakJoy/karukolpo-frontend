@@ -146,6 +146,16 @@ export class OrderService {
   }
 
   /**
+   * Track order by human-readable order number
+   * GET /orders/order-number/{order_number}
+   */
+  trackOrderByNumber(orderNumber: string): Observable<Order> {
+    return this.apiService.get<any>(API_ENDPOINTS.ORDERS.TRACK_BY_NUMBER(orderNumber)).pipe(
+      map(order => this.mapBackendToFrontend(order))
+    );
+  }
+
+  /**
    * Cancel an order (Customer/Public endpoint)
    * PATCH /orders/{id}/cancel
    */

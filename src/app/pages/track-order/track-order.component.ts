@@ -74,6 +74,7 @@ export class TrackOrderComponent {
     // Check if input looks like a phone number (contains only digits, possibly with +88 prefix)
     const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
     const isPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanPhone);
+    const isOrderNumber = this.orderId.trim().toUpperCase().startsWith('ORD-');
 
     if (isPhone) {
       // Normalize phone number to 11 digits (01XXXXXXXXX format)
@@ -119,9 +120,30 @@ export class TrackOrderComponent {
           });
         }
       });
+    } else if (isOrderNumber) {
+        // Track by human-readable Order Number
+        this.orderService.trackOrderByNumber(this.orderId.trim().toUpperCase()).subscribe({
+          next: (order) => {
+            if (order) {
+              this.resolveProductNames(order).subscribe(resolvedOrder => {
+                this.order.set(resolvedOrder);
+                this.loading.set(false);
+              });
+            }
+          },
+          error: (err) => {
+            console.error('Order number tracking error:', err);
+            this.loading.set(false);
+            this.messageService.add({ life: 2000,
+              severity: 'error',
+              summary: 'Not Found',
+              detail: 'Order number not found'
+            });
+          }
+        });
     } else {
-      // Assume it's an Order ID
-      this.orderService.getOrderById(this.orderId).subscribe({
+      // Assume it's an internal UUID/ID
+      this.orderService.getOrderById(this.orderId.trim()).subscribe({
         next: (order) => {
           if (order) {
             this.resolveProductNames(order).subscribe(resolvedOrder => {

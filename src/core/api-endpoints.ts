@@ -67,6 +67,7 @@ export const ORDERS_API = {
     CONFIRM: (orderId: number | string) => `orders/${orderId}/confirm`, // Added based on pattern
     COMPLETE: (orderId: number | string) => `orders/${orderId}/complete`, // Added based on pattern
     TRACK_BY_PHONE: (phone: string) => `orders/track?phone=${encodeURIComponent(phone)}`,
+    TRACK_BY_NUMBER: (orderNumber: string) => `orders/order-number/${encodeURIComponent(orderNumber)}`,
 
     // Admin Order Actions
     ADMIN_UPDATE: (orderId: number | string) => `admin/orders/${orderId}`, // Generic Admin Update

@@ -1,6 +1,6 @@
 export interface ProductImage {
-  id: number;
-  product_id: number;
+  id: string;
+  product_id: string;
   image_path: string;
   image_thumb?: string;
   image_medium?: string;

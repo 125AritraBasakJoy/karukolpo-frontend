@@ -191,7 +191,7 @@ export class InventoryComponent implements OnInit {
         order.items.forEach(item => {
           const quantity = item.quantity || 0;
           const price = item.product?.price || 0;
-          const name = item.product?.name || `Product #${item.product?.id}`;
+          const name = item.product?.name || `Product PROD-${item.product?.id?.slice(-4)}`;
 
           salesMap.set(name, (salesMap.get(name) || 0) + quantity);
           units += quantity;

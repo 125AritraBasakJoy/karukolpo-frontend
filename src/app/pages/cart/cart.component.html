@@ -3,7 +3,7 @@
         <!-- Invoice Component -->
         <app-invoice *ngIf="orderConfirmed" [orderedItems]="orderedItems" [orderFormSnapshot]="orderFormSnapshot"
             [orderPaymentMethod]="orderPaymentMethod" [orderDeliveryCharge]="orderDeliveryCharge"
-            [orderTotal]="orderTotal" [placedOrderId]="placedOrderId" (continueShoppingClick)="continueShopping()">
+            [orderTotal]="orderTotal" [placedOrderId]="placedOrderId" [placedOrderNumber]="placedOrderNumber" (continueShoppingClick)="continueShopping()">
         </app-invoice>
 
         <!-- Main Cart Content -->

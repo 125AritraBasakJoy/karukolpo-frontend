@@ -124,6 +124,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     districts: District[] = districts;
     subDistricts: string[] = [];
     placedOrderId = '';
+    placedOrderNumber = '';
     currentPaymentId: number | null = null;
     transactionId = '';
     landingPageImage = signal<string>('assets/landing-bg.jpg');
@@ -457,24 +458,43 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     trackOrder() {
         if (!this.trackPhone) {
-            this.showError('Please enter a phone number');
+            this.showError('Please enter a phone number or order number');
             return;
         }
 
+        const input = this.trackPhone.trim().toUpperCase();
         this.trackingLoading = true;
         this.hasSearched = true;
-        this.orderService.trackOrdersByPhone(this.trackPhone).subscribe({
-            next: (orders) => {
-                // Sort by date descending
-                this.trackedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-                this.trackingLoading = false;
-            },
-            error: (err) => {
-                console.error('Tracking failed', err);
-                this.trackedOrders = [];
-                this.trackingLoading = false;
-            }
-        });
+
+        if (input.startsWith('ORD-')) {
+            // Track by order number
+            this.orderService.trackOrderByNumber(input).subscribe({
+                next: (order) => {
+                    this.trackedOrders = order ? [order] : [];
+                    this.trackingLoading = false;
+                },
+                error: (err) => {
+                    console.error('Tracking by number failed', err);
+                    this.trackedOrders = [];
+                    this.trackingLoading = false;
+                    this.showError('Order number not found.');
+                }
+            });
+        } else {
+            // Track by phone
+            this.orderService.trackOrdersByPhone(this.trackPhone).subscribe({
+                next: (orders) => {
+                    // Sort by date descending
+                    this.trackedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+                    this.trackingLoading = false;
+                },
+                error: (err) => {
+                    console.error('Tracking failed', err);
+                    this.trackedOrders = [];
+                    this.trackingLoading = false;
+                }
+            });
+        }
     }
 
     openPaymentForOrder(orderId: string | undefined) {
@@ -503,7 +523,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             }
         }
 
-        const oid = parseInt(this.placedOrderId, 10);
+        const oid = this.placedOrderId;
 
         // Helper to handle confirmation
         const handleConfirmation = (paymentId: number) => {
@@ -623,8 +643,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         const orderData = this.prepareOrderData('COD');
 
         try {
-            const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
-            this.placedOrderId = orderId;
+            const order = await lastValueFrom(this.orderService.createOrder(orderData));
+            this.placedOrderId = order.id || '';
+            this.placedOrderNumber = order.orderNumber || this.placedOrderId;
 
             // Since it's COD, we can directly show success
             this.messageService.add({
@@ -661,8 +682,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (!this.placedOrderId) {
             const orderData = this.prepareOrderData('bKash');
             try {
-                const orderId = await lastValueFrom(this.orderService.createOrder(orderData));
-                this.placedOrderId = orderId;
+                const order = await lastValueFrom(this.orderService.createOrder(orderData));
+                this.placedOrderId = order.id || '';
+                this.placedOrderNumber = order.orderNumber || this.placedOrderId;
             } catch (err) {
                 console.error('bKash Order creation failed', err);
                 this.showError('Failed to create order before payment. Please try again.');
@@ -671,7 +693,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             }
         }
 
-        const oid = parseInt(this.placedOrderId, 10);
+        const oid = this.placedOrderId;
 
         // Sanitize phone number
         let cleanPhone = this.bkashPhone.replace(/\D/g, '');

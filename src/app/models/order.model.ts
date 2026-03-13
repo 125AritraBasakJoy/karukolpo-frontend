@@ -2,6 +2,7 @@ import { CartItem } from './cart.model';
 
 export interface Order {
   id?: string;
+  orderNumber?: string;
   fullName: string;
   email: string;
   phoneNumber: string;
@@ -27,7 +28,7 @@ export interface Order {
 
   // New fields to match backend response structure
   address?: {
-    id: number;
+    id: string;
     full_name: string;
     phone: string;
     district: string;
@@ -36,8 +37,8 @@ export interface Order {
     additional_info: string;
   };
   payments?: {
-    id: number;
-    order_id: number;
+    id: string;
+    order_id: string;
     status: string;
     payment_method: string;
     transaction_id: string;

@@ -48,7 +48,7 @@ export class OrderService {
    * Create new order
    * POST /orders
    */
-  createOrder(order: Omit<Order, 'id'>): Observable<string> {
+  createOrder(order: Omit<Order, 'id'>): Observable<Order> {
     const backendOrder = this.mapFrontendToBackend(order);
     return this.apiService.post<any>(API_ENDPOINTS.ORDERS.CREATE, backendOrder).pipe(
       tap({
@@ -56,10 +56,10 @@ export class OrderService {
         error: (err) => console.error('Order creation failed:', err)
       }),
       map(response => {
-        const orderId = response.id?.toString() || '';
+        const mappedOrder = this.mapBackendToFrontend(response);
         // Notify admin of new order
-        this.notifyAdmin(orderId, 'new');
-        return orderId;
+        this.notifyAdmin(mappedOrder.id || '', 'new');
+        return mappedOrder;
       })
     );
   }
@@ -142,6 +142,16 @@ export class OrderService {
   trackOrdersByPhone(phone: string): Observable<Order[]> {
     return this.apiService.get<any[]>(API_ENDPOINTS.ORDERS.TRACK_BY_PHONE(phone)).pipe(
       map(orders => orders.map(order => this.mapBackendToFrontend(order)))
+    );
+  }
+
+  /**
+   * Track order by human-readable order number
+   * GET /orders/order-number/{order_number}
+   */
+  trackOrderByNumber(orderNumber: string): Observable<Order> {
+    return this.apiService.get<any>(API_ENDPOINTS.ORDERS.TRACK_BY_NUMBER(orderNumber)).pipe(
+      map(order => this.mapBackendToFrontend(order))
     );
   }
 
@@ -402,6 +412,7 @@ export class OrderService {
 
     return {
       id: (backendOrder.id !== undefined && backendOrder.id !== null) ? backendOrder.id.toString() : '',
+      orderNumber: backendOrder.order_number || '',
       fullName: backendOrder.address?.full_name || backendOrder.fullName || '',
       email: backendOrder.address?.email || backendOrder.email || '',
       phoneNumber: backendOrder.address?.phone || backendOrder.phoneNumber || backendOrder.phone || '',

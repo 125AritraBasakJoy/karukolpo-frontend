@@ -34,57 +34,96 @@ import { FloatLabelModule } from 'primeng/floatlabel';
       <!-- Right: Login Panel -->
       <div class="login-form-panel">
         <div class="login-form-inner">
-          <h2 class="login-heading">Admin Login</h2>
-          <p class="login-subtitle">Enter your credentials to access the dashboard</p>
-
-          <div class="p-fluid mt-5">
-            <div class="field mb-4">
-              <label for="email" class="form-label">Email Address</label>
-              <input type="email" pInputText id="email" [(ngModel)]="email" autocomplete="email" class="w-full" placeholder="Enter your email">
+          <div class="login-brand-header mb-5">
+            <div class="brand-icon-circle">
+              <i class="pi pi-shield"></i>
             </div>
-            <div class="field mb-4">
-              <label for="password" class="form-label">Password</label>
-              <p-password id="password" [(ngModel)]="password" [feedback]="false" autocomplete="new-password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" [style]="{'width': '100%'}" placeholder="Enter your password"></p-password>
+            <div>
+              <h2 class="login-heading">Admin Login</h2>
+              <p class="login-subtitle">Dashboard Control Center</p>
             </div>
           </div>
 
-          <p-button label="Sign In" icon="pi pi-sign-in" (click)="login()" *ngIf="!loading()" styleClass="w-full login-btn"></p-button>
+          <div class="p-fluid mt-4">
+            <div class="field mb-4">
+              <label for="email" class="form-label-premium">EMAIL ADDRESS</label>
+              <div class="p-inputgroup premium-form-inputgroup">
+                <span class="p-inputgroup-addon">
+                  <i class="pi pi-envelope"></i>
+                </span>
+                <input type="email" pInputText id="email" [(ngModel)]="email" autocomplete="email" placeholder="admin@karukolpo.com">
+              </div>
+            </div>
+            <div class="field mb-5">
+              <label for="password" class="form-label-premium">PASSWORD</label>
+              <div class="p-inputgroup premium-form-inputgroup">
+                <span class="p-inputgroup-addon">
+                  <i class="pi pi-lock"></i>
+                </span>
+                <p-password id="password" [(ngModel)]="password" [feedback]="false" autocomplete="current-password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" placeholder="••••••••"></p-password>
+              </div>
+            </div>
+          </div>
+
+          <button pButton label="Sign In to Dashboard" icon="pi pi-sign-in" (click)="login()" *ngIf="!loading()" class="w-full premium-login-btn"></button>
+          
           <div *ngIf="loading()" class="flex justify-content-center py-3">
             <p-progressSpinner styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
           </div>
 
-          <div class="flex justify-content-center mt-4">
-            <button pButton label="Forgot Password?" icon="pi pi-lock" class="p-button-text p-button-secondary p-button-sm" (click)="showForgotPassword()"></button>
+          <div class="flex justify-content-center mt-5">
+            <button pButton label="Forgot Password?" icon="pi pi-key" class="p-button-text p-button-secondary p-button-sm forgot-link-btn" (click)="showForgotPassword()"></button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Forgot Password Modal -->
-    <p-dialog header="Forgot Password" [(visible)]="displayForgotPasswordModal" [modal]="true" [style]="{width: '450px'}" styleClass="premium-dialog">
-      <div class="p-fluid">
-          <p class="text-sm mb-4" style="color: var(--text-color-secondary);">
-              Enter your admin email address below. If the account exists, we'll send a password reset link to your inbox.
-          </p>
-          <div class="field mb-3">
-              <p-floatlabel>
-                  <input type="email" pInputText id="forgotEmail" [(ngModel)]="forgotEmail" class="w-full premium-input">
-                  <label for="forgotEmail">Email Address</label>
-              </p-floatlabel>
+    <p-dialog [(visible)]="displayForgotPasswordModal" [modal]="true" [style]="{width: '450px'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}" styleClass="premium-dialog forgot-password-dialog" [draggable]="false" [resizable]="false">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-3">
+          <div class="header-icon-wrapper">
+             <i class="pi pi-lock-open text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="m-0 text-xl font-bold text-white">Forgot Password</h2>
+            <p class="m-0 text-xs text-slate-400 mt-1">Admin Account Recovery</p>
+          </div>
+        </div>
+      </ng-template>
+      <div class="p-fluid modal-body-content pt-4">
+          <div class="instruction-card mb-4">
+            <i class="pi pi-info-circle text-blue-400"></i>
+            <p class="text-sm m-0">
+                Enter your admin email address below. If the account exists, we'll send a password reset link to your inbox.
+            </p>
+          </div>
+
+          <div class="field mb-0">
+              <label for="forgotEmail" class="form-label mb-2">EMAIL ADDRESS</label>
+              <div class="p-inputgroup premium-input-group">
+                <span class="p-inputgroup-addon">
+                    <i class="pi pi-envelope"></i>
+                </span>
+                <input type="email" pInputText id="forgotEmail" [(ngModel)]="forgotEmail" class="w-full" placeholder="name@karukolpo.com">
+              </div>
           </div>
       </div>
       <ng-template pTemplate="footer">
-          <div class="flex justify-content-end gap-2">
-              <p-button label="Cancel" icon="pi pi-times" styleClass="premium-btn-secondary" (click)="displayForgotPasswordModal=false"></p-button>
-              <p-button
-                  label="Send Password Reset Link"
+          <div class="flex justify-content-end gap-3 mt-2">
+              <button pButton label="Cancel" icon="pi pi-times" class="p-button-text cancel-btn" (click)="displayForgotPasswordModal=false"></button>
+              <button
+                  pButton
+                  label="Send Reset Link"
                   icon="pi pi-send"
-                  styleClass="premium-btn-primary"
+                  class="reset-btn"
                   (click)="sendForgotPassword()"
                   [disabled]="forgotPasswordLoading()"
                   *ngIf="!forgotPasswordLoading()">
-              </p-button>
-              <p-progressSpinner *ngIf="forgotPasswordLoading()" styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+              </button>
+              <div *ngIf="forgotPasswordLoading()" class="loading-wrapper pr-4">
+                <p-progressSpinner styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+              </div>
           </div>
       </ng-template>
     </p-dialog>
@@ -148,117 +187,311 @@ import { FloatLabelModule } from 'primeng/floatlabel';
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     }
 
-    /* Right Panel — Form */
+    /* Main Login Form Styling */
     .login-form-panel {
-      width: 480px;
-      min-width: 420px;
+      width: 520px;
+      min-width: 460px;
       background: #0f172a;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 3rem;
+      padding: 4rem;
       border-left: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .login-form-inner {
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
+    }
+
+    .login-brand-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .brand-icon-circle {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #60a5fa;
+      font-size: 1.5rem;
+      box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.2);
     }
 
     .login-heading {
-      font-size: 1.75rem;
+      font-size: 1.85rem;
       font-weight: 700;
       color: #f8fafc;
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 0.25rem 0;
       letter-spacing: -0.02em;
     }
 
     .login-subtitle {
-      color: #94a3b8;
-      font-size: 0.95rem;
+      color: #64748b;
+      font-size: 0.85rem;
       margin: 0;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
-    .form-label {
+    .form-label-premium {
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
       color: #94a3b8;
-      font-weight: 500;
-      font-size: 0.9rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
     }
 
-    :host ::ng-deep .login-btn {
+    :host ::ng-deep .premium-form-inputgroup,
+    :host ::ng-deep .premium-input-group {
+      display: flex !important;
+      width: 100% !important;
+      align-items: stretch !important;
+
+      .p-inputgroup-addon {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-right: none !important;
+        color: #64748b !important;
+        border-top-left-radius: 12px !important;
+        border-bottom-left-radius: 12px !important;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        padding: 0 1.25rem !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 0 0 auto !important;
+      }
+
+      /* Force p-inputgroup children to behave as one unit */
+      > input, 
+      > p-password {
+        flex: 1 1 auto !important;
+        display: flex !important;
+      }
+
+      /* Apply 'joined' styles to the actual input element */
+      > input,
+      > p-password input {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-top-right-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        width: 100% !important;
+        border-left: none !important;
+      }
+
+      /* Specific handling for p-password component wrapper */
+      > p-password {
+        .p-password {
+          width: 100% !important;
+          display: flex !important;
+          
+          input {
+            flex: 1 1 auto !important;
+          }
+        }
+      }
+
+      &:focus-within {
+        .p-inputgroup-addon {
+          color: #3b82f6 !important;
+          border-color: #3b82f6 !important;
+          background: rgba(59, 130, 246, 0.05) !important;
+        }
+        input, .p-password input {
+          border-color: #3b82f6 !important;
+        }
+      }
+    }
+
+    :host ::ng-deep .premium-login-btn {
       background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
       border: none !important;
       border-radius: 12px !important;
-      padding: 0.9rem 1.5rem !important;
-      font-weight: 600 !important;
+      padding: 1.1rem !important;
+      font-weight: 700 !important;
       font-size: 1rem !important;
-      box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.35) !important;
-      transition: all 0.3s ease !important;
+      letter-spacing: 0.02em;
+      box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4) !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+      &:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.5) !important;
+        filter: brightness(1.1);
+      }
     }
 
-    :host ::ng-deep .login-btn:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 12px 24px -4px rgba(37, 99, 235, 0.45) !important;
+    :host ::ng-deep .forgot-link-btn {
+      color: #64748b !important;
+      font-weight: 600 !important;
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.05) !important;
+      padding: 0.6rem 1.2rem !important;
+      border-radius: 10px !important;
+      transition: all 0.2s ease !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #f8fafc !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+      }
+    }
+
+    /* Forgot Password Modal Enhancements */
+    :host ::ng-deep .forgot-password-dialog {
+      .p-dialog-header {
+        padding: 2rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+      }
+
+      .header-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #60a5fa;
+      }
+
+      .instruction-card {
+        background: rgba(59, 130, 246, 0.05);
+        border-left: 3px solid #3b82f6;
+        padding: 1rem;
+        border-radius: 8px;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        color: #94a3b8;
+        line-height: 1.5;
+      }
+
+      .p-dialog-footer {
+        padding: 1rem 2rem 2.5rem !important;
+        border-top: none !important;
+        background: transparent !important;
+      }
+
+      .cancel-btn {
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+        padding: 1rem 1.5rem !important;
+        border-radius: 14px !important;
+        height: 52px !important;
+        transition: all 0.3s ease !important;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.05) !important;
+          color: white !important;
+          transform: translateY(-1px);
+        }
+      }
+
+      .reset-btn {
+        padding: 1rem 2rem !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        height: 52px !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border: none !important;
+        box-shadow: 0 8px 20px -5px rgba(37, 99, 235, 0.45) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        flex: 1 !important;
+        justify-content: center !important;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px) !important;
+          box-shadow: 0 12px 25px -5px rgba(37, 99, 235, 0.55) !important;
+          filter: brightness(1.1);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed !important;
+        }
+      }
     }
 
     /* Responsive: Keep same layout, just adapt sizing */
-    @media (max-width: 768px) {
+
+    /* Responsive: Adaptive layouts for all screens */
+    @media (max-width: 1024px) {
       .login-form-panel {
-        width: 320px;
-        min-width: 280px;
-        padding: 1.5rem;
+        width: 480px;
+        min-width: 400px;
+        padding: 3rem;
+      }
+      
+      .brand-title {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .login-form-panel {
+        width: 100%;
+        min-width: unset;
+        padding: 3rem;
+        background: #0f172a;
+        border-left: none;
+      }
+
+      .login-image-panel {
+        display: none;
       }
 
       .login-form-inner {
-        max-width: 100%;
-      }
-
-      .login-heading {
-        font-size: 1.35rem;
-      }
-
-      .login-subtitle {
-        font-size: 0.85rem;
-      }
-
-      .form-label {
-        font-size: 0.8rem;
-      }
-
-      .brand-title {
-        font-size: 1.75rem;
-      }
-
-      .brand-tagline {
-        font-size: 0.9rem;
-      }
-
-      .login-image-content {
-        bottom: 1.5rem;
-        left: 1.5rem;
+        max-width: 450px;
+        margin: 0 auto;
       }
     }
 
     @media (max-width: 480px) {
       .login-form-panel {
-        width: 260px;
-        min-width: 220px;
-        padding: 1.25rem;
+        padding: 1.5rem;
       }
 
-      .login-heading {
-        font-size: 1.15rem;
+      .login-brand-header {
+        gap: 1rem;
+        margin-bottom: 2rem !important;
       }
 
-      .brand-title {
+      .brand-icon-circle {
+        width: 48px;
+        height: 48px;
         font-size: 1.25rem;
       }
 
-      .login-image-content {
-        bottom: 1rem;
-        left: 1rem;
+      .login-heading {
+        font-size: 1.5rem;
+      }
+
+      .login-subtitle {
+        font-size: 0.75rem;
+      }
+
+      .premium-form-inputgroup .p-inputgroup-addon {
+        padding: 0 1rem !important;
+      }
+      
+      .premium-login-btn {
+        padding: 0.9rem !important;
+        font-size: 0.95rem !important;
       }
     }
   `]

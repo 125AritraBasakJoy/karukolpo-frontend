@@ -6,11 +6,11 @@
     <div class="glass-card search-card p-5 mb-6">
       <div class="search-section">
         <h1 class="text-4xl font-bold mb-2 text-white">Track Your Order</h1>
-        <p class="text-slate-400 mb-5 text-lg">Enter your order ID or registered phone number</p>
+        <p class="text-slate-400 mb-5 text-lg">Enter your order ID (e.g. ORD-...) or registered phone number</p>
 
         <div
           class="flex flex-column sm:flex-row align-items-center justify-content-center gap-3 w-full md:w-30rem mx-auto">
-          <input type="text" pInputText placeholder="e.g. 017..." [(ngModel)]="orderId" (keyup.enter)="trackOrder()"
+          <input type="text" pInputText placeholder="Enter Order # or Phone" [(ngModel)]="orderId" (keyup.enter)="trackOrder()"
             class="w-full premium-input">
           <button type="button" pButton icon="pi pi-search" (click)="trackOrder()"
             class="premium-btn-primary p-button-icon-only w-full sm:w-auto px-5"></button>
@@ -59,7 +59,7 @@
               styleClass="text-sm px-3"></p-tag>
           </div>
           <div class="text-right">
-            <span class="text-slate-400 text-sm block mb-1">Order #{{ order()?.id }}</span>
+            <span class="text-slate-400 text-sm block mb-1">Order {{ order()?.orderNumber || order()?.id }}</span>
             <span class="font-bold text-xl text-white">{{ order()?.orderDate | date:'medium' }}</span>
           </div>
         </div>

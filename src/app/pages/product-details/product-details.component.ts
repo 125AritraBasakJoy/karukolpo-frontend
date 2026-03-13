@@ -82,7 +82,7 @@ export class ProductDetailsComponent implements OnInit {
 
   loadProduct(id: string | number) {
     this.loading.set(true);
-    const pid = typeof id === 'string' ? parseInt(id, 10) : id;
+    const pid = id.toString();
 
     // Fetch Product details (stock is included in the response, no auth required)
     this.productService.getProductById(pid).subscribe({

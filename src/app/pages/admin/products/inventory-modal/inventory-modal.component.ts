@@ -65,7 +65,7 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 })
 export class InventoryModalComponent {
     @Input() visible = false;
-    @Input() productId!: number;
+    @Input() productId!: string;
     @Output() closed = new EventEmitter<void>();
     @Output() saved = new EventEmitter<void>();
 

@@ -91,7 +91,7 @@
             <ng-template pTemplate="body" let-product>
                 <tr class="table-row">
                     <td>
-                        <code class="id-tag">#{{ product.id }}</code>
+                        <code class="id-tag">PROD-{{ product.id.slice(-4) }}</code>
                     </td>
                     <td>
                         <div class="product-img-container">

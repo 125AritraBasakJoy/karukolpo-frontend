@@ -257,10 +257,11 @@ export class ProductService {
       });
     }
 
-    let url = API_ENDPOINTS.PRODUCTS.BATCH_UPDATE_IMAGES(productId);
     if (newPrimaryId !== undefined && newPrimaryId !== null) {
-      url += `?new_primary_id=${newPrimaryId}`;
+      formData.append('new_primary_id', String(newPrimaryId));
     }
+
+    const url = API_ENDPOINTS.PRODUCTS.BATCH_UPDATE_IMAGES(productId);
 
     return this.apiService.patch<any[]>(url, formData);
   }

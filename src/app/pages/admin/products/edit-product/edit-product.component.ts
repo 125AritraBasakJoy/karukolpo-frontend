@@ -139,6 +139,7 @@ export class EditProductComponent implements OnInit {
         const file = event?.target?.files?.[0] || event?.files?.[0];
         if (file) {
             this.selectedMainImage = file;
+            this.newPrimaryImageId = null; // Clear existing primary selection if new file is chosen
             const reader = new FileReader();
             reader.onload = (e: any) => {
                 this.mainImagePreview = e.target.result;
@@ -177,6 +178,8 @@ export class EditProductComponent implements OnInit {
 
     setAsPrimary(img: ProductImage) {
         this.newPrimaryImageId = img.id;
+        this.selectedMainImage = null; // Clear new file upload if existing image is selected
+        this.mainImagePreview = img.image_medium || img.image_large || img.image_path || null;
     }
 
     isImagePrimary(img: ProductImage): boolean {
@@ -213,22 +216,25 @@ export class EditProductComponent implements OnInit {
             }
 
             // 3. Handle Images
-            const hasNewImages = this.selectedMainImage !== null || this.selectedAdditionalImages.length > 0;
+            const hasNewUploads = this.selectedMainImage !== null || this.selectedAdditionalImages.length > 0;
             const hasDeletes = this.deletedImageIds.length > 0;
-            const hasNewPrimary = this.newPrimaryImageId !== null && this.newPrimaryImageId !== this.initialPrimaryId;
+            const hasExistingPrimaryChange = this.newPrimaryImageId !== null && this.newPrimaryImageId !== this.initialPrimaryId;
 
-            if (hasNewImages || hasDeletes || hasNewPrimary) {
-                if (!hasNewImages && !hasDeletes && hasNewPrimary) {
-                    await firstValueFrom(this.productService.setPrimaryImage(productId, this.newPrimaryImageId!));
-                } else {
-                    await firstValueFrom(this.productService.batchUpdateImages(
-                        productId,
-                        hasNewPrimary ? this.newPrimaryImageId : undefined,
-                        this.selectedMainImage || undefined,
-                        this.selectedAdditionalImages.length > 0 ? this.selectedAdditionalImages : undefined,
-                        this.deletedImageIds.length > 0 ? this.deletedImageIds : undefined
-                    ));
-                }
+            if (hasDeletes && !hasNewUploads && !hasExistingPrimaryChange && this.deletedImageIds.length === 1) {
+                // Individual delete if ONLY ONE image was deleted
+                await firstValueFrom(this.productService.removeImage(productId, this.deletedImageIds[0]));
+            } else if (hasNewUploads || hasDeletes) {
+                // Batch update if there are uploads or multiple deletes (or delete + change)
+                await firstValueFrom(this.productService.batchUpdateImages(
+                    productId,
+                    hasExistingPrimaryChange ? this.newPrimaryImageId : undefined,
+                    this.selectedMainImage || undefined,
+                    this.selectedAdditionalImages.length > 0 ? this.selectedAdditionalImages : undefined,
+                    this.deletedImageIds.length > 0 ? this.deletedImageIds : undefined
+                ));
+            } else if (hasExistingPrimaryChange) {
+                // Individual primary update if ONLY the primary changed between existing images
+                await firstValueFrom(this.productService.setPrimaryImage(productId, this.newPrimaryImageId!));
             }
 
             // 4. Update Inventory

@@ -1,81 +1,80 @@
 # Karukolpo Frontend
 
-This project is an Angular application for the Karukolpo platform.
+Karukolpo is a premium E-commerce platform dedicated to showcasing and selling exquisite handcrafted goods. This Angular-based frontend application provides a seamless experience for both customers and administrators, combining modern aesthetics with robust management tools.
 
-## Prerequisites
+## 🌟 Key Features
 
-Before you begin, ensure you have met the following requirements:
-*   **Node.js**: Make sure you have Node.js installed. You can download it from [nodejs.org](https://nodejs.org/).
-*   **Angular CLI**: Install the Angular CLI globally if you haven't already.
+### 🛍️ Customer Storefront
+- **Dynamic Home Page**: Featuring curated hero sections, featured products, and seasonal categories.
+- **Product Catalog**: Advanced filtering and search capabilities to explore handcrafted items.
+- **Seamless Cart Experience**: Real-time cart management with local storage persistence.
+- **Order Tracking**: Real-time status updates for placed orders.
+- **Responsive Design**: Optimized for mobile, tablet, and desktop viewing.
 
-    ```bash
-    npm install -g @angular/cli
-    ```
+### 🛡️ Admin Portal
+- **Management Dashboard**: Visualized sales data and order statistics using Chart.js.
+- **Product & Category Management**: Full CRUD operations for products and categories.
+- **Inventory Tracking**: Real-time stock management with barcode generation (JsBarcode).
+- **Order Fulfillment**: Complete order lifecycle management from pending to delivered.
+- **Reporting Tools**: Export sales and inventory data to Excel (XLSX) or download invoices as PDF (jsPDF).
+- **Maintenance Control**: Toggle site-wide maintenance mode for scheduled updates.
 
-## Getting Started
+## 🛠️ Technologies Used
 
-To get a local copy up and running, follow these simple steps.
+- **Framework**: [Angular 20+](https://angular.io/)
+- **UI Components**: [PrimeNG](https://primeng.org/) & [PrimeFlex](https://primeflex.org/)
+- **Data Grids**: [AG Grid](https://www.ag-grid.com/) for high-performance data handling.
+- **Visualization**: [Chart.js](https://www.chartjs.org/) for business insights.
+- **Reporting**:
+  - [XLSX](https://github.com/SheetJS/sheetjs) for spreadsheet exports.
+  - [jsPDF](https://github.com/parallax/jsPDF) and [jsPDF-AutoTable](https://github.com/simonbengtsson/jspdf-autotable) for PDF generation.
+- **Barcodes**: [JsBarcode](https://lindell.me/JsBarcode/) for inventory labeling.
+- **Utilities**: [RxJS](https://rxjs.dev/) for reactive state management.
 
-### 1. Clone the Repository
+## 🚀 Getting Started
 
-Open your terminal or command prompt and run the following command to clone the repository:
+### Prerequisites
+- **Node.js**: [Download and install Node.js](https://nodejs.org/)
+- **Angular CLI**: Install globally:
+  ```bash
+  npm install -g @angular/cli
+  ```
 
-```bash
-git clone https://github.com/your-username/karukolpo-frontend.git
-cd karukolpo-frontend
-```
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/karukolpo-frontend.git
+   cd karukolpo-frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### 2. Install Dependencies
-
-Install the project dependencies using npm:
-
-```bash
-npm install
-```
-
-### 3. Run the Application
-
-Start the development server:
-
+### Development
+Start the local server:
 ```bash
 npm start
-```
-OR
-```bash
+# OR
 ng serve
 ```
+Navigate to `http://localhost:4200/`.
 
-Navigate to `http://localhost:4200/` in your browser. The application will automatically reload if you change any of the source files.
+Access the [**🚀 Admin Portal**](http://localhost:4200/admin) for management tasks.
 
-### Admin Portal
+## 📦 Build & Deployment
 
-Once the application is running, click the link below to access the admin login:
-
-[**🚀 Launch Admin Portal**](http://localhost:4200/admin)
-
-## Build
-
-To build the project for production:
-
+To build for production:
 ```bash
 npm run build
 ```
+Artifacts will be in the `dist/` directory.
 
-The build artifacts will be stored in the `dist/` directory.
-
-## Running Tests
-
-To execute the unit tests via [Karma](https://karma-runner.github.io):
-
+## 🧪 Testing
+Run unit tests via Karma:
 ```bash
 npm test
 ```
 
-## Technologies Used
-
-*   [Angular](https://angular.io/) - Framework
-*   [PrimeNG](https://primeng.org/) - UI Component Library
-*   [AG Grid](https://www.ag-grid.com/) - Data Grid
-*   [Chart.js](https://www.chartjs.org/) - Charting Library
-*   [XLSX](https://github.com/SheetJS/sheetjs) - Spreadsheet Parser and Writer
-*   [jspdf](https://www.npmjs.com/package/jspdf) - Invoice download as pdf
+## 📄 License
+This project is proprietary and for internal use only.

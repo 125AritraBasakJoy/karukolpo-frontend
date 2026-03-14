@@ -1,5 +1,7 @@
 import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface ContactInfo {
     address: string;
@@ -19,7 +21,10 @@ export class ContactService {
         email: 'contact@karukolpo.com'
     });
 
-    constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+    constructor(
+        @Inject(PLATFORM_ID) private platformId: Object,
+        private http: HttpClient
+    ) {
         this.loadContactInfo();
     }
 
@@ -42,5 +47,15 @@ export class ContactService {
         if (isPlatformBrowser(this.platformId)) {
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(info));
         }
+    }
+
+    submitContactForm(data: { name: string, contact: string, message: string }): Observable<any> {
+        // Replace this URL with your actual Google Apps Script Web App URL
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbyUerPmcrk3OakXnPKrJPMXQZnBU8P3gdHO4tvG5sOjxTMRExSRORux536rPPoY2WRUIQ/exec';
+        
+        // We must send it as text/plain and stringify the JSON to avoid CORS preflight (OPTIONS) errors with Google Apps Script
+        return this.http.post(scriptUrl, JSON.stringify(data), {
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
     }
 }

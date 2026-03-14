@@ -225,7 +225,7 @@ export class ProductService {
    * PATCH /products/{productId}/images/{imageId}/set-primary
    */
   setPrimaryImage(productId: string, imageId: string): Observable<any> {
-    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.SET_PRIMARY_IMAGE(productId, imageId), null);
+    return this.apiService.patch(API_ENDPOINTS.PRODUCTS.SET_PRIMARY_IMAGE(productId, imageId), {});
   }
 
   /**
@@ -404,7 +404,7 @@ export class ProductService {
   public mapBackendToFrontend(data: any): Product {
     // Collect potential stock fields
     const stockQty = data.stock_quantity ?? data.available_quantity ?? data.quantity ?? data.stock;
-    const stock = stockQty !== undefined ? parseInt(String(stockQty), 10) : 0;
+    const stock = (stockQty !== undefined && stockQty !== null) ? parseInt(String(stockQty), 10) : 0;
 
     // Normalize manual status (handle lowercase from some API versions)
     let rawStatus = data.stock_status || data.manual_stock_status || data.manualStockStatus || 'AUTO';
@@ -503,10 +503,20 @@ export class ProductService {
    * Map frontend product format to backend format
    */
   private mapFrontendToBackend(product: Product): any {
-    return {
+    const payload: any = {
       name: product.name,
       price: product.price,
       description: product.description || null
     };
+    
+    if (product.manualStockStatus && product.manualStockStatus !== 'AUTO') {
+      payload.manual_stock_status = product.manualStockStatus;
+      payload.stock_status = product.manualStockStatus; // fallback for some backends
+    } else if (product.manualStockStatus === 'AUTO') {
+      payload.manual_stock_status = 'AUTO';
+      payload.stock_status = 'AUTO';
+    }
+    
+    return payload;
   }
 }

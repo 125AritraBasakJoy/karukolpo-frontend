@@ -228,7 +228,8 @@
                                 class="p-button-lg w-full font-bold letter-spacing-1 border-none text-sm transition-colors transition-duration-300 hover:bg-blue-600"
                                 style="background: var(--accent-color); border-radius: 8px;"
                                 (click)="submitContactForm()"
-                                [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message"></button>
+                                [loading]="isContactSubmitting"
+                                [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting"></button>
                         </div>
                     </div>
                 </div>

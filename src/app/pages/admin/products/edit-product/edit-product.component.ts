@@ -183,6 +183,10 @@ export class EditProductComponent implements OnInit {
     }
 
     isImagePrimary(img: ProductImage): boolean {
+        // If a new file is uploaded as the primary image, no existing image acts as primary
+        if (this.selectedMainImage !== null) {
+            return false;
+        }
         if (this.newPrimaryImageId !== null) {
             return this.newPrimaryImageId === img.id;
         }
@@ -238,8 +242,12 @@ export class EditProductComponent implements OnInit {
             }
 
             // 4. Update Inventory
-            await firstValueFrom(this.productService.updateInventory(productId, this.inventoryForm.stock));
+            // Inventory is managed via a separate dialog in the inventory page. We do not want to blindly
+            // override quantity back to 0 here if it wasn't explicitly populated (the backend GET product query
+            // often doesn't return `stock` natively, meaning it defaults to 0 in this form logic).
+            // await firstValueFrom(this.productService.updateInventory(productId, this.inventoryForm.stock));
 
+            this.productService.clearCache();
             this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully' });
             setTimeout(() => {
                 this.router.navigate(['/admin/dashboard/inventory']);

@@ -109,10 +109,10 @@
                         <div class="status-badge-container">
                             <p-tag [value]="product.manualStockStatus === 'IN_STOCK' ? 'In Stock (Forced)' : 
                                            (product.manualStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock (Forced)' : 
-                                           (product.stock > 0 ? 'In Stock (' + product.stock + ')' : 'Out of Stock'))"
+                                           (product.isInStock ? (product.stock > 0 ? 'In Stock (' + product.stock + ')' : 'In Stock') : 'Out of Stock'))"
                                 [severity]="product.manualStockStatus === 'IN_STOCK' ? 'success' : 
                                                (product.manualStockStatus === 'OUT_OF_STOCK' ? 'danger' : 
-                                               (product.stock > 0 ? 'success' : 'danger'))"
+                                               (product.isInStock ? 'success' : 'danger'))"
                                 styleClass="custom-stock-tag"></p-tag>
                         </div>
                     </td>

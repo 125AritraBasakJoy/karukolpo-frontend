@@ -118,6 +118,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         contactInfo: '',
         message: ''
     };
+    isContactSubmitting = false;
     // Delivery Logic
     deliveryLocation: 'Inside Dhaka' | 'Outside Dhaka' = 'Inside Dhaka';
     currentDeliveryCharge = 0;
@@ -241,14 +242,29 @@ export class HomeComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // Handle via frontend for now (per instruction). Reset form and show success toast.
-        this.messageService.add({ severity: 'success', summary: 'Message Sent', detail: 'Thank you for reaching out! We will get back to you soon.', life: 3000 });
-
-        this.contactForm = {
-            name: '',
-            contactInfo: '',
-            message: ''
+        this.isContactSubmitting = true;
+        const formData = {
+            name: this.contactForm.name,
+            contact: this.contactForm.contactInfo,
+            message: this.contactForm.message
         };
+
+        this.contactService.submitContactForm(formData).subscribe({
+            next: (res) => {
+                this.isContactSubmitting = false;
+                this.messageService.add({ severity: 'success', summary: 'Message Sent', detail: 'Thank you for reaching out! We will get back to you soon.', life: 3000 });
+                this.contactForm = {
+                    name: '',
+                    contactInfo: '',
+                    message: ''
+                };
+            },
+            error: (err) => {
+                this.isContactSubmitting = false;
+                console.error('Error sending message', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to send message. Please try again later.' });
+            }
+        });
     }
 
     ngOnInit() {

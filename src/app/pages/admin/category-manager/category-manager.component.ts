@@ -66,7 +66,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
                 [rowsPerPageOptions]="[10, 25, 50, 100]"
                 [tableStyle]="{'min-width': '50rem'}" selectionMode="single" dataKey="id"
                 styleClass="premium-table-v2" [rowHover]="true" [showCurrentPageReport]="true"
-                currentPageReportTemplate="Showing {first} to {last} of many (Buffered)"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'body'"
                 [lazy]="true" (onLazyLoad)="loadCategories($event)" [totalRecords]="totalRecords()" [loading]="loading()">
                 
                 <ng-template pTemplate="caption">

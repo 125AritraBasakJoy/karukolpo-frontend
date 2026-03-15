@@ -176,28 +176,7 @@
                 </div>
             </div>
 
-            <div class="glass-card p-5 mb-5">
-                <h3 class="text-xl font-bold text-white mb-4 border-bottom-1 border-white-alpha-10 pb-2">Inventory
-                    Control</h3>
-                <div class="field mb-4">
-                    <label for="stock"
-                        class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Available
-                        Quantity</label>
-                    <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal"
-                        styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
-                </div>
 
-                <div class="field">
-                    <label for="manualStockStatus"
-                        class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Stock Display
-                        Mode</label>
-                    <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
-                        [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
-                        styleClass="w-full premium-dropdown" appendTo="body"></p-dropdown>
-                    <small class="block mt-2 text-slate-500 italic">Force "In Stock" or "Out of Stock" labels regardless
-                        of quantity.</small>
-                </div>
-            </div>
 
             <div class="sticky-action-bar">
                 <button pButton label="Save Changes" icon="pi pi-check"

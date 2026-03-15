@@ -16,7 +16,6 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     cursor: default;
-    user-select: none;
     color-scheme: dark;
     overflow-x: hidden;
 }
@@ -94,14 +93,15 @@ main {
 /* Explicit Overrides for PrimeNG v18 Overlays */
 .p-select-overlay,
 .p-select-panel,
-.p-dropdown-panel,
-.p-overlay {
+.p-dropdown-panel {
     background: var(--surface-card) !important;
     border: 1px solid var(--surface-border) !important;
     box-shadow: var(--card-shadow-hover) !important;
     border-radius: 12px !important;
     color: var(--text-color) !important;
-    padding: 0.5rem !important;
+    padding: 1.0rem !important;
+    margin-top: 0 !important;
+    min-width: 100% !important;
 }
 
 .p-select-items-wrapper,
@@ -250,6 +250,7 @@ button,
     [role="button"] *,
     .clickable,
     .clickable *,
+    .p-breadcrumb,
     .p-breadcrumb-home,
     .p-breadcrumb-item-link,
     .p-paginator-page,
@@ -281,6 +282,12 @@ h6,
 label,
 div {
     cursor: default;
+}
+
+/* Breadcrumb Styling Overrides */
+.p-breadcrumb {
+    background: transparent !important;
+    padding: 0 !important;
 }
 
 /* Except for actual inputs */

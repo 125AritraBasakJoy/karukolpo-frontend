@@ -27,7 +27,7 @@
             (selectionChange)="selectedProducts.set($event)" [rows]="10" [paginator]="true"
             [globalFilterFields]="['name', 'code']" [rowsPerPageOptions]="[10, 25, 50, 100]"
             [tableStyle]="{'min-width': '60rem'}" styleClass="premium-table-v2" [rowHover]="true" [loading]="loading()"
-            [showCurrentPageReport]="true" dataKey="id">
+            [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'body'" dataKey="id">
 
             <ng-template pTemplate="header">
                 <tr>

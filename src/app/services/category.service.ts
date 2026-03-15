@@ -29,10 +29,8 @@ export class CategoryService {
             const cached = this.loadFromCache();
             this.categories.set(cached);
 
-            // Background refresh only if cache is empty or on service boot
-            if (cached.length === 0) {
-                this.refreshCache();
-            }
+            // Always trigger background refresh to ensure we have the latest categories from the production database
+            this.refreshCache();
         }
     }
 

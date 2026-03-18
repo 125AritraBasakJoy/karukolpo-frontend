@@ -32,7 +32,6 @@ Karukolpo is a premium E-commerce platform dedicated to showcasing and selling e
 - **Reporting**:
   - [XLSX](https://github.com/SheetJS/sheetjs) for spreadsheet exports.
   - [jsPDF](https://github.com/parallax/jsPDF) and [jsPDF-AutoTable](https://github.com/simonbengtsson/jspdf-autotable) for PDF generation.
-- **Barcodes**: [JsBarcode](https://lindell.me/JsBarcode/) for inventory labeling.
 - **Utilities**: [RxJS](https://rxjs.dev/) for reactive state management.
 
 ## 🚀 Getting Started

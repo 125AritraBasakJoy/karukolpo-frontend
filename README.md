@@ -19,6 +19,10 @@ Karukolpo is a premium E-commerce platform dedicated to showcasing and selling e
 - **Reporting Tools**: Export sales and inventory data to Excel (XLSX) or download invoices as PDF (jsPDF).
 - **Maintenance Control**: Toggle site-wide maintenance mode for scheduled updates.
 
+## 🏢 Frontend Architecture
+
+<img width="1024" height="559" alt="image" src="https://github.com/user-attachments/assets/bb81bfac-80df-461b-928b-78bfaf5618c6" />
+
 ## 🛠️ Technologies Used
 
 - **Framework**: [Angular 20+](https://angular.io/)

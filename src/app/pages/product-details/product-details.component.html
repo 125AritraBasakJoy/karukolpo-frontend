@@ -99,8 +99,13 @@
         <div class="grid">
             @for (p of relatedProducts(); track p.id) {
             <div class="col-6 sm:col-6 md:col-3">
-                <div class="product-card surface-card border-round shadow-1 p-3 cursor-pointer h-full"
+                <div class="product-card surface-card border-round shadow-1 p-3 cursor-pointer h-full relative"
                     [routerLink]="['/products', p.id]">
+                    @if (!p.isInStock) {
+                    <div class="absolute top-0 right-0 m-2 z-2">
+                        <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
+                    </div>
+                    }
                     <img [ngSrc]="p.imageUrl" [alt]="p.name" class="w-full border-round mb-3" width="150" height="150"
                         style="height: 150px; object-fit: cover;">
                     <div class="font-bold text-lg mb-1">{{ p.name }}</div>

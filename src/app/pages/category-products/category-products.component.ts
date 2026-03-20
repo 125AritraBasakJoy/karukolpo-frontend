@@ -11,13 +11,14 @@ import { Category } from '../../models/category.model';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
+import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-category-products',
     standalone: true,
-    imports: [CommonModule, ButtonModule, TooltipModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink, SafeHtmlPipe, NgOptimizedImage],
+    imports: [CommonModule, ButtonModule, TooltipModule, TagModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink, SafeHtmlPipe, NgOptimizedImage],
 
     templateUrl: './category-products.component.html',
     styleUrls: ['./category-products.component.scss'],

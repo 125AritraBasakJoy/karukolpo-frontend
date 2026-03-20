@@ -8,13 +8,14 @@ import { CartService } from '../../services/cart.service';
 import { Product } from '../../models/product.model';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-all-products',
     standalone: true,
-    imports: [CommonModule, ButtonModule, TooltipModule, SkeletonModule, ToastModule, CurrencyPipe, SafeHtmlPipe, NgOptimizedImage],
+    imports: [CommonModule, ButtonModule, TooltipModule, TagModule, SkeletonModule, ToastModule, CurrencyPipe, SafeHtmlPipe, NgOptimizedImage],
     templateUrl: './all-products.component.html',
     styleUrls: ['./all-products.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

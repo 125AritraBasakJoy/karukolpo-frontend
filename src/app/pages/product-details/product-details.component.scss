@@ -159,9 +159,10 @@
 
 // Rich HTML description from Quill
 .rich-description {
-    word-break: break-word;
+    word-break: normal;
     overflow-wrap: break-word;
     white-space: normal;
+    text-align: left;
 
     // Quill output resets — ensure prose looks natural
     p {

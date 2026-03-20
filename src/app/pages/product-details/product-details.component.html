@@ -8,7 +8,7 @@
     @if (!loading() && product()) {
     <div class="grid">
         <!-- Left Column: Product Image/Carousel -->
-        <div class="col-12 md:col-6">
+        <div class="col-12 md:col-5">
             <div class="product-gallery-container">
                 @if (product()!.images && product()!.images!.length > 1) {
                 <div class="gallery-viewer">
@@ -41,7 +41,7 @@
         </div>
 
         <!-- Right Column: Product Info -->
-        <div class="col-12 md:col-6 md:pl-6">
+        <div class="col-12 md:col-7 md:pl-5">
             <div class="flex align-items-center justify-content-between mb-4">
                 <h1 class="text-4xl font-bold m-0 text-900">{{ product()!.name }}</h1>
                 <p-tag [value]="isOutOfStock() ? 'Out of Stock' : 'In Stock'"

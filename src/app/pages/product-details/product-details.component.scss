@@ -160,12 +160,13 @@
 // Rich HTML description from Quill
 .rich-description {
     word-break: normal !important;
-    overflow-wrap: normal !important;
+    overflow-wrap: break-word !important;
     white-space: normal !important;
     text-align: left !important;
     line-height: 1.8 !important;
     display: block !important;
     hyphens: none !important;
+    max-width: 100% !important;
 
     // Quill output resets — ensure prose looks natural
     p {

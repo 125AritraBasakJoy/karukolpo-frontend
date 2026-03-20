@@ -65,6 +65,11 @@
                         class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                             <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                            @if (isOutOfStock(product)) {
+                            <div class="absolute top-0 right-0 m-2 z-2">
+                                <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
+                            </div>
+                            }
                         </div>
                         <div class="flex-grow-1 flex align-items-center justify-content-between gap-2 mb-2">
                             <div class="product-title m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap" style="flex: 1; font-size: 0.9rem;" [pTooltip]="product.name" tooltipPosition="top">{{ product.name }}</div>
@@ -75,7 +80,7 @@
                             <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
                                 (click)="addToCart(product)"></button>
                             } @else {
-                            <button pButton label="Out of Stock" icon="pi pi-times-circle" class="p-button-secondary p-button-sm w-full" disabled></button>
+                            <button pButton label="View" icon="pi pi-eye" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
                             }
                         </div>
                     </div>
@@ -103,6 +108,11 @@
                     <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                             <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                            @if (isOutOfStock(product)) {
+                            <div class="absolute top-0 right-0 m-2 z-2">
+                                <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
+                            </div>
+                            }
                             <div class="absolute top-0 right-0 m-2">
                                 <p-tag value="Hot" severity="danger" class="shadow-2"></p-tag>
                             </div>
@@ -116,7 +126,7 @@
                             <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
                                 (click)="addToCart(product)"></button>
                             } @else {
-                            <button pButton label="Out of Stock" icon="pi pi-times-circle" class="p-button-secondary p-button-sm w-full" disabled></button>
+                            <button pButton label="View" icon="pi pi-eye" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
                             }
                         </div>
                     </div>

@@ -42,6 +42,7 @@ export class ProductDetailsComponent implements OnInit {
   loading = signal<boolean>(true);
   loadingRelated = signal<boolean>(false);
   activeImageIndex = 0;
+  quantity = signal<number>(1);
   responsiveOptions = [
     {
       breakpoint: '1024px',
@@ -182,5 +183,15 @@ export class ProductDetailsComponent implements OnInit {
     const images = this.product()?.images;
     if (!images || images.length <= 1) return;
     this.activeImageIndex = this.activeImageIndex === images.length - 1 ? 0 : this.activeImageIndex + 1;
+  }
+  
+  incrementQuantity() {
+    this.quantity.update(q => q + 1);
+  }
+
+  decrementQuantity() {
+    if (this.quantity() > 1) {
+      this.quantity.update(q => q - 1);
+    }
   }
 }

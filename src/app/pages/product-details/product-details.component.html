@@ -1,4 +1,4 @@
-<div class="container py-8 px-4">
+<div class="container-fluid py-6 px-2 sm:px-4 lg:px-4">
     @if (loading()) {
     <div class="flex justify-content-center align-items-center py-8">
         <p-progressSpinner></p-progressSpinner>
@@ -6,75 +6,110 @@
     }
 
     @if (!loading() && product()) {
-    <div class="grid">
-        <!-- Left Column: Product Image/Carousel -->
-        <div class="col-12 md:col-4">
-            <div class="product-gallery-container">
-                @if (product()!.images && product()!.images!.length > 1) {
-                <div class="gallery-viewer">
-                    <img [ngSrc]="product()!.images![activeImageIndex]" [alt]="product()!.name" class="product-image"
-                        width="600" height="600" priority>
+    <nav class="breadcrumb-container">
+        <ul class="breadcrumb-list">
+            <li><a routerLink="/">Home</a><span class="separator">/</span></li>
+            <li><a routerLink="/products">Products</a><span class="separator">/</span></li>
+            <li class="active">{{ product()!.name }}</li>
+        </ul>
+    </nav>
 
-                    <!-- Transparent Nav Buttons -->
-                    <button class="gallery-nav gallery-nav-prev" (click)="prevImage()" aria-label="Previous image">
-                        <i class="pi pi-chevron-left"></i>
-                    </button>
-                    <button class="gallery-nav gallery-nav-next" (click)="nextImage()" aria-label="Next image">
-                        <i class="pi pi-chevron-right"></i>
-                    </button>
+    <div class="product-main-layout">
+        <div class="grid">
+            <!-- Left Column: Product Gallery -->
+            <div class="col-12 lg:col-4">
+                <div class="product-gallery-container">
+                    @if (product()!.images && product()!.images!.length > 1) {
+                    <div class="gallery-viewer">
+                        <img [ngSrc]="product()!.images![activeImageIndex]" [alt]="product()!.name"
+                            class="product-image" width="600" height="600" priority>
 
-                    <!-- Dot Indicators -->
-                    <div class="gallery-dots">
-                        @for (img of product()!.images!; track $index) {
-                        <button class="gallery-dot" [class.active]="$index === activeImageIndex"
-                            (click)="activeImageIndex = $index" [attr.aria-label]="'Image ' + ($index + 1)"></button>
-                        }
+                        <button class="gallery-nav gallery-nav-prev" (click)="prevImage()">
+                            <i class="pi pi-chevron-left"></i>
+                        </button>
+                        <button class="gallery-nav gallery-nav-next" (click)="nextImage()">
+                            <i class="pi pi-chevron-right"></i>
+                        </button>
+
+                        <div class="gallery-dots">
+                            @for (img of product()!.images!; track $index) {
+                            <button class="gallery-dot" [class.active]="$index === activeImageIndex"
+                                (click)="activeImageIndex = $index"></button>
+                            }
+                        </div>
                     </div>
-                </div>
-                } @else {
-                <div class="image-wrapper solo">
-                    <img [ngSrc]="product()!.imageUrl" [alt]="product()!.name" class="product-image" width="500"
-                        height="500" priority>
-                </div>
-                }
-            </div>
-        </div>
-
-        <!-- Right Column: Product Info -->
-        <div class="col-12 md:col-8 md:pl-6">
-            <div class="flex align-items-center justify-content-between mb-4">
-                <h1 class="text-4xl font-bold m-0 text-900">{{ product()!.name }}</h1>
-                <p-tag [value]="isOutOfStock() ? 'Out of Stock' : 'In Stock'"
-                    [severity]="isOutOfStock() ? 'danger' : 'success'"></p-tag>
-            </div>
-
-            <div class="text-3xl text-primary font-bold mb-4">
-                {{ product()!.price | currency:'BDT':'৳' }}
-            </div>
-
-            <div class="rich-description text-700 text-lg mb-5"
-                [innerHTML]="product()!.description | safeHtml">
-            </div>
-
-            <div class="surface-border border-top-1 pt-5">
-                @if (!isOutOfStock()) {
-                <div class="flex flex-column sm:flex-row gap-3 mt-5">
-                    <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-lg flex-1"
-                        (click)="addToCart()"></button>
-
-                    <button pButton label="Buy Now" icon="pi pi-check-circle"
-                        class="p-button-lg p-button-warning flex-1" (click)="buyNow()"></button>
-                </div>
-                }
-
-                <div class="mt-6">
-                    <div class="flex align-items-center gap-3 text-600 mb-2">
-                        <i class="pi pi-truck text-xl"></i>
-                        <span>Fast Delivery Available</span>
+                    } @else {
+                    <div class="image-wrapper solo">
+                        <img [ngSrc]="product()!.imageUrl" [alt]="product()!.name" class="product-image" width="550"
+                            height="550" priority>
                     </div>
-                    <div class="flex align-items-center gap-3 text-600">
-                        <i class="pi pi-verified text-xl"></i>
-                        <span>100% Authentic Product</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Right Column: Professional Buy Block & Info -->
+            <div class="col-12 lg:col-8 lg:pl-4">
+                <div class="buy-block" lang="bn">
+                    <div class="flex align-items-center justify-content-between">
+                        <h1 class="product-title" lang="bn">{{ product()!.name }}</h1>
+                        <div class="custom-status-tag">
+                            <p-tag [value]="isOutOfStock() ? 'Out of Stock' : 'In Stock'"
+                                [severity]="isOutOfStock() ? 'danger' : 'success'"></p-tag>
+                        </div>
+                    </div>
+
+                    <div class="price-container">
+                        <span class="price-tag">{{ product()!.price | currency:'BDT':'৳' }}</span>
+                        <span class="price-suffix">Inclusive of all taxes</span>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="section-header">
+                            <i class="pi pi-info-circle"></i>
+                            <span>Description</span>
+                        </div>
+                        <div class="rich-description" [innerHTML]="product()!.description | safeHtml" lang="bn"></div>
+                    </div>
+
+                    @if (!isOutOfStock()) {
+                    <div class="buy-now-actions-container mt-6">
+                        <div class="quantity-row flex align-items-center mb-4">
+                            <span class="label text-xs uppercase letter-spacing-1 mr-3 opacity-50">Quantity</span>
+                            <div class="premium-qty-selector">
+                                <button class="qty-btn" (click)="decrementQuantity()" [disabled]="quantity() <= 1">
+                                    <i class="pi pi-minus"></i>
+                                </button>
+                                <span class="qty-display">{{ quantity() }}</span>
+                                <button class="qty-btn" (click)="incrementQuantity()">
+                                    <i class="pi pi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons-grid">
+                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart"
+                                class="p-button-outlined premium-btn-secondary" (click)="addToCart()"></button>
+                            <button pButton label="Buy Now" icon="pi pi-bolt" 
+                                class="premium-btn-primary" (click)="buyNow()"></button>
+                        </div>
+                    </div>
+                    }
+
+                    <div class="trust-footer">
+                        <div class="trust-item">
+                            <div class="icon-box"><i class="pi pi-truck"></i></div>
+                            <div class="text-box">
+                                <span class="title">Fast Shipping</span>
+                                <span class="sub">Nationwide delivery</span>
+                            </div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="icon-box"><i class="pi pi-verified"></i></div>
+                            <div class="text-box">
+                                <span class="title">Authentic</span>
+                                <span class="sub">100% genuine handmade</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -94,34 +129,42 @@
     <!-- Related Products with @defer -->
     @if (!loading() && product()) {
     @defer (on viewport) {
-    <div class="mt-8 pt-8 border-top-1 surface-border">
-        <h2 class="text-3xl font-bold mb-5">Related Products</h2>
+    <div class="related-products-section">
+        <h2 class="section-title">Related Products</h2>
         <div class="grid">
             @for (p of relatedProducts(); track p.id) {
-            <div class="col-6 sm:col-6 md:col-3">
-                <div class="product-card surface-card border-round shadow-1 p-3 cursor-pointer h-full relative"
-                    [routerLink]="['/products', p.id]">
+            <div class="col-12 sm:col-6 md:col-3">
+                <div class="product-card cursor-pointer" [routerLink]="['/products', p.id]">
                     @if (!p.isInStock) {
-                    <div class="absolute top-0 right-0 m-2 z-2">
-                        <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
+                    <div class="stock-tag">
+                        <p-tag value="Out of Stock" severity="danger"></p-tag>
                     </div>
                     }
-                    <img [ngSrc]="p.imageUrl" [alt]="p.name" class="w-full border-round mb-3" width="150" height="150"
-                        style="height: 150px; object-fit: cover;">
-                    <div class="font-bold text-lg mb-1">{{ p.name }}</div>
-                    <div class="text-primary font-bold">{{ p.price | currency:'BDT':'৳' }}</div>
+                    <div class="image-container">
+                        <img [ngSrc]="p.imageUrl" [alt]="p.name" class="card-image" width="200" height="200">
+                        <div class="view-overlay">
+                            <i class="pi pi-arrow-right"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-name">{{ p.name }}</div>
+                        <div class="card-price">
+                            <span class="currency-symbol">৳</span>
+                            <span>{{ p.price | number:'1.0-0' }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             }
         </div>
     </div>
     } @placeholder {
-    <div class="mt-8 pt-8 border-top-1 surface-border">
-        <h2 class="text-3xl font-bold mb-5">Related Products</h2>
+    <div class="related-products-section">
+        <h2 class="section-title">Related Products</h2>
         <div class="grid">
             @for (i of [1,2,3,4]; track i) {
-            <div class="col-6 sm:col-6 md:col-3">
-                <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
+            <div class="col-12 sm:col-6 md:col-3">
+                <p-skeleton width="100%" height="250px" styleClass="border-round-xl opacity-20"></p-skeleton>
             </div>
             }
         </div>

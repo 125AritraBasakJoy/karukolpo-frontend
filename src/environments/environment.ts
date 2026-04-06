@@ -1,5 +1,5 @@
 export const environment = {
     production: false,
-    baseUrl: 'https://api.karukolpocrafts.com',
-    apiUrl: 'https://api.karukolpocrafts.com' // Keeping apiUrl for compatibility during transition
+    baseUrl: 'http://localhost:8000',
+    apiUrl: 'http://localhost:8000' // Keeping apiUrl for compatibility during transition
 };

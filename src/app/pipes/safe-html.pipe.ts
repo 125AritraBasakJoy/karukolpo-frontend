@@ -11,6 +11,11 @@ export class SafeHtmlPipe implements PipeTransform {
 
     transform(value: string | undefined | null): SafeHtml {
         if (!value) return '';
-        return this.sanitizer.bypassSecurityTrustHtml(value);
+        // Replace &nbsp; (from Quill Editor) with regular spaces
+        // so the browser can wrap text at word boundaries
+        const cleaned = value
+            .replace(/&nbsp;/g, ' ')    // HTML entity form
+            .replace(/\u00A0/g, ' ');   // Unicode non-breaking space
+        return this.sanitizer.bypassSecurityTrustHtml(cleaned);
     }
 }

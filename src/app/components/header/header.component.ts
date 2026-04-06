@@ -4,15 +4,16 @@ import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { BadgeModule } from 'primeng/badge';
 import { CartService } from '../../services/cart.service';
+import { NgOptimizedImage } from '@angular/common';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonModule, BadgeModule],
+  imports: [CommonModule, RouterModule, ButtonModule, BadgeModule, NgOptimizedImage],
   template: `
     <div class="header-glass flex justify-content-between align-items-center pl-1 pr-4 sticky top-0 z-5">
       <div class="flex align-items-center gap-2 cursor-pointer h-full" routerLink="/" aria-label="Go to Home">
-        <img src="assets/logo.png" alt="Karukolpo Logo" class="header-logo" width="80" height="80" />
+        <img [ngSrc]="'assets/logo.png'" alt="Karukolpo Logo" class="header-logo" width="80" height="80" priority />
       </div>
       
       <div class="flex align-items-center gap-2 sm:gap-3">
@@ -49,7 +50,7 @@ import { CartService } from '../../services/cart.service';
 
     .header-logo {
       height: 80px;
-      width: auto;
+      width: 80px;
       object-fit: contain;
       transition: transform 0.3s ease;
       &:hover {

@@ -1,9 +1,10 @@
-<!-- ... existing content ... -->
 <div class="home-container">
     <!-- Hero Section -->
     <div
         class="hero-section-fullscreen flex align-items-center justify-content-center text-center text-white relative overflow-hidden">
-        <img [ngSrc]="landingPageImage()" priority fetchpriority="high" fill style="object-fit: cover; z-index: 0;"
+        <img [ngSrc]="landingPageImage()" priority fetchpriority="high" fill 
+            sizes="100vw"
+            style="object-fit: cover; z-index: 0;"
             alt="Karukolpo Hero Image">
         <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
         <div class="z-2">
@@ -36,8 +37,9 @@
         </p-divider>
         <div class="category-grid w-full">
             @for (cat of categories(); track cat.id) {
-            <div class="category-card" (click)="selectCategory(cat)"
-                [style.background-image]="'linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), url(' + getCategoryImage(cat.name) + ')'">
+            <div class="category-card" (click)="selectCategory(cat)">
+                <img [ngSrc]="getCategoryImage(cat.name)" fill style="object-fit: cover; z-index: 0;" [alt]="cat.name" loading="lazy">
+                <div class="category-overlay"></div>
                 <div class="category-info">
                     <span class="category-name">{{ cat.name }}</span>
                 </div>
@@ -49,7 +51,7 @@
     <div class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
         <div class="category-grid w-full">
             @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="category-card skeleton-loader" style="height: 300px;"></div>
+            <div class="category-card skeleton-loader aspect-square"></div>
             }
         </div>
     </div>
@@ -66,13 +68,16 @@
         </p-divider>
 
         <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="1" [circular]="true"
+            styleClass="carousel-stable"
             [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
                     <div
                         class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" priority="false" style="object-fit: cover;">
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" 
+                                sizes="(max-width: 768px) 50vw, 200px"
+                                priority="false" style="object-fit: cover;">
                             @if (isOutOfStock(product)) {
                             <div class="absolute top-0 right-0 m-2 z-2">
                                 <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
@@ -124,12 +129,15 @@
         </p-divider>
 
         <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="1" [circular]="true"
+            styleClass="carousel-stable"
             [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
                     <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" priority="false" style="object-fit: cover;">
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" 
+                                sizes="(max-width: 768px) 50vw, 200px"
+                                priority="false" style="object-fit: cover;">
                             @if (isOutOfStock(product)) {
                             <div class="absolute top-0 right-0 m-2 z-2">
                                 <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
@@ -224,8 +232,8 @@
 
         <div class="support-section relative w-full overflow-hidden surface-ground">
             <!-- Background Image Area (Left side on desktop, full background on mobile) -->
-            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full bg-cover bg-left md:bg-center"
-                style="background-image: url('assets/handcrafted_heritage_bg.png');">
+            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden">
+                <img ngSrc="assets/handcrafted_heritage_bg.png" fill style="object-fit: cover; object-position: left center;" alt="Heritage background" loading="lazy">
                 <!-- Fade gradient to surface-ground -->
                 <div class="absolute top-0 left-0 w-full h-full bg-gradient-fade"></div>
             </div>

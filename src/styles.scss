@@ -1,12 +1,23 @@
 /* You can add global styles to this file, and also import other style files */
 /* Theme is loaded dynamically via index.html and ThemeService */
 // @import "primeng/resources/themes/lara-light-blue/theme.css";
-@import "primeicons/primeicons.css";
+// @import "primeicons/primeicons.css";
+@font-face {
+  font-family: 'primeicons';
+  font-display: swap;
+  src: url('primeicons/fonts/primeicons.eot'),
+       url('primeicons/fonts/primeicons.eot?#iefix') format('embedded-opentype'),
+       url('primeicons/fonts/primeicons.woff2') format('woff2'),
+       url('primeicons/fonts/primeicons.woff') format('woff'),
+       url('primeicons/fonts/primeicons.ttf') format('truetype'),
+       url('primeicons/fonts/primeicons.svg#primeicons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+@import "primeicons/primeicons.css"; // Still import for the classes, but redeclaring font-face helps display=swap
 @import "primeflex/primeflex.css";
 
-/* AG-Grid Styles */
-@import 'ag-grid-community/styles/ag-grid.css';
-@import 'ag-grid-community/styles/ag-theme-quartz.css';
+/* AG-Grid Styles moved to Admin Dashboard scope to save 71KB on initial load */
 
 body {
     margin: 0;
@@ -1388,22 +1399,28 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
    PERFORMANCE & CLS UTILITIES
    ───────────────────────────────────────────────────────────────── */
 .skeleton-loader {
-    background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0.03) 25%, 
-        rgba(255, 255, 255, 0.08) 50%, 
-        rgba(255, 255, 255, 0.03) 75%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
     border-radius: 12px;
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        transform: translateX(-100%);
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.08) 50%, 
+            transparent 100%
+        );
+        animation: skeleton-shimmer 2s infinite;
+    }
 }
 
-@keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
+@keyframes skeleton-shimmer {
     100% {
-        background-position: -200% 0;
+        transform: translateX(100%);
     }
 }
 

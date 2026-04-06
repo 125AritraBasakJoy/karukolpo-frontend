@@ -179,14 +179,14 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
     gap: 1.5rem;
     color: #f8fafc;
     min-width: 0;        // Prevents flex child overflow
-    overflow: hidden;    // Safety net for text content
+    overflow: visible;    // Allow hover transforms (like translateY) to bleed out without cropping
 }
 
 .product-title {
     font-size: 2.75rem;
     font-weight: 850;
-    line-height: 1.1;
-    margin: 0;
+    line-height: 1.3;
+    margin: 2px;
     letter-spacing: -0.02em;
 
     @media screen and (max-width: 768px) {
@@ -352,49 +352,57 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
 .trust-footer {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.5rem;
-    margin-top: 3rem;
-    padding: 1.75rem;
+    gap: 1.25rem;
+    margin-top: 4rem;
+    width: 100%;
+}
+
+.trust-item {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex: 1;
+    min-width: 280px;
+    padding: 1.5rem;
     background: rgba(15, 23, 42, 0.4);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
 
-    .trust-item {
+    &:hover {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
         display: flex;
         align-items: center;
-        gap: 1rem;
-        flex: 1;
-        min-width: 240px;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
 
-        .icon-box {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
+    .text-box {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .title { 
+            font-weight: 700; 
+            color: #ffffff; 
+            font-size: 1rem; 
+            line-height: 1.2;
         }
-
-        .text-box {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-
-            .title { 
-                font-weight: 700; 
-                color: #ffffff; 
-                font-size: 1rem; 
-                line-height: 1.2;
-            }
-            .sub { 
-                font-size: 0.85rem; 
-                color: #94a3b8; 
-                line-height: 1.4;
-            }
+        .sub { 
+            font-size: 0.85rem; 
+            color: #94a3b8; 
+            line-height: 1.4;
         }
     }
 }

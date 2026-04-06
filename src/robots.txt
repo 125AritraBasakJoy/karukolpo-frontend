@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Sitemaps (if any)
+# Sitemap: https://karukolpocrafts.com/sitemap.xml

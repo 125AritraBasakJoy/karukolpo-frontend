@@ -3,7 +3,7 @@
     <!-- Hero Section -->
     <div
         class="hero-section-fullscreen flex align-items-center justify-content-center text-center text-white relative overflow-hidden">
-        <img [ngSrc]="landingPageImage()" priority fill style="object-fit: cover; z-index: 0;"
+        <img [ngSrc]="landingPageImage()" priority fetchpriority="high" fill style="object-fit: cover; z-index: 0;"
             alt="Karukolpo Hero Image">
         <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
         <div class="z-2">
@@ -17,7 +17,7 @@
             </div>
         </div>
         <!-- Scroll Down Indicator -->
-        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()">
+        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()" aria-label="Scroll to Categories" role="button">
             <i class="pi pi-chevron-down"></i>
         </div>
     </div>
@@ -45,6 +45,14 @@
             }
         </div>
     </div>
+    } @else {
+    <div class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
+        <div class="category-grid w-full">
+            @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="category-card skeleton-loader" style="height: 300px;"></div>
+            }
+        </div>
+    </div>
     }
 
     <!-- Best Selling Section -->
@@ -64,7 +72,7 @@
                     <div
                         class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" priority="false" style="object-fit: cover;">
                             @if (isOutOfStock(product)) {
                             <div class="absolute top-0 right-0 m-2 z-2">
                                 <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
@@ -77,16 +85,30 @@
                         </div>
                         <div class="mt-auto w-full">
                             @if (product.isInStock) {
-                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
+                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart" aria-label="Add product to cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
                                 (click)="addToCart(product)"></button>
                             } @else {
-                            <button pButton label="View" icon="pi pi-eye" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
+                            <button pButton label="View" icon="pi pi-eye" aria-label="View product details" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
                             }
                         </div>
                     </div>
                 </div>
             </ng-template>
         </p-carousel>
+    </div>
+    } @else if (loading()) {
+    <div class="container px-4 py-4">
+        <div class="grid">
+            @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="col-12 sm:col-6 md:col-2 px-1">
+                <div class="surface-card p-3 border-round-xl">
+                    <div class="skeleton-loader aspect-square mb-3"></div>
+                    <div class="skeleton-loader h-1rem w-8 mb-2"></div>
+                    <div class="skeleton-loader h-2rem w-full"></div>
+                </div>
+            </div>
+            }
+        </div>
     </div>
     }
 
@@ -107,7 +129,7 @@
                 <div class="px-1 h-full">
                     <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="150" height="150">
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" priority="false" style="object-fit: cover;">
                             @if (isOutOfStock(product)) {
                             <div class="absolute top-0 right-0 m-2 z-2">
                                 <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
@@ -123,16 +145,30 @@
                         </div>
                         <div class="mt-auto w-full">
                             @if (product.isInStock) {
-                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
+                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart" aria-label="Add hot deal to cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
                                 (click)="addToCart(product)"></button>
                             } @else {
-                            <button pButton label="View" icon="pi pi-eye" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
+                            <button pButton label="View" icon="pi pi-eye" aria-label="View hot deal details" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
                             }
                         </div>
                     </div>
                 </div>
             </ng-template>
         </p-carousel>
+    </div>
+    } @else if (loading()) {
+    <div class="container px-4 py-4">
+        <div class="grid">
+            @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="col-12 sm:col-6 md:col-2 px-1">
+                <div class="surface-card p-3 border-round-xl">
+                    <div class="skeleton-loader aspect-square mb-3"></div>
+                    <div class="skeleton-loader h-1rem w-8 mb-2"></div>
+                    <div class="skeleton-loader h-2rem w-full"></div>
+                </div>
+            </div>
+            }
+        </div>
     </div>
     }
 
@@ -149,7 +185,7 @@
                 <div class="col-12 md:col-4 mb-4 md:mb-0">
                     <div class="crafted-image-wrapper">
                         <img [ngSrc]="'assets/artisan-weaving.png'" width="380" height="250" alt="Artisan weaving"
-                            class="border-round-xl shadow-4 crafted-image">
+                            priority="false" loading="lazy" class="border-round-xl shadow-4 crafted-image">
                     </div>
                 </div>
                 <div class="col-12 md:col-8 md:pl-6">
@@ -166,6 +202,7 @@
                             to sustain their livelihoods and keep ancient traditions alive.
                         </p>
                         <button pButton label="Learn Our Story" icon="pi pi-arrow-right" pButton iconPos="right"
+                            aria-label="Learn more about our heritage"
                             class="p-button-lg p-button-primary p-button-rounded shadow-3 transition-all transition-duration-300"
                             (click)="goToAboutUs()"></button>
                     </div>
@@ -234,6 +271,7 @@
                             </div>
 
                             <button pButton label="SEND MESSAGE" icon="pi pi-send"
+                                aria-label="Send contact message"
                                 class="p-button-lg w-full font-bold letter-spacing-1 border-none text-sm transition-colors transition-duration-300 hover:bg-blue-600"
                                 style="background: var(--accent-color); border-radius: 8px;"
                                 (click)="submitContactForm()"
@@ -273,10 +311,14 @@
                             </div>
                         </div>
                         <div class="flex align-items-center gap-2">
-                            <button pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
+                            <button pButton icon="pi pi-minus" 
+                                aria-label="Decrease quantity"
+                                class="p-button-rounded p-button-text p-button-sm"
                                 (click)="updateQuantity(item, -1)"></button>
                             <span class="font-bold w-2rem text-center">{{ item.quantity }}</span>
-                            <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
+                            <button pButton icon="pi pi-plus" 
+                                aria-label="Increase quantity"
+                                class="p-button-rounded p-button-text p-button-sm"
                                 (click)="updateQuantity(item, 1)"></button>
                         </div>
                     </div>
@@ -396,7 +438,7 @@
             <div class="flex gap-3 w-full">
                 <input pInputText [(ngModel)]="trackPhone" placeholder="Order # or Phone" (keyup.enter)="trackOrder()"
                     class="flex-1">
-                <button pButton icon="pi pi-search" (click)="trackOrder()" [loading]="trackingLoading"></button>
+                <button pButton icon="pi pi-search" aria-label="Search for order status" (click)="trackOrder()" [loading]="trackingLoading"></button>
             </div>
         </div>
 

@@ -15,6 +15,7 @@ body {
     color: var(--text-color);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     cursor: default;
     color-scheme: dark;
     overflow-x: hidden;
@@ -1381,4 +1382,42 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
     border-radius: 100px !important;
     background: #3b82f6 !important;
     box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   PERFORMANCE & CLS UTILITIES
+   ───────────────────────────────────────────────────────────────── */
+.skeleton-loader {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.03) 25%, 
+        rgba(255, 255, 255, 0.08) 50%, 
+        rgba(255, 255, 255, 0.03) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 12px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+.aspect-video {
+    aspect-ratio: 16 / 9;
+}
+
+/* Image Placeholder for CLS */
+.img-placeholder {
+    background-color: rgba(255, 255, 255, 0.02);
+    display: block;
+    width: 100%;
 }

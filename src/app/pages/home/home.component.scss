@@ -18,6 +18,7 @@
 
   .category-grid {
     flex: 1;
+    min-height: 600px; // Reserve height for categories on desktop
   }
 }
 
@@ -247,8 +248,6 @@
   aspect-ratio: 1 / 1;
 
   border-radius: 16px;
-  background-size: cover;
-  background-position: center;
   position: relative;
   cursor: pointer;
   overflow: hidden;
@@ -257,14 +256,20 @@
   align-items: center;
   justify-content: center;
 
+  .category-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.5));
+    z-index: 1;
+    transition: background 0.3s ease;
+  }
+
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.2);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 1;
     transition: background 0.3s ease;
   }
 
@@ -272,8 +277,8 @@
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 
-    &::before {
-      background: rgba(0, 0, 0, 0.4);
+    &::before, .category-overlay {
+      background: rgba(0, 0, 0, 0.5);
     }
 
     .category-name {
@@ -459,8 +464,8 @@
       position: relative !important;
       width: 100% !important;
       height: 350px !important;
-      background-position: center;
-
+      // Removed redundant background-image to prevent double-downloads and shifts
+      
       .bg-gradient-fade {
         background: linear-gradient(180deg, transparent 0%, transparent 60%, var(--surface-ground) 100%);
       }
@@ -618,4 +623,13 @@
   }
 }
 
-// Product card refinements are global in styles.scss
+// ── CLS Stability Helpers ─────────────────────────────────────
+.carousel-stable {
+  min-height: 480px; // Reserved height for product carousels to prevent footer shift
+  display: block;
+}
+
+// Carousel custom indicators override for better clickability/accessibility
+:host ::ng-deep .p-carousel-indicators {
+  padding: 1rem 0;
+}

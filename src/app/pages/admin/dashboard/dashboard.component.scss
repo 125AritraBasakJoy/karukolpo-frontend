@@ -1,3 +1,7 @@
+/* AG-Grid Styles scoped to Admin Section */
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-quartz.css';
+
 .admin-layout {
     display: flex;
     height: 100vh;

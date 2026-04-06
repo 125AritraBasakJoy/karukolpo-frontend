@@ -293,13 +293,28 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     updateSeo() {
-        this.titleService.setTitle('Karukolpo | Premium Handmade Crafts');
-        this.metaService.updateTag({
-            name: 'description',
-            content: 'Karukolpo offers a wide range of premium handmade crafts and products. Discover unique collections and hot deals.'
-        });
-        this.metaService.updateTag({ property: 'og:title', content: 'Karukolpo | Premium Handmade Crafts' });
-        this.metaService.updateTag({ property: 'og:image', content: this.landingPageImage() });
+        const title = 'Karukolpo | Authentic Bangladeshi Handcrafts';
+        const description = 'Discover Karukolpo: Premium Bangladeshi handcrafted heritage products, home decor, and authentic artisan creations. Support local craftsmen.';
+        const imageUrl = 'https://karukolpo.com/assets/landing-bg.jpg';
+        const siteUrl = 'https://karukolpo.com/';
+
+        this.titleService.setTitle(title);
+        
+        // Standard Meta Tags
+        this.metaService.updateTag({ name: 'description', content: description });
+        
+        // Open Graph / Facebook
+        this.metaService.updateTag({ property: 'og:title', content: title });
+        this.metaService.updateTag({ property: 'og:description', content: description });
+        this.metaService.updateTag({ property: 'og:image', content: imageUrl });
+        this.metaService.updateTag({ property: 'og:url', content: siteUrl });
+        this.metaService.updateTag({ property: 'og:type', content: 'website' });
+
+        // Twitter
+        this.metaService.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+        this.metaService.updateTag({ name: 'twitter:title', content: title });
+        this.metaService.updateTag({ name: 'twitter:description', content: description });
+        this.metaService.updateTag({ name: 'twitter:image', content: imageUrl });
     }
 
     loadDeliveryCharges() {

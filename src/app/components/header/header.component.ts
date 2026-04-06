@@ -13,7 +13,7 @@ import { NgOptimizedImage } from '@angular/common';
   template: `
     <div class="header-glass flex justify-content-between align-items-center pl-1 pr-4 sticky top-0 z-5">
       <div class="flex align-items-center gap-2 cursor-pointer h-full" routerLink="/" aria-label="Go to Home">
-        <img [ngSrc]="'assets/logo.png'" alt="Karukolpo Logo" class="header-logo" width="80" height="80" priority />
+        <img [ngSrc]="'assets/logo.png'" alt="Karukolpo Logo" class="header-logo" width="80" height="80" priority fetchpriority="high" />
       </div>
       
       <div class="flex align-items-center gap-2 sm:gap-3">

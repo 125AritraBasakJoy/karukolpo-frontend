@@ -11,17 +11,19 @@ import { CartService } from '../../services/cart.service';
   imports: [CommonModule, RouterModule, ButtonModule, BadgeModule],
   template: `
     <div class="header-glass flex justify-content-between align-items-center pl-1 pr-4 sticky top-0 z-5">
-      <div class="flex align-items-center gap-2 cursor-pointer h-full" routerLink="/">
-        <img src="assets/logo.png" alt="Karukolpo Logo" class="header-logo" />
+      <div class="flex align-items-center gap-2 cursor-pointer h-full" routerLink="/" aria-label="Go to Home">
+        <img src="assets/logo.png" alt="Karukolpo Logo" class="header-logo" width="80" height="80" />
       </div>
       
       <div class="flex align-items-center gap-2 sm:gap-3">
         <button pButton label="Track Order" icon="pi pi-search" 
+          aria-label="Track your order"
           class="p-button-text header-btn hidden sm:inline-flex" 
           routerLink="/track-order"></button>
           
         <div class="relative flex align-items-center">
           <button pButton icon="pi pi-shopping-cart" 
+            aria-label="Open shopping cart"
             class="p-button-rounded p-button-text header-cart-btn" 
             (click)="openCart()">
           </button>

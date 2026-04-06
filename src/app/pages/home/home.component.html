@@ -5,15 +5,17 @@
         <img [ngSrc]="landingPageImage()" priority fetchpriority="high" fill 
             sizes="100vw"
             style="object-fit: cover; z-index: 0;"
-            alt="Karukolpo Hero Image">
+            alt="Karukolpo Official Hero Banner">
         <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
         <div class="z-2">
             <h1 class="text-6xl font-bold mb-2">Karukolpo</h1>
             <p class="text-2xl">{{ landingPageTagline() }}</p>
             <div class="flex gap-3 justify-content-center mt-4">
                 <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg glass-button"
+                    aria-label="Shop our full collection of products"
                     routerLink="/all-products"></button>
                 <button pButton label="About Us" icon="pi pi-info-circle" class="p-button-lg glass-button"
+                    aria-label="Learn more about our heritage and artisans"
                     (click)="goToAboutUs()"></button>
             </div>
         </div>
@@ -38,7 +40,9 @@
         <div class="category-grid w-full">
             @for (cat of categories(); track cat.id) {
             <div class="category-card" (click)="selectCategory(cat)">
-                <img [ngSrc]="getCategoryImage(cat.name)" fill style="object-fit: cover; z-index: 0;" [alt]="cat.name" loading="lazy">
+                <img [ngSrc]="getCategoryImage(cat.name)" fill style="object-fit: cover; z-index: 0;" [alt]="cat.name" 
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                    loading="lazy">
                 <div class="category-overlay"></div>
                 <div class="category-info">
                     <span class="category-name">{{ cat.name }}</span>
@@ -75,8 +79,8 @@
                     <div
                         class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" 
-                                sizes="(max-width: 768px) 50vw, 200px"
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
+                                sizes="(max-width: 768px) 50vw, 15vw"
                                 priority="false" style="object-fit: cover;">
                             @if (isOutOfStock(product)) {
                             <div class="absolute top-0 right-0 m-2 z-2">
@@ -135,8 +139,8 @@
                 <div class="px-1 h-full">
                     <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="250" 
-                                sizes="(max-width: 768px) 50vw, 200px"
+                            <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
+                                sizes="(max-width: 768px) 50vw, 15vw"
                                 priority="false" style="object-fit: cover;">
                             @if (isOutOfStock(product)) {
                             <div class="absolute top-0 right-0 m-2 z-2">
@@ -192,7 +196,8 @@
             <div class="grid align-items-center">
                 <div class="col-12 md:col-4 mb-4 md:mb-0">
                     <div class="crafted-image-wrapper">
-                        <img [ngSrc]="'assets/artisan-weaving.png'" width="380" height="250" alt="Artisan weaving"
+                        <img [ngSrc]="'assets/artisan-weaving.png'" fill alt="Artisan weaving traditional fabrics"
+                            sizes="(max-width: 768px) 90vw, 33vw"
                             priority="false" loading="lazy" class="border-round-xl shadow-4 crafted-image">
                     </div>
                 </div>
@@ -233,7 +238,9 @@
         <div class="support-section relative w-full overflow-hidden surface-ground">
             <!-- Background Image Area (Left side on desktop, full background on mobile) -->
             <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden">
-                <img ngSrc="assets/handcrafted_heritage_bg.png" fill style="object-fit: cover; object-position: left center;" alt="Heritage background" loading="lazy">
+                <img ngSrc="assets/handcrafted_heritage_bg.png" fill style="object-fit: cover; object-position: left center;" 
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                    alt="Heritage background showing traditional craft environment" loading="lazy">
                 <!-- Fade gradient to surface-ground -->
                 <div class="absolute top-0 left-0 w-full h-full bg-gradient-fade"></div>
             </div>
@@ -320,12 +327,12 @@
                         </div>
                         <div class="flex align-items-center gap-2">
                             <button pButton icon="pi pi-minus" 
-                                aria-label="Decrease quantity"
+                                aria-label="Decrease product quantity"
                                 class="p-button-rounded p-button-text p-button-sm"
                                 (click)="updateQuantity(item, -1)"></button>
                             <span class="font-bold w-2rem text-center">{{ item.quantity }}</span>
                             <button pButton icon="pi pi-plus" 
-                                aria-label="Increase quantity"
+                                aria-label="Increase product quantity"
                                 class="p-button-rounded p-button-text p-button-sm"
                                 (click)="updateQuantity(item, 1)"></button>
                         </div>

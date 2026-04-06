@@ -18,7 +18,10 @@
 
   .category-grid {
     flex: 1;
-    min-height: 600px; // Reserve height for categories on desktop
+    min-height: 400px; // Reserve height for categories on mobile
+    @media (min-width: 1024px) {
+      min-height: 600px; // Reserve height for categories on desktop
+    }
   }
 }
 
@@ -171,6 +174,14 @@
 }
 
 // Product card styles are now global in styles.scss
+.product-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5; // 200 / 250
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--surface-hover);
+}
 
 // Payment Selection Styling
 .payment-method-card {
@@ -335,6 +346,9 @@
     position: relative;
     overflow: hidden;
     border-radius: 1.5rem;
+    width: 100%;
+    aspect-ratio: 1.52 / 1; // 380 / 250
+    min-height: 250px;
 
     &::after {
       content: '';
@@ -482,6 +496,7 @@
       max-width: 420px;
       margin: 0 auto;
       padding: 2.5rem 1.5rem !important;
+      min-height: 580px; // Stabilize form height
     }
   }
 }
@@ -512,6 +527,10 @@
   justify-content: center;
   margin: 0 !important;
   scroll-margin-top: 2rem;
+  min-height: 520px; // Mobile stability for product sections
+  @media (min-width: 1024px) {
+    min-height: 600px;
+  }
 }
 
 .surface-ground {
@@ -627,6 +646,45 @@
 .carousel-stable {
   min-height: 480px; // Reserved height for product carousels to prevent footer shift
   display: block;
+  
+  @media (max-width: 767px) {
+    min-height: 440px;
+  }
+}
+
+.skeleton-loader {
+  background: var(--surface-hover);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.05) 20%,
+      rgba(255, 255, 255, 0.1) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  &.aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 // Carousel custom indicators override for better clickability/accessibility

@@ -110,6 +110,42 @@ export class InvoiceComponent {
         });
     }
 
+    /** Helper to render Bengali/Unicode text as a high-quality data URL via Browser Canvas */
+    private renderTextAsImage(text: string, options: { fontSize: number; color: string; bold?: boolean }): { data: string; w: number; h: number } {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        // Increase resolution for better PDF quality (oversample)
+        const scale = 4; 
+        const fontSize = options.fontSize * scale;
+        ctx.font = `${options.bold ? 'bold' : 'normal'} ${fontSize}px "Inter", "Segoe UI", "Tahoma", "Noto Sans Bengali", sans-serif`;
+        
+        // Measure text
+        const metrics = ctx.measureText(text);
+        const padding = 4 * scale;
+        canvas.width = metrics.width + padding * 2;
+        canvas.height = (fontSize * 1.5) + padding; // Extra height for Bengali ascenders/descenders
+
+        // Re-set font after canvas resize
+        ctx.font = `${options.bold ? 'bold' : 'normal'} ${fontSize}px "Inter", "Segoe UI", "Tahoma", "Noto Sans Bengali", sans-serif`;
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = options.color;
+        
+        // Draw
+        ctx.fillText(text, padding, canvas.height / 2);
+        
+        return {
+            data: canvas.toDataURL('image/png', 1.0),
+            w: canvas.width,
+            h: canvas.height
+        };
+    }
+
+    private hasBengali(text: string): boolean {
+        return /[\u0980-\u09FF]/.test(text);
+    }
+
+
     async downloadReceipt(): Promise<void> {
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = pdf.internal.pageSize.getWidth();    // 210
@@ -272,10 +308,27 @@ export class InvoiceComponent {
         // =====================
         const tableBody = (this.orderedItems || []).map((item: any) => {
             const name = item.product?.name || 'Product';
+            
+            // If name has Bengali, we'll replace the text with empty string in the data 
+            // and draw the image in didDrawCell instead.
+            const displayName = this.hasBengali(name) ? '' : name;
+            const nameImageData = this.hasBengali(name) ? this.renderTextAsImage(name, { fontSize: 11, color: '#1e293b', bold: true }) : null;
+
             const qty = item.quantity || 0;
             const price = item.product?.price || 0;
             const lineTotal = price * qty;
-            return [name, qty.toString(), `BDT ${price.toLocaleString()}`, `BDT ${lineTotal.toLocaleString()}`];
+
+            return [
+                { 
+                    content: displayName, 
+                    nameImage: nameImageData ? nameImageData.data : null,
+                    imageW: nameImageData ? nameImageData.w : 0,
+                    imageH: nameImageData ? nameImageData.h : 0
+                }, // Custom cell data
+                qty.toString(), 
+                `BDT ${price.toLocaleString()}`, 
+                `BDT ${lineTotal.toLocaleString()}`
+            ];
         });
 
         autoTable(pdf, {
@@ -288,7 +341,8 @@ export class InvoiceComponent {
                 cellPadding: 4,
                 textColor: [51, 65, 85],
                 lineColor: tableBg,
-                lineWidth: 0.3
+                lineWidth: 0.3,
+                minCellHeight: 12
             },
             headStyles: {
                 fillColor: tableBg,
@@ -305,7 +359,28 @@ export class InvoiceComponent {
                 3: { halign: 'center', cellWidth: 35 }
             },
             alternateRowStyles: { fillColor: [255, 255, 255] },
-            theme: 'grid'
+            theme: 'grid',
+            didDrawCell: (data: any) => {
+                // If it's the product column and we have a generated image
+                if (data.column.index === 0 && data.cell.raw && data.cell.raw.nameImage) {
+                    const cell = data.cell;
+                    const raw = cell.raw;
+                    const padding = 4;
+                    
+                    // Preserve aspect ratio
+                    const targetH = 6; // Height in mm
+                    const ratio = raw.imageW / raw.imageH;
+                    let targetW = targetH * ratio;
+                    
+                    // Constraint to column width
+                    const maxW = cell.width - padding * 2;
+                    if (targetW > maxW) {
+                        targetW = maxW;
+                    }
+                    
+                    pdf.addImage(raw.nameImage, 'PNG', cell.x + padding, cell.y + (cell.height - targetH) / 2, targetW, targetH, undefined, 'FAST');
+                }
+            }
         });
 
         y = (pdf as any).lastAutoTable.finalY + 10;

@@ -35,6 +35,7 @@ import { VersionService } from './services/version.service';
       flex: 1;
       display: flex;
       flex-direction: column;
+      min-height: calc(100vh - 160px); /* 80px header + estimated 80px footer minimum */
     }
   `]
 })

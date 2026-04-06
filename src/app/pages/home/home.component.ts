@@ -128,7 +128,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     placedOrderNumber = '';
     currentPaymentId: number | null = null;
     transactionId = '';
-    landingPageImage = signal<string>('assets/landing-bg.jpg');
+    landingPageImage = signal<string>('assets/landing-bg.webp');
     landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
     categoryImages: { [key: string]: string } = {
         'Prodip': 'assets/categories/prodip.png',
@@ -224,7 +224,20 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     getCategoryImage(categoryName: string): string {
-        return this.categoryImages[categoryName] || 'assets/category-default.jpg';
+        if (!categoryName) return 'assets/logo.png'; 
+        
+        const name = categoryName.toLowerCase().trim();
+        const mapping: { [key: string]: string } = {
+            'prodip': 'assets/categories/prodip.webp',
+            'protima': 'assets/categories/protima.webp',
+            'shora': 'assets/categories/shora.webp',
+            'home decor': 'assets/categories/homedecor.webp',
+            'homedecor': 'assets/categories/homedecor.webp',
+            'mirror': 'assets/categories/mirror.webp',
+            'sharee': 'assets/categories/sharee.webp'
+        };
+
+        return mapping[name] || 'assets/logo.png';
     }
 
     openPaymentModal(orderId: string) {
@@ -295,7 +308,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     updateSeo() {
         const title = 'Karukolpo | Authentic Bangladeshi Handcrafts';
         const description = 'Discover Karukolpo: Premium Bangladeshi handcrafted heritage products, home decor, and authentic artisan creations. Support local craftsmen.';
-        const imageUrl = 'https://karukolpo.com/assets/landing-bg.jpg';
+        const imageUrl = 'https://karukolpo.com/assets/landing-bg.webp';
         const siteUrl = 'https://karukolpo.com/';
 
         this.titleService.setTitle(title);

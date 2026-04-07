@@ -347,8 +347,8 @@
     overflow: hidden;
     border-radius: 1.5rem;
     width: 100%;
-    aspect-ratio: 1.52 / 1; // 380 / 250
-    min-height: 250px;
+    aspect-ratio: 4 / 3;
+    min-height: 280px;
 
     &::after {
       content: '';
@@ -477,7 +477,8 @@
     .support-bg {
       position: relative !important;
       width: 100% !important;
-      height: 350px !important;
+      aspect-ratio: 16 / 9;
+      height: auto !important;
       // Removed redundant background-image to prevent double-downloads and shifts
       
       .bg-gradient-fade {

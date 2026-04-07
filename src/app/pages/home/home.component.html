@@ -195,8 +195,8 @@
             </p-divider>
             <div class="grid align-items-center">
                 <div class="col-12 md:col-4 mb-4 md:mb-0">
-                    <div class="crafted-image-wrapper">
-                        <img [ngSrc]="'assets/artisan-weaving.png'" fill alt="Artisan weaving traditional fabrics"
+                    <div class="crafted-image-wrapper" style="aspect-ratio: 4/3; position: relative;">
+                        <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Artisan weaving traditional fabrics"
                             sizes="(max-width: 768px) 90vw, 33vw"
                             priority="false" loading="lazy" class="border-round-xl shadow-4 crafted-image">
                     </div>
@@ -237,8 +237,8 @@
 
         <div class="support-section relative w-full overflow-hidden surface-ground">
             <!-- Background Image Area (Left side on desktop, full background on mobile) -->
-            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden">
-                <img ngSrc="assets/handcrafted_heritage_bg.png" fill style="object-fit: cover; object-position: left center;" 
+            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden" style="aspect-ratio: 16/9;">
+                <img ngSrc="assets/handcrafted_heritage_bg.webp" fill style="object-fit: cover; object-position: left center;" 
                     sizes="(max-width: 768px) 100vw, 60vw"
                     alt="Heritage background showing traditional craft environment" loading="lazy">
                 <!-- Fade gradient to surface-ground -->

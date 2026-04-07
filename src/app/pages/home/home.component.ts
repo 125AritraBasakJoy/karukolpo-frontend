@@ -131,12 +131,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     landingPageImage = signal<string>('assets/landing-bg.webp');
     landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
     categoryImages: { [key: string]: string } = {
-        'Prodip': 'assets/categories/prodip.png',
-        'Protima': 'assets/categories/protima.png',
-        'Shora': 'assets/categories/shora.png',
-        'Home Decor': 'assets/categories/homedecor.png',
-        'Mirror': 'assets/categories/mirror.png',
-        'Sharee': 'assets/categories/sharee.png'
+        'Prodip': 'assets/categories/prodip.webp',
+        'Protima': 'assets/categories/protima.webp',
+        'Shora': 'assets/categories/shora.webp',
+        'Home Decor': 'assets/categories/homedecor.webp',
+        'Mirror': 'assets/categories/mirror.webp',
+        'Sharee': 'assets/categories/sharee.webp'
     };
     categories = this.categoryService.categories;
     selectedCategory: Category | null = null;
@@ -224,7 +224,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     getCategoryImage(categoryName: string): string {
-        if (!categoryName) return 'assets/logo.png'; 
+        if (!categoryName) return 'assets/logo.webp'; 
         
         const name = categoryName.toLowerCase().trim();
         const mapping: { [key: string]: string } = {
@@ -237,7 +237,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             'sharee': 'assets/categories/sharee.webp'
         };
 
-        return mapping[name] || 'assets/logo.png';
+        return mapping[name] || 'assets/logo.webp';
     }
 
     openPaymentModal(orderId: string) {

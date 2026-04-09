@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgOptimizedImage } from '@angular/common';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -14,6 +14,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { SkeletonModule } from 'primeng/skeleton';
+import { ImageModule } from 'primeng/image';
+import { GalleriaModule } from 'primeng/galleria';
 import { of } from 'rxjs';
 
 @Component({
@@ -30,7 +32,9 @@ import { of } from 'rxjs';
     CurrencyPipe,
     RouterLink,
     SafeHtmlPipe,
-    NgOptimizedImage
+    NgOptimizedImage,
+    ImageModule,
+    GalleriaModule
   ],
   templateUrl: './product-details.component.html',
   styleUrls: ['./product-details.component.scss'],
@@ -41,8 +45,17 @@ export class ProductDetailsComponent implements OnInit {
   relatedProducts = signal<Product[]>([]);
   loading = signal<boolean>(true);
   loadingRelated = signal<boolean>(false);
-  activeImageIndex = 0;
+  activeImageIndex = signal<number>(0);
+  displayGalleria = signal<boolean>(false);
   quantity = signal<number>(1);
+
+  // Reactive image array
+  images = computed(() => {
+    const p = this.product();
+    if (!p) return [];
+    if (p.images && p.images.length > 0) return p.images;
+    return p.imageUrl ? [p.imageUrl] : [];
+  });
   responsiveOptions = [
     {
       breakpoint: '1024px',
@@ -143,16 +156,10 @@ export class ProductDetailsComponent implements OnInit {
     });
   }
 
-  get images(): string[] {
-    const p = this.product();
-    if (!p) return [];
-    if (p.images && p.images.length > 0) return p.images;
-    return p.imageUrl ? [p.imageUrl] : [];
-  }
-
   isOutOfStock(): boolean {
     const p = this.product();
-    return !p || !p.isInStock;
+    if (!p) return false;
+    return p.manualStockStatus === 'OUT_OF_STOCK' || (p.manualStockStatus === 'AUTO' && (p.stock || 0) <= 0);
   }
 
   addToCart() {
@@ -174,17 +181,6 @@ export class ProductDetailsComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  prevImage() {
-    const images = this.product()?.images;
-    if (!images || images.length <= 1) return;
-    this.activeImageIndex = this.activeImageIndex === 0 ? images.length - 1 : this.activeImageIndex - 1;
-  }
-
-  nextImage() {
-    const images = this.product()?.images;
-    if (!images || images.length <= 1) return;
-    this.activeImageIndex = this.activeImageIndex === images.length - 1 ? 0 : this.activeImageIndex + 1;
-  }
   
   incrementQuantity() {
     this.quantity.update(q => q + 1);
@@ -194,5 +190,10 @@ export class ProductDetailsComponent implements OnInit {
     if (this.quantity() > 1) {
       this.quantity.update(q => q - 1);
     }
+  }
+
+  showGalleria(index: number) {
+    this.activeImageIndex.set(index);
+    this.displayGalleria.set(true);
   }
 }

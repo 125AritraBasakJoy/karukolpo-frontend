@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject, forkJoin, of } from 'rxjs';
-import { map, tap, catchError, switchMap } from 'rxjs/operators';
+import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import { Order } from '../models/order.model';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
@@ -34,6 +34,7 @@ export class OrderService {
   private newOrderSubject = new Subject<OrderNotification>();
   newOrderNotification$ = this.newOrderSubject.asObservable();
   private ordersCache: Order[] | null = null;
+  private pendingOrdersRequest: Observable<Order[]> | null = null;
 
   constructor(private apiService: ApiService) { }
 
@@ -75,8 +76,12 @@ export class OrderService {
       return of(this.ordersCache);
     }
 
+    if (!forceRefresh && this.pendingOrdersRequest && skip === 0) {
+      return this.pendingOrdersRequest;
+    }
+
     const query = buildListQuery(skip, limit);
-    return this.apiService.get<any>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
+    const request = this.apiService.get<any>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
       map(response => {
         // Handle direct array or wrapped object { data: [], orders: [], etc }
         let rawOrders: any[] = [];
@@ -97,11 +102,23 @@ export class OrderService {
           this.ordersCache = orders;
         }
       }),
+      shareReplay(1),
+      finalize(() => {
+        if (skip === 0) {
+          this.pendingOrdersRequest = null;
+        }
+      }),
       catchError(err => {
         console.error('Failed to fetch orders:', err);
         throw err;
       })
     );
+
+    if (skip === 0) {
+      this.pendingOrdersRequest = request;
+    }
+
+    return request;
   }
 
   /**

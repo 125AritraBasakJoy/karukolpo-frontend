@@ -8,6 +8,7 @@ import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs/operators';
+import { SiteConfigService } from '../../../services/site-config.service';
 
 @Component({
     selector: 'app-hot-deals-manager',
@@ -19,6 +20,7 @@ import { finalize } from 'rxjs/operators';
 export class HotDealsManagerComponent implements OnInit {
     private productService = inject(ProductService);
     private messageService = inject(MessageService);
+    private siteConfigService = inject(SiteConfigService);
 
     products = signal<Product[]>([]);
     selectedProducts = signal<Product[]>([]);
@@ -31,7 +33,7 @@ export class HotDealsManagerComponent implements OnInit {
     loadProducts() {
         this.loading.set(true);
         // Fetch a large enough limit to show all products for selection
-        this.productService.getProducts(0, 1000, undefined, true)
+        this.productService.getProducts(0, 1000, undefined, false)
             .pipe(finalize(() => this.loading.set(false)))
             .subscribe({
                 next: (products) => {
@@ -84,6 +86,7 @@ export class HotDealsManagerComponent implements OnInit {
                         summary: 'Saved Successfully',
                         detail: `${selectedIds.length} products are now marked for Hot Deals.`
                     });
+                    this.siteConfigService.updateConfig({ hasHotDeals: selectedIds.length > 0 });
                 },
                 error: (err) => {
                     console.error('Failed to save hot deals', err);
@@ -110,6 +113,7 @@ export class HotDealsManagerComponent implements OnInit {
                         summary: 'Cleared Successfully',
                         detail: 'All products removed from Hot Deals.'
                     });
+                    this.siteConfigService.updateConfig({ hasHotDeals: false });
                 },
                 error: (err) => {
                     console.error('Failed to clear hot deals', err);

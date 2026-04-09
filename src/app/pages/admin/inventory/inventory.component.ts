@@ -4,7 +4,6 @@ import { firstValueFrom } from 'rxjs';
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { ProductService } from '../../../services/product.service';
 import { Product, ProductImage } from '../../../models/product.model';
-import { CategoryService } from '../../../services/category.service';
 import { Category } from '../../../models/category.model';
 import { OrderService } from '../../../services/order.service';
 import { Order } from '../../../models/order.model';
@@ -65,7 +64,7 @@ export class InventoryComponent implements OnInit {
     manualStockStatus: 'AUTO' as 'AUTO' | 'IN_STOCK' | 'OUT_OF_STOCK'
   };
 
-  categories = this.categoryService.categories;
+
 
   chartData: any;
   chartOptions: any;
@@ -90,7 +89,6 @@ export class InventoryComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private orderService: OrderService,
-    private categoryService: CategoryService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,

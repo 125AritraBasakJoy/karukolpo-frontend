@@ -11,7 +11,7 @@ import { NgOptimizedImage } from '@angular/common';
   standalone: true,
   imports: [CommonModule, RouterModule, ButtonModule, BadgeModule, NgOptimizedImage],
   template: `
-    <div class="header-glass flex justify-content-between align-items-center pl-1 pr-4 sticky top-0 z-5">
+    <div class="header-glass flex justify-content-between align-items-center pl-1 pr-4">
       <div class="flex align-items-center gap-2 cursor-pointer h-full" routerLink="/" aria-label="Go to Home">
         <img [ngSrc]="'assets/logo.webp'" alt="Karukolpo Logo" class="header-logo" width="80" height="80" priority fetchpriority="high" />
       </div>
@@ -39,6 +39,9 @@ import { NgOptimizedImage } from '@angular/common';
     :host {
       display: block;
       width: 100%;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
 
     .header-glass {

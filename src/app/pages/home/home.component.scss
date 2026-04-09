@@ -599,44 +599,65 @@
 :host ::ng-deep .p-carousel {
   padding: 0;
 
+  .p-carousel-content {
+     position: relative;
+  }
+
   .p-carousel-items-container {
     will-change: transform;
-    /* Tells the browser to prep the GPU */
     backface-visibility: hidden;
-    /* Fixes rare flickering in Chrome/Safari */
+    /* Softened cubic-bezier for a more natural flow */
+    /* Removed !important to allow PrimeNG to reset transition speed during circular rewinds */
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .p-carousel-item {
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.8s ease;
+    
+    // Subtle depth effect for inactive items if they are partially visible
+    // PrimeNG handles visibility via overflow, but we can add a general scale
+    .product-card {
+       transform: scale(0.98);
+       transition: transform 0.5s ease;
+    }
   }
 
   .p-carousel-indicators {
-    padding: 1.2rem 0 !important;
-    gap: 0.4rem !important;
+    padding: 1.5rem 0 !important;
+    gap: 0.6rem !important;
 
     .p-carousel-indicator {
       .p-carousel-indicator-button {
-        width: 20px !important;
-        height: 3px !important;
-        border-radius: 4px !important;
-        background: #334155 !important;
-        transition: all 0.3s ease !important;
-        border: none !important;
-        opacity: 0.3 !important;
+        width: 10px !important;
+        height: 10px !important;
+        border-radius: 50% !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(4px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         margin: 0 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
         &:hover {
-          opacity: 0.6 !important;
+          background: rgba(255, 255, 255, 0.2) !important;
+          transform: scale(1.2);
         }
       }
 
-      &.p-carousel-indicator-active .p-carousel-indicator-button,
-      &.p-highlight .p-carousel-indicator-button,
-      .p-carousel-indicator-button[aria-current="page"] {
-        width: 40px !important;
-        background: #3b82f6 !important;
-        opacity: 1 !important;
+      // Active state: Stretch into a pill
+      &.p-highlight, &.p-carousel-indicator-active {
+        .p-carousel-indicator-button {
+           width: 32px !important;
+           border-radius: 10px !important;
+           background: var(--accent-color) !important; // Blue
+           border-color: rgba(59, 130, 246, 0.3) !important;
+           box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
       }
     }
   }
 
-  // Navigators hidden in HTML, but ensuring they don't impact layout
+  // Navigators hidden as requested before, but if ever enabled, they'd be here
   .p-carousel-prev,
   .p-carousel-next {
     display: none !important;

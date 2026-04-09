@@ -75,6 +75,7 @@ export class ProductDetailsComponent implements OnInit {
     this.route.params.subscribe(params => {
       const id = params['id'];
       if (id) {
+        this.cartService.refreshCartProducts();
         this.loadProduct(id);
         this.loadRelatedProducts(id);
       }

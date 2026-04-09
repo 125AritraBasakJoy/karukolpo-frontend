@@ -15,9 +15,13 @@ import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
 })
 export class ProductService {
   private productsCache: Product[] | null = null;
+  private hotDealsCache: Product[] | null = null;
+  private bestSellersCache: Product[] | null = null;
   private productCategoriesCache = new Map<string | number, any[]>();
   private productMap = new Map<string | number, Product>();
   private pendingProductsRequest: Observable<Product[]> | null = null;
+  private pendingHotDealsRequest: Observable<Product[]> | null = null;
+  private pendingBestSellersRequest: Observable<Product[]> | null = null;
 
   constructor(
     private apiService: ApiService,
@@ -29,6 +33,8 @@ export class ProductService {
    */
   clearCache() {
     this.productsCache = null;
+    this.hotDealsCache = null;
+    this.bestSellersCache = null;
     this.productCategoriesCache.clear();
     this.productMap.clear();
   }
@@ -300,10 +306,27 @@ export class ProductService {
    * Get all hot deal products
    * GET /products/hot-deals
    */
-  getHotDeals(): Observable<Product[]> {
-    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS).pipe(
-      map(products => products.map(p => this.mapBackendToFrontend(p)))
+  getHotDeals(forceRefresh = false): Observable<Product[]> {
+    if (!forceRefresh && this.hotDealsCache) {
+      return of(this.hotDealsCache);
+    }
+    
+    if (!forceRefresh && this.pendingHotDealsRequest) {
+      return this.pendingHotDealsRequest;
+    }
+
+    const request = this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p))),
+      tap(products => this.hotDealsCache = products),
+      shareReplay(1),
+      finalize(() => this.pendingHotDealsRequest = null)
     );
+
+    if (!forceRefresh) {
+      this.pendingHotDealsRequest = request;
+    }
+
+    return request;
   }
 
   /**
@@ -346,10 +369,27 @@ export class ProductService {
    * Get all best seller products
    * GET /products/best-sellers
    */
-  getBestSellers(): Observable<Product[]> {
-    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS).pipe(
-      map(products => products.map(p => this.mapBackendToFrontend(p)))
+  getBestSellers(forceRefresh = false): Observable<Product[]> {
+    if (!forceRefresh && this.bestSellersCache) {
+      return of(this.bestSellersCache);
+    }
+
+    if (!forceRefresh && this.pendingBestSellersRequest) {
+      return this.pendingBestSellersRequest;
+    }
+
+    const request = this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS).pipe(
+      map(products => products.map(p => this.mapBackendToFrontend(p))),
+      tap(products => this.bestSellersCache = products),
+      shareReplay(1),
+      finalize(() => this.pendingBestSellersRequest = null)
     );
+
+    if (!forceRefresh) {
+      this.pendingBestSellersRequest = request;
+    }
+
+    return request;
   }
 
   /**
@@ -465,7 +505,9 @@ export class ProductService {
       categories: data.categories || [],
       stock: stock,
       manualStockStatus: manualStatus,
-      isInStock: isInStock
+      isInStock: isInStock,
+      isHotDeal: !!(data.is_hot_deal || data.hot_deal),
+      isBestSeller: !!(data.is_best_seller || data.best_seller)
     };
   }
 

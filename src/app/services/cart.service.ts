@@ -42,7 +42,6 @@ export class CartService {
             return item;
           });
           this.cart.set(normalizedItems);
-          this.refreshCartProducts();
         } catch (e) {
           console.error('Failed to load cart', e);
         }

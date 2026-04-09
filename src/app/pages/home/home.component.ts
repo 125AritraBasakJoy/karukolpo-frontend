@@ -13,7 +13,7 @@ import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgOptimizedIma
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { lastValueFrom } from 'rxjs';
+import { forkJoin, lastValueFrom, of } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
 import { DataViewModule } from 'primeng/dataview';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -147,7 +147,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     responsiveOptions: any[] = [
         {
             breakpoint: '1600px',
-            numVisible: 6,
+            numVisible: 5,
             numScroll: 1
         },
         {
@@ -224,8 +224,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     getCategoryImage(categoryName: string): string {
-        if (!categoryName) return 'assets/logo.webp'; 
-        
+        if (!categoryName) return 'assets/logo.webp';
+
         const name = categoryName.toLowerCase().trim();
         const mapping: { [key: string]: string } = {
             'prodip': 'assets/categories/prodip.webp',
@@ -281,7 +281,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.loadProducts();
+        this.loadSpecialSections();
         this.loadLandingPageConfig();
         this.loadDeliveryCharges();
 
@@ -312,10 +312,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         const siteUrl = 'https://karukolpo.com/';
 
         this.titleService.setTitle(title);
-        
+
         // Standard Meta Tags
         this.metaService.updateTag({ name: 'description', content: description });
-        
+
         // Open Graph / Facebook
         this.metaService.updateTag({ property: 'og:title', content: title });
         this.metaService.updateTag({ property: 'og:description', content: description });
@@ -369,23 +369,37 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     private loadSpecialSections() {
-        // Fetch Hot Deals from Backend
-        this.productService.getHotDeals().subscribe({
-            next: (products) => {
-                this.hotDeals.set(products || []);
-            },
-            error: (err) => {
-                console.error('Error fetching hot deals', err);
-            }
-        });
+        const config = this.siteConfigService.siteConfig();
 
-        // Fetch Best Sellers from Backend
-        this.productService.getBestSellers().subscribe({
-            next: (products) => {
-                this.bestSelling.set(products || []);
+        if (!config.hasHotDeals && !config.hasBestSellers) {
+            this.loading.set(false);
+            return;
+        }
+
+        this.loading.set(true);
+
+        const requests: any = {};
+        if (config.hasHotDeals) {
+            requests.hotDeals = this.productService.getHotDeals();
+        } else {
+            requests.hotDeals = of([]);
+        }
+
+        if (config.hasBestSellers) {
+            requests.bestSellers = this.productService.getBestSellers();
+        } else {
+            requests.bestSellers = of([]);
+        }
+
+        forkJoin(requests).subscribe({
+            next: (result: any) => {
+                this.hotDeals.set(result.hotDeals || []);
+                this.bestSelling.set(result.bestSellers || []);
+                this.loading.set(false);
             },
             error: (err) => {
-                console.error('Error fetching best sellers', err);
+                console.error('Error fetching special sections', err);
+                this.loading.set(false);
             }
         });
     }
@@ -466,6 +480,9 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
             return;
         }
+        // Refresh cart products before showing checkout to ensure latest price/stock
+        this.cartService.refreshCartProducts();
+
         // Reset payment method to default to ensure modal logic works
         this.selectedPaymentMethod = null;
         this.displayCheckoutModal = true;

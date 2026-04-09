@@ -2,25 +2,22 @@
     <!-- Hero Section -->
     <div
         class="hero-section-fullscreen flex align-items-center justify-content-center text-center text-white relative overflow-hidden">
-        <img [ngSrc]="landingPageImage()" priority fetchpriority="high" fill 
-            sizes="100vw"
-            style="object-fit: cover; z-index: 0;"
-            alt="Karukolpo Official Hero Banner">
+        <img [ngSrc]="landingPageImage()" priority fetchpriority="high" fill sizes="100vw"
+            style="object-fit: cover; z-index: 0;" alt="Karukolpo Official Hero Banner">
         <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
         <div class="z-2">
             <h1 class="text-6xl font-bold mb-2">Karukolpo</h1>
             <p class="text-2xl">{{ landingPageTagline() }}</p>
             <div class="flex gap-3 justify-content-center mt-4">
                 <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg glass-button"
-                    aria-label="Shop our full collection of products"
-                    routerLink="/all-products"></button>
+                    aria-label="Shop our full collection of products" routerLink="/all-products"></button>
                 <button pButton label="About Us" icon="pi pi-info-circle" class="p-button-lg glass-button"
-                    aria-label="Learn more about our heritage and artisans"
-                    (click)="goToAboutUs()"></button>
+                    aria-label="Learn more about our heritage and artisans" (click)="goToAboutUs()"></button>
             </div>
         </div>
         <!-- Scroll Down Indicator -->
-        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()" aria-label="Scroll to Categories" role="button">
+        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()" aria-label="Scroll to Categories"
+            role="button">
             <i class="pi pi-chevron-down"></i>
         </div>
     </div>
@@ -40,9 +37,8 @@
         <div class="category-grid w-full">
             @for (cat of categories(); track cat.id) {
             <div class="category-card" (click)="selectCategory(cat)">
-                <img [ngSrc]="getCategoryImage(cat.name)" fill style="object-fit: cover; z-index: 0;" [alt]="cat.name" 
-                    sizes="(max-width: 767px) 50vw, (max-width: 1024px) 33vw, 33vw"
-                    loading="lazy">
+                <img [ngSrc]="getCategoryImage(cat.name)" fill style="object-fit: cover; z-index: 0;" [alt]="cat.name"
+                    sizes="(max-width: 767px) 50vw, (max-width: 1024px) 33vw, 33vw" loading="lazy">
                 <div class="category-overlay"></div>
                 <div class="category-info">
                     <span class="category-name">{{ cat.name }}</span>
@@ -71,13 +67,13 @@
             </div>
         </p-divider>
 
-        <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="1" [circular]="true"
-            styleClass="carousel-stable"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false">
+        <p-carousel [value]="bestSelling()" [numVisible]="5" [numScroll]="1" [circular]="true"
+            styleClass="carousel-stable" [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000"
+            [showNavigators]="false" [showIndicators]="bestSelling().length > 5">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
-                    <div
-                        class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
+                    <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all"
+                        style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                             <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
                                 sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
@@ -89,15 +85,25 @@
                             }
                         </div>
                         <div class="flex-grow-1 flex align-items-center justify-content-between gap-2 mb-2">
-                            <div class="product-title m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap" style="flex: 1; font-size: 0.9rem;" [pTooltip]="product.name" tooltipPosition="top">{{ product.name }}</div>
-                            <div class="product-price text-xs px-2 py-1 border-round-3xl font-bold" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; white-space: nowrap; font-size: 0.75rem !important;">{{ product.price | currency:'BDT':'৳' }}</div>
+                            <div class="product-title m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap"
+                                style="flex: 1; font-size: 0.9rem;" [pTooltip]="product.name" tooltipPosition="top">{{
+                                product.name }}</div>
+                            <div class="product-price text-xs px-2 py-1 border-round-3xl font-bold"
+                                style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; white-space: nowrap; font-size: 0.75rem !important;">
+                                {{ product.price | currency:'BDT':'৳' }}</div>
                         </div>
                         <div class="mt-auto w-full">
                             @if (product.isInStock) {
-                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart" aria-label="Add product to cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
-                                (click)="addToCart(product)"></button>
+                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart"
+                                aria-label="Add product to cart"
+                                class="p-button-sm w-full border-none transition-colors transition-duration-300"
+                                style="background-color: #1e293b; color: white;"
+                                onmouseover="this.style.backgroundColor='#334155'"
+                                onmouseout="this.style.backgroundColor='#1e293b'" (click)="addToCart(product)"></button>
                             } @else {
-                            <button pButton label="View" icon="pi pi-eye" aria-label="View product details" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
+                            <button pButton label="View" icon="pi pi-eye" aria-label="View product details"
+                                class="p-button-secondary p-button-sm w-full"
+                                (click)="showProductDetails(product)"></button>
                             }
                         </div>
                     </div>
@@ -132,12 +138,13 @@
             </div>
         </p-divider>
 
-        <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="1" [circular]="true"
-            styleClass="carousel-stable"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false">
+        <p-carousel [value]="hotDeals()" [numVisible]="5" [numScroll]="1" [circular]="true" styleClass="carousel-stable"
+            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false"
+            [showIndicators]="hotDeals().length > 5">
             <ng-template let-product pTemplate="item">
                 <div class="px-1 h-full">
-                    <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all" style="padding: 8px;">
+                    <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all"
+                        style="padding: 8px;">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                             <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
                                 sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
@@ -152,15 +159,25 @@
                             </div>
                         </div>
                         <div class="flex-grow-1 flex align-items-center justify-content-between gap-2 mb-2">
-                            <div class="product-title m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap" style="flex: 1; font-size: 0.9rem;" [pTooltip]="product.name" tooltipPosition="top">{{ product.name }}</div>
-                            <div class="product-price text-xs px-2 py-1 border-round-3xl font-bold" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; white-space: nowrap; font-size: 0.75rem !important;">{{ product.price | currency:'BDT':'৳' }}</div>
+                            <div class="product-title m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap"
+                                style="flex: 1; font-size: 0.9rem;" [pTooltip]="product.name" tooltipPosition="top">{{
+                                product.name }}</div>
+                            <div class="product-price text-xs px-2 py-1 border-round-3xl font-bold"
+                                style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; white-space: nowrap; font-size: 0.75rem !important;">
+                                {{ product.price | currency:'BDT':'৳' }}</div>
                         </div>
                         <div class="mt-auto w-full">
                             @if (product.isInStock) {
-                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart" aria-label="Add hot deal to cart" class="p-button-sm w-full border-none transition-colors transition-duration-300" style="background-color: #1e293b; color: white;" onmouseover="this.style.backgroundColor='#334155'" onmouseout="this.style.backgroundColor='#1e293b'"
-                                (click)="addToCart(product)"></button>
+                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart"
+                                aria-label="Add hot deal to cart"
+                                class="p-button-sm w-full border-none transition-colors transition-duration-300"
+                                style="background-color: #1e293b; color: white;"
+                                onmouseover="this.style.backgroundColor='#334155'"
+                                onmouseout="this.style.backgroundColor='#1e293b'" (click)="addToCart(product)"></button>
                             } @else {
-                            <button pButton label="View" icon="pi pi-eye" aria-label="View hot deal details" class="p-button-secondary p-button-sm w-full" (click)="showProductDetails(product)"></button>
+                            <button pButton label="View" icon="pi pi-eye" aria-label="View hot deal details"
+                                class="p-button-secondary p-button-sm w-full"
+                                (click)="showProductDetails(product)"></button>
                             }
                         </div>
                     </div>
@@ -197,8 +214,8 @@
                 <div class="col-12 md:col-4 mb-4 md:mb-0">
                     <div class="crafted-image-wrapper" style="aspect-ratio: 4/3; position: relative;">
                         <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Artisan weaving traditional fabrics"
-                            sizes="(max-width: 768px) 90vw, 33vw"
-                            priority="false" loading="lazy" class="border-round-xl shadow-4 crafted-image">
+                            sizes="(max-width: 768px) 90vw, 33vw" priority="false" loading="lazy"
+                            class="border-round-xl shadow-4 crafted-image">
                     </div>
                 </div>
                 <div class="col-12 md:col-8 md:pl-6">
@@ -237,9 +254,10 @@
 
         <div class="support-section relative w-full overflow-hidden surface-ground">
             <!-- Background Image Area (Left side on desktop, full background on mobile) -->
-            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden" style="aspect-ratio: 16/9;">
-                <img ngSrc="assets/handcrafted_heritage_bg.webp" fill style="object-fit: cover; object-position: left center;" 
-                    sizes="(max-width: 768px) 100vw, 60vw"
+            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden"
+                style="aspect-ratio: 16/9;">
+                <img ngSrc="assets/handcrafted_heritage_bg.webp" fill
+                    style="object-fit: cover; object-position: left center;" sizes="(max-width: 768px) 100vw, 60vw"
                     alt="Heritage background showing traditional craft environment" loading="lazy">
                 <!-- Fade gradient to surface-ground -->
                 <div class="absolute top-0 left-0 w-full h-full bg-gradient-fade"></div>
@@ -285,12 +303,10 @@
                                     style="resize: none;"></textarea>
                             </div>
 
-                            <button pButton label="SEND MESSAGE" icon="pi pi-send"
-                                aria-label="Send contact message"
+                            <button pButton label="SEND MESSAGE" icon="pi pi-send" aria-label="Send contact message"
                                 class="p-button-lg w-full font-bold letter-spacing-1 border-none text-sm transition-colors transition-duration-300 hover:bg-blue-600"
                                 style="background: var(--accent-color); border-radius: 8px;"
-                                (click)="submitContactForm()"
-                                [loading]="isContactSubmitting"
+                                (click)="submitContactForm()" [loading]="isContactSubmitting"
                                 [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting"></button>
                         </div>
                     </div>
@@ -326,13 +342,11 @@
                             </div>
                         </div>
                         <div class="flex align-items-center gap-2">
-                            <button pButton icon="pi pi-minus" 
-                                aria-label="Decrease product quantity"
+                            <button pButton icon="pi pi-minus" aria-label="Decrease product quantity"
                                 class="p-button-rounded p-button-text p-button-sm"
                                 (click)="updateQuantity(item, -1)"></button>
                             <span class="font-bold w-2rem text-center">{{ item.quantity }}</span>
-                            <button pButton icon="pi pi-plus" 
-                                aria-label="Increase product quantity"
+                            <button pButton icon="pi pi-plus" aria-label="Increase product quantity"
                                 class="p-button-rounded p-button-text p-button-sm"
                                 (click)="updateQuantity(item, 1)"></button>
                         </div>
@@ -453,7 +467,8 @@
             <div class="flex gap-3 w-full">
                 <input pInputText [(ngModel)]="trackPhone" placeholder="Order # or Phone" (keyup.enter)="trackOrder()"
                     class="flex-1">
-                <button pButton icon="pi pi-search" aria-label="Search for order status" (click)="trackOrder()" [loading]="trackingLoading"></button>
+                <button pButton icon="pi pi-search" aria-label="Search for order status" (click)="trackOrder()"
+                    [loading]="trackingLoading"></button>
             </div>
         </div>
 
@@ -590,7 +605,8 @@
     <div class="flex flex-column align-items-center text-center p-4">
         <i class="pi pi-thumbs-up text-6xl text-primary mb-3"></i>
         <h2 class="m-0 mb-2">Thank You!</h2>
-        <p class="text-600 mb-4">Your order <span class="font-bold text-primary">{{ placedOrderNumber || placedOrderId }}</span> and payment
+        <p class="text-600 mb-4">Your order <span class="font-bold text-primary">{{ placedOrderNumber || placedOrderId
+                }}</span> and payment
             information have been received. Our team will verify and process
             your order soon.</p>
         <button pButton label="Continue Shopping" styleClass="p-button-outlined"

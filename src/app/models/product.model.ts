@@ -23,4 +23,6 @@ export interface Product {
   categoryId?: string;
   categories?: any[];
   isInStock?: boolean;
+  isHotDeal?: boolean;
+  isBestSeller?: boolean;
 }

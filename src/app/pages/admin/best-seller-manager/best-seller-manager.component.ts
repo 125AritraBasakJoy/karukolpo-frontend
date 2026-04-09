@@ -8,6 +8,7 @@ import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs/operators';
+import { SiteConfigService } from '../../../services/site-config.service';
 
 @Component({
     selector: 'app-best-seller-manager',
@@ -19,6 +20,7 @@ import { finalize } from 'rxjs/operators';
 export class BestSellerManagerComponent implements OnInit {
     private productService = inject(ProductService);
     private messageService = inject(MessageService);
+    private siteConfigService = inject(SiteConfigService);
 
     products = signal<Product[]>([]);
     selectedProducts = signal<Product[]>([]);
@@ -30,7 +32,7 @@ export class BestSellerManagerComponent implements OnInit {
 
     loadProducts() {
         this.loading.set(true);
-        this.productService.getProducts(0, 1000, undefined, true)
+        this.productService.getProducts(0, 1000, undefined, false)
             .pipe(finalize(() => this.loading.set(false)))
             .subscribe({
                 next: (products) => {
@@ -83,6 +85,7 @@ export class BestSellerManagerComponent implements OnInit {
                         summary: 'Saved Successfully',
                         detail: `${selectedIds.length} products are now marked as Best Sellers.`
                     });
+                    this.siteConfigService.updateConfig({ hasBestSellers: selectedIds.length > 0 });
                 },
                 error: (err) => {
                     console.error('Failed to save best sellers', err);
@@ -109,6 +112,7 @@ export class BestSellerManagerComponent implements OnInit {
                         summary: 'Cleared Successfully',
                         detail: 'All products removed from Best Sellers.'
                     });
+                    this.siteConfigService.updateConfig({ hasBestSellers: false });
                 },
                 error: (err) => {
                     console.error('Failed to clear best sellers', err);

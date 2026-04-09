@@ -5,6 +5,8 @@ export interface SiteConfig {
     siteName: string;
     logoUrl: string;
     isMaintenanceMode: boolean;
+    hasHotDeals: boolean;
+    hasBestSellers: boolean;
 }
 
 @Injectable({
@@ -16,7 +18,9 @@ export class SiteConfigService {
     siteConfig = signal<SiteConfig>({
         siteName: 'Karukolpo',
         logoUrl: '', // Empty string means use text fallback
-        isMaintenanceMode: false
+        isMaintenanceMode: false,
+        hasHotDeals: true,
+        hasBestSellers: true
     });
 
     constructor(@Inject(PLATFORM_ID) private platformId: Object) {

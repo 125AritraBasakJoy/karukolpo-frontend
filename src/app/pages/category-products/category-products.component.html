@@ -25,35 +25,45 @@
 
     @if (!loading() && products().length > 0) {
     <div class="grid">
-        @for (product of products(); track product.id) {
-        <div class="col-12 sm:col-6 md:col-4 lg:col-3">
-            <div class="product-card surface-card shadow-2 p-3 h-full flex flex-column relative">
-                <!-- Out of Stock Badge -->
+        @for (product of products(); track product.id; let index = $index) {
+        <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-4">
+            <div class="product-card premium-product-card surface-card flex flex-column h-full relative overflow-hidden">
                 @if (isOutOfStock(product)) {
-                <div class="absolute top-0 right-0 m-2 z-2">
-                    <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
+                <div class="absolute top-0 right-0 m-3 z-3">
+                    <span class="oos-badge">Out of Stock</span>
                 </div>
                 }
 
                 <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                    <img [ngSrc]="product.imageUrl" [alt]="product.name" width="200" height="200"
-                        [priority]="product.id === products()[0]?.id || product.id === products()[1]?.id">
+                    <img [ngSrc]="product.imageUrl" [alt]="product.name" fill class="product-image"
+                        sizes="(max-width: 767px) 45vw, (max-width: 991px) 30vw, 22vw"
+                        [priority]="index < 4">
+
+                        <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center gap-3">
+                            <button pButton icon="pi pi-eye" label="View"
+                                class="p-button-rounded p-button-sm glass-pill-button px-4"
+                                (click)="showProductDetails(product)"></button>
+                        </div>
                 </div>
-                <div class="flex-grow-1">
-                    <div class="product-title">{{ product.name }}</div>
-                    <div class="desc-clamp" [innerHTML]="product.description | safeHtml">
+
+                <div class="product-info-content p-3 flex-grow-1 flex flex-column">
+                    <div class="product-header-flex">
+                        <h3 class="product-title">{{ product.name }}</h3>
+                        <div class="price-pill">{{ product.price | currency:'BDT':'৳' }}</div>
                     </div>
-                    <div class="product-price">{{ product.price | currency:'BDT':'৳' }}
+                    
+
+                    <div class="mt-auto">
+                        @if (!isOutOfStock(product)) {
+                        <button pButton label="View" icon="pi pi-eye"
+                            class="p-button-sm w-full dark-cart-button"
+                            (click)="$event.stopPropagation(); showProductDetails(product)"></button>
+                        } @else {
+                        <button pButton label="Notify Me" icon="pi pi-bell"
+                            class="p-button-secondary p-button-sm w-full border-round-lg"
+                            (click)="$event.stopPropagation()"></button>
+                        }
                     </div>
-                </div>
-                <div class="mt-3 flex gap-2">
-                    <button pButton label="View Product" icon="pi pi-eye"
-                        class="p-button-outlined flex-1"
-                        (click)="showProductDetails(product)"></button>
-                    @if (!isOutOfStock(product)) {
-                    <button pButton icon="pi pi-shopping-cart" class="p-button-primary" pTooltip="Add to Cart"
-                        tooltipPosition="top" (click)="addToCart(product)"></button>
-                    }
                 </div>
             </div>
         </div>

@@ -25,295 +25,302 @@
 
 
     <!-- Category Section -->
-    @if (categories().length > 0) {
-    <div id="categories"
-        class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
-        <p-divider align="center" styleClass="w-full mb-4">
-            <div class="elegant-header px-4">
-                <span class="subtitle text-primary">Shop By</span>
-                <h2 class="title m-0">Category</h2>
-            </div>
-        </p-divider>
-        <div class="category-grid w-full">
-            @for (cat of categories(); track cat.id) {
-            <div class="category-card" (click)="selectCategory(cat)">
-                <img [ngSrc]="getCategoryImage(cat.name)" fill style="object-fit: cover; z-index: 0;" [alt]="cat.name"
-                    sizes="(max-width: 767px) 50vw, (max-width: 1024px) 33vw, 33vw" loading="lazy">
-                <div class="category-overlay"></div>
-                <div class="category-info">
-                    <span class="category-name">{{ cat.name }}</span>
+    @defer (on viewport) {
+        @if (categories().length > 0) {
+        <div id="categories"
+            class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
+            <p-divider align="center" styleClass="w-full mb-4">
+                <div class="elegant-header px-4">
+                    <span class="subtitle text-primary">Shop By</span>
+                    <h2 class="title m-0">Category</h2>
                 </div>
+            </p-divider>
+            <div class="category-grid w-full">
+                @for (cat of categories(); track cat.id) {
+                <div class="category-card" (click)="selectCategory(cat)">
+                    <img [ngSrc]="getCategoryImage(cat.name)" fill style="object-fit: cover; z-index: 0;" [alt]="cat.name"
+                        sizes="(max-width: 767px) 50vw, (max-width: 1024px) 33vw, 33vw" loading="lazy">
+                    <div class="category-overlay"></div>
+                    <div class="category-info">
+                        <span class="category-name">{{ cat.name }}</span>
+                    </div>
+                </div>
+                }
             </div>
-            }
         </div>
-    </div>
-    } @else {
-    <div class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
-        <div class="category-grid w-full">
-            @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="category-card skeleton-loader aspect-square"></div>
-            }
+        }
+    } @placeholder {
+        <div class="category-section-fullscreen flex flex-column align-items-center justify-content-center px-4">
+            <div class="category-grid w-full">
+                @for (i of [1,2,3,4,5,6]; track i) {
+                <div class="category-card skeleton-loader aspect-square"></div>
+                }
+            </div>
         </div>
-    </div>
     }
 
     <!-- Best Selling Section -->
-    @if (bestSelling().length > 0) {
-    <div id="best-selling" class="container px-4 py-4 surface-ground">
-        <p-divider align="center" styleClass="mb-4">
-            <div class="elegant-header px-4">
-                <span class="subtitle text-primary">Curated Collection</span>
-                <h2 class="title m-0">Best Selling</h2>
-            </div>
-        </p-divider>
+    @defer (on viewport) {
+        @if (bestSelling().length > 0) {
+        <div id="best-selling" class="surface-ground">
+            <div class="container px-4">
+            <p-divider align="center" styleClass="mb-4">
+                <div class="elegant-header px-4">
+                    <span class="subtitle text-primary">Curated Collection</span>
+                    <h2 class="title m-0">Best Selling</h2>
+                </div>
+            </p-divider>
 
-        <p-carousel [value]="bestSelling()" [numVisible]="5" [numScroll]="1" [circular]="true"
-            styleClass="carousel-stable" [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000"
-            [showNavigators]="false" [showIndicators]="bestSelling().length > 5">
-            <ng-template let-product pTemplate="item">
-                <div class="px-1 h-full">
-                    <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all"
-                        style="padding: 8px;">
-                        <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
-                                sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                priority="false" style="object-fit: cover;">
-                            @if (isOutOfStock(product)) {
-                            <div class="absolute top-0 right-0 m-2 z-2">
-                                <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
+            <p-carousel [value]="bestSelling()" [numVisible]="5" [numScroll]="1" [circular]="true"
+                styleClass="carousel-stable" [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000"
+                [showNavigators]="false" [showIndicators]="bestSelling().length > 5">
+                <ng-template let-product pTemplate="item">
+                    <div class="px-2 h-full">
+                        <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
+                            <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
+                                <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
+                                    sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
+                                    priority="false" style="object-fit: cover;" class="product-image">
+                                
+                                @if (isOutOfStock(product)) {
+                                <div class="absolute top-0 right-0 m-2 z-2">
+                                    <span class="oos-badge">Out of Stock</span>
+                                </div>
+                                }
                             </div>
-                            }
-                        </div>
-                        <div class="flex-grow-1 flex align-items-center justify-content-between gap-2 mb-2">
-                            <div class="product-title m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-                                style="flex: 1; font-size: 0.9rem;" [pTooltip]="product.name" tooltipPosition="top">{{
-                                product.name }}</div>
-                            <div class="product-price text-xs px-2 py-1 border-round-3xl font-bold"
-                                style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; white-space: nowrap; font-size: 0.75rem !important;">
-                                {{ product.price | currency:'BDT':'৳' }}</div>
-                        </div>
-                        <div class="mt-auto w-full">
-                            @if (product.isInStock) {
-                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart"
-                                aria-label="Add product to cart"
-                                class="p-button-sm w-full border-none transition-colors transition-duration-300"
-                                style="background-color: #1e293b; color: white;"
-                                onmouseover="this.style.backgroundColor='#334155'"
-                                onmouseout="this.style.backgroundColor='#1e293b'" (click)="addToCart(product)"></button>
-                            } @else {
-                            <button pButton label="View" icon="pi pi-eye" aria-label="View product details"
-                                class="p-button-secondary p-button-sm w-full"
-                                (click)="showProductDetails(product)"></button>
-                            }
+
+                            <div class="product-info-home p-3 flex-grow-1 flex flex-column">
+                                <div class="product-header-flex">
+                                    <h3 class="product-title">{{ product.name }}</h3>
+                                    <div class="price-pill">{{ product.price | currency:'BDT':'৳' }}</div>
+                                </div>
+                                
+                                <div class="mt-auto">
+                                    @if (product.isInStock) {
+                                    <button pButton label="View" icon="pi pi-eye"
+                                        class="p-button-sm w-full dark-cart-button"
+                                        (click)="showProductDetails(product)"></button>
+                                    } @else {
+                                    <button pButton label="View Details" icon="pi pi-eye"
+                                        class="p-button-secondary p-button-sm w-full border-round-lg"
+                                        (click)="showProductDetails(product)"></button>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </ng-template>
-        </p-carousel>
-    </div>
-    } @else if (loading()) {
-    <div class="container px-4 py-4">
-        <div class="grid">
-            @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="col-12 sm:col-6 md:col-2 px-1">
-                <div class="surface-card p-3 border-round-xl">
-                    <div class="skeleton-loader aspect-4-5 mb-3"></div>
-                    <div class="skeleton-loader h-1rem w-8 mb-2"></div>
-                    <div class="skeleton-loader h-2rem w-full"></div>
-                </div>
+                </ng-template>
+            </p-carousel>
             </div>
-            }
         </div>
-    </div>
+        }
+    } @placeholder {
+        <div class="container px-4 py-8">
+            <div class="skeleton-loader h-4rem w-full mb-4 border-round-xl"></div>
+            <div class="grid">
+                @for (i of [1,2,3,4,5]; track i) {
+                    <div class="col-12 sm:col-6 md:col-2 px-1">
+                        <div class="skeleton-loader h-15rem w-full border-round-xl"></div>
+                    </div>
+                }
+            </div>
+        </div>
     }
 
 
     <!-- Hot Deals Section -->
-    @if (hotDeals().length > 0) {
-    <div id="hot-deals" class="container px-4 py-4">
-        <p-divider align="center" styleClass="mb-4">
-            <div class="elegant-header px-4">
-                <span class="subtitle text-primary">Special Offers</span>
-                <h2 class="title m-0">Hot Deals</h2>
-            </div>
-        </p-divider>
+    @defer (on viewport) {
+        @if (hotDeals().length > 0) {
+        <div id="hot-deals">
+            <div class="container px-4">
+            <p-divider align="center" styleClass="mb-4">
+                <div class="elegant-header px-4">
+                    <span class="subtitle text-primary">Special Offers</span>
+                    <h2 class="title m-0">Hot Deals</h2>
+                </div>
+            </p-divider>
 
-        <p-carousel [value]="hotDeals()" [numVisible]="5" [numScroll]="1" [circular]="true" styleClass="carousel-stable"
-            [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false"
-            [showIndicators]="hotDeals().length > 5">
-            <ng-template let-product pTemplate="item">
-                <div class="px-1 h-full">
-                    <div class="product-card small-card surface-card shadow-1 flex flex-column relative hover:shadow-4 transition-all"
-                        style="padding: 8px;">
+            <p-carousel [value]="hotDeals()" [numVisible]="5" [numScroll]="1" [circular]="true" styleClass="carousel-stable"
+                [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000" [showNavigators]="false"
+                [showIndicators]="hotDeals().length > 5">
+                <ng-template let-product pTemplate="item">
+                <div class="px-2 h-full">
+                    <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                         <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                             <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
                                 sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                priority="false" style="object-fit: cover;">
+                                priority="false" style="object-fit: cover;" class="product-image">
+                            
                             @if (isOutOfStock(product)) {
                             <div class="absolute top-0 right-0 m-2 z-2">
-                                <p-tag value="Out of Stock" severity="danger" class="shadow-2"></p-tag>
+                                <span class="oos-badge">Out of Stock</span>
                             </div>
                             }
-                            <div class="absolute top-0 right-0 m-2">
-                                <p-tag value="Hot" severity="danger" class="shadow-2"></p-tag>
+                        </div>
+
+                        <div class="product-info-home p-3 flex-grow-1 flex flex-column">
+                            <div class="product-header-flex">
+                                <h3 class="product-title">{{ product.name }}</h3>
+                                <div class="price-pill">{{ product.price | currency:'BDT':'৳' }}</div>
                             </div>
-                        </div>
-                        <div class="flex-grow-1 flex align-items-center justify-content-between gap-2 mb-2">
-                            <div class="product-title m-0 text-overflow-ellipsis overflow-hidden white-space-nowrap"
-                                style="flex: 1; font-size: 0.9rem;" [pTooltip]="product.name" tooltipPosition="top">{{
-                                product.name }}</div>
-                            <div class="product-price text-xs px-2 py-1 border-round-3xl font-bold"
-                                style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; white-space: nowrap; font-size: 0.75rem !important;">
-                                {{ product.price | currency:'BDT':'৳' }}</div>
-                        </div>
-                        <div class="mt-auto w-full">
-                            @if (product.isInStock) {
-                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart"
-                                aria-label="Add hot deal to cart"
-                                class="p-button-sm w-full border-none transition-colors transition-duration-300"
-                                style="background-color: #1e293b; color: white;"
-                                onmouseover="this.style.backgroundColor='#334155'"
-                                onmouseout="this.style.backgroundColor='#1e293b'" (click)="addToCart(product)"></button>
-                            } @else {
-                            <button pButton label="View" icon="pi pi-eye" aria-label="View hot deal details"
-                                class="p-button-secondary p-button-sm w-full"
-                                (click)="showProductDetails(product)"></button>
-                            }
+                            
+                            <div class="mt-auto">
+                                @if (product.isInStock) {
+                                <button pButton label="View" icon="pi pi-eye"
+                                    class="p-button-sm w-full dark-cart-button"
+                                    (click)="showProductDetails(product)"></button>
+                                } @else {
+                                <button pButton label="View Details" icon="pi pi-eye"
+                                    class="p-button-secondary p-button-sm w-full border-round-lg"
+                                    (click)="showProductDetails(product)"></button>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
             </ng-template>
         </p-carousel>
-    </div>
-    } @else if (loading()) {
-    <div class="container px-4 py-4">
-        <div class="grid">
-            @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="col-12 sm:col-6 md:col-2 px-1">
-                <div class="surface-card p-3 border-round-xl">
-                    <div class="skeleton-loader aspect-4-5 mb-3"></div>
-                    <div class="skeleton-loader h-1rem w-8 mb-2"></div>
-                    <div class="skeleton-loader h-2rem w-full"></div>
-                </div>
-            </div>
-            }
         </div>
     </div>
     }
+} @placeholder {
+    <div class="container px-4 py-8">
+        <div class="skeleton-loader h-4rem w-full mb-4 border-round-xl"></div>
+        <div class="grid">
+            @for (i of [1,2,3,4,5]; track i) {
+                <div class="col-12 sm:col-6 md:col-2 px-1">
+                    <div class="skeleton-loader h-15rem w-full border-round-xl"></div>
+                </div>
+            }
+        </div>
+    </div>
+}
 
     <!-- Crafted by Hands Section -->
-    <section class="crafted-section py-4 px-4">
-        <div class="container">
-            <p-divider align="center" styleClass="mb-4">
-                <div class="elegant-header px-4">
-                    <span class="subtitle text-primary">Our Story</span>
-                    <h2 class="title m-0">Our Heritage</h2>
-                </div>
-            </p-divider>
-            <div class="grid align-items-center">
-                <div class="col-12 md:col-4 mb-4 md:mb-0">
-                    <div class="crafted-image-wrapper" style="aspect-ratio: 4/3; position: relative;">
-                        <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Artisan weaving traditional fabrics"
-                            sizes="(max-width: 768px) 90vw, 33vw" priority="false" loading="lazy"
-                            class="border-round-xl shadow-4 crafted-image">
+    @defer (on viewport) {
+        <section class="crafted-section">
+            <div class="container">
+                <p-divider align="center" styleClass="mb-4">
+                    <div class="elegant-header px-4">
+                        <span class="subtitle text-primary">Our Story</span>
+                        <h2 class="title m-0">Our Heritage</h2>
                     </div>
-                </div>
-                <div class="col-12 md:col-8 md:pl-6">
-                    <div class="crafted-content">
-                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
-                        </h2>
-                        <p class="text-lg text-600 mb-4 line-height-3">
-                            Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage. We believe
-                            that every handcrafted item tells a story – a story of tradition, skill, and dedication
-                            passed down through generations.
-                        </p>
-                        <p class="text-lg text-600 mb-5 line-height-3">
-                            Every product you purchase directly supports local craftspeople and their families, helping
-                            to sustain their livelihoods and keep ancient traditions alive.
-                        </p>
-                        <button pButton label="Learn Our Story" icon="pi pi-arrow-right" pButton iconPos="right"
-                            aria-label="Learn more about our heritage"
-                            class="p-button-lg p-button-primary p-button-rounded shadow-3 transition-all transition-duration-300"
-                            (click)="goToAboutUs()"></button>
+                </p-divider>
+                <div class="grid align-items-center">
+                    <div class="col-12 md:col-4 mb-4 md:mb-0">
+                        <div class="crafted-image-wrapper" style="aspect-ratio: 4/3; position: relative;">
+                            <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Artisan weaving traditional fabrics"
+                                sizes="(max-width: 768px) 90vw, 33vw" priority="false" loading="lazy"
+                                class="border-round-xl shadow-4 crafted-image">
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- New Handcrafted Contact Section -->
-    <section id="contact" class="surface-ground pt-4">
-        <div class="container px-4">
-            <p-divider align="center" styleClass="mb-4">
-                <div class="elegant-header px-4">
-                    <span class="subtitle text-primary">Get In Touch</span>
-                    <h2 class="title m-0">Share Your Experience</h2>
-                </div>
-            </p-divider>
-        </div>
-
-        <div class="support-section relative w-full overflow-hidden surface-ground">
-            <!-- Background Image Area (Left side on desktop, full background on mobile) -->
-            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden"
-                style="aspect-ratio: 16/9;">
-                <img ngSrc="assets/handcrafted_heritage_bg.webp" fill
-                    style="object-fit: cover; object-position: left center;" sizes="(max-width: 768px) 100vw, 60vw"
-                    alt="Heritage background showing traditional craft environment" loading="lazy">
-                <!-- Fade gradient to surface-ground -->
-                <div class="absolute top-0 left-0 w-full h-full bg-gradient-fade"></div>
-            </div>
-
-            <div
-                class="container support-content-container relative z-1 py-6 px-4 flex flex-column md:flex-row align-items-center">
-                <!-- Left Side Content (Empty space to maintain layout for the right side form) -->
-                <div class="col-12 md:col-6 hidden md:block">
-                </div>
-
-                <!-- Right Side Form Card -->
-                <div class="col-12 md:col-6 md:pl-6">
-                    <div class="form-glass-card p-5 md:p-6 border-round-3xl relative">
-                        <h3 class="text-4xl font-normal mb-3 mt-0 text-900"
-                            style="font-family: 'Playfair Display', serif;">
-                            Leave us a message</h3>
-                        <p class="text-600 mb-6 line-height-3 text-sm">Whether it's a custom request, feedback, or a
-                            simple
-                            hello, we'd love to hear from you. Our team will get back to you shortly.</p>
-
-                        <div class="p-fluid">
-                            <div class="field mb-5 relative">
-                                <label for="contactName"
-                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
-                                    style="color: var(--accent-color);">Your Name</label>
-                                <input pInputText id="contactName" [(ngModel)]="contactForm.name"
-                                    placeholder="Enter your full name" class="w-full contact-input">
-                            </div>
-                            <div class="field mb-5 relative">
-                                <label for="contactInfo"
-                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
-                                    style="color: var(--accent-color);">Phone Number or Email</label>
-                                <input pInputText id="contactInfo" [(ngModel)]="contactForm.contactInfo"
-                                    placeholder="How can we reach you?" class="w-full contact-input">
-                            </div>
-                            <div class="field mb-6 relative">
-                                <label for="contactMessage"
-                                    class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
-                                    style="color: var(--accent-color);">Message</label>
-                                <textarea pInputTextarea id="contactMessage" [(ngModel)]="contactForm.message" rows="1"
-                                    placeholder="Tell us about your inquiry..." class="w-full contact-input"
-                                    style="resize: none;"></textarea>
-                            </div>
-
-                            <button pButton label="SEND MESSAGE" icon="pi pi-send" aria-label="Send contact message"
-                                class="p-button-lg w-full font-bold letter-spacing-1 border-none text-sm transition-colors transition-duration-300 hover:bg-blue-600"
-                                style="background: var(--accent-color); border-radius: 8px;"
-                                (click)="submitContactForm()" [loading]="isContactSubmitting"
-                                [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting"></button>
+                    <div class="col-12 md:col-8 md:pl-6">
+                        <div class="crafted-content">
+                            <h2 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
+                            </h2>
+                            <p class="text-lg text-600 mb-4 line-height-3">
+                                Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage. We believe
+                                that every handcrafted item tells a story – a story of tradition, skill, and dedication
+                                passed down through generations.
+                            </p>
+                            <p class="text-lg text-600 mb-5 line-height-3">
+                                Every product you purchase directly supports local craftspeople and their families, helping
+                                to sustain their livelihoods and keep ancient traditions alive.
+                            </p>
+                            <button pButton label="Learn Our Story" icon="pi pi-arrow-right" pButton iconPos="right"
+                                aria-label="Learn more about our heritage"
+                                class="p-button-lg p-button-primary p-button-rounded shadow-3 transition-all transition-duration-300"
+                                (click)="goToAboutUs()"></button>
                         </div>
                     </div>
                 </div>
             </div>
+        </section>
+    } @placeholder {
+        <div class="container py-8">
+            <div class="skeleton-loader h-20rem w-full border-round-xl"></div>
         </div>
-    </section>
+    }
+
+    <!-- New Handcrafted Contact Section -->
+    @defer (on viewport) {
+        <section id="contact" class="surface-ground">
+            <div class="container px-4">
+                <p-divider align="center" styleClass="mb-4">
+                    <div class="elegant-header px-4">
+                        <span class="subtitle text-primary">Get In Touch</span>
+                        <h2 class="title m-0">Share Your Experience</h2>
+                    </div>
+                </p-divider>
+            </div>
+
+            <div class="support-section relative w-full overflow-hidden surface-ground">
+                <!-- Background Image Area (Left side on desktop, full background on mobile) -->
+                <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden"
+                    style="aspect-ratio: 16/9;">
+                    <img ngSrc="assets/handcrafted_heritage_bg.webp" fill
+                        style="object-fit: cover; object-position: left center;" sizes="(max-width: 768px) 100vw, 60vw"
+                        alt="Heritage background showing traditional craft environment" loading="lazy">
+                    <!-- Fade gradient to surface-ground -->
+                    <div class="absolute top-0 left-0 w-full h-full bg-gradient-fade"></div>
+                </div>
+
+                <div
+                    class="container support-content-container relative z-1 py-6 px-4 flex flex-column md:flex-row align-items-center">
+                    <!-- Left Side Content (Empty space to maintain layout for the right side form) -->
+                    <div class="col-12 md:col-6 hidden md:block">
+                    </div>
+
+                    <!-- Right Side Form Card -->
+                    <div class="col-12 md:col-6 md:pl-6">
+                        <div class="form-glass-card p-5 md:p-6 border-round-3xl relative">
+                            <h3 class="text-4xl font-normal mb-3 mt-0 text-900"
+                                style="font-family: 'Playfair Display', serif;">
+                                Leave us a message</h3>
+                            <p class="text-600 mb-6 line-height-3 text-sm">Whether it's a custom request, feedback, or a
+                                simple
+                                hello, we'd love to hear from you. Our team will get back to you shortly.</p>
+
+                            <div class="p-fluid">
+                                <div class="field mb-5 relative">
+                                    <label for="contactName"
+                                        class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
+                                        style="color: var(--accent-color);">Your Name</label>
+                                    <input pInputText id="contactName" [(ngModel)]="contactForm.name"
+                                        placeholder="Enter your full name" class="w-full contact-input">
+                                </div>
+                                <div class="field mb-5 relative">
+                                    <label for="contactInfo"
+                                        class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
+                                        style="color: var(--accent-color);">Phone Number or Email</label>
+                                    <input pInputText id="contactInfo" [(ngModel)]="contactForm.contactInfo"
+                                        placeholder="How can we reach you?" class="w-full contact-input">
+                                </div>
+                                <div class="field mb-6 relative">
+                                    <label for="contactMessage"
+                                        class="text-xs font-bold uppercase letter-spacing-1 block mb-2 transition-colors transition-duration-200"
+                                        style="color: var(--accent-color);">Message</label>
+                                    <textarea pInputTextarea id="contactMessage" [(ngModel)]="contactForm.message" rows="1"
+                                        placeholder="Tell us about your inquiry..." class="w-full contact-input"
+                                        style="resize: none;"></textarea>
+                                </div>
+
+                                <button pButton label="SEND MESSAGE" icon="pi pi-send" aria-label="Send contact message"
+                                    class="p-button-lg w-full font-bold letter-spacing-1 border-none text-sm transition-colors transition-duration-300 hover:bg-blue-600"
+                                    style="background: var(--accent-color); border-radius: 8px;"
+                                    (click)="submitContactForm()" [loading]="isContactSubmitting"
+                                    [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    } @placeholder {
+        <div class="container py-8">
+            <div class="skeleton-loader h-30rem w-full border-round-3xl"></div>
+        </div>
+    }
 </div>
 
 <!-- Product Details Modal (Keep for legacy or remove? Keeping it doesn't hurt but we navigate now) -->

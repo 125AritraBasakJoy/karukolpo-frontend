@@ -5,12 +5,14 @@
 // ── Full-screen sections ────────────────────────────────────────
 .hero-section-fullscreen {
   position: relative;
-  height: calc(100vh - 80px);
+  height: 100vh;
+  min-height: 500px; // Ensure space is reserved
+  background: #000; // Placeholder background
   width: 100%;
 }
 
 .category-section-fullscreen {
-  padding: 4rem 1rem;
+  padding: 2rem 1rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -19,6 +21,7 @@
   .category-grid {
     flex: 1;
     min-height: 400px; // Reserve height for categories on mobile
+
     @media (min-width: 1024px) {
       min-height: 600px; // Reserve height for categories on desktop
     }
@@ -256,12 +259,12 @@
 }
 
 .category-card {
-  aspect-ratio: 1 / 1;
-
-  border-radius: 16px;
   position: relative;
-  cursor: pointer;
+  aspect-ratio: 1/1; // Reserve square space to prevent CLS
+  border-radius: 12px;
   overflow: hidden;
+  cursor: pointer;
+  background: var(--surface-card); // Skeleton color
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
@@ -270,7 +273,7 @@
   .category-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4));
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4));
     z-index: 1;
     transition: background 0.3s ease;
   }
@@ -288,7 +291,8 @@
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 
-    &::before, .category-overlay {
+    &::before,
+    .category-overlay {
       background: rgba(0, 0, 0, 0.5);
     }
 
@@ -480,7 +484,7 @@
       aspect-ratio: 16 / 9;
       height: auto !important;
       // Removed redundant background-image to prevent double-downloads and shifts
-      
+
       .bg-gradient-fade {
         background: linear-gradient(180deg, transparent 0%, transparent 60%, var(--surface-ground) 100%);
       }
@@ -522,16 +526,12 @@
 }
 
 #hot-deals,
-#best-selling {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin: 0 !important;
+#best-selling,
+.crafted-section,
+#contact {
+  padding: 2rem 0;
   scroll-margin-top: 2rem;
-  min-height: 520px; // Mobile stability for product sections
-  @media (min-width: 1024px) {
-    min-height: 600px;
-  }
+  display: block;
 }
 
 .surface-ground {
@@ -600,7 +600,7 @@
   padding: 0;
 
   .p-carousel-content {
-     position: relative;
+    position: relative;
   }
 
   .p-carousel-items-container {
@@ -613,12 +613,12 @@
 
   .p-carousel-item {
     transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.8s ease;
-    
+
     // Subtle depth effect for inactive items if they are partially visible
     // PrimeNG handles visibility via overflow, but we can add a general scale
     .product-card {
-       transform: scale(0.98);
-       transition: transform 0.5s ease;
+      transform: scale(0.98);
+      transition: transform 0.5s ease;
     }
   }
 
@@ -645,13 +645,14 @@
       }
 
       // Active state: Stretch into a pill
-      &.p-highlight, &.p-carousel-indicator-active {
+      &.p-highlight,
+      &.p-carousel-indicator-active {
         .p-carousel-indicator-button {
-           width: 32px !important;
-           border-radius: 10px !important;
-           background: var(--accent-color) !important; // Blue
-           border-color: rgba(59, 130, 246, 0.3) !important;
-           box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+          width: 32px !important;
+          border-radius: 10px !important;
+          background: var(--accent-color) !important; // Blue
+          border-color: rgba(59, 130, 246, 0.3) !important;
+          box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
         }
       }
     }
@@ -668,7 +669,7 @@
 .carousel-stable {
   min-height: 480px; // Reserved height for product carousels to prevent footer shift
   display: block;
-  
+
   @media (max-width: 767px) {
     min-height: 440px;
   }
@@ -688,19 +689,18 @@
     bottom: 0;
     left: 0;
     transform: translateX(-100%);
-    background-image: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0,
-      rgba(255, 255, 255, 0.05) 20%,
-      rgba(255, 255, 255, 0.1) 60%,
-      rgba(255, 255, 255, 0)
-    );
+    background-image: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0,
+        rgba(255, 255, 255, 0.05) 20%,
+        rgba(255, 255, 255, 0.1) 60%,
+        rgba(255, 255, 255, 0));
     animation: shimmer 2s infinite;
   }
 
   &.aspect-square {
     aspect-ratio: 1 / 1;
   }
+
   &.aspect-4-5 {
     aspect-ratio: 4 / 5;
   }
@@ -714,5 +714,5 @@
 
 // Carousel custom indicators override for better clickability/accessibility
 :host ::ng-deep .p-carousel-indicators {
-  padding: 1rem 0;
+  padding: 1.5rem 0 0 0; // Only top padding to separate from items, bottom comes from section
 }

@@ -1,7 +1,7 @@
 <div class="container py-6 px-4">
     <!-- Header -->
     <div class="flex align-items-center mb-6 gap-3">
-        <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded" (click)="goBack()"></button>
+        <button pButton icon="pi pi-arrow-left" class="back-btn-pill" (click)="goBack()"></button>
         <div>
             <h1 class="text-4xl font-bold m-0">{{ category()?.name || 'Category' }}</h1>
             <p class="text-600 m-0">Discover our collection in {{ category()?.name }}</p>
@@ -59,9 +59,9 @@
                             class="p-button-sm w-full dark-cart-button"
                             (click)="$event.stopPropagation(); showProductDetails(product)"></button>
                         } @else {
-                        <button pButton label="Notify Me" icon="pi pi-bell"
+                        <button pButton label="View" icon="pi pi-eye"
                             class="p-button-secondary p-button-sm w-full border-round-lg"
-                            (click)="$event.stopPropagation()"></button>
+                            (click)="$event.stopPropagation(); showProductDetails(product)"></button>
                         }
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 <div class="all-products-page">
 
-    <div class="container px-3 md:px-4 py-6 pb-8">
+    <div class="container px-3 md:px-4 py-4 pb-6">
         <!-- Page Navigation -->
         <div class="page-top-nav">
             <button pButton icon="pi pi-arrow-left" 
@@ -67,7 +67,7 @@
         @if (filteredProducts().length > 0) {
         <div class="grid g-3">
             @for (product of filteredProducts(); track product.id; let index = $index) {
-            <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-4 stagger-item" [style.--index]="index">
+            <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-3 stagger-item" [style.--index]="index">
                 <div class="product-card premium-product-card surface-card flex flex-column h-full relative overflow-hidden">
                     @if (isOutOfStock(product)) {
                     <div class="absolute top-0 right-0 m-3 z-3">

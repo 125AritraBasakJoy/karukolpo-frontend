@@ -10,7 +10,7 @@
 }
 
 .category-section-fullscreen {
-  padding: 4rem 1rem;
+  padding: 2rem 1rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -524,17 +524,12 @@
 }
 
 #hot-deals,
-#best-selling {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin: 0 !important;
+#best-selling,
+.crafted-section,
+#contact {
+  padding: 2rem 0;
   scroll-margin-top: 2rem;
-  min-height: 520px; // Mobile stability for product sections
-
-  @media (min-width: 1024px) {
-    min-height: 600px;
-  }
+  display: block;
 }
 
 .surface-ground {
@@ -717,5 +712,5 @@
 
 // Carousel custom indicators override for better clickability/accessibility
 :host ::ng-deep .p-carousel-indicators {
-  padding: 1rem 0;
+  padding: 1.5rem 0 0 0; // Only top padding to separate from items, bottom comes from section
 }

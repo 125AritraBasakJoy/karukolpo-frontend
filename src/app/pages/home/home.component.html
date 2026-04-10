@@ -59,7 +59,8 @@
 
     <!-- Best Selling Section -->
     @if (bestSelling().length > 0) {
-    <div id="best-selling" class="container px-4 py-4 surface-ground">
+    <div id="best-selling" class="surface-ground">
+        <div class="container px-4">
         <p-divider align="center" styleClass="mb-4">
             <div class="elegant-header px-4">
                 <span class="subtitle text-primary">Curated Collection</span>
@@ -107,6 +108,7 @@
                 </div>
             </ng-template>
         </p-carousel>
+        </div>
     </div>
     } @else if (loading()) {
     <div class="container px-4 py-4">
@@ -127,7 +129,8 @@
 
     <!-- Hot Deals Section -->
     @if (hotDeals().length > 0) {
-    <div id="hot-deals" class="container px-4 py-4">
+    <div id="hot-deals">
+        <div class="container px-4">
         <p-divider align="center" styleClass="mb-4">
             <div class="elegant-header px-4">
                 <span class="subtitle text-primary">Special Offers</span>
@@ -175,6 +178,7 @@
                 </div>
             </ng-template>
         </p-carousel>
+        </div>
     </div>
     } @else if (loading()) {
     <div class="container px-4 py-4">
@@ -193,7 +197,7 @@
     }
 
     <!-- Crafted by Hands Section -->
-    <section class="crafted-section py-4 px-4">
+    <section class="crafted-section">
         <div class="container">
             <p-divider align="center" styleClass="mb-4">
                 <div class="elegant-header px-4">
@@ -233,7 +237,7 @@
     </section>
 
     <!-- New Handcrafted Contact Section -->
-    <section id="contact" class="surface-ground pt-4">
+    <section id="contact" class="surface-ground">
         <div class="container px-4">
             <p-divider align="center" styleClass="mb-4">
                 <div class="elegant-header px-4">

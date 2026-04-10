@@ -98,9 +98,9 @@
                                     class="p-button-sm w-full dark-cart-button"
                                     (click)="$event.stopPropagation(); showProductDetails(product)"></button>
                             } @else {
-                            <button pButton label="Notify Me" icon="pi pi-bell"
+                            <button pButton label="View" icon="pi pi-eye"
                                 class="p-button-secondary p-button-sm w-full border-round-lg"
-                                (click)="$event.stopPropagation()"></button>
+                                (click)="$event.stopPropagation(); showProductDetails(product)"></button>
                             }
                         </div>
                     </div>

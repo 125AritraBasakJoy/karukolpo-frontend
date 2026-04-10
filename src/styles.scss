@@ -486,6 +486,31 @@ textarea,
     }
 }
 
+.back-btn-pill {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px !important;
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+        background: #334155 !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    i {
+        font-size: 1.1rem;
+    }
+}
+
 /* ── Universal Premium Product Card Design ───────────────────── */
 .premium-product-card {
     border-radius: 12px !important; // Matched to image
@@ -518,11 +543,11 @@ textarea,
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
-        aspect-ratio: 1 / 1 !important; // Ultra-premium tall portrait
+        aspect-ratio: 1 / 1 !important; // Simple square aspect for compactness
         background: #111;
         position: relative;
         overflow: hidden;
-        border-radius: 12px 12px 0 0 !important; // Top rounding only
+        border-radius: 8px 8px 0 0 !important; // Reduced rounding
 
         .product-image {
             position: absolute !important;
@@ -555,22 +580,22 @@ textarea,
 
     .product-info-content,
     .product-info-home {
-        padding: 0.65rem !important; // Reduced padding for compactness
+        padding: 0.5rem !important; // Minimal padding for smaller cards
 
         .product-header-flex {
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 4px; // Significantly reduced gap
-            margin-bottom: 0.75rem; // Reduced margin
+            gap: 2px; // Even tighter gap
+            margin-bottom: 0.5rem; // Reduced margin
             flex: 1;
         }
 
         .product-title {
             color: #fff;
-            font-size: 1rem;
-            font-weight: 700;
+            font-size: 0.85rem; // Smaller font
+            font-weight: 600; // Slightly lighter weight
             line-height: 1.4;
             margin: 0;
             display: -webkit-box;
@@ -588,10 +613,10 @@ textarea,
             flex-shrink: 0;
             background: rgba(59, 130, 246, 0.08) !important;
             color: #3b82f6 !important;
-            padding: 4px 12px !important;
+            padding: 2px 8px !important; // Smaller pill
             border-radius: 100px !important;
-            font-size: 0.9rem !important;
-            font-weight: 800 !important;
+            font-size: 0.8rem !important; // Smaller price
+            font-weight: 700 !important;
             white-space: nowrap;
             border: 1px solid rgba(59, 130, 246, 0.2) !important;
             align-items: center;
@@ -603,10 +628,10 @@ textarea,
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             color: #fff !important;
             border-radius: 8px !important;
-            padding: 0.6rem !important;
+            padding: 0.4rem !important;
             font-weight: 600 !important;
-            font-size: 0.9rem !important;
-            height: 2.5rem;
+            font-size: 0.8rem !important;
+            height: 2.2rem;
             width: 100%;
             display: flex;
             align-items: center;

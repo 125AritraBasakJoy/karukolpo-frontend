@@ -125,7 +125,7 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
 
     .thumbnails-carousel-wrapper {
         width: 100%;
-        max-width: 550px;
+        max-width: 480px; // Reduced from 550px for better proportion
         margin: 0.5rem auto 0;
 
         ::ng-deep .p-carousel {
@@ -138,8 +138,8 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
                 top: 50%;
                 transform: translateY(-50%);
                 z-index: 10;
-                width: 34px;
-                height: 34px;
+                width: 28px; // Smaller buttons
+                height: 28px;
                 background: rgba(15, 23, 42, 0.7);
                 backdrop-filter: blur(8px);
                 border: 1px solid rgba(255, 255, 255, 0.15);
@@ -164,7 +164,7 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
             .p-carousel-next { right: -12px; }
 
             .p-carousel-items-container {
-                padding: 0.5rem 0;
+                padding: 0.25rem 0; // Reduced padding
             }
         }
     }
@@ -175,7 +175,7 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
         background: rgba(255, 255, 255, 0.03);
         filter: grayscale(40%) contrast(0.9);
         opacity: 0.6;
-        transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        transition: all 0.3s ease; // Faster transition
 
         &:hover {
             opacity: 1;

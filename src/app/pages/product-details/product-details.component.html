@@ -39,7 +39,7 @@
                     <!-- Premium Dedicated Thumbnails Carousel -->
                     @if (images().length > 1) {
                     <div class="thumbnails-carousel-wrapper mt-4">
-                        <p-carousel [value]="images()" [numVisible]="4" [numScroll]="1" [circular]="true"
+                        <p-carousel [value]="images()" [numVisible]="5" [numScroll]="1" [circular]="true"
                                     [responsiveOptions]="responsiveOptions" [showIndicators]="false"
                                     [showNavigators]="true">
                             <ng-template let-img pTemplate="item">
@@ -79,10 +79,6 @@
                 <div class="buy-block" lang="bn">
                     <div class="flex align-items-center justify-content-between">
                         <h1 class="product-title" lang="bn">{{ product()!.name }}</h1>
-                        <div class="custom-status-tag">
-                            <p-tag [value]="isOutOfStock() ? 'Out of Stock' : 'In Stock'"
-                                [severity]="isOutOfStock() ? 'danger' : 'success'"></p-tag>
-                        </div>
                     </div>
 
                     <div class="price-container">
@@ -160,7 +156,7 @@
         <h2 class="section-title">Related Products</h2>
         <div class="grid">
             @for (p of relatedProducts(); track p.id; let index = $index) {
-            <div class="col-6 sm:col-6 md:col-3 px-2 mb-4">
+            <div class="col-4 sm:col-4 md:col-2 px-2 mb-4">
                 <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden" [routerLink]="['/products', p.id]">
                     @if (!p.isInStock) {
                     <div class="absolute top-0 right-0 m-3 z-3">
@@ -199,8 +195,8 @@
         <h2 class="section-title">Related Products</h2>
         <div class="grid">
             @for (i of [1,2,3,4]; track i) {
-            <div class="col-12 sm:col-6 md:col-3">
-                <p-skeleton width="100%" height="250px" styleClass="border-round-xl opacity-20"></p-skeleton>
+            <div class="col-4 sm:col-4 md:col-2">
+                        <p-skeleton width="100%" height="200px" styleClass="border-round-xl opacity-20"></p-skeleton>
             </div>
             }
         </div>

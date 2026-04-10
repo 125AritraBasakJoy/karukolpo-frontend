@@ -159,25 +159,34 @@
     <div class="related-products-section">
         <h2 class="section-title">Related Products</h2>
         <div class="grid">
-            @for (p of relatedProducts(); track p.id) {
-            <div class="col-12 sm:col-6 md:col-3">
-                <div class="product-card cursor-pointer" [routerLink]="['/products', p.id]">
+            @for (p of relatedProducts(); track p.id; let index = $index) {
+            <div class="col-6 sm:col-6 md:col-3 px-2 mb-4">
+                <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden" [routerLink]="['/products', p.id]">
                     @if (!p.isInStock) {
-                    <div class="stock-tag">
-                        <p-tag value="Out of Stock" severity="danger"></p-tag>
+                    <div class="absolute top-0 right-0 m-3 z-3">
+                        <span class="oos-badge">Out of Stock</span>
                     </div>
                     }
-                    <div class="image-container">
-                        <img [ngSrc]="p.imageUrl" [alt]="p.name" class="card-image" width="200" height="200">
-                        <div class="view-overlay">
-                            <i class="pi pi-arrow-right"></i>
+
+                    <div class="product-image-wrapper">
+                        <img [ngSrc]="p.imageUrl" [alt]="p.name" fill class="product-image"
+                            sizes="(max-width: 767px) 45vw, (max-width: 991px) 25vw, 15vw" priority="false">
+
+                        <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center">
+                            <i class="pi pi-arrow-right text-3xl"></i>
                         </div>
                     </div>
-                    <div class="card-content">
-                        <div class="card-name">{{ p.name }}</div>
-                        <div class="card-price">
-                            <span class="currency-symbol">৳</span>
-                            <span>{{ p.price | number:'1.0-0' }}</span>
+
+                    <div class="product-info-content p-3 flex-grow-1 flex flex-column">
+                        <div class="product-header-flex">
+                            <h3 class="product-title">{{ p.name }}</h3>
+                            <div class="price-pill">{{ p.price | currency:'BDT':'৳' }}</div>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <button pButton label="View" icon="pi pi-eye"
+                                class="p-button-sm w-full dark-cart-button"
+                                (click)="showProductDetails(p)"></button>
                         </div>
                     </div>
                 </div>

@@ -1,47 +1,49 @@
 <div class="all-products-page">
 
     <div class="container px-3 md:px-4 py-6 pb-8">
-        <!-- Results Header -->
-        <div class="results-header shadow-2 mb-6 p-4 border-round-2xl flex flex-column md:flex-row justify-content-between align-items-center gap-4">
-            <div class="flex flex-column gap-1">
-                <h1 class="text-3xl font-bold m-0 tracking-tight">Our Collections</h1>
-                <div class="text-600 font-medium">
-                    {{ loading() ? 'Finding the best items...' : 'Explore our selection of handcrafted heritage' }}
-                </div>
-            </div>
-            <div class="flex align-items-center gap-3">
-                <div class="results-badge py-2 px-3 border-round-pill bg-primary-reverse text-primary font-bold">
-                    {{ filteredProducts().length }} {{ filteredProducts().length === 1 ? 'Product' : 'Products' }}
-                </div>
-                <button pButton icon="pi pi-arrow-left" label="Back to Home" class="p-button-outlined p-button-sm border-round-xl" (click)="goBack()"></button>
+        <!-- Page Navigation -->
+        <div class="page-top-nav">
+            <button pButton icon="pi pi-arrow-left" 
+                class="back-btn-pill" 
+                (click)="goBack()"
+                pTooltip="Back to Home"
+                tooltipPosition="bottom"></button>
+            <div class="page-title-group">
+                <h1 class="page-title">Our Collections</h1>
+                <span class="product-count">{{ filteredProducts().length }} Items Available</span>
             </div>
         </div>
 
-        <!-- Filter Section -->
-        <div class="filter-section mb-6">
-            <div class="filter-glass-pill p-3 md:p-4 border-round-3xl flex flex-column lg:flex-row gap-4 align-items-center">
-                <div class="flex-1 w-full order-2 lg:order-1">
-                    <span class="p-input-icon-left w-full premium-search">
-                        <i class="pi pi-search text-600"></i>
-                        <input pInputText type="text" [(ngModel)]="searchQuery" (ngModelChange)="searchQuery.set($event)" 
-                               placeholder="What are you looking for?" class="w-full border-round-xl" />
-                    </span>
+        <!-- Structured Filter Section -->
+        <div class="filter-section">
+            <div class="search-container">
+                <span class="p-input-icon-left">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text" [(ngModel)]="searchQuery"
+                        (ngModelChange)="searchQuery.set($event)" placeholder="Search products..." />
+                </span>
+            </div>
+
+            <div class="controls-group">
+                <div class="filter-control-item">
+                    <span class="control-label">Category</span>
+                    <p-dropdown [options]="categories()" [(ngModel)]="selectedCategoryId"
+                        (ngModelChange)="selectedCategoryId.set($event)" optionLabel="name" optionValue="id"
+                        [showClear]="true" appendTo="body" placeholder="All Categories"></p-dropdown>
                 </div>
-                
-                <div class="flex flex-column sm:flex-row gap-3 w-full lg:w-auto order-1 lg:order-2">
-                    <p-dropdown [options]="categories()" [(ngModel)]="selectedCategoryId" (ngModelChange)="selectedCategoryId.set($event)"
-                                optionLabel="name" optionValue="id" [showClear]="true" appendTo="body"
-                                placeholder="Categories" styleClass="w-full lg:w-15rem border-round-xl"></p-dropdown>
-                    
+
+                <div class="filter-control-item">
+                    <span class="control-label">Sort By</span>
                     <p-dropdown [options]="sortOptions" [(ngModel)]="sortOrder" (ngModelChange)="sortOrder.set($event)"
-                                optionLabel="label" optionValue="value" appendTo="body"
-                                placeholder="Sort By" styleClass="w-full lg:w-15rem border-round-xl"></p-dropdown>
-                    
-                    @if (searchQuery() || selectedCategoryId()) {
-                        <button pButton icon="pi pi-filter-slash" pTooltip="Clear Filters" tooltipPosition="bottom" 
-                                class="p-button-text p-button-rounded p-button-danger" (click)="clearFilters()"></button>
-                    }
+                        optionLabel="label" optionValue="value" appendTo="body"></p-dropdown>
                 </div>
+
+                @if (searchQuery() || selectedCategoryId()) {
+                <button pButton icon="pi pi-filter-slash" 
+                    class="p-button-text p-button-rounded p-button-danger mt-auto" 
+                    (click)="clearFilters()"
+                    pTooltip="Clear Filters"></button>
+                }
             </div>
         </div>
 
@@ -62,67 +64,62 @@
         }
 
         @if (!loading()) {
-            @if (filteredProducts().length > 0) {
-            <div class="grid g-3">
-                @for (product of filteredProducts(); track product.id; let index = $index) {
-                <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-4 stagger-item" [style.--index]="index">
-                    <div class="product-card premium-card flex flex-column h-full relative overflow-hidden">
-                        @if (isOutOfStock(product)) {
-                        <div class="absolute top-0 right-0 m-3 z-3">
-                            <span class="oos-badge">Out of Stock</span>
-                        </div>
-                        }
+        @if (filteredProducts().length > 0) {
+        <div class="grid g-3">
+            @for (product of filteredProducts(); track product.id; let index = $index) {
+            <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-4 stagger-item" [style.--index]="index">
+                <div class="product-card premium-product-card surface-card flex flex-column h-full relative overflow-hidden">
+                    @if (isOutOfStock(product)) {
+                    <div class="absolute top-0 right-0 m-3 z-3">
+                        <span class="oos-badge">Out of Stock</span>
+                    </div>
+                    }
 
-                        <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                            <img [ngSrc]="product.imageUrl" [alt]="product.name" fill class="product-image" 
-                                 sizes="(max-width: 767px) 45vw, (max-width: 991px) 30vw, 22vw" priority="false">
-                            
-                            <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center gap-3">
-                                <button pButton icon="pi pi-eye" label="View Details" 
-                                        class="p-button-rounded p-button-sm glass-pill-button px-4"></button>
-                                
-                                @if (!isOutOfStock(product)) {
-                                <button pButton icon="pi pi-shopping-cart" label="Add to Cart" 
-                                        class="p-button-rounded p-button-sm p-button-primary shadow-4 px-4"
-                                        (click)="$event.stopPropagation(); addToCart(product)"></button>
-                                }
-                            </div>
-                        </div>
+                    <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
+                        <img [ngSrc]="product.imageUrl" [alt]="product.name" fill class="product-image"
+                            sizes="(max-width: 767px) 45vw, (max-width: 991px) 30vw, 22vw" priority="false">
 
-                        <div class="product-info-content p-4 flex-grow-1 flex flex-column">
-                            <h3 class="product-title font-bold m-0 mb-1">{{ product.name }}</h3>
-                            <div class="text-xs text-500 mb-3 uppercase tracking-wider font-semibold">Authentic Handcraft</div>
-                            
-                            <div class="mt-auto flex align-items-end justify-content-between">
-                                <div class="flex flex-column">
-                                    <span class="product-price text-xl font-bold">{{ product.price | currency:'BDT':'৳' }}</span>
-                                </div>
-                                
-                                @if (!isOutOfStock(product)) {
-                                <button pButton icon="pi pi-shopping-cart" 
-                                        class="p-button-rounded p-button-primary p-button-sm shadow-2 mini-fab" 
-                                        (click)="$event.stopPropagation(); addToCart(product)"></button>
-                                } @else {
-                                <button pButton icon="pi pi-bell" 
-                                        class="p-button-rounded p-button-outlined p-button-secondary p-button-sm" 
-                                        pTooltip="Notify Me" tooltipPosition="top"></button>
-                                }
-                            </div>
+                        <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center gap-3">
+                            <button pButton icon="pi pi-eye" label="View"
+                                class="p-button-rounded p-button-sm glass-pill-button px-4"></button>
+                        </div>
+                    </div>
+
+                    <div class="product-info-content p-3 flex-grow-1 flex flex-column">
+                        <div class="product-header-flex">
+                            <h3 class="product-title">{{ product.name }}</h3>
+                            <div class="price-pill">{{ product.price | currency:'BDT':'৳' }}</div>
+                        </div>
+                        
+
+                        <div class="mt-auto">
+                            @if (!isOutOfStock(product)) {
+                                <button pButton label="View" icon="pi pi-eye"
+                                    class="p-button-sm w-full dark-cart-button"
+                                    (click)="$event.stopPropagation(); showProductDetails(product)"></button>
+                            } @else {
+                            <button pButton label="Notify Me" icon="pi pi-bell"
+                                class="p-button-secondary p-button-sm w-full border-round-lg"
+                                (click)="$event.stopPropagation()"></button>
+                            }
                         </div>
                     </div>
                 </div>
-                }
-            </div>
-            } @else {
-            <div class="empty-state-premium py-8 flex flex-column align-items-center justify-content-center text-center">
-                <div class="empty-icon-container mb-4">
-                    <i class="pi pi-search-minus text-6xl text-primary opacity-50"></i>
-                </div>
-                <h2 class="text-3xl font-bold m-0 mb-2">No matching items</h2>
-                <p class="text-600 m-0 mb-5 max-w-20rem">We couldn't find anything matching your current filters. Try a different search or category.</p>
-                <button pButton label="Reset All Filters" icon="pi pi-refresh" class="p-button-outlined p-button-primary px-5 border-round-xl" (click)="clearFilters()"></button>
             </div>
             }
+        </div>
+        } @else {
+        <div class="empty-state-premium py-8 flex flex-column align-items-center justify-content-center text-center">
+            <div class="empty-icon-container mb-4">
+                <i class="pi pi-search-minus text-6xl text-primary opacity-50"></i>
+            </div>
+            <h2 class="text-3xl font-bold m-0 mb-2">No matching items</h2>
+            <p class="text-600 m-0 mb-5 max-w-20rem">We couldn't find anything matching your current filters. Try a
+                different search or category.</p>
+            <button pButton label="Reset All Filters" icon="pi pi-refresh"
+                class="p-button-outlined p-button-primary px-5 border-round-xl" (click)="clearFilters()"></button>
+        </div>
+        }
         }
     </div>
 </div>

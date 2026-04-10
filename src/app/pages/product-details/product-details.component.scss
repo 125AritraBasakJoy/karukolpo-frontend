@@ -480,11 +480,12 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
             font-size: 0.85rem; 
             color: #94a3b8; 
             line-height: 1.4;
+            letter-spacing: 0.05em;
         }
     }
 }
 
-// 📦 Related Products Section & Modern Card Design
+// Related Products section heading styles
 .related-products-section {
     margin-top: 5rem;
     padding-top: 4rem;
@@ -508,120 +509,6 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
             height: 4px;
             background: #3b82f6;
             border-radius: 100px;
-        }
-    }
-}
-
-.product-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
-    padding: 1.25rem;
-    height: 100%;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-
-    &:hover {
-        transform: translateY(-8px);
-        border-color: rgba(59, 130, 246, 0.5);
-        background: rgba(255, 255, 255, 0.05);
-        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 
-                    0 0 20px rgba(59, 130, 246, 0.1);
-
-        .card-image {
-            transform: scale(1.08);
-        }
-
-        .view-overlay {
-            opacity: 1;
-        }
-    }
-
-    .image-container {
-        width: 100%;
-        aspect-ratio: 1/1;
-        background: rgba(15, 23, 42, 0.5);
-        border-radius: 14px;
-        overflow: hidden;
-        margin-bottom: 1.25rem;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .card-image {
-            width: 90%;
-            height: 90%;
-            object-fit: contain;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .view-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.3s ease;
-            
-            i {
-                font-size: 1.5rem;
-                color: #ffffff;
-                background: #3b82f6;
-                width: 44px;
-                height: 44px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-            }
-        }
-    }
-
-    .card-content {
-        .card-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #f8fafc;
-            margin-bottom: 0.5rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .card-price {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: #3b82f6;
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-
-            .currency-symbol { font-size: 0.9rem; font-weight: 600; opacity: 0.8; }
-        }
-    }
-
-    .stock-tag {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        z-index: 2;
-        
-        ::ng-deep .p-tag {
-            background: rgba(239, 68, 68, 0.15) !important;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5 !important;
-            backdrop-filter: blur(8px);
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
     }
 }

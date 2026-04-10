@@ -196,4 +196,8 @@ export class ProductDetailsComponent implements OnInit {
     this.activeImageIndex.set(index);
     this.displayGalleria.set(true);
   }
+
+  showProductDetails(product: Product) {
+    this.router.navigate(['/products', product.id]);
+  }
 }

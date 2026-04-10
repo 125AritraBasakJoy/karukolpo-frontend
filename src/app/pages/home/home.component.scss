@@ -5,7 +5,9 @@
 // ── Full-screen sections ────────────────────────────────────────
 .hero-section-fullscreen {
   position: relative;
-  height: calc(100vh - 80px);
+  height: 100vh;
+  min-height: 500px; // Ensure space is reserved
+  background: #000; // Placeholder background
   width: 100%;
 }
 
@@ -257,12 +259,12 @@
 }
 
 .category-card {
-  aspect-ratio: 1 / 1;
-
-  border-radius: 16px;
   position: relative;
-  cursor: pointer;
+  aspect-ratio: 1/1; // Reserve square space to prevent CLS
+  border-radius: 12px;
   overflow: hidden;
+  cursor: pointer;
+  background: var(--surface-card); // Skeleton color
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;

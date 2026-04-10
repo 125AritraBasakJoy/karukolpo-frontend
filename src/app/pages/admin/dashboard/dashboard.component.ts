@@ -23,7 +23,7 @@ interface SidebarMenuItem {
   imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule],
 
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss', '../admin-styles.scss']
 })
 export class DashboardComponent implements OnInit {
   sidebarCollapsed = signal<boolean>(false);

@@ -17,8 +17,8 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { forkJoin, of, Observable } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import { NotificationService } from '../../../services/notification.service';
 import { InvoiceComponent } from '../../../components/invoice/invoice.component';
@@ -306,38 +306,35 @@ export class OrdersComponent implements OnInit {
     this.loadingDetails = true;
 
     // Fetch fresh order details from backend to get latest payment info
-    this.orderService.getOrderById(order.id!).subscribe({
-      next: (fullOrder) => {
-        if (fullOrder) {
-          this.selectedOrder = fullOrder;
-        }
-        this.fetchMissingProductDetails();
+    this.orderService.getOrderById(order.id!).pipe(
+      switchMap((fullOrder: Order | undefined) => {
+        const targetOrder = fullOrder || this.selectedOrder!;
+        return this.ensureProductDetails(targetOrder);
+      })
+    ).subscribe({
+      next: (finalOrder: Order) => {
+        this.selectedOrder = finalOrder;
+        this.loadingDetails = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to fetch full order details', err);
-        // Fallback to existing data if fetch fails, but still try loading product names
-        this.fetchMissingProductDetails();
+        // Fallback to existing data if fetch fails
+        this.ensureProductDetails(this.selectedOrder!).subscribe((final: Order) => {
+          this.selectedOrder = final;
+          this.loadingDetails = false;
+        });
       }
     });
   }
 
-  fetchMissingProductDetails() {
-    if (!this.selectedOrder) {
-      this.loadingDetails = false;
-      return;
-    }
-
-    const itemsToFetch = this.selectedOrder.items.filter(item => !item.product.name || item.product.name === '');
+  ensureProductDetails(order: Order): Observable<Order> {
+    const itemsToFetch = order.items.filter(item => !item.product.name || item.product.name === '');
 
     if (itemsToFetch.length === 0) {
-      this.loadingDetails = false;
-      return;
+      return of(order);
     }
 
     const requests = itemsToFetch.map(item => {
-      // Use ID as is, or parseInt if you are sure product IDs are numbers. 
-      // Assuming product IDs are numbers for now, but let's be safe.
-      // If product.id is string "123", parseInt works.
       const productId = item.product.id;
       return this.productService.getProductById(productId).pipe(
         map(product => ({ item, product })),
@@ -348,9 +345,9 @@ export class OrdersComponent implements OnInit {
       );
     });
 
-    forkJoin(requests).subscribe(results => {
-      if (this.selectedOrder) {
-        const updatedItems = this.selectedOrder.items.map(currentItem => {
+    return forkJoin(requests).pipe(
+      map(results => {
+        const updatedItems = order.items.map(currentItem => {
           const result = results.find(r => r.item.product.id === currentItem.product.id);
           if (result && result.product) {
             return {
@@ -374,13 +371,12 @@ export class OrdersComponent implements OnInit {
           return currentItem;
         });
 
-        this.selectedOrder = {
-          ...this.selectedOrder,
+        return {
+          ...order,
           items: updatedItems
         };
-      }
-      this.loadingDetails = false;
-    });
+      })
+    );
   }
 
   updateStatus(order: Order, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed') {
@@ -589,45 +585,55 @@ export class OrdersComponent implements OnInit {
     const orderIdStr = order.id ? order.id.toString() : '';
     this.downloadingOrderId.set(orderIdStr);
 
-    // Map order data to common invoice format
-    this.invoiceOrderData = {
-      items: order.items || [],
-      snapshot: {
-        fullName: order.address?.full_name || order.fullName,
-        phoneNumber: order.address?.phone || order.phoneNumber,
-        fullAddress: order.address?.address_line || order.fullAddress,
-        subDistrict: order.address?.subdistrict || order.subDistrict,
-        district: order.address?.district || order.district,
-        postalCode: order.postalCode || '',
-        email: order.email || ''
-      },
-      method: order.paymentMethod || 'COD',
-      deliveryCharge: order.deliveryCharge || 0,
-      total: order.totalAmount || 0,
-      id: orderIdStr,
-      orderNumber: order.orderNumber || orderIdStr
-    };
+    // Ensure we have product details (names, codes) before generating the invoice
+    this.ensureProductDetails(order).subscribe({
+      next: (finalOrder: Order) => {
+        // Map order data to common invoice format
+        this.invoiceOrderData = {
+          items: finalOrder.items || [],
+          snapshot: {
+            fullName: finalOrder.address?.full_name || finalOrder.fullName,
+            phoneNumber: finalOrder.address?.phone || finalOrder.phoneNumber,
+            fullAddress: finalOrder.address?.address_line || finalOrder.fullAddress,
+            subDistrict: finalOrder.address?.subdistrict || finalOrder.subDistrict,
+            district: finalOrder.address?.district || finalOrder.district,
+            postalCode: finalOrder.postalCode || '',
+            email: finalOrder.email || ''
+          },
+          method: finalOrder.paymentMethod || 'COD',
+          deliveryCharge: finalOrder.deliveryCharge || 0,
+          total: finalOrder.totalAmount || 0,
+          id: orderIdStr,
+          orderNumber: finalOrder.orderNumber || orderIdStr
+        };
 
-    // Use a small timeout to let Angular update the inputs on the hidden app-invoice
-    setTimeout(() => {
-      this.adminInvoice.downloadReceipt().then(() => {
+        // Use a small timeout to let Angular update the inputs on the hidden app-invoice
+        setTimeout(() => {
+          this.adminInvoice.downloadReceipt().then(() => {
+            this.downloadingOrderId.set(null);
+            this.messageService.add({
+              life: 2000,
+              severity: 'success',
+              summary: 'Success',
+              detail: `Invoice for Order ${finalOrder.orderNumber || finalOrder.id} downloaded.`
+            });
+          }).catch(err => {
+            console.error('Admin Invoice download failed:', err);
+            this.downloadingOrderId.set(null);
+            this.messageService.add({
+              life: 2000,
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to generate PDF.'
+            });
+          });
+        }, 300); // Slightly longer timeout for full data sync
+      },
+      error: (err: any) => {
+        console.error('Failed to ensure product details for invoice', err);
         this.downloadingOrderId.set(null);
-        this.messageService.add({
-          life: 2000,
-          severity: 'success',
-          summary: 'Success',
-          detail: `Invoice for Order ${order.id} downloaded.`
-        });
-      }).catch(err => {
-        console.error('Admin Invoice download failed:', err);
-        this.downloadingOrderId.set(null);
-        this.messageService.add({
-          life: 2000,
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to generate PDF.'
-        });
-      });
-    }, 200);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not resolve product names.' });
+      }
+    });
   }
 }

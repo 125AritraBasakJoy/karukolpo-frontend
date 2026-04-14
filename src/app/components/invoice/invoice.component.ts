@@ -307,7 +307,7 @@ export class InvoiceComponent {
         //  PRODUCTS TABLE (AutoTable)
         // =====================
         const tableBody = (this.orderedItems || []).map((item: any) => {
-            const name = item.product?.name || 'Product';
+            const name = item.product?.name || item.product?.code || `Product ID: ${item.product?.id || 'Unknown'}`;
             
             // If name has Bengali, we'll replace the text with empty string in the data 
             // and draw the image in didDrawCell instead.

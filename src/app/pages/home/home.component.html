@@ -82,8 +82,12 @@
                                     sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
                                     priority="false" style="object-fit: cover;" class="product-image">
 
+                                <div class="quick-actions-overlay">
+                                    <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
+                                </div>
+
                                 @if (isOutOfStock(product)) {
-                                <div class="absolute top-0 right-0 m-2 z-2">
+                                <div class="absolute top-0 right-0 m-3 z-3">
                                     <span class="oos-badge">Out of Stock</span>
                                 </div>
                                 }
@@ -96,15 +100,9 @@
                                 </div>
 
                                 <div class="mt-auto">
-                                    @if (product.isInStock) {
-                                    <button pButton label="View" icon="pi pi-eye"
+                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'" icon="pi pi-eye"
                                         class="p-button-sm w-full dark-cart-button"
                                         (click)="showProductDetails(product)"></button>
-                                    } @else {
-                                    <button pButton label="View" icon="pi pi-eye"
-                                        class="p-button-secondary p-button-sm w-full border-round-lg"
-                                        (click)="showProductDetails(product)"></button>
-                                    }
                                 </div>
                             </div>
                         </div>
@@ -151,8 +149,12 @@
                                     sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
                                     priority="false" style="object-fit: cover;" class="product-image">
 
+                                <div class="quick-actions-overlay">
+                                    <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
+                                </div>
+
                                 @if (isOutOfStock(product)) {
-                                <div class="absolute top-0 right-0 m-2 z-2">
+                                <div class="absolute top-0 right-0 m-3 z-3">
                                     <span class="oos-badge">Out of Stock</span>
                                 </div>
                                 }
@@ -165,15 +167,9 @@
                                 </div>
 
                                 <div class="mt-auto">
-                                    @if (product.isInStock) {
-                                    <button pButton label="View" icon="pi pi-eye"
+                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'" icon="pi pi-eye"
                                         class="p-button-sm w-full dark-cart-button"
                                         (click)="showProductDetails(product)"></button>
-                                    } @else {
-                                    <button pButton label="View Details" icon="pi pi-eye"
-                                        class="p-button-secondary p-button-sm w-full border-round-lg"
-                                        (click)="showProductDetails(product)"></button>
-                                    }
                                 </div>
                             </div>
                         </div>

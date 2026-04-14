@@ -68,21 +68,20 @@
         <div class="grid g-3">
             @for (product of filteredProducts(); track product.id; let index = $index) {
             <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-3 stagger-item" [style.--index]="index">
-                <div class="product-card premium-product-card surface-card flex flex-column h-full relative overflow-hidden">
-                    @if (isOutOfStock(product)) {
-                    <div class="absolute top-0 right-0 m-3 z-3">
-                        <span class="oos-badge">Out of Stock</span>
-                    </div>
-                    }
-
+                <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                     <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                         <img [ngSrc]="product.imageUrl" [alt]="product.name" fill class="product-image"
                             sizes="(max-width: 767px) 45vw, (max-width: 991px) 30vw, 22vw" priority="false">
 
-                        <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center gap-3">
-                            <button pButton icon="pi pi-eye" label="View"
-                                class="p-button-rounded p-button-sm glass-pill-button px-4"></button>
+                        <div class="quick-actions-overlay">
+                            <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
                         </div>
+
+                        @if (isOutOfStock(product)) {
+                        <div class="absolute top-0 right-0 m-3 z-3">
+                            <span class="oos-badge">Out of Stock</span>
+                        </div>
+                        }
                     </div>
 
                     <div class="product-info-content p-3 flex-grow-1 flex flex-column">
@@ -93,15 +92,9 @@
                         
 
                         <div class="mt-auto">
-                            @if (!isOutOfStock(product)) {
-                                <button pButton label="View" icon="pi pi-eye"
-                                    class="p-button-sm w-full dark-cart-button"
-                                    (click)="$event.stopPropagation(); showProductDetails(product)"></button>
-                            } @else {
-                            <button pButton label="View" icon="pi pi-eye"
-                                class="p-button-secondary p-button-sm w-full border-round-lg"
+                            <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'" icon="pi pi-eye"
+                                class="p-button-sm w-full dark-cart-button"
                                 (click)="$event.stopPropagation(); showProductDetails(product)"></button>
-                            }
                         </div>
                     </div>
                 </div>

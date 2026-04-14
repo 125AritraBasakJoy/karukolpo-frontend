@@ -147,7 +147,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     responsiveOptions: any[] = [
         {
             breakpoint: '1600px',
-            numVisible: 6, // 6 items on large screens
+            numVisible: 6,
             numScroll: 1
         },
         {
@@ -167,7 +167,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         },
         {
             breakpoint: '767px',
-            numVisible: 3, // 3 items on mobile
+            numVisible: 2, // 2 items on standard mobile
+            numScroll: 1
+        },
+        {
+            breakpoint: '480px',
+            numVisible: 2, // Keep 2 even on small phones but we'll scale down padding/font
             numScroll: 1
         }
     ];

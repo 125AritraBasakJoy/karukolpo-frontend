@@ -156,21 +156,21 @@
         <h2 class="section-title">Related Products</h2>
         <div class="grid">
             @for (p of relatedProducts(); track p.id; let index = $index) {
-            <div class="col-4 sm:col-4 md:col-2 px-2 mb-4">
+            <div class="col-6 sm:col-6 md:col-2 px-2 mb-4">
                 <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden" [routerLink]="['/products', p.id]">
-                    @if (!p.isInStock) {
-                    <div class="absolute top-0 right-0 m-3 z-3">
-                        <span class="oos-badge">Out of Stock</span>
-                    </div>
-                    }
-
                     <div class="product-image-wrapper">
                         <img [ngSrc]="p.imageUrl" [alt]="p.name" fill class="product-image"
                             sizes="(max-width: 767px) 45vw, (max-width: 991px) 25vw, 15vw" priority="false">
 
-                        <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center">
-                            <i class="pi pi-arrow-right text-3xl"></i>
+                        <div class="quick-actions-overlay">
+                            <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
                         </div>
+
+                        @if (!p.isInStock) {
+                        <div class="absolute top-0 right-0 m-3 z-3">
+                            <span class="oos-badge">Out of Stock</span>
+                        </div>
+                        }
                     </div>
 
                     <div class="product-info-content p-3 flex-grow-1 flex flex-column">
@@ -180,7 +180,7 @@
                         </div>
                         
                         <div class="mt-auto">
-                            <button pButton label="View" icon="pi pi-eye"
+                            <button pButton [label]="!p.isInStock ? 'View Details' : 'View Product'" icon="pi pi-eye"
                                 class="p-button-sm w-full dark-cart-button"
                                 (click)="showProductDetails(p)"></button>
                         </div>

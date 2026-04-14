@@ -565,42 +565,51 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 1.5rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.05), transparent);
 
   .subtitle {
-    color: var(--primary-color);
-    font-size: 0.75rem;
-    font-weight: 700;
+    color: var(--accent-color);
+    font-size: 0.85rem;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    margin-bottom: 0.2rem;
+    letter-spacing: 0.3em;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   }
 
   .title {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 3rem;
+    font-weight: 800;
     margin: 0;
     color: var(--text-color);
-    font-family: 'Playfair Display', 'Merriweather', 'Times New Roman', serif;
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.02em;
+    background: linear-gradient(to bottom, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   @media (max-width: 768px) {
     .title {
-      font-size: 2rem;
+      font-size: 2.25rem;
     }
   }
 }
 
 :host ::ng-deep .p-divider-content {
   background: var(--surface-ground) !important;
+  border-radius: 100px;
 }
 
 // ── Carousel Overrides ──────────────────────────────────────────
 :host ::ng-deep .p-carousel {
-  padding: 0;
+  padding: 1rem 0;
 
   .p-carousel-content {
     position: relative;
+    padding: 0 1rem;
   }
 
   .p-carousel-items-container {

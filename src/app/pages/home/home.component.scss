@@ -529,8 +529,8 @@
 #best-selling,
 .crafted-section,
 #contact {
-  padding: 2rem 0;
-  scroll-margin-top: 2rem;
+  padding: 0.75rem 0;
+  scroll-margin-top: 1rem;
   display: block;
 }
 
@@ -565,7 +565,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1rem 2rem;
+  padding: 0.5rem 1.5rem;
   background: linear-gradient(to right, transparent, rgba(59, 130, 246, 0.05), transparent);
 
   .subtitle {
@@ -605,7 +605,7 @@
 
 // ── Carousel Overrides ──────────────────────────────────────────
 :host ::ng-deep .p-carousel {
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 
   .p-carousel-content {
     position: relative;
@@ -632,7 +632,7 @@
   }
 
   .p-carousel-indicators {
-    padding: 1.5rem 0 !important;
+    padding: 0.5rem 0 !important;
     gap: 0.6rem !important;
 
     .p-carousel-indicator {
@@ -676,11 +676,11 @@
 
 // ── CLS Stability Helpers ─────────────────────────────────────
 .carousel-stable {
-  min-height: 480px; // Reserved height for product carousels to prevent footer shift
+  min-height: 400px; // Reduced from 480px to prevent vertical stretching
   display: block;
 
   @media (max-width: 767px) {
-    min-height: 440px;
+    min-height: 350px; // Reduced from 440px for mobile
   }
 }
 
@@ -723,5 +723,5 @@
 
 // Carousel custom indicators override for better clickability/accessibility
 :host ::ng-deep .p-carousel-indicators {
-  padding: 1.5rem 0 0 0; // Only top padding to separate from items, bottom comes from section
+  padding: 0.5rem 0 0 0; // Tightened to reduce gap after products
 }

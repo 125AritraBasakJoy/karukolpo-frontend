@@ -69,38 +69,37 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
     .main-image-viewport {
         width: 100%;
         max-width: 550px;
-        aspect-ratio: 1 / 1; // High-end square format
+        aspect-ratio: 1 / 1;
         background: #0f172a;
         margin: 0 auto;
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         &:hover {
             border-color: rgba(59, 130, 246, 0.4);
             box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), 
                         0 0 40px rgba(59, 130, 246, 0.1);
+            
+            .main-product-image {
+                transform: scale(1.05);
+            }
         }
 
         @media screen and (max-width: 768px) {
             border-radius: 16px;
         }
-    }
 
-    ::ng-deep .p-image {
-        width: 100%;
-        height: 100%;
-        
         .main-product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; // Maintain full detail of craft
-            padding: 1.5rem;
+            max-width: 90%;
+            max-height: 90%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-
-            @media screen and (max-width: 768px) {
-                padding: 1rem;
-            }
         }
     }
 
@@ -138,18 +137,20 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
                 top: 50%;
                 transform: translateY(-50%);
                 z-index: 10;
-                width: 28px; // Smaller buttons
-                height: 28px;
-                background: rgba(15, 23, 42, 0.7);
-                backdrop-filter: blur(8px);
+                width: 32px;
+                height: 32px;
+                background: rgba(15, 23, 42, 0.85);
+                backdrop-filter: blur(12px);
                 border: 1px solid rgba(255, 255, 255, 0.15);
-                color: #ffffff;
+                color: #3b82f6; // High-contrast blue
                 border-radius: 50%;
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
                 
                 &:hover:not(.p-disabled) {
                     background: #3b82f6;
                     border-color: #3b82f6;
+                    color: #ffffff;
                     box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
                     transform: translateY(-50%) scale(1.1);
                 }
@@ -211,36 +212,7 @@ $accent-glow: 0 4px 20px -5px rgba(59, 130, 246, 0.4);
     }
 }
 
-// 🖼️ PrimeNG Galleria Fullscreen Overrides
-:host ::ng-deep .p-galleria-mask {
-    background-color: rgba(15, 23, 42, 0.95) !important;
-    backdrop-filter: blur(10px);
 
-    .p-galleria-item-prev,
-    .p-galleria-item-next {
-        background: rgba(255, 255, 255, 0.05) !important;
-        color: #ffffff !important;
-        width: 4rem !important;
-        height: 4rem !important;
-        border-radius: 50% !important;
-        transition: all 0.3s ease !important;
-
-        &:hover {
-            background: rgba(59, 130, 246, 0.2) !important;
-            color: #3b82f6 !important;
-        }
-    }
-
-    .p-galleria-thumbnail-container {
-        background: rgba(15, 23, 42, 0.8) !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 1rem 0 !important;
-    }
-
-    .p-galleria-thumbnails-content {
-        background: transparent !important;
-    }
-}
 
 .scrollbar-none {
     scrollbar-width: none;

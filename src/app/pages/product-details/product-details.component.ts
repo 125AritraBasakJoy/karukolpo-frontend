@@ -200,4 +200,43 @@ export class ProductDetailsComponent implements OnInit {
   showProductDetails(product: Product) {
     this.router.navigate(['/products', product.id]);
   }
+
+  // 📱 Swipe Gesture Handling
+  private touchStartX = 0;
+  private readonly minSwipeDistance = 50; // Minimum px to trigger swipe
+
+  onTouchStart(event: TouchEvent) {
+    this.touchStartX = event.changedTouches[0].screenX;
+  }
+
+  onTouchEnd(event: TouchEvent) {
+    const touchEndX = event.changedTouches[0].screenX;
+    const deltaX = touchEndX - this.touchStartX;
+
+    if (Math.abs(deltaX) > this.minSwipeDistance) {
+      if (deltaX > 0) {
+        // Swipe Right -> Previous Image
+        this.prevImage();
+      } else {
+        // Swipe Left -> Next Image
+        this.nextImage();
+      }
+    }
+  }
+
+  private nextImage() {
+    const current = this.activeImageIndex();
+    const total = this.images().length;
+    if (total > 1) {
+      this.activeImageIndex.set((current + 1) % total);
+    }
+  }
+
+  private prevImage() {
+    const current = this.activeImageIndex();
+    const total = this.images().length;
+    if (total > 1) {
+      this.activeImageIndex.set((current - 1 + total) % total);
+    }
+  }
 }

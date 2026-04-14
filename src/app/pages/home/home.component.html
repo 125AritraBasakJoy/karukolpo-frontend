@@ -64,7 +64,7 @@
     @if (bestSelling().length > 0) {
     <div id="best-selling" class="surface-ground">
         <div class="container px-4">
-            <p-divider align="center" styleClass="mb-4">
+            <p-divider align="center" styleClass="m-0">
                 <div class="elegant-header px-4">
                     <span class="subtitle text-primary">Curated Collection</span>
                     <h2 class="title m-0">Best Selling</h2>
@@ -83,11 +83,12 @@
                                     priority="false" style="object-fit: cover;" class="product-image">
 
                                 <div class="quick-actions-overlay">
-                                    <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
+                                    <button pButton icon="pi pi-search-plus" label="Details"
+                                        class="p-button-rounded glass-button"></button>
                                 </div>
 
                                 @if (isOutOfStock(product)) {
-                                <div class="absolute top-0 right-0 m-3 z-3">
+                                <div class="absolute top-0 right-0 m-2 z-3">
                                     <span class="oos-badge">Out of Stock</span>
                                 </div>
                                 }
@@ -100,8 +101,8 @@
                                 </div>
 
                                 <div class="mt-auto">
-                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'" icon="pi pi-eye"
-                                        class="p-button-sm w-full dark-cart-button"
+                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'"
+                                        icon="pi pi-eye" class="p-button-sm w-full dark-cart-button"
                                         (click)="showProductDetails(product)"></button>
                                 </div>
                             </div>
@@ -131,7 +132,7 @@
     @if (hotDeals().length > 0) {
     <div id="hot-deals">
         <div class="container px-4">
-            <p-divider align="center" styleClass="mb-4">
+            <p-divider align="center" styleClass="m-0">
                 <div class="elegant-header px-4">
                     <span class="subtitle text-primary">Special Offers</span>
                     <h2 class="title m-0">Hot Deals</h2>
@@ -150,11 +151,12 @@
                                     priority="false" style="object-fit: cover;" class="product-image">
 
                                 <div class="quick-actions-overlay">
-                                    <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
+                                    <button pButton icon="pi pi-search-plus" label="Details"
+                                        class="p-button-rounded glass-button"></button>
                                 </div>
 
                                 @if (isOutOfStock(product)) {
-                                <div class="absolute top-0 right-0 m-3 z-3">
+                                <div class="absolute top-0 right-0 m-2 z-3">
                                     <span class="oos-badge">Out of Stock</span>
                                 </div>
                                 }
@@ -167,8 +169,8 @@
                                 </div>
 
                                 <div class="mt-auto">
-                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'" icon="pi pi-eye"
-                                        class="p-button-sm w-full dark-cart-button"
+                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'"
+                                        icon="pi pi-eye" class="p-button-sm w-full dark-cart-button"
                                         (click)="showProductDetails(product)"></button>
                                 </div>
                             </div>

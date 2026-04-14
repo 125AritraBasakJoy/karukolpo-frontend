@@ -20,18 +20,19 @@
             <div class="col-12 lg:col-4">
                 <div class="product-gallery-modern flex flex-column gap-3">
                     <!-- Main Image Viewer with Zoom -->
-                    <div class="main-image-viewport border-round-xl overflow-hidden shadow-2 surface-card flex flex-column align-items-center justify-content-center relative cursor-zoom-in"
+                    <div class="main-image-viewport border-round-xl overflow-hidden shadow-2 relative cursor-zoom-in"
+                         (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)"
                          (click)="showGalleria(activeImageIndex())">
                         <img [src]="images()[activeImageIndex()]" [alt]="product()!.name" 
-                             class="main-product-image w-full h-full object-contain p-3">
+                             class="main-product-image">
                         
                         <div class="zoom-hint-overlay absolute bottom-0 left-0 w-full py-2 text-center text-xs opacity-60">
                             <i class="pi pi-search-plus mr-1"></i> Click for zoom in
                         </div>
                         
                         @if (isOutOfStock()) {
-                           <div class="absolute top-0 right-0 m-3 z-3">
-                               <p-tag value="Out of Stock" severity="danger" class="shadow-4"></p-tag>
+                           <div class="absolute top-0 right-0 m-2 z-3">
+                               <span class="oos-badge">Out of Stock</span>
                            </div>
                         }
                     </div>
@@ -167,7 +168,7 @@
                         </div>
 
                         @if (!p.isInStock) {
-                        <div class="absolute top-0 right-0 m-3 z-3">
+                        <div class="absolute top-0 right-0 m-2 z-3">
                             <span class="oos-badge">Out of Stock</span>
                         </div>
                         }

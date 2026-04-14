@@ -551,7 +551,7 @@ textarea,
         position: relative;
         overflow: hidden;
         border-radius: 14px !important;
-        box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
 
         .product-image {
             position: absolute !important;
@@ -689,7 +689,7 @@ textarea,
                 font-size: 0.75rem !important;
                 padding: 0.4rem !important;
                 border-radius: 10px !important;
-                
+
                 ::ng-deep .p-button-icon {
                     font-size: 0.8rem;
                 }
@@ -711,18 +711,17 @@ textarea,
 }
 
 .oos-badge {
-    background: rgba(15, 23, 42, 0.4) !important;
-    color: #fca5a5 !important;
-    backdrop-filter: blur(20px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    padding: 8px 16px !important;
-    border-radius: 12px !important;
+    background: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    padding: 6px 14px !important;
     font-size: 0.7rem !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.15em !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+    letter-spacing: 0.1em !important;
+    border-radius: 100px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -731,13 +730,25 @@ textarea,
     &::before {
         content: '';
         display: inline-block;
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
         background: #ef4444;
         border-radius: 50%;
-        margin-right: 10px;
-        box-shadow: 0 0 15px #ef4444;
+        margin-right: 8px;
+        box-shadow: 0 0 10px #ef4444;
         animation: pulse-red 1.5s infinite;
+    }
+
+    @media (max-width: 767px) {
+        padding: 4px 10px !important;
+        font-size: 0.55rem !important;
+        letter-spacing: 0.05em !important;
+
+        &::before {
+            width: 4px;
+            height: 4px;
+            margin-right: 6px;
+        }
     }
 }
 
@@ -746,10 +757,12 @@ textarea,
         transform: scale(0.9);
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
     }
+
     70% {
         transform: scale(1.1);
         box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
     }
+
     100% {
         transform: scale(0.9);
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
@@ -1124,16 +1137,19 @@ textarea,
     }
 
     .product-title {
-        font-size: 1.25rem;
+        font-size: 1.15rem;
         font-weight: 700;
-        color: var(--text-color);
-        margin-bottom: 0.5rem;
+        color: #ffffff;
+        margin-bottom: 0.4rem;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
     }
 
     .product-price {
         font-size: 1.25rem;
         font-weight: 800;
-        color: var(--accent-color);
+        color: #3b82f6;
+        text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
     }
 
     .product-image-wrapper {
@@ -1142,81 +1158,96 @@ textarea,
         aspect-ratio: 1/1;
         overflow: hidden;
         border-radius: 14px;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         background: rgba(255, 255, 255, 0.02);
+        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.2);
 
         img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.5s ease;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    /* ── High-End Buttons ── */
+    .p-button {
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        transition: all 0.3s ease !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+        &.dark-cart-button {
+            background: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(10px) !important;
+            color: #ffffff !important;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.1) !important;
+                border-color: rgba(255, 255, 255, 0.3) !important;
+                transform: translateY(-2px);
+            }
         }
     }
 
     &:hover .product-image-wrapper img {
-        transform: scale(1.05);
+        transform: scale(1.08);
     }
 
     @media (max-width: 768px) {
-        padding: 0.5rem !important;
+        padding: 0.4rem !important;
 
         .product-title {
-            font-size: 0.95rem !important;
+            font-size: 0.9rem !important;
             margin-bottom: 0.25rem !important;
+            font-weight: 600 !important;
         }
 
         .product-price {
             font-size: 1rem !important;
         }
 
-        .desc-clamp {
-            font-size: 0.75rem !important;
-            -webkit-line-clamp: 2 !important;
-            line-clamp: 2 !important;
-            margin-bottom: 0.4rem !important;
-        }
-
         .product-image-wrapper {
-            margin-bottom: 0.4rem !important;
+            margin-bottom: 0.5rem !important;
             border-radius: 10px !important;
         }
 
-        /* Buttons on Mobile: Smaller text and padding */
+        /* Icon-only on Tablet/Mobile for a cleaner look */
         .p-button {
-            padding: 0.4rem 0.6rem !important;
+            padding: 0.6rem !important;
+            display: flex !important;
+            justify-content: center !important;
 
             .p-button-label {
-                font-size: 0.75rem;
+                display: none !important; // Removed text as requested
             }
 
             .p-button-icon {
-                font-size: 0.8rem;
+                font-size: 1.1rem !important;
+                margin: 0 !important;
             }
         }
     }
 
     @media (max-width: 576px) {
         .mt-3 {
-            margin-top: 0.5rem !important;
-        }
-
-        .p-button .p-button-label {
-            display: none !important;
+            margin-top: 0.4rem !important;
         }
 
         .p-button {
             flex: 1 !important;
             justify-content: center !important;
             padding: 0.6rem !important;
+            min-height: 44px;
 
-            .p-button-icon {
-                font-size: 1.1rem !important;
+            .p-button-label {
+                display: none !important; // FORCED HIDDEN
             }
         }
 
         .gap-2,
         .gap-1 {
-            gap: 0.5rem !important;
+            gap: 0.4rem !important;
         }
     }
 }
@@ -1393,4 +1424,104 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
     background-color: rgba(255, 255, 255, 0.02);
     display: block;
     width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL GALLERIA OVERRIDES (Fullscreen visibility fix)
+   ───────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL GALLERIA & CAROUSEL OVERRIDES (Craft Theme Fix)
+   ───────────────────────────────────────────────────────────────── */
+.p-galleria-mask,
+.p-carousel,
+.p-galleria {
+
+    /* Shared Navigation Styling */
+    .p-galleria-item-nav,
+    .p-carousel-prev,
+    .p-carousel-next {
+        background: #0f172a !important; // Solid navy
+        border: 2px solid rgba(255, 255, 255, 0.1) !important;
+        width: 3.5rem !important;
+        height: 3.5rem !important;
+        border-radius: 50% !important;
+        opacity: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 1001 !important;
+
+        /* White arrows for match and visibility */
+        &,
+        i,
+        svg,
+        path {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+            stroke: #ffffff !important;
+        }
+
+        i {
+            font-size: 1.5rem !important;
+            font-weight: 900 !important;
+        }
+
+        &:hover:not(.p-disabled) {
+            background: #eab308 !important; // Golden Amber
+            border-color: #eab308 !important;
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.4) !important;
+
+            &,
+            i,
+            svg,
+            path {
+                color: #0f172a !important; // Navy icon on gold background
+                fill: #0f172a !important;
+                stroke: #0f172a !important;
+            }
+        }
+
+        &.p-galleria-item-prev {
+            left: 1.5rem !important;
+        }
+
+        &.p-galleria-item-next {
+            right: 1.5rem !important;
+        }
+    }
+
+    /* Thumbnail refinements */
+    .p-galleria-thumbnail-container {
+        background: rgba(15, 23, 42, 0.95) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        padding: 1rem 0 !important;
+    }
+}
+
+.p-galleria-mask {
+    background-color: rgba(15, 23, 42, 0.98) !important;
+    backdrop-filter: blur(15px) !important;
+    z-index: 100000 !important;
+}
+
+/* Handle carousel specific centering if needed */
+.p-carousel {
+
+    .p-carousel-prev,
+    .p-carousel-next {
+        position: absolute !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+    }
+
+    .p-carousel-prev {
+        left: 5px !important;
+    }
+
+    .p-carousel-next {
+        right: 5px !important;
+    }
 }

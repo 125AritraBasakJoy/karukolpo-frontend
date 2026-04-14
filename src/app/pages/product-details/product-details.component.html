@@ -64,7 +64,8 @@
                                 [circular]="true" [responsiveOptions]="responsiveOptions"
                                 [containerStyle]="{'max-width': '850px'}">
                         <ng-template pTemplate="item" let-item>
-                            <img [src]="item" style="width: 100%; max-height: 80vh; object-fit: contain;" />
+                            <img [src]="item" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)"
+                                style="width: 100%; max-height: 80vh; object-fit: contain; cursor: grab;" />
                         </ng-template>
                         <ng-template pTemplate="thumbnail" let-item>
                             <div class="grid grid-nogutter justify-content-center">

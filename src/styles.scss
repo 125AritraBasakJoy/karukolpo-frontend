@@ -1525,3 +1525,11 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
         right: 5px !important;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL SVG ICON OVERRIDES
+   ───────────────────────────────────────────────────────────────── */
+.p-icon {
+    color: #8da9e7 !important;
+    fill: #8da9e7 !important;
+}

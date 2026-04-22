@@ -158,8 +158,7 @@ export class ProductDetailsComponent implements OnInit {
 
   isOutOfStock(): boolean {
     const p = this.product();
-    if (!p) return false;
-    return p.manualStockStatus === 'OUT_OF_STOCK' || (p.manualStockStatus === 'AUTO' && (p.stock || 0) <= 0);
+    return !!p && p.isInStock === false;
   }
 
   addToCart() {

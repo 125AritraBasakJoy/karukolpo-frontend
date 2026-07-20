@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { NotificationService } from '../../../services/notification.service';
+import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { filter } from 'rxjs/operators';
 
 interface SidebarMenuItem {
@@ -20,7 +21,7 @@ interface SidebarMenuItem {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule, NotificationButtonComponent],
 
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss', '../admin-styles.scss']
@@ -54,6 +55,14 @@ export class DashboardComponent implements OnInit {
     private authService: AuthService,
     public themeService: ThemeService
   ) { }
+
+  get unreadOrderCount(): number {
+    const unreadList = this.notificationService.notificationsSignal().filter(n => !(n.is_read || n.read) && (n.type === 'order' || n.type === 'order_placed'));
+    if (unreadList.length === 0 && this.notificationService.unreadCountSignal() > 0) {
+      return this.notificationService.unreadCountSignal();
+    }
+    return unreadList.length;
+  }
 
   ngOnInit() {
     this.notificationService.init(this.messageService);

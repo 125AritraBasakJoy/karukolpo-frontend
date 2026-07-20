@@ -21,10 +21,20 @@
 
                 <div class="menu-section-content"
                     [class.expanded]="isSectionExpanded(section) || (sidebarCollapsed() && !isMobile())">
-                    <a *ngFor="let item of getItemsBySection(section)" [routerLink]="item.route" class="menu-item"
+                    <a *ngFor="let item of getItemsBySection(section)" [routerLink]="item.route" class="menu-item flex align-items-center justify-content-between"
                         [class.active]="isActiveRoute(item.route)" (click)="closeMobileMenu()">
-                        <i [class]="item.icon + ' menu-icon'"></i>
-                        <span class="menu-label">{{ item.label }}</span>
+                        <div class="flex align-items-center gap-2 min-w-0">
+                            <div class="relative flex align-items-center justify-content-center">
+                                <i [class]="item.icon + ' menu-icon'"></i>
+                                <span *ngIf="item.route === 'orders' && unreadOrderCount > 0 && (sidebarCollapsed() && !isMobile())" 
+                                      class="sidebar-collapsed-dot"></span>
+                            </div>
+                            <span class="menu-label">{{ item.label }}</span>
+                        </div>
+                        <span *ngIf="item.route === 'orders' && unreadOrderCount > 0 && (!sidebarCollapsed() || isMobile())" 
+                              class="sidebar-order-badge">
+                            {{ unreadOrderCount > 99 ? '99+' : unreadOrderCount }}
+                        </span>
                     </a>
                 </div>
             </div>
@@ -57,8 +67,9 @@
                 </div>
             </div>
 
-            <div class="header-right">
-                <span class="text-sm text-color-secondary">Admin Panel</span>
+            <div class="header-right flex align-items-center gap-3">
+                <app-notification-button></app-notification-button>
+                <span class="text-sm text-color-secondary hidden sm:inline">Admin Panel</span>
             </div>
         </header>
 

@@ -98,6 +98,16 @@ export const ADMIN_API = {
 } as const;
 
 /**
+ * Admin Notification endpoints
+ */
+export const NOTIFICATIONS_API = {
+    LIST: (unreadOnly = false, skip = 0, limit = 50) => `admin/notifications?unread_only=${unreadOnly}&skip=${skip}&limit=${limit}`,
+    UNREAD_COUNT: 'admin/notifications/unread-count',
+    READ_ALL: 'admin/notifications/read-all',
+    MARK_READ: (notificationId: string) => `admin/notifications/${notificationId}/read`,
+} as const;
+
+/**
  * Query parameter builders for list endpoints
  */
 export const buildListQuery = (skip = 0, limit = 100): string => {
@@ -120,4 +130,6 @@ export const API_ENDPOINTS = {
     ORDERS: ORDERS_API,
     PAYMENTS: PAYMENTS_API,
     ADMIN: ADMIN_API,
+    NOTIFICATIONS: NOTIFICATIONS_API,
 } as const;
+

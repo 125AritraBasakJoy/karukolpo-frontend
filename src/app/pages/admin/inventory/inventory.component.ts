@@ -5,8 +5,6 @@ import { NotificationButtonComponent } from '../../../components/notification-bu
 import { ProductService } from '../../../services/product.service';
 import { Product, ProductImage } from '../../../models/product.model';
 import { Category } from '../../../models/category.model';
-import { OrderService } from '../../../services/order.service';
-import { Order } from '../../../models/order.model';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +12,6 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
-import { ChartModule } from 'primeng/chart';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
@@ -37,7 +34,6 @@ import { Router } from '@angular/router';
     CardModule,
     ToastModule,
     ConfirmDialogModule,
-    ChartModule,
     ProgressSpinnerModule,
     TagModule,
     SkeletonModule,
@@ -66,13 +62,7 @@ export class InventoryComponent implements OnInit {
 
 
 
-  chartData: any;
-  chartOptions: any;
 
-  // Sales Summary Metrics
-  totalUnitsSold = signal<number>(0);
-  totalRevenue = signal<number>(0);
-  confirmedOrdersCount = signal<number>(0);
 
   manualStockOptions = [
     { label: 'Auto (Based on Quantity)', value: 'AUTO' },
@@ -88,7 +78,6 @@ export class InventoryComponent implements OnInit {
 
   constructor(
     private productService: ProductService,
-    private orderService: OrderService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,
@@ -150,13 +139,7 @@ export class InventoryComponent implements OnInit {
         this.products.set(pageData);
         this.loading.set(false);
 
-        // Load chart data once if this is the first chunk (optional optimization to avoid reloading chart constantly)
-        if (chunkStart === 0 && !this.chartData) {
-          this.orderService.getOrders().subscribe({
-            next: (orders) => this.updateChart(products, orders),
-            error: () => { }
-          });
-        }
+
       },
       error: () => {
         this.loading.set(false);
@@ -168,109 +151,13 @@ export class InventoryComponent implements OnInit {
     this.productService.clearCache(); // Clear service-level cache to fetch fresh data from API
     this.productsBuffer = [];
     this.totalRecords.set(0);
-    this.chartData = null; // Reset chart data to refresh it
+
     const event: TableLazyLoadEvent = this.lastLazyLoadEvent ? { ...this.lastLazyLoadEvent } : { first: 0, rows: 10 };
     this.loadProducts(event);
     this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Inventory updated' });
   }
 
-  updateChart(products: Product[], orders: Order[]) {
-    // Build salesMap purely from completed order items (not pre-seeded from inventory buffer)
-    // Pre-seeding caused mismatches where order product names didn't match inventory names exactly
-    const salesMap = new Map<string, number>();
 
-    let units = 0;
-    let revenue = 0;
-    let completedCount = 0;
-
-    orders.forEach(order => {
-      if (order.status?.toLowerCase() === 'completed') {
-        completedCount++;
-        order.items.forEach(item => {
-          const quantity = item.quantity || 0;
-          const price = item.product?.price || 0;
-          const name = item.product?.name || `Product PROD-${item.product?.id?.slice(-4)}`;
-
-          salesMap.set(name, (salesMap.get(name) || 0) + quantity);
-          units += quantity;
-          revenue += quantity * price;
-        });
-      }
-    });
-
-    this.totalUnitsSold.set(units);
-    this.totalRevenue.set(revenue);
-    this.confirmedOrdersCount.set(completedCount);
-
-    // Sort by units sold descending
-    const sortedEntries = Array.from(salesMap.entries())
-      .sort((a, b) => b[1] - a[1]);
-
-    const productNames = sortedEntries.map(e => e[0]);
-    const productSales = sortedEntries.map(e => e[1]);
-
-    // Generate a distinct color per bar
-    const palette = [
-      'rgba(59, 130, 246, 0.7)',
-      'rgba(16, 185, 129, 0.7)',
-      'rgba(168, 85, 247, 0.7)',
-      'rgba(245, 158, 11, 0.7)',
-      'rgba(239, 68, 68, 0.7)',
-      'rgba(14, 165, 233, 0.7)'
-    ];
-    const colors = productNames.map((_, i) => palette[i % palette.length]);
-
-    this.chartData = {
-      labels: productNames,
-      datasets: [
-        {
-          label: 'Units Sold',
-          data: productSales,
-          backgroundColor: colors,
-          borderColor: colors.map(c => c.replace('0.7', '1')),
-          borderWidth: 1,
-          borderRadius: 8
-        }
-      ]
-    };
-
-    this.chartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        title: {
-          display: true,
-          text: productNames.length === 0
-            ? 'No completed sales yet'
-            : 'Top Selling Products (Units)',
-          color: '#fff',
-          font: { size: 14, weight: 'bold' }
-        },
-        tooltip: {
-          backgroundColor: 'rgba(15, 23, 42, 0.95)',
-          titleColor: '#fff',
-          bodyColor: '#94a3b8',
-          padding: 12,
-          cornerRadius: 8,
-          callbacks: {
-            label: (ctx: any) => ` ${ctx.raw} units sold`
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#94a3b8', font: { size: 12 } },
-          grid: { display: false }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { stepSize: 1, color: '#94a3b8' },
-          grid: { color: 'rgba(255, 255, 255, 0.05)' }
-        }
-      }
-    };
-  }
 
 
 

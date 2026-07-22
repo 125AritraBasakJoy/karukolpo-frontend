@@ -39,8 +39,9 @@ export const ADMIN_ROUTES: Routes = [
         path: 'best-selling',
         loadComponent: () => import('./best-seller-manager/best-seller-manager.component').then(m => m.BestSellerManagerComponent)
       },
-      { path: '', redirectTo: 'inventory', pathMatch: 'full' },
+      { path: '', redirectTo: 'analytics', pathMatch: 'full' },
       { path: 'inventory', loadComponent: () => import('./inventory/inventory.component').then(m => m.InventoryComponent) },
+      { path: 'analytics', loadComponent: () => import('./analytics/analytics.component').then(m => m.AnalyticsComponent) },
       { path: 'orders', loadComponent: () => import('./orders/orders.component').then(m => m.OrdersComponent) },
       { path: 'manage-landing', loadComponent: () => import('./landing-page-manager/landing-page-manager.component').then(m => m.LandingPageManagerComponent) },
       {

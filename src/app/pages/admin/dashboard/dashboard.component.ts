@@ -41,6 +41,7 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
 
   menuItems: SidebarMenuItem[] = [
+    { label: 'Analytics', icon: 'pi pi-chart-bar', route: 'analytics', section: 'Main' },
     { label: 'Inventory', icon: 'pi pi-box', route: 'inventory', section: 'Main' },
     { label: 'Orders', icon: 'pi pi-shopping-cart', route: 'orders', section: 'Main' },
     { label: 'Categories', icon: 'pi pi-tags', route: 'category-manager', section: 'Main' },

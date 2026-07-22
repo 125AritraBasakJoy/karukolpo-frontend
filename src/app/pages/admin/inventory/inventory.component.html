@@ -13,61 +13,7 @@
         </div>
     </div>
 
-    <!-- Sales Summary Cards - 2 columns on mobile, 4 on desktop -->
-    <div class="stats-grid mb-5">
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle orange">
-                <i class="pi pi-box"></i>
-            </div>
-            <span class="stat-label">Total Products</span>
-            <h2 class="stat-value">{{ totalRecords() | number }}</h2>
-        </div>
 
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle blue">
-                <i class="pi pi-shopping-bag"></i>
-            </div>
-            <span class="stat-label">Units Sold</span>
-            <h2 class="stat-value">{{ totalUnitsSold() | number }}</h2>
-        </div>
-
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle green">
-                <i class="pi pi-wallet"></i>
-            </div>
-            <span class="stat-label">Total Revenue</span>
-            <h2 class="stat-value revenue">{{ totalRevenue() | currency:'BDT':'৳':'1.0-0' }}</h2>
-        </div>
-
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle purple">
-                <i class="pi pi-check-circle"></i>
-            </div>
-            <span class="stat-label">Completed Orders</span>
-            <h2 class="stat-value">{{ confirmedOrdersCount() | number }}</h2>
-        </div>
-    </div>
-
-    <div class="grid mb-5">
-        <div class="col-12">
-            <div class="chart-section-card">
-                <div class="chart-header">
-                    <div class="chart-icon">
-                        <i class="pi pi-chart-bar"></i>
-                    </div>
-                    <h3>Product Sales Performance</h3>
-                </div>
-                <div *ngIf="chartData; else loadingChart" class="chart-wrapper">
-                    <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="250"></p-chart>
-                </div>
-                <ng-template #loadingChart>
-                    <div class="flex align-items-center justify-content-center" style="height: 200px">
-                        <p-progressSpinner styleClass="w-3rem h-3rem"></p-progressSpinner>
-                    </div>
-                </ng-template>
-            </div>
-        </div>
-    </div>
 
     <div class="glass-card fadein animation-duration-500">
         <p-table #dt [value]="products()" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'id', 'code']"

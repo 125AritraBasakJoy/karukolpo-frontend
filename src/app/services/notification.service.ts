@@ -40,8 +40,6 @@ export class NotificationService {
 
     constructor(@Inject(PLATFORM_ID) private platformId: Object) {
         this.loadLocalNotifications();
-        this.startListening();
-        this.startPolling();
     }
 
     /**
@@ -248,6 +246,19 @@ export class NotificationService {
         this.messageService = messageService;
         if (this.authService.isAuthenticated()) {
             this.refreshAll();
+            this.startListening();
+            this.startPolling();
+        }
+    }
+
+    stop() {
+        if (this.pollingSub) {
+            this.pollingSub.unsubscribe();
+            this.pollingSub = undefined;
+        }
+        if (this.orderSub) {
+            this.orderSub.unsubscribe();
+            this.orderSub = undefined;
         }
     }
 

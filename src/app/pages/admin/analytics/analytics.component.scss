@@ -244,12 +244,14 @@
   position: relative;
 
   ::ng-deep {
-
-    p-chart,
-    canvas {
+    p-chart {
+      display: block;
       width: 100% !important;
       height: 100% !important;
-      display: block;
+    }
+    p-chart > div {
+      width: 100% !important;
+      height: 100% !important;
     }
   }
 }

@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { ProductService } from '../../../services/product.service';
 import { Product, ProductImage } from '../../../models/product.model';
 import { Category } from '../../../models/category.model';
@@ -28,7 +27,6 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [
     CommonModule,
-    NotificationButtonComponent,
     TableModule,
     ButtonModule,
     CardModule,

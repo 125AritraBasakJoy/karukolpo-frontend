@@ -1,5 +1,6 @@
-import { Component, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, OnInit, signal, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../../services/order.service';
 import { ProductService } from '../../../services/product.service';
 import { PaymentService } from '../../../services/payment.service';
@@ -12,7 +13,6 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
@@ -33,7 +33,6 @@ import { InvoiceComponent } from '../../../components/invoice/invoice.component'
     ToastModule,
     DialogModule,
     ProgressSpinnerModule,
-    NotificationButtonComponent,
     SkeletonModule,
     TooltipModule,
     InputTextModule,
@@ -50,6 +49,10 @@ export class OrdersComponent implements OnInit {
   @ViewChild('adminInvoice') adminInvoice!: InvoiceComponent;
 
   // ... signals remain same ...
+  private activatedRoute = inject(ActivatedRoute);
+  private router = inject(Router);
+  highlightedOrderId = signal<string | null>(null);
+
   orders = signal<Order[]>([]);
   totalRecords = signal<number>(0); // Initialize to 0, will grow as we fetch
   loading = signal<boolean>(false);
@@ -86,6 +89,24 @@ export class OrdersComponent implements OnInit {
 
   ngOnInit() {
     this.loadOrders();
+
+    this.activatedRoute.queryParams.subscribe(params => {
+      const highlightId = params['highlight'];
+      if (highlightId) {
+        this.highlightedOrderId.set(highlightId);
+        this.openOrderById(highlightId);
+
+        // Clean URL query parameter without triggering full reload or losing state
+        setTimeout(() => {
+          this.router.navigate([], {
+            relativeTo: this.activatedRoute,
+            queryParams: { highlight: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+          });
+        }, 1000);
+      }
+    });
     this.orderService.newOrderNotification$.subscribe(() => {
       this.loadOrders();
     });
@@ -325,6 +346,41 @@ export class OrdersComponent implements OnInit {
         });
       }
     });
+  }
+
+  openOrderById(orderId: string) {
+    const existingOrder = this.orders().find(o => o.id === orderId || o.orderNumber === orderId);
+    if (existingOrder) {
+      this.viewOrder(existingOrder);
+    } else {
+      this.loadingDetails = true;
+      this.displayOrderDialog = true;
+      this.orderService.getOrderById(orderId).subscribe({
+        next: (order) => {
+          if (order) {
+            this.viewOrder(order);
+          } else {
+            // Try searching by orderNumber in cache/buffer if UUID lookup fails
+            this.orderService.getOrders(0, 100).subscribe(allOrders => {
+              const matched = allOrders.find(o => o.orderNumber === orderId || o.id === orderId);
+              if (matched) {
+                this.viewOrder(matched);
+              } else {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Order not found' });
+                this.displayOrderDialog = false;
+              }
+              this.loadingDetails = false;
+            });
+          }
+        },
+        error: (err) => {
+          console.error('Failed to load order for highlight', err);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load order details' });
+          this.displayOrderDialog = false;
+          this.loadingDetails = false;
+        }
+      });
+    }
   }
 
   ensureProductDetails(order: Order): Observable<Order> {

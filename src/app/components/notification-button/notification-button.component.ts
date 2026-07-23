@@ -109,7 +109,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
                                           [class.text-slate-300]="notif.is_read || notif.read">
                                         {{ notif.title || 'Notification' }}
                                     </span>
-                                    <span *ngIf="!(notif.is_read || notif.read)" class="text-3xs bg-primary-900/60 text-primary-300 border-1 border-primary-500/30 px-1-5 py-0-5 border-round">NEW</span>
+                                    <span *ngIf="!(notif.is_read || notif.read)" class="new-badge-btn">NEW</span>
                                 </div>
 
                                 <div class="text-xs text-slate-400 line-height-3 mb-2 text-break">
@@ -237,6 +237,28 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         animation: pulse-red-bell 2s infinite;
     }
 
+    .new-badge-btn {
+        font-size: 0.625rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: #ffffff;
+        padding: 2.5px 8px;
+        border-radius: 6px;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        display: inline-block;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .new-badge-btn:hover {
+        transform: translateY(-1px) scale(1.05);
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+        background: linear-gradient(135deg, #60a5fa, #2563eb);
+    }
+
     @keyframes pulse-red-bell {
         0% {
             box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
@@ -254,8 +276,7 @@ export class NotificationButtonComponent implements OnInit {
     notificationService = inject(NotificationService);
 
     ngOnInit() {
-        this.notificationService.fetchNotifications().subscribe();
-        this.notificationService.fetchUnreadCount().subscribe();
+        // Notification fetches are already initialized by the parent DashboardComponent layout
     }
 
     get notifications(): NotificationRead[] {
@@ -304,6 +325,9 @@ export class NotificationButtonComponent implements OnInit {
 
     onNotificationClick(notif: NotificationRead, overlay: any) {
         this.notificationService.handleNotificationClick(notif);
+        if (overlay) {
+            overlay.hide();
+        }
     }
 
     getNotificationIcon(type?: string): string {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -26,7 +26,7 @@ interface SidebarMenuItem {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss', '../admin-styles.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   sidebarCollapsed = signal<boolean>(false);
   mobileMenuOpen = signal<boolean>(false);
   isMobile = signal<boolean>(false);
@@ -79,6 +79,10 @@ export class DashboardComponent implements OnInit {
         this.mobileMenuOpen.set(false);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.notificationService.stop();
   }
 
   @HostListener('window:resize')

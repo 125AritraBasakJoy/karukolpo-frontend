@@ -532,10 +532,17 @@ export class ProductService {
         mainImageUrl = primaryImage.image_medium || primaryImage.image_large || primaryImage.image_thumb || primaryImage.image_path || mainImageUrl;
       }
 
-      // 2. Map all image records to their high-quality 'large' variant for the product details carousel
+      // 2. Map all image records to their high-quality 'large' variant for the product details carousel,
+      //    ensuring the primary image always appears first.
+      const galleryUrl = (img: any) => img.image_large || img.image_medium || img.image_thumb || img.image_path;
       galleryImages = data.images
-        .map((img: any) => img.image_large || img.image_medium || img.image_thumb || img.image_path)
-        .filter(Boolean);
+        .map(galleryUrl)
+        .filter(Boolean)
+        .sort((a: string, b: string) => {
+          const aPrimary = data.images.find((img: any) => galleryUrl(img) === a)?.is_primary;
+          const bPrimary = data.images.find((img: any) => galleryUrl(img) === b)?.is_primary;
+          return Number(bPrimary) - Number(aPrimary);
+        });
 
     } else if (data.image) {
       mainImageUrl = data.image;

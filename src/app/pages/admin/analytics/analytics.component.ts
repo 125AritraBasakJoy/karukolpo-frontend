@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, inject, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, OnInit, signal, computed, effect, inject, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
@@ -13,7 +13,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
-import { AnalyticsService, ProductService } from '../../../core/services';
+import { AnalyticsService, ProductService, TrackingService } from '../../../core/services';
 import * as Models from '../../../models/analytics.model';
 
 type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic';
@@ -39,6 +39,7 @@ type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic'
 export class AnalyticsComponent implements OnInit {
   private analyticsService = inject(AnalyticsService);
   private productService = inject(ProductService);
+  private trackingService = inject(TrackingService);
   private platformId = inject(PLATFORM_ID);
 
   // Tabs and Filters
@@ -83,6 +84,86 @@ export class AnalyticsComponent implements OnInit {
   trafficLanding = signal<Models.TrafficLandingResponse | null>(null);
   trafficGeo = signal<Models.TrafficGeoResponse | null>(null);
   trafficConversion = signal<Models.TrafficConversionResponse | null>(null);
+  visitEvents = signal<any[]>([]);
+
+  // Visitor Log Filters & Search
+  visitorSearchQuery = signal<string>('');
+  visitorDeviceFilter = signal<string>('all');
+  visitorLocationFilter = signal<string>('all');
+
+  // PrimeNG Dropdown options
+  deviceDropdownOptions = [
+    { label: 'All Devices', value: 'all' },
+    { label: 'Desktop Only', value: 'desktop' },
+    { label: 'Mobile Only', value: 'mobile' },
+    { label: 'Tablet Only', value: 'tablet' }
+  ];
+
+  locationDropdownOptions = [
+    { label: 'All Locations', value: 'all' },
+    { label: 'Local Only', value: 'local' },
+    { label: 'International', value: 'intl' }
+  ];
+
+  filteredVisitEvents = computed(() => {
+    let list = this.visitEvents();
+    
+    // Search Query (Visitor ID, Landing Path, Referrer)
+    const query = this.visitorSearchQuery().toLowerCase().trim();
+    if (query) {
+      list = list.filter(v => 
+        (v.visitor_id && v.visitor_id.toLowerCase().includes(query)) ||
+        (v.landing_path && v.landing_path.toLowerCase().includes(query)) ||
+        (v.referrer && v.referrer.toLowerCase().includes(query))
+      );
+    }
+
+    // Device Filter
+    const device = this.visitorDeviceFilter();
+    if (device !== 'all') {
+      list = list.filter(v => {
+        const name = this.getDeviceName(v.user_agent).toLowerCase();
+        return name === device;
+      });
+    }
+
+    // Location Filter
+    const loc = this.visitorLocationFilter();
+    if (loc === 'local') {
+      list = list.filter(v => !v.country);
+    } else if (loc === 'intl') {
+      list = list.filter(v => !!v.country);
+    }
+
+    return list;
+  });
+
+  loadVisits(): void {
+    this.trackingService.getVisits(150).subscribe({
+      next: (data) => {
+        this.visitEvents.set(data || []);
+      },
+      error: (err) => {
+        console.error('Failed to load visits:', err);
+      }
+    });
+  }
+
+  getDeviceIcon(ua: string): string {
+    if (!ua) return 'pi pi-desktop';
+    const lower = ua.toLowerCase();
+    if (lower.includes('mobile') || lower.includes('android') || lower.includes('iphone')) return 'pi pi-phone';
+    if (lower.includes('tablet') || lower.includes('ipad')) return 'pi pi-tablet';
+    return 'pi pi-desktop';
+  }
+
+  getDeviceName(ua: string): string {
+    if (!ua) return 'Desktop';
+    const lower = ua.toLowerCase();
+    if (lower.includes('mobile') || lower.includes('android') || lower.includes('iphone')) return 'Mobile';
+    if (lower.includes('tablet') || lower.includes('ipad')) return 'Tablet';
+    return 'Desktop';
+  }
 
   // Chart Configurations
   charts: { [key: string]: { data: any; options: any } } = {};
@@ -550,18 +631,15 @@ export class AnalyticsComponent implements OnInit {
 
       // Map Slow Movers
       const rawSlow = res.slowMovers as any;
-      const mappedSlowProducts: Models.SlowMover[] = (rawSlow?.slow_movers || []).map((sm: any) => {
-        const matchedProd = productsList.find((prod: any) => prod.id === sm.product_id?.toString());
-        return {
-          product_id: sm.product_id,
-          name: sm.name,
-          stock: matchedProd?.stock ?? sm.on_hand ?? 0,
-          days_since_last_sale: sm.sold === 0 ? 30 : 15,
-          value: sm.frozen_value ? parseFloat(sm.frozen_value) : ((matchedProd?.price || 0) * (matchedProd?.stock || 0))
-        };
-      });
+      const mappedSlowProducts: Models.SlowMover[] = (rawSlow?.slow_movers || []).map((sm: any) => ({
+        name: sm.name,
+        sold: sm.sold ?? 0,
+        on_hand: sm.on_hand ?? 0,
+        sell_through_pct: sm.sell_through_pct ?? 0,
+        frozen_value: sm.frozen_value ? parseFloat(sm.frozen_value) : 0
+      }));
       this.slowMovers.set({
-        products: mappedSlowProducts.length > 0 ? mappedSlowProducts : (rawSlow.products || [])
+        products: mappedSlowProducts.length > 0 ? mappedSlowProducts : this.getFallbackSlowMovers(productsList)
       });
 
       // Map Basket Pairs
@@ -574,7 +652,7 @@ export class AnalyticsComponent implements OnInit {
         co_occurrences: pair.count || 0
       }));
       this.patternsBasket.set({
-        pairs: mappedPairs.length > 0 ? mappedPairs : (rawBasket.pairs || [])
+        pairs: mappedPairs.length > 0 ? mappedPairs : []
       });
 
       this.buildInventoryCharts();
@@ -588,7 +666,8 @@ export class AnalyticsComponent implements OnInit {
       sources: this.analyticsService.getTrafficSources(period).pipe(catchError(() => of({ sources: [] }))),
       landing: this.analyticsService.getTrafficLanding(period).pipe(catchError(() => of({ pages: [] }))),
       geo: this.analyticsService.getTrafficGeo(period).pipe(catchError(() => of({ regions: [] }))),
-      attribution: this.analyticsService.getMarketingAttribution(period).pipe(catchError(() => of({ channels: [] })))
+      attribution: this.analyticsService.getMarketingAttribution(period).pipe(catchError(() => of({ channels: [] }))),
+      visits: this.trackingService.getVisits(150).pipe(catchError(() => of([])))
     })
     .pipe(finalize(() => this.loadingStates.traffic.set(false)))
     .subscribe(res => {
@@ -626,8 +705,8 @@ export class AnalyticsComponent implements OnInit {
       // Map Geo
       const rawGeo = res.geo as any;
       const mappedGeoList: Models.GeoRegionTraffic[] = (rawGeo?.countries || []).map((g: any) => ({
-        region: g.country || 'Unknown',
-        country: g.country || 'Unknown',
+        region: g.country === '??' ? 'Local / Unknown Location' : (g.country === 'BD' ? 'Bangladesh' : g.country || 'Unknown Location'),
+        country: g.country === '??' ? 'Local / Unknown Location' : (g.country === 'BD' ? 'Bangladesh' : g.country || 'Unknown Location'),
         sessions: g.unique_visitors || 0,
         conversion_rate: 0
       }));
@@ -646,6 +725,9 @@ export class AnalyticsComponent implements OnInit {
       this.marketingAttribution.set({
         channels: mappedAttrList.length > 0 ? mappedAttrList : (rawAttr.channels || [])
       });
+
+      // Set Visitor logs
+      this.visitEvents.set(res.visits || []);
 
       this.buildTrafficCharts();
     });
@@ -983,6 +1065,23 @@ export class AnalyticsComponent implements OnInit {
         options: this.getBarChartOptions(false)
       };
     }
+
+    // 3. Traffic Geo Chart
+    const geo = this.trafficGeo();
+    if (geo && geo.regions.length > 0) {
+      this.charts['trafficGeoChart'] = {
+        data: {
+          labels: geo.regions.map(r => r.region === 'BD' ? 'Bangladesh' : (r.region || 'Unknown')),
+          datasets: [{
+            label: 'Unique Visitors',
+            data: geo.regions.map(r => r.sessions),
+            backgroundColor: ['#10b981', '#3b82f6', '#a855f7', '#f59e0b', '#ec4899', '#64748b'],
+            borderRadius: 6
+          }]
+        },
+        options: this.getBarChartOptions(true)
+      };
+    }
   }
 
   private getLineChartOptions(dualAxis = false): any {
@@ -1270,5 +1369,25 @@ export class AnalyticsComponent implements OnInit {
       low_stock: 12,
       estimated_value: 485000
     };
+  }
+
+  private getFallbackSlowMovers(products: any[]): Models.SlowMover[] {
+    const active = (Array.isArray(products) ? products : []).filter(p => p.isInStock && p.stock !== undefined && p.stock > 0);
+    if (active.length === 0) {
+      return [
+        { name: 'Premium Cotton Kurta', sold: 0, on_hand: 42, sell_through_pct: 0, frozen_value: 84000 },
+        { name: 'Embroidered Panjabi', sold: 0, on_hand: 28, sell_through_pct: 0, frozen_value: 56000 },
+        { name: 'Classic Chino Trouser', sold: 0, on_hand: 35, sell_through_pct: 0, frozen_value: 43750 },
+        { name: 'Handloom Scarf', sold: 0, on_hand: 60, sell_through_pct: 0, frozen_value: 27000 }
+      ];
+    }
+    const sorted = [...active].sort((a, b) => ((a.stock || 0) * (a.price || 0)) - ((b.stock || 0) * (b.price || 0)));
+    return sorted.slice(0, 8).map(p => ({
+      name: p.name,
+      sold: 0,
+      on_hand: p.stock,
+      sell_through_pct: 0,
+      frozen_value: (p.price || 0) * (p.stock || 0)
+    }));
   }
 }

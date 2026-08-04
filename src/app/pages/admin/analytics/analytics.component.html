@@ -239,7 +239,7 @@
                 </div>
 
                 <p-table [value]="profitableProducts()" styleClass="premium-table-ui text-xs sm:text-sm" [responsiveLayout]="'scroll'">
-                  <ng-template ngTemplate="header">
+                  <ng-template pTemplate="header">
                     <tr>
                       <th>Product Name</th>
                       <th class="text-right hidden sm:table-cell">Unit Profit</th>
@@ -247,7 +247,7 @@
                       <th class="text-right">Margin</th>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="body" let-prod>
+                  <ng-template pTemplate="body" let-prod>
                     <tr>
                       <td>
                         <span class="font-semibold text-white block text-xs sm:text-sm" style="word-break: break-word;">{{ prod.name }}</span>
@@ -264,7 +264,7 @@
                       </td>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="emptymessage">
+                  <ng-template pTemplate="emptymessage">
                     <tr>
                       <td colspan="4" class="text-center py-4 text-color-secondary">No profitability records available.</td>
                     </tr>
@@ -565,25 +565,23 @@
                   <i class="pi pi-link text-indigo-400"></i> Frequently Bought Together
                 </h3>
                 <p-table [value]="patternsBasket()?.pairs || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
-                  <ng-template ngTemplate="header">
+                  <ng-template pTemplate="header">
                     <tr>
                       <th>Product A</th>
                       <th>Product B</th>
                       <th class="text-right">Co-occurrences</th>
-                      <th class="text-right">Confidence</th>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="body" let-pair>
+                  <ng-template pTemplate="body" let-pair>
                     <tr>
                       <td><span class="text-white text-xs font-semibold">{{ pair.product_a }}</span></td>
                       <td><span class="text-white text-xs font-semibold">{{ pair.product_b }}</span></td>
                       <td class="text-right text-color-secondary">{{ pair.co_occurrences }}</td>
-                      <td class="text-right text-indigo-400 font-bold">{{ pair.confidence }}%</td>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="emptymessage">
+                  <ng-template pTemplate="emptymessage">
                     <tr>
-                      <td colspan="4" class="text-center py-4 text-color-secondary">No cross-sales data recorded.</td>
+                      <td colspan="3" class="text-center py-4 text-color-secondary">No cross-sales data recorded.</td>
                     </tr>
                   </ng-template>
                 </p-table>
@@ -597,25 +595,27 @@
                   <i class="pi pi-chart-line text-orange-400"></i> Inventory Slow Movers
                 </h3>
                 <p-table [value]="slowMovers()?.products || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
-                  <ng-template ngTemplate="header">
+                  <ng-template pTemplate="header">
                     <tr>
                       <th>Product</th>
-                      <th class="text-right">Stock</th>
-                      <th class="text-right">Idle Days</th>
-                      <th class="text-right">Assets Value</th>
+                      <th class="text-right">Units Sold</th>
+                      <th class="text-right">On Hand</th>
+                      <th class="text-right">Sell-through %</th>
+                      <th class="text-right">Asset Value</th>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="body" let-prod>
+                  <ng-template pTemplate="body" let-prod>
                     <tr>
                       <td><span class="text-white text-xs font-semibold">{{ prod.name }}</span></td>
-                      <td class="text-right text-color-secondary">{{ prod.stock }}</td>
-                      <td class="text-right text-orange-400 font-bold">{{ prod.days_since_last_sale }} days</td>
-                      <td class="text-right text-color-secondary font-semibold">{{ prod.value | number }} BDT</td>
+                      <td class="text-right text-color-secondary">{{ prod.sold }}</td>
+                      <td class="text-right text-color-secondary">{{ prod.on_hand }}</td>
+                      <td class="text-right text-orange-400 font-bold">{{ prod.sell_through_pct }}%</td>
+                      <td class="text-right text-color-secondary font-semibold">{{ prod.frozen_value | number }} BDT</td>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="emptymessage">
+                  <ng-template pTemplate="emptymessage">
                     <tr>
-                      <td colspan="4" class="text-center py-4 text-color-secondary">No slow-moving products recorded.</td>
+                      <td colspan="5" class="text-center py-4 text-color-secondary">No slow-moving products recorded.</td>
                     </tr>
                   </ng-template>
                 </p-table>
@@ -670,21 +670,21 @@
                   <i class="pi pi-file text-pink-500"></i> Popular Entry Pages
                 </h3>
                 <p-table [value]="trafficLanding()?.pages || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
-                  <ng-template ngTemplate="header">
+                  <ng-template pTemplate="header">
                     <tr>
                       <th>Page Path</th>
                       <th class="text-right">Sessions</th>
                       <th class="text-right">Bounce Rate</th>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="body" let-page>
+                  <ng-template pTemplate="body" let-page>
                     <tr>
                       <td><span class="text-white text-xs font-mono">{{ page.path }}</span></td>
                       <td class="text-right text-color-secondary font-semibold">{{ page.sessions | number }}</td>
                       <td class="text-right text-color-secondary">{{ page.bounce_rate }}%</td>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="emptymessage">
+                  <ng-template pTemplate="emptymessage">
                     <tr>
                       <td colspan="3" class="text-center py-4 text-color-secondary">No traffic records.</td>
                     </tr>
@@ -695,31 +695,270 @@
 
             <!-- Geo Region Traffic -->
             <div class="col-12 lg:col-6">
-              <div class="glass-panel p-4">
+              <div class="glass-panel p-4 h-full flex flex-column">
                 <h3 class="panel-title flex align-items-center gap-2 mb-4">
                   <i class="pi pi-globe text-cyan-400"></i> Traffic by Region
                 </h3>
+
+                <!-- Geographical Heatmap/Bar Chart -->
+                <div class="chart-wrapper mb-4" style="position: relative; height: 200px;" *ngIf="charts['trafficGeoChart']">
+                  <p-chart type="bar" [data]="charts['trafficGeoChart'].data" [options]="charts['trafficGeoChart'].options"></p-chart>
+                </div>
+
                 <p-table [value]="trafficGeo()?.regions || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
-                  <ng-template ngTemplate="header">
+                  <ng-template pTemplate="header">
                     <tr>
                       <th>Region / Territory</th>
                       <th class="text-right">Sessions</th>
                       <th class="text-right">Conversion Rate</th>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="body" let-geo>
+                  <ng-template pTemplate="body" let-geo>
                     <tr>
-                      <td><span class="text-white text-xs font-semibold">{{ geo.region }}, {{ geo.country }}</span></td>
+                      <td><span class="text-white text-xs font-semibold">{{ geo.region }}</span></td>
                       <td class="text-right text-color-secondary font-semibold">{{ geo.sessions | number }}</td>
                       <td class="text-right text-emerald-400 font-bold">{{ geo.conversion_rate }}%</td>
                     </tr>
                   </ng-template>
-                  <ng-template ngTemplate="emptymessage">
+                  <ng-template pTemplate="emptymessage">
                     <tr>
                       <td colspan="3" class="text-center py-4 text-color-secondary">No regional data.</td>
                     </tr>
                   </ng-template>
                 </p-table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Visitor Activity Logs -->
+          <div class="grid mt-4">
+            <div class="col-12">
+              <div class="glass-panel p-4">
+                <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
+                  <div class="flex align-items-center gap-2">
+                    <div class="flex align-items-center justify-content-center border-round-md bg-cyan-950 text-cyan-400 border-1 border-cyan-800 shadow-2" style="width: 36px; height: 36px; backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2) !important;">
+                      <i class="pi pi-users text-base"></i>
+                    </div>
+                    <div>
+                      <h3 class="panel-title m-0">
+                        Live Visitor Activity Feed
+                      </h3>
+                      <p class="text-xs text-color-secondary m-0 mt-0.5">Real-time storefront visit sessions and entry points</p>
+                    </div>
+                  </div>
+                  <span class="discount-badge glass-badge-cyan font-bold text-xs px-3 py-1.5 border-round-lg">
+                    <i class="pi pi-users mr-1"></i>Total Logged Sessions: {{ visitEvents().length }}
+                  </span>
+                </div>
+
+                <!-- Control Panel (Search & Dropdowns) -->
+                <div class="flex flex-column lg:flex-row align-items-stretch lg:align-items-center justify-content-between gap-3 mb-4 p-3 border-round-xl border-1 border-white-alpha-10" style="background: rgba(255, 255, 255, 0.02);">
+                  <!-- Left side: search input -->
+                  <div class="relative flex-grow-1 max-w-25rem">
+                    <i class="pi pi-search absolute text-slate-400" style="left: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 0.875rem;"></i>
+                    <input type="text" pInputText placeholder="Search path or visitor ID..." 
+                           class="w-full premium-input text-sm py-2"
+                           style="padding-left: 2.25rem !important;"
+                           [ngModel]="visitorSearchQuery()" 
+                           (ngModelChange)="visitorSearchQuery.set($event)" />
+                  </div>
+
+                  <!-- Right side: Dropdown filters & refresh -->
+                  <div class="flex flex-column sm:flex-row align-items-stretch sm:align-items-center gap-3">
+                    <p-dropdown [options]="deviceDropdownOptions" 
+                                [ngModel]="visitorDeviceFilter()" 
+                                (ngModelChange)="visitorDeviceFilter.set($event)"
+                                styleClass="premium-dropdown text-xs" 
+                                placeholder="Device Filter"></p-dropdown>
+
+                    <p-dropdown [options]="locationDropdownOptions" 
+                                [ngModel]="visitorLocationFilter()" 
+                                (ngModelChange)="visitorLocationFilter.set($event)"
+                                styleClass="premium-dropdown text-xs" 
+                                placeholder="Location Filter"></p-dropdown>
+
+                    <button pButton type="button" icon="pi pi-refresh" 
+                            class="p-button-outlined p-button-secondary p-button-sm glossy-button" 
+                            (click)="loadVisits()" 
+                            pTooltip="Refresh Logs" tooltipPosition="top"></button>
+                  </div>
+                </div>
+
+                <!-- Desktop view (Table format) -->
+                <div class="hidden md:block">
+                  <p-table [value]="filteredVisitEvents()" styleClass="premium-table-ui" [paginator]="true" [rows]="10" [responsiveLayout]="'scroll'">
+                    <ng-template pTemplate="header">
+                      <tr>
+                        <th>Location</th>
+                        <th>Visitor ID</th>
+                        <th>Landing Path</th>
+                        <th>Referrer</th>
+                        <th>Marketing Source</th>
+                        <th>Device</th>
+                        <th class="text-right">Visited At</th>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-visit>
+                      <tr>
+                        <!-- Location -->
+                        <td>
+                          <div class="flex align-items-center gap-2">
+                            <span *ngIf="visit.country; else localBadge" class="glass-badge glass-badge-green font-bold uppercase text-2xs px-2.5 py-1">
+                              <i class="pi pi-globe mr-1 text-emerald-400"></i>{{ visit.country }}
+                            </span>
+                            <ng-template #localBadge>
+                              <span class="glass-badge glass-badge-blue font-bold uppercase text-2xs px-2.5 py-1">
+                                <i class="pi pi-home mr-1 text-blue-400"></i>Local
+                              </span>
+                            </ng-template>
+                            <span class="text-xs text-color-secondary font-semibold">
+                              {{ visit.country === 'BD' ? 'Bangladesh' : (visit.country || 'Localhost') }}
+                            </span>
+                          </div>
+                        </td>
+
+                        <!-- Visitor ID -->
+                        <td>
+                          <span class="glass-badge glass-badge-cyan font-mono text-3xs px-2.5 py-1">
+                            <i class="pi pi-user mr-1 text-cyan-400"></i>{{ visit.visitor_id ? visit.visitor_id.substring(0, 10) + '...' : 'Anonymous' }}
+                          </span>
+                        </td>
+
+                        <!-- Landing Path -->
+                        <td>
+                          <span class="glass-badge glass-badge-grey font-mono text-3xs px-2.5 py-1">
+                            <i class="pi pi-compass mr-1 text-slate-400"></i>{{ visit.landing_path || '/' }}
+                          </span>
+                        </td>
+
+                        <!-- Referrer -->
+                        <td>
+                          <span class="text-xs text-color-secondary truncate block max-w-15rem" [title]="visit.referrer || 'Direct'">
+                            <i class="pi pi-link text-slate-500 mr-1"></i>{{ visit.referrer ? (visit.referrer.replace('https://', '').replace('http://', '').split('/')[0]) : 'Direct' }}
+                          </span>
+                        </td>
+
+                        <!-- Marketing Source -->
+                        <td>
+                          <div class="flex flex-wrap gap-1" *ngIf="visit.utm_source || visit.utm_campaign; else noMarketing">
+                            <span class="glass-badge glass-badge-blue font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_source">
+                              {{ visit.utm_source }}
+                            </span>
+                            <span class="glass-badge glass-badge-purple font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_campaign">
+                              {{ visit.utm_campaign }}
+                            </span>
+                          </div>
+                          <ng-template #noMarketing>
+                            <span class="text-xs text-slate-500">—</span>
+                          </ng-template>
+                        </td>
+
+                        <!-- Device Info -->
+                        <td>
+                          <div class="flex align-items-center text-xs text-slate-300" style="gap: 0.5rem;">
+                            <i [class]="getDeviceIcon(visit.user_agent) + ' text-slate-400'"></i>
+                            <span>{{ getDeviceName(visit.user_agent) }}</span>
+                          </div>
+                        </td>
+
+                        <!-- Visited At -->
+                        <td class="text-right text-xs text-color-secondary">
+                          <div class="flex flex-column align-items-end justify-content-center">
+                            <span class="font-semibold text-white flex align-items-center justify-content-end" style="gap: 0.35rem;">
+                              <i class="pi pi-clock text-slate-400" style="font-size: 0.75rem;"></i>
+                              {{ visit.created_at | date:'mediumTime' }}
+                            </span>
+                            <span class="text-3xs text-slate-500 mt-1">{{ visit.created_at | date:'mediumDate' }}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                      <tr>
+                        <td colspan="7" class="text-center py-5 text-color-secondary">
+                          <i class="pi pi-inbox text-2xl block mb-2 text-slate-600"></i>
+                          No matching visitor logs found.
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                </div>
+
+                <!-- Mobile view (Feed Cards layout) -->
+                <div class="block md:hidden mt-2">
+                  <div class="grid">
+                    @for (visit of filteredVisitEvents(); track visit.id) {
+                      <div class="col-12 mb-3">
+                        <div class="glass-panel p-3 border-1 border-white-alpha-10" style="border-radius: 12px; background: rgba(15, 23, 42, 0.45);">
+                          <!-- Header: Location & Time -->
+                          <div class="flex justify-content-between align-items-center mb-2">
+                            <div class="flex align-items-center gap-2">
+                              <span *ngIf="visit.country; else localBadgeMobile" class="glass-badge glass-badge-green font-bold uppercase text-3xs px-2 py-0.5">
+                                <i class="pi pi-globe mr-1 text-emerald-400"></i>{{ visit.country }}
+                              </span>
+                              <ng-template #localBadgeMobile>
+                                <span class="glass-badge glass-badge-blue font-bold uppercase text-3xs px-2 py-0.5">
+                                  <i class="pi pi-home mr-1 text-blue-400"></i>Local
+                                </span>
+                              </ng-template>
+                              <span class="text-xs text-color-secondary font-semibold">
+                                {{ visit.country === 'BD' ? 'Bangladesh' : (visit.country || 'Localhost') }}
+                              </span>
+                            </div>
+                            <span class="text-2xs text-color-secondary font-medium">
+                              <i class="pi pi-clock mr-1 text-slate-400 text-3xs"></i>{{ visit.created_at | date:'shortTime' }}
+                            </span>
+                          </div>
+
+                          <!-- Sub-header: Device & Visitor Hash -->
+                          <div class="flex justify-content-between align-items-center mb-2">
+                            <div class="flex align-items-center gap-1.5 text-xs text-slate-300">
+                              <i [class]="getDeviceIcon(visit.user_agent) + ' text-slate-400'"></i>
+                              <span>{{ getDeviceName(visit.user_agent) }}</span>
+                            </div>
+                            <span class="glass-badge glass-badge-cyan font-mono text-3xs px-2 py-0.5">
+                              ID: {{ visit.visitor_id ? visit.visitor_id.substring(0, 8) : 'Anon' }}
+                            </span>
+                          </div>
+
+                          <!-- Body: Path & Source details -->
+                          <div class="mt-2 pt-2 border-top-1 border-white-alpha-5">
+                            <div class="flex flex-column gap-1.5">
+                              <div class="flex align-items-center gap-2">
+                                <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">Path:</span>
+                                <span class="glass-badge glass-badge-grey font-mono text-3xs px-2 py-0.5 truncate max-w-16rem">
+                                  {{ visit.landing_path || '/' }}
+                                </span>
+                              </div>
+                              <div class="flex align-items-center gap-2" *ngIf="visit.referrer">
+                                <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">From:</span>
+                                <span class="text-xs text-color-secondary truncate max-w-16rem">
+                                  <i class="pi pi-link text-slate-500 mr-1 text-3xs"></i>{{ visit.referrer.replace('https://', '').replace('http://', '').split('/')[0] }}
+                                </span>
+                              </div>
+                              <div class="flex align-items-center gap-2" *ngIf="visit.utm_source || visit.utm_campaign">
+                                <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">Source:</span>
+                                <div class="flex gap-1">
+                                  <span class="glass-badge glass-badge-blue font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_source">
+                                    {{ visit.utm_source }}
+                                  </span>
+                                  <span class="glass-badge glass-badge-purple font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_campaign">
+                                    {{ visit.utm_campaign }}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="col-12 text-center py-5 text-color-secondary">
+                        <i class="pi pi-inbox text-2xl block mb-2 text-slate-600"></i>
+                        No matching visitor logs found.
+                      </div>
+                    }
+                  </div>
+                </div>
               </div>
             </div>
           </div>

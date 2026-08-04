@@ -68,6 +68,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.notificationService.init(this.messageService);
     this.checkScreenSize();
+    
+    // Expand all menu sections by default so options are visible immediately
+    this.expandedSections.set(new Set(this.getMenuSections()));
+    
     this.updateCurrentRoute(this.router.url);
 
     // Listen to route changes

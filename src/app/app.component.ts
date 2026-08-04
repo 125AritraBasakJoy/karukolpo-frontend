@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { OrderService, NotificationService, VersionService } from './core/services';;
+import { OrderService, NotificationService, VersionService, TrackingService } from './core/services';;
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { CommonModule } from '@angular/common';
@@ -24,11 +24,13 @@ export class AppComponent implements OnInit {
     private messageService: MessageService,
     private _notificationService: NotificationService,
     private router: Router,
-    private versionService: VersionService
+    private versionService: VersionService,
+    private trackingService: TrackingService
   ) { }
 
   ngOnInit() {
     this.versionService.checkForUpdates();
+    this.trackingService.trackVisit();
 
     // Check if current route is admin - using window.location.pathname for initial load robustness
     this.isAdminRoute = window.location.pathname.startsWith('/admin');

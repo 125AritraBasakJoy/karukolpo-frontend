@@ -14,6 +14,7 @@ export * from './loading/loading.service';
 export * from './site-config/site-config.service';
 export * from './theme/theme.service';
 export * from './version/version.service';
+export * from './tracking/tracking.service';
 
 // APIs & Helpers
 export * from './api/api-config';

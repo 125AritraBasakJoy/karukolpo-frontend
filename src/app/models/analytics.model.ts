@@ -144,11 +144,11 @@ export interface PatternsBasketResponse {
 }
 
 export interface SlowMover {
-  product_id: string;
   name: string;
-  stock: number;
-  days_since_last_sale: number;
-  value: number;
+  sold: number;
+  on_hand: number;
+  sell_through_pct: number;
+  frozen_value: number;
 }
 
 export interface SlowMoversResponse {

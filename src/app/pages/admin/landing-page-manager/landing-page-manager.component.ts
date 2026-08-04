@@ -6,7 +6,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { SiteConfigService } from '../../../services/site-config.service';
+import { SiteConfigService } from '../../../core/services';;;
 
 @Component({
     selector: 'app-landing-page-manager',

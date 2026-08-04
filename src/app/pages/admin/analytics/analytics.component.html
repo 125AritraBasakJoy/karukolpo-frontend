@@ -1,0 +1,970 @@
+<div class="analytics-container">
+  <!-- Page Header -->
+  <div class="analytics-header flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="page-title mb-1">Analytics Dashboard</h1>
+      <p class="text-sm text-color-secondary">Real-time business intelligence and performance diagnostics.</p>
+    </div>
+    
+    <!-- Global Filters -->
+    <div class="flex align-items-center gap-3 filter-panel">
+      <div class="flex align-items-center gap-2">
+        <label for="global-period" class="text-xs font-semibold text-color-secondary uppercase">Period:</label>
+        <p-dropdown 
+          id="global-period" 
+          [options]="periods" 
+          [ngModel]="selectedPeriod()"
+          (ngModelChange)="setPeriod($event)"
+          styleClass="premium-dropdown"
+          [disabled]="loadingStates.overview() || loadingStates.sales() || loadingStates.customers() || loadingStates.inventory() || loadingStates.traffic()"
+        ></p-dropdown>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Navigation Tabs -->
+  <div class="premium-tabs-bar mb-4 overflow-x-auto">
+    <div class="flex gap-2 min-w-max pb-2">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'overview'" 
+        (click)="setTab('overview')"
+      >
+        <i class="pi pi-th-large mr-2"></i>Overview
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'sales'" 
+        (click)="setTab('sales')"
+      >
+        <i class="pi pi-wallet mr-2"></i>Sales & Orders
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'customers'" 
+        (click)="setTab('customers')"
+      >
+        <i class="pi pi-users mr-2"></i>Customer Insights
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'inventory'" 
+        (click)="setTab('inventory')"
+      >
+        <i class="pi pi-box mr-2"></i>Inventory & Products
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'traffic'" 
+        (click)="setTab('traffic')"
+      >
+        <i class="pi pi-globe mr-2"></i>Traffic & Marketing
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Tabs Content -->
+  <div class="tab-content-container">
+
+    <!-- 1. OVERVIEW TAB -->
+    @if (activeTab() === 'overview') {
+      <div class="tab-pane animate-fade-in">
+        
+        <!-- Skeletons while loading -->
+        @if (loadingStates.overview()) {
+          <div class="grid mb-4">
+            <div class="col-12 sm:col-6 lg:col-3" *ngFor="let i of [1,2,3,4]">
+              <p-card styleClass="premium-card">
+                <p-skeleton width="60%" styleClass="mb-2"></p-skeleton>
+                <p-skeleton width="80%" height="2rem" styleClass="mb-2"></p-skeleton>
+                <p-skeleton width="40%"></p-skeleton>
+              </p-card>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="col-12 lg:col-8">
+              <p-card styleClass="premium-card">
+                <p-skeleton width="40%" height="1.5rem" styleClass="mb-3"></p-skeleton>
+                <p-skeleton height="250px"></p-skeleton>
+              </p-card>
+            </div>
+            <div class="col-12 lg:col-4">
+              <p-card styleClass="premium-card">
+                <p-skeleton width="50%" height="1.5rem" styleClass="mb-3"></p-skeleton>
+                <p-skeleton height="250px"></p-skeleton>
+              </p-card>
+            </div>
+          </div>
+        } @else {
+          <!-- Stats Grid -->
+          <div class="grid mb-4" *ngIf="overviewData()">
+            <!-- Revenue -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-blue">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Total Revenue</span>
+                  <div class="icon-wrap blue"><i class="pi pi-wallet"></i></div>
+                </div>
+                <div class="value">{{ overviewData()?.total_revenue | number }} BDT</div>
+                <div class="trend flex align-items-center mt-2" [class.up]="overviewData()!.revenue_growth_percentage >= 0" [class.down]="overviewData()!.revenue_growth_percentage < 0">
+                  <i class="pi" [ngClass]="overviewData()!.revenue_growth_percentage >= 0 ? 'pi-arrow-up-right' : 'pi-arrow-down-left'"></i>
+                  <span class="ml-1 font-semibold">{{ overviewData()?.revenue_growth_percentage }}% vs last period</span>
+                </div>
+              </div>
+            </div>
+            <!-- Orders -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-green">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Total Orders</span>
+                  <div class="icon-wrap green"><i class="pi pi-shopping-bag"></i></div>
+                </div>
+                <div class="value">{{ overviewData()?.total_orders | number }}</div>
+                <div class="trend flex align-items-center mt-2" [class.up]="overviewData()!.orders_growth_percentage >= 0" [class.down]="overviewData()!.orders_growth_percentage < 0">
+                  <i class="pi" [ngClass]="overviewData()!.orders_growth_percentage >= 0 ? 'pi-arrow-up-right' : 'pi-arrow-down-left'"></i>
+                  <span class="ml-1 font-semibold">{{ overviewData()?.orders_growth_percentage }}% vs last period</span>
+                </div>
+              </div>
+            </div>
+            <!-- Conversion Rate -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-purple">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Conversion Rate</span>
+                  <div class="icon-wrap purple"><i class="pi pi-percentage"></i></div>
+                </div>
+                <div class="value">{{ overviewData()?.conversion_rate }}%</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Sessions: {{ trafficOverview()?.total_sessions | number }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Active Customers -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-orange">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Active Customers</span>
+                  <div class="icon-wrap orange"><i class="pi pi-users"></i></div>
+                </div>
+                <div class="value">{{ overviewData()?.active_customers | number }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Avg Order Value: {{ overviewData()?.average_order_value | number:'1.0-2' }} BDT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid">
+            <!-- Revenue Trend Chart -->
+            <div class="col-12 lg:col-8" *ngIf="charts['overviewRevenue']">
+              <div class="glass-panel p-4 h-full flex flex-column">
+                <div class="flex align-items-center justify-content-between mb-4">
+                  <h3 class="panel-title flex align-items-center gap-2">
+                    <i class="pi pi-chart-line text-blue-500"></i> Revenue & Order Growth Trend
+                  </h3>
+                </div>
+                <div class="chart-wrapper flex-grow-1" style="position: relative; height: 320px;">
+                  <p-chart type="line" [data]="charts['overviewRevenue'].data" [options]="charts['overviewRevenue'].options"></p-chart>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Conversion Funnel Chart -->
+            <div class="col-12 lg:col-4" *ngIf="charts['overviewFunnel']">
+              <div class="glass-panel p-4 h-full flex flex-column">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <i class="pi pi-filter text-purple-500"></i> Checkout Funnel
+                </h3>
+                <div class="chart-wrapper flex-grow-1" style="position: relative; height: 320px;">
+                  <p-chart type="bar" [data]="charts['overviewFunnel'].data" [options]="charts['overviewFunnel'].options"></p-chart>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- 2. SALES & ORDERS TAB -->
+    @if (activeTab() === 'sales') {
+      <div class="tab-pane animate-fade-in">
+        <!-- Loading -->
+        @if (loadingStates.sales()) {
+          <div class="grid">
+            <div class="col-12 lg:col-8">
+              <p-card styleClass="premium-card mb-4"><p-skeleton height="300px"></p-skeleton></p-card>
+              <p-card styleClass="premium-card"><p-skeleton height="200px"></p-skeleton></p-card>
+            </div>
+            <div class="col-12 lg:col-4">
+              <p-card styleClass="premium-card mb-4"><p-skeleton height="250px"></p-skeleton></p-card>
+              <p-card styleClass="premium-card"><p-skeleton height="250px"></p-skeleton></p-card>
+            </div>
+          </div>
+        } @else {
+          <div class="grid">
+            <!-- Revenue Timeseries with Granularity Selector -->
+            <div class="col-12 lg:col-8">
+              <div class="glass-panel p-4 mb-4">
+                <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
+                  <h3 class="panel-title flex align-items-center gap-2">
+                    <i class="pi pi-chart-bar text-indigo-500"></i> Detailed Revenue Analysis
+                  </h3>
+                  <div class="flex align-items-center gap-2">
+                    <label class="text-xs font-semibold text-color-secondary uppercase">Granularity:</label>
+                    <p-dropdown 
+                      [options]="granularities" 
+                      [ngModel]="salesGranularity()" 
+                      (ngModelChange)="salesGranularity.set($event)"
+                      styleClass="premium-dropdown"
+                    ></p-dropdown>
+                  </div>
+                </div>
+                <div class="chart-wrapper" style="position: relative; height: 300px;" *ngIf="charts['salesRevenue']">
+                  <p-chart type="line" [data]="charts['salesRevenue'].data" [options]="charts['salesRevenue'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- High Profitability Products Table & Chart -->
+              <div class="glass-panel p-4">
+                <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
+                  <h3 class="panel-title flex align-items-center gap-2">
+                    <i class="pi pi-percentage text-emerald-500"></i> Most Profitable Products
+                  </h3>
+                </div>
+
+                <!-- Profitable Products Bar Chart -->
+                <div class="chart-wrapper mb-4" style="position: relative; height: 260px;" *ngIf="charts['salesProfitable']">
+                  <p-chart type="bar" [data]="charts['salesProfitable'].data" [options]="charts['salesProfitable'].options"></p-chart>
+                </div>
+
+                <p-table [value]="profitableProducts()" styleClass="premium-table-ui text-xs sm:text-sm" [responsiveLayout]="'scroll'">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Product Name</th>
+                      <th class="text-right hidden sm:table-cell">Unit Profit</th>
+                      <th class="text-right">Gross Profit</th>
+                      <th class="text-right">Margin</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-prod>
+                    <tr>
+                      <td>
+                        <span class="font-semibold text-white block text-xs sm:text-sm" style="word-break: break-word;">{{ prod.name }}</span>
+                      </td>
+                      <td class="text-right text-color-secondary hidden sm:table-cell">{{ prod.profit | number:'1.0-0' }} BDT</td>
+                      <td class="text-right text-emerald-400 font-semibold">{{ (prod.revenue * prod.margin_percentage / 100) | number:'1.0-0' }} BDT</td>
+                      <td class="text-right">
+                        <div class="flex flex-column align-items-end justify-content-center">
+                          <p-tag styleClass="premium-tag-green" [value]="(prod.margin_percentage | number:'1.0-0') + '%'"></p-tag>
+                          <div class="w-4rem bg-white-alpha-10 border-round overflow-hidden mt-1 hidden sm:block" style="height: 4px;">
+                            <div class="bg-emerald-500 h-full" [style.width]="prod.margin_percentage + '%'"></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="4" class="text-center py-4 text-color-secondary">No profitability records available.</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </div>
+
+            <!-- Side Panels: Doughnuts & Risk -->
+            <div class="col-12 lg:col-4">
+              <!-- Order Status Breakdown -->
+              <div class="glass-panel p-4 mb-4" *ngIf="charts['salesStatus']">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3">
+                  <i class="pi pi-info-circle text-orange-500"></i> Orders by Status
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="doughnut" [data]="charts['salesStatus'].data" [options]="charts['salesStatus'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- Payment Method Breakdown -->
+              <div class="glass-panel p-4 mb-4" *ngIf="charts['salesPayment']">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3">
+                  <i class="pi pi-credit-card text-teal-500"></i> Revenue by Method
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="doughnut" [data]="charts['salesPayment'].data" [options]="charts['salesPayment'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- Order Risk Alerts -->
+              <div class="glass-panel p-4">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3 text-red-400">
+                  <i class="pi pi-shield text-red-500"></i> Risk Assessment
+                </h3>
+                <div class="risk-alerts-list flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                  @if (ordersRisk() && ordersRisk()!.orders.length > 0) {
+                    <div class="risk-item p-3 border-round border-1 border-red-900 bg-red-950 flex flex-column gap-1" *ngFor="let order of ordersRisk()!.orders">
+                      <div class="flex justify-content-between align-items-center">
+                        <span class="text-white font-semibold text-sm">{{ order.order_number }}</span>
+                        <p-tag severity="danger" [value]="order.risk_score + ' Score'"></p-tag>
+                      </div>
+                      <span class="text-xs text-red-200">Customer: {{ order.customer_name }}</span>
+                      <span class="text-xs text-red-300 font-semibold mt-1">Reasons: {{ order.risk_reasons.join(', ') }}</span>
+                    </div>
+                  } @else {
+                    <div class="text-center py-4 text-color-secondary flex flex-column align-items-center gap-2">
+                      <i class="pi pi-verified text-2xl text-emerald-500"></i>
+                      <span class="text-xs">All orders checked. No high-risk alerts detected.</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- 3. CUSTOMER INSIGHTS TAB -->
+    @if (activeTab() === 'customers') {
+      <div class="tab-pane animate-fade-in">
+        @if (loadingStates.customers()) {
+          <div class="grid">
+            <div class="col-12 lg:col-8">
+              <p-card styleClass="premium-card mb-4"><p-skeleton height="300px"></p-skeleton></p-card>
+              <p-card styleClass="premium-card"><p-skeleton height="200px"></p-skeleton></p-card>
+            </div>
+            <div class="col-12 lg:col-4">
+              <p-card styleClass="premium-card mb-4"><p-skeleton height="250px"></p-skeleton></p-card>
+              <p-card styleClass="premium-card"><p-skeleton height="250px"></p-skeleton></p-card>
+            </div>
+          </div>
+        } @else {
+          <div class="grid">
+            <!-- Main Grid Side -->
+            <div class="col-12 lg:col-8">
+              <!-- Hour of Day Patterns Line Chart -->
+              <div class="glass-panel p-4 mb-4" *ngIf="charts['patternsHour']">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <i class="pi pi-clock text-pink-500"></i> Sales Activity by Hour
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="line" [data]="charts['patternsHour'].data" [options]="charts['patternsHour'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- Top Customers List & Heatmap placeholder/Retention Cohorts -->
+              <div class="grid">
+                <div class="col-12 md:col-6">
+                  <div class="glass-panel p-4 h-full">
+                    <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                      <i class="pi pi-crown text-amber-500"></i> Top Spenders
+                    </h3>
+                    <div class="top-spenders-list flex flex-column gap-3">
+                      <div class="spender-item flex justify-content-between align-items-center p-2 border-bottom-1 border-white-alpha-10" *ngFor="let user of customersData()?.top_customers">
+                        <div>
+                          <div class="font-semibold text-white text-sm">{{ user.customer_name }}</div>
+                          <div class="text-xs text-color-secondary">{{ user.email }}</div>
+                        </div>
+                        <div class="text-right">
+                          <div class="font-semibold text-emerald-400 text-sm">{{ user.total_spent | number }} BDT</div>
+                          <div class="text-xs text-color-secondary">{{ user.orders_count }} orders</div>
+                        </div>
+                      </div>
+                      <div *ngIf="!customersData()?.top_customers?.length" class="text-center py-4 text-color-secondary">No customer data.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Geography Breakdown -->
+                <div class="col-12 md:col-6">
+                  <div class="glass-panel p-4 h-full">
+                    <div class="flex justify-content-between align-items-center mb-4">
+                      <h3 class="panel-title flex align-items-center gap-2">
+                        <i class="pi pi-map-marker text-cyan-500"></i> Regional Sales
+                      </h3>
+                      <p-dropdown 
+                        [options]="geoGroups" 
+                        [ngModel]="geoGroupBy()"
+                        (ngModelChange)="geoGroupBy.set($event)"
+                        styleClass="premium-dropdown"
+                      ></p-dropdown>
+                    </div>
+                    <div class="geo-points-list flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                      @if (geographyData() && geographyData()!.data.length > 0) {
+                        <div class="geo-item flex justify-content-between align-items-center p-2 bg-white-alpha-5 border-round" *ngFor="let item of geographyData()!.data">
+                          <span class="text-white text-sm font-semibold">{{ item.location }}</span>
+                          <span class="text-emerald-400 text-sm font-bold">{{ item.revenue | number }} BDT ({{ item.orders }} orders)</span>
+                        </div>
+                      } @else {
+                        <div class="text-center py-4 text-color-secondary">No geography patterns recorded.</div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer Segments & Cohort Retentions -->
+            <div class="col-12 lg:col-4">
+              <!-- Segments Doughnut -->
+              <div class="glass-panel p-4 mb-4" *ngIf="charts['customerSegments']">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3">
+                  <i class="pi pi-percentage text-purple-500"></i> Customer Segments
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="doughnut" [data]="charts['customerSegments'].data" [options]="charts['customerSegments'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- Day of Week Activity Bar -->
+              <div class="glass-panel p-4 mb-4" *ngIf="charts['patternsDay']">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3">
+                  <i class="pi pi-calendar-times text-indigo-500"></i> Activity by Day
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="bar" [data]="charts['patternsDay'].data" [options]="charts['patternsDay'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- Cohort Retention Small Grid -->
+              <div class="glass-panel p-4">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3">
+                  <i class="pi pi-sync text-teal-400"></i> Cohort Retention (%)
+                </h3>
+                <div class="cohorts-table-container overflow-x-auto">
+                  @if (cohortsData() && cohortsData()!.cohorts.length > 0) {
+                    <table class="w-full text-xs text-left border-collapse">
+                      <thead>
+                        <tr class="text-color-secondary">
+                          <th class="p-1">Cohort</th>
+                          <th class="p-1 text-center">Size</th>
+                          <th class="p-1 text-center" *ngFor="let idx of [1,2,3,4]">M{{ idx }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let c of cohortsData()!.cohorts">
+                          <td class="p-1 font-semibold text-white">{{ c.cohort_month }}</td>
+                          <td class="p-1 text-center text-color-secondary">{{ c.size }}</td>
+                          <td class="p-1 text-center font-bold text-emerald-400" *ngFor="let ret of c.retention.slice(0, 4)">
+                            {{ ret }}%
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  } @else {
+                    <div class="text-center py-4 text-color-secondary">No cohort records available.</div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- 4. INVENTORY & PRODUCTS TAB -->
+    @if (activeTab() === 'inventory') {
+      <div class="tab-pane animate-fade-in">
+        @if (loadingStates.inventory()) {
+          <div class="grid">
+            <div class="col-12 lg:col-6">
+              <p-card styleClass="premium-card mb-4"><p-skeleton height="260px"></p-skeleton></p-card>
+            </div>
+            <div class="col-12 lg:col-6">
+              <p-card styleClass="premium-card mb-4"><p-skeleton height="260px"></p-skeleton></p-card>
+            </div>
+          </div>
+        } @else {
+          <!-- Inventory Health Grid -->
+          <div class="grid mb-4" *ngIf="inventoryHealth()">
+            <!-- Total Catalog Products -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-blue">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Total Products</span>
+                  <div class="icon-wrap blue"><i class="pi pi-objects-column"></i></div>
+                </div>
+                <div class="value text-white">{{ inventoryHealth()?.total_products }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>In active catalog</span>
+                </div>
+              </div>
+            </div>
+            <!-- In Stock Products -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-green">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">In Stock</span>
+                  <div class="icon-wrap green"><i class="pi pi-check-circle"></i></div>
+                </div>
+                <div class="value text-emerald-400">{{ inventoryHealth()?.in_stock }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Available for order</span>
+                </div>
+              </div>
+            </div>
+            <!-- Low Stock Warning -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-orange">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Low Stock</span>
+                  <div class="icon-wrap orange"><i class="pi pi-exclamation-triangle"></i></div>
+                </div>
+                <div class="value text-orange-400">{{ inventoryHealth()?.low_stock }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Qty is 5 or less</span>
+                </div>
+              </div>
+            </div>
+            <!-- Out of Stock Alerts -->
+            <div class="col-12 sm:col-6 lg:col-3">
+              <div class="premium-stat-card bg-glow-red">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Out of Stock</span>
+                  <div class="icon-wrap red"><i class="pi pi-times-circle"></i></div>
+                </div>
+                <div class="value text-red-400">{{ inventoryHealth()?.out_of_stock }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Requires restocking</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <!-- Top Selling Products Chart -->
+            <div class="col-12 lg:col-6" *ngIf="charts['topProductsChart']">
+              <div class="glass-panel p-4 mb-4">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <i class="pi pi-chart-bar text-emerald-500"></i> Top Products by Revenue
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="bar" [data]="charts['topProductsChart'].data" [options]="charts['topProductsChart'].options"></p-chart>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Categories Chart -->
+            <div class="col-12 lg:col-6" *ngIf="charts['topCategoriesChart']">
+              <div class="glass-panel p-4 mb-4">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <i class="pi pi-tags text-blue-500"></i> Category Sales (Units)
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="bar" [data]="charts['topCategoriesChart'].data" [options]="charts['topCategoriesChart'].options"></p-chart>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product association (Basket Co-purchase) and Slow Movers Grid -->
+          <div class="grid">
+            <div class="col-12 lg:col-6">
+              <div class="glass-panel p-4 h-full">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <i class="pi pi-link text-indigo-400"></i> Frequently Bought Together
+                </h3>
+                <p-table [value]="patternsBasket()?.pairs || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Product A</th>
+                      <th>Product B</th>
+                      <th class="text-right">Co-occurrences</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-pair>
+                    <tr>
+                      <td><span class="text-white text-xs font-semibold">{{ pair.product_a }}</span></td>
+                      <td><span class="text-white text-xs font-semibold">{{ pair.product_b }}</span></td>
+                      <td class="text-right text-color-secondary">{{ pair.co_occurrences }}</td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="3" class="text-center py-4 text-color-secondary">No cross-sales data recorded.</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </div>
+
+            <!-- Slow Movers -->
+            <div class="col-12 lg:col-6">
+              <div class="glass-panel p-4 h-full">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4 text-orange-400">
+                  <i class="pi pi-chart-line text-orange-400"></i> Inventory Slow Movers
+                </h3>
+                <p-table [value]="slowMovers()?.products || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-right">Units Sold</th>
+                      <th class="text-right">On Hand</th>
+                      <th class="text-right">Sell-through %</th>
+                      <th class="text-right">Asset Value</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-prod>
+                    <tr>
+                      <td><span class="text-white text-xs font-semibold">{{ prod.name }}</span></td>
+                      <td class="text-right text-color-secondary">{{ prod.sold }}</td>
+                      <td class="text-right text-color-secondary">{{ prod.on_hand }}</td>
+                      <td class="text-right text-orange-400 font-bold">{{ prod.sell_through_pct }}%</td>
+                      <td class="text-right text-color-secondary font-semibold">{{ prod.frozen_value | number }} BDT</td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="5" class="text-center py-4 text-color-secondary">No slow-moving products recorded.</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- 5. TRAFFIC & MARKETING TAB -->
+    @if (activeTab() === 'traffic') {
+      <div class="tab-pane animate-fade-in">
+        @if (loadingStates.traffic()) {
+          <div class="grid">
+            <div class="col-12 lg:col-6"><p-card styleClass="premium-card mb-4"><p-skeleton height="260px"></p-skeleton></p-card></div>
+            <div class="col-12 lg:col-6"><p-card styleClass="premium-card mb-4"><p-skeleton height="260px"></p-skeleton></p-card></div>
+          </div>
+        } @else {
+          <!-- Traffic Details Grid -->
+          <div class="grid">
+            <!-- Traffic Sources Pie -->
+            <div class="col-12 lg:col-4" *ngIf="charts['trafficSourcesChart']">
+              <div class="glass-panel p-4 mb-4 h-full flex flex-column">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3">
+                  <i class="pi pi-compass text-blue-500"></i> Traffic Referrals
+                </h3>
+                <div class="chart-wrapper flex-grow-1" style="position: relative; height: 260px;">
+                  <p-chart type="doughnut" [data]="charts['trafficSourcesChart'].data" [options]="charts['trafficSourcesChart'].options"></p-chart>
+                </div>
+              </div>
+            </div>
+
+            <!-- Marketing Attribution ROI Bar -->
+            <div class="col-12 lg:col-8" *ngIf="charts['marketingAttributionChart']">
+              <div class="glass-panel p-4 mb-4">
+                <h3 class="panel-title flex align-items-center gap-2 mb-3">
+                  <i class="pi pi-chart-line text-indigo-500"></i> Marketing Attribution
+                </h3>
+                <div class="chart-wrapper" style="position: relative; height: 260px;">
+                  <p-chart type="bar" [data]="charts['marketingAttributionChart'].data" [options]="charts['marketingAttributionChart'].options"></p-chart>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Regional Traffic & Landing Pages lists -->
+          <div class="grid">
+            <div class="col-12 lg:col-6">
+              <div class="glass-panel p-4">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <i class="pi pi-file text-pink-500"></i> Popular Entry Pages
+                </h3>
+                <p-table [value]="trafficLanding()?.pages || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Page Path</th>
+                      <th class="text-right">Sessions</th>
+                      <th class="text-right">Bounce Rate</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-page>
+                    <tr>
+                      <td><span class="text-white text-xs font-mono">{{ page.path }}</span></td>
+                      <td class="text-right text-color-secondary font-semibold">{{ page.sessions | number }}</td>
+                      <td class="text-right text-color-secondary">{{ page.bounce_rate }}%</td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="3" class="text-center py-4 text-color-secondary">No traffic records.</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </div>
+
+            <!-- Geo Region Traffic -->
+            <div class="col-12 lg:col-6">
+              <div class="glass-panel p-4 h-full flex flex-column">
+                <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <i class="pi pi-globe text-cyan-400"></i> Traffic by Region
+                </h3>
+
+                <!-- Geographical Heatmap/Bar Chart -->
+                <div class="chart-wrapper mb-4" style="position: relative; height: 200px;" *ngIf="charts['trafficGeoChart']">
+                  <p-chart type="bar" [data]="charts['trafficGeoChart'].data" [options]="charts['trafficGeoChart'].options"></p-chart>
+                </div>
+
+                <p-table [value]="trafficGeo()?.regions || []" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Region / Territory</th>
+                      <th class="text-right">Sessions</th>
+                      <th class="text-right">Conversion Rate</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-geo>
+                    <tr>
+                      <td><span class="text-white text-xs font-semibold">{{ geo.region }}</span></td>
+                      <td class="text-right text-color-secondary font-semibold">{{ geo.sessions | number }}</td>
+                      <td class="text-right text-emerald-400 font-bold">{{ geo.conversion_rate }}%</td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="3" class="text-center py-4 text-color-secondary">No regional data.</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Visitor Activity Logs -->
+          <div class="grid mt-4">
+            <div class="col-12">
+              <div class="glass-panel p-4">
+                <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
+                  <div class="flex align-items-center gap-2">
+                    <div class="flex align-items-center justify-content-center border-round-md bg-cyan-950 text-cyan-400 border-1 border-cyan-800 shadow-2" style="width: 36px; height: 36px; backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.2) !important;">
+                      <i class="pi pi-users text-base"></i>
+                    </div>
+                    <div>
+                      <h3 class="panel-title m-0">
+                        Live Visitor Activity Feed
+                      </h3>
+                      <p class="text-xs text-color-secondary m-0 mt-0.5">Real-time storefront visit sessions and entry points</p>
+                    </div>
+                  </div>
+                  <span class="discount-badge glass-badge-cyan font-bold text-xs px-3 py-1.5 border-round-lg">
+                    <i class="pi pi-users mr-1"></i>Total Logged Sessions: {{ visitEvents().length }}
+                  </span>
+                </div>
+
+                <!-- Control Panel (Search & Dropdowns) -->
+                <div class="flex flex-column lg:flex-row align-items-stretch lg:align-items-center justify-content-between gap-3 mb-4 p-3 border-round-xl border-1 border-white-alpha-10" style="background: rgba(255, 255, 255, 0.02);">
+                  <!-- Left side: search input -->
+                  <div class="relative flex-grow-1 max-w-25rem">
+                    <i class="pi pi-search absolute text-slate-400" style="left: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 0.875rem;"></i>
+                    <input type="text" pInputText placeholder="Search path or visitor ID..." 
+                           class="w-full premium-input text-sm py-2"
+                           style="padding-left: 2.25rem !important;"
+                           [ngModel]="visitorSearchQuery()" 
+                           (ngModelChange)="visitorSearchQuery.set($event)" />
+                  </div>
+
+                  <!-- Right side: Dropdown filters & refresh -->
+                  <div class="flex flex-column sm:flex-row align-items-stretch sm:align-items-center gap-3">
+                    <p-dropdown [options]="deviceDropdownOptions" 
+                                [ngModel]="visitorDeviceFilter()" 
+                                (ngModelChange)="visitorDeviceFilter.set($event)"
+                                styleClass="premium-dropdown text-xs" 
+                                placeholder="Device Filter"></p-dropdown>
+
+                    <p-dropdown [options]="locationDropdownOptions" 
+                                [ngModel]="visitorLocationFilter()" 
+                                (ngModelChange)="visitorLocationFilter.set($event)"
+                                styleClass="premium-dropdown text-xs" 
+                                placeholder="Location Filter"></p-dropdown>
+
+                    <button pButton type="button" icon="pi pi-refresh" 
+                            class="p-button-outlined p-button-secondary p-button-sm glossy-button" 
+                            (click)="loadVisits()" 
+                            pTooltip="Refresh Logs" tooltipPosition="top"></button>
+                  </div>
+                </div>
+
+                <!-- Desktop view (Table format) -->
+                <div class="hidden md:block">
+                  <p-table [value]="filteredVisitEvents()" styleClass="premium-table-ui" [paginator]="true" [rows]="10" [responsiveLayout]="'scroll'">
+                    <ng-template pTemplate="header">
+                      <tr>
+                        <th>Location</th>
+                        <th>Visitor ID</th>
+                        <th>Landing Path</th>
+                        <th>Referrer</th>
+                        <th>Marketing Source</th>
+                        <th>Device</th>
+                        <th class="text-right">Visited At</th>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-visit>
+                      <tr>
+                        <!-- Location -->
+                        <td>
+                          <div class="flex align-items-center gap-2">
+                            <span *ngIf="visit.country; else localBadge" class="glass-badge glass-badge-green font-bold uppercase text-2xs px-2.5 py-1">
+                              <i class="pi pi-globe mr-1 text-emerald-400"></i>{{ visit.country }}
+                            </span>
+                            <ng-template #localBadge>
+                              <span class="glass-badge glass-badge-blue font-bold uppercase text-2xs px-2.5 py-1">
+                                <i class="pi pi-home mr-1 text-blue-400"></i>Local
+                              </span>
+                            </ng-template>
+                            <span class="text-xs text-color-secondary font-semibold">
+                              {{ visit.country === 'BD' ? 'Bangladesh' : (visit.country || 'Localhost') }}
+                            </span>
+                          </div>
+                        </td>
+
+                        <!-- Visitor ID -->
+                        <td>
+                          <span class="glass-badge glass-badge-cyan font-mono text-3xs px-2.5 py-1">
+                            <i class="pi pi-user mr-1 text-cyan-400"></i>{{ visit.visitor_id ? visit.visitor_id.substring(0, 10) + '...' : 'Anonymous' }}
+                          </span>
+                        </td>
+
+                        <!-- Landing Path -->
+                        <td>
+                          <span class="glass-badge glass-badge-grey font-mono text-3xs px-2.5 py-1">
+                            <i class="pi pi-compass mr-1 text-slate-400"></i>{{ visit.landing_path || '/' }}
+                          </span>
+                        </td>
+
+                        <!-- Referrer -->
+                        <td>
+                          <span class="text-xs text-color-secondary truncate block max-w-15rem" [title]="visit.referrer || 'Direct'">
+                            <i class="pi pi-link text-slate-500 mr-1"></i>{{ visit.referrer ? (visit.referrer.replace('https://', '').replace('http://', '').split('/')[0]) : 'Direct' }}
+                          </span>
+                        </td>
+
+                        <!-- Marketing Source -->
+                        <td>
+                          <div class="flex flex-wrap gap-1" *ngIf="visit.utm_source || visit.utm_campaign; else noMarketing">
+                            <span class="glass-badge glass-badge-blue font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_source">
+                              {{ visit.utm_source }}
+                            </span>
+                            <span class="glass-badge glass-badge-purple font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_campaign">
+                              {{ visit.utm_campaign }}
+                            </span>
+                          </div>
+                          <ng-template #noMarketing>
+                            <span class="text-xs text-slate-500">—</span>
+                          </ng-template>
+                        </td>
+
+                        <!-- Device Info -->
+                        <td>
+                          <div class="flex align-items-center text-xs text-slate-300" style="gap: 0.5rem;">
+                            <i [class]="getDeviceIcon(visit.user_agent) + ' text-slate-400'"></i>
+                            <span>{{ getDeviceName(visit.user_agent) }}</span>
+                          </div>
+                        </td>
+
+                        <!-- Visited At -->
+                        <td class="text-right text-xs text-color-secondary">
+                          <div class="flex flex-column align-items-end justify-content-center">
+                            <span class="font-semibold text-white flex align-items-center justify-content-end" style="gap: 0.35rem;">
+                              <i class="pi pi-clock text-slate-400" style="font-size: 0.75rem;"></i>
+                              {{ visit.created_at | date:'mediumTime' }}
+                            </span>
+                            <span class="text-3xs text-slate-500 mt-1">{{ visit.created_at | date:'mediumDate' }}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                      <tr>
+                        <td colspan="7" class="text-center py-5 text-color-secondary">
+                          <i class="pi pi-inbox text-2xl block mb-2 text-slate-600"></i>
+                          No matching visitor logs found.
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                </div>
+
+                <!-- Mobile view (Feed Cards layout) -->
+                <div class="block md:hidden mt-2">
+                  <div class="grid">
+                    @for (visit of filteredVisitEvents(); track visit.id) {
+                      <div class="col-12 mb-3">
+                        <div class="glass-panel p-3 border-1 border-white-alpha-10" style="border-radius: 12px; background: rgba(15, 23, 42, 0.45);">
+                          <!-- Header: Location & Time -->
+                          <div class="flex justify-content-between align-items-center mb-2">
+                            <div class="flex align-items-center gap-2">
+                              <span *ngIf="visit.country; else localBadgeMobile" class="glass-badge glass-badge-green font-bold uppercase text-3xs px-2 py-0.5">
+                                <i class="pi pi-globe mr-1 text-emerald-400"></i>{{ visit.country }}
+                              </span>
+                              <ng-template #localBadgeMobile>
+                                <span class="glass-badge glass-badge-blue font-bold uppercase text-3xs px-2 py-0.5">
+                                  <i class="pi pi-home mr-1 text-blue-400"></i>Local
+                                </span>
+                              </ng-template>
+                              <span class="text-xs text-color-secondary font-semibold">
+                                {{ visit.country === 'BD' ? 'Bangladesh' : (visit.country || 'Localhost') }}
+                              </span>
+                            </div>
+                            <span class="text-2xs text-color-secondary font-medium">
+                              <i class="pi pi-clock mr-1 text-slate-400 text-3xs"></i>{{ visit.created_at | date:'shortTime' }}
+                            </span>
+                          </div>
+
+                          <!-- Sub-header: Device & Visitor Hash -->
+                          <div class="flex justify-content-between align-items-center mb-2">
+                            <div class="flex align-items-center gap-1.5 text-xs text-slate-300">
+                              <i [class]="getDeviceIcon(visit.user_agent) + ' text-slate-400'"></i>
+                              <span>{{ getDeviceName(visit.user_agent) }}</span>
+                            </div>
+                            <span class="glass-badge glass-badge-cyan font-mono text-3xs px-2 py-0.5">
+                              ID: {{ visit.visitor_id ? visit.visitor_id.substring(0, 8) : 'Anon' }}
+                            </span>
+                          </div>
+
+                          <!-- Body: Path & Source details -->
+                          <div class="mt-2 pt-2 border-top-1 border-white-alpha-5">
+                            <div class="flex flex-column gap-1.5">
+                              <div class="flex align-items-center gap-2">
+                                <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">Path:</span>
+                                <span class="glass-badge glass-badge-grey font-mono text-3xs px-2 py-0.5 truncate max-w-16rem">
+                                  {{ visit.landing_path || '/' }}
+                                </span>
+                              </div>
+                              <div class="flex align-items-center gap-2" *ngIf="visit.referrer">
+                                <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">From:</span>
+                                <span class="text-xs text-color-secondary truncate max-w-16rem">
+                                  <i class="pi pi-link text-slate-500 mr-1 text-3xs"></i>{{ visit.referrer.replace('https://', '').replace('http://', '').split('/')[0] }}
+                                </span>
+                              </div>
+                              <div class="flex align-items-center gap-2" *ngIf="visit.utm_source || visit.utm_campaign">
+                                <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">Source:</span>
+                                <div class="flex gap-1">
+                                  <span class="glass-badge glass-badge-blue font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_source">
+                                    {{ visit.utm_source }}
+                                  </span>
+                                  <span class="glass-badge glass-badge-purple font-bold uppercase text-3xs px-2 py-0.5" *ngIf="visit.utm_campaign">
+                                    {{ visit.utm_campaign }}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="col-12 text-center py-5 text-color-secondary">
+                        <i class="pi pi-inbox text-2xl block mb-2 text-slate-600"></i>
+                        No matching visitor logs found.
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

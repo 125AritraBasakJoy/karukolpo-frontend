@@ -83,8 +83,16 @@
                         <h1 class="product-title" lang="bn">{{ product()!.name }}</h1>
                     </div>
 
-                    <div class="price-container">
-                        <span class="price-tag">{{ product()!.price | currency:'BDT':'৳' }}</span>
+                    <div class="price-container flex align-items-center flex-wrap gap-3">
+                        @if (product()?.effective_price && (product()?.effective_price || 0) < (product()?.price || 0)) {
+                            <span class="price-tag">{{ product()?.effective_price | currency:'BDT':'৳' }}</span>
+                            <span class="old-price line-through text-slate-500 font-semibold text-lg">{{ product()?.price | currency:'BDT':'৳' }}</span>
+                            <span class="discount-badge">
+                                Flat ৳{{ product()?.discount_value | number:'1.0-0' }} OFF
+                            </span>
+                        } @else {
+                            <span class="price-tag">{{ product()?.price | currency:'BDT':'৳' }}</span>
+                        }
                         <span class="price-suffix">Inclusive of all taxes</span>
                     </div>
 
@@ -168,6 +176,14 @@
                             <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
                         </div>
 
+                        @if (p.discount_value && p.effective_price && p.effective_price < p.price) {
+                        <div class="absolute top-0 left-0 m-2 z-3">
+                            <span class="discount-badge">
+                                Flat ৳{{ p.discount_value | number:'1.0-0' }} OFF
+                            </span>
+                        </div>
+                        }
+
                         @if (!p.isInStock) {
                         <div class="absolute top-0 right-0 m-2 z-3">
                             <span class="oos-badge">Out of Stock</span>
@@ -178,7 +194,14 @@
                     <div class="product-info-content p-3 flex-grow-1 flex flex-column">
                         <div class="product-header-flex">
                             <h3 class="product-title">{{ p.name }}</h3>
-                            <div class="price-pill">{{ p.price | currency:'BDT':'৳' }}</div>
+                            <div class="price-container flex flex-column align-items-end">
+                                @if (p.effective_price && p.effective_price < p.price) {
+                                    <span class="old-price text-xs text-slate-500 line-through mb-1">{{ p.price | currency:'BDT':'৳' }}</span>
+                                    <span class="price-pill discounted">{{ p.effective_price | currency:'BDT':'৳' }}</span>
+                                } @else {
+                                    <span class="price-pill">{{ p.price | currency:'BDT':'৳' }}</span>
+                                }
+                            </div>
                         </div>
                         
                         <div class="mt-auto">

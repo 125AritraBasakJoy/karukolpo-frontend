@@ -2,8 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService } from '../../../../services/product.service';
-import { CategoryService } from '../../../../services/category.service';
+import { ProductService } from '../../../../core/services';;;
+import { CategoryService } from '../../../../core/services';;;
 import { MessageService } from 'primeng/api';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,6 +15,7 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { CalendarModule } from 'primeng/calendar';
 import { TooltipModule } from 'primeng/tooltip';
 import { Product, ProductImage } from '../../../../models/product.model';
 import { firstValueFrom, forkJoin, of } from 'rxjs';
@@ -37,6 +38,7 @@ import { ValidationMessageComponent } from '../../../../components/validation-me
         ToastModule,
         TagModule,
         ProgressSpinnerModule,
+        CalendarModule,
         ValidationMessageComponent,
         TooltipModule
     ],
@@ -49,19 +51,20 @@ export class EditProductComponent implements OnInit {
     product = signal<Product | null>(null);
     loading = signal<boolean>(false);
     saving = signal<boolean>(false);
+    savingStatus = signal<string>('');
+    discountPreview = signal<any>(null);
 
     productForm: Partial<Product> = {};
     selectedCategoryIds: any[] = [];
     inventoryForm = {
-        stock: 0,
-        manualStockStatus: 'AUTO' as 'AUTO' | 'IN_STOCK' | 'OUT_OF_STOCK'
+        stock: 0
     };
 
     categories = this.categoryService.categories;
-    manualStockOptions = [
-        { label: 'Auto (Based on Quantity)', value: 'AUTO' },
-        { label: 'In Stock (Force)', value: 'IN_STOCK' },
-        { label: 'Out of Stock (Force)', value: 'OUT_OF_STOCK' }
+    discountTypeOptions = [
+        { label: 'No Discount', value: null },
+        { label: 'Fixed Amount (BDT)', value: 'FIXED' },
+        { label: 'Percentage (%)', value: 'PERCENT' }
     ];
 
     // Image handling
@@ -94,6 +97,17 @@ export class EditProductComponent implements OnInit {
         }
     }
 
+    formatDateForInput(dateVal: Date | string | null | undefined): Date | null {
+        if (!dateVal) return null;
+        if (dateVal instanceof Date) return dateVal;
+        try {
+            const d = new Date(dateVal);
+            return isNaN(d.getTime()) ? null : d;
+        } catch {
+            return null;
+        }
+    }
+
     loadProductData() {
         if (!this.productId) return;
         this.loading.set(true);
@@ -102,14 +116,20 @@ export class EditProductComponent implements OnInit {
             next: (product) => {
                 if (!product) return;
                 this.product.set(product);
-                this.productForm = { ...product };
+                this.productForm = { 
+                    ...product,
+                    discount_starts_at: this.formatDateForInput(product.discount_starts_at),
+                    discount_ends_at: this.formatDateForInput(product.discount_ends_at)
+                };
                 this.inventoryForm.stock = product.stock || 0;
-                this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
                 this.existingImages = product.imageObjects ? [...product.imageObjects] : [];
                 const currentPrimary = this.existingImages.find(img => img.is_primary);
                 this.initialPrimaryId = currentPrimary ? currentPrimary.id : null;
                 this.newPrimaryImageId = null;
                 this.mainImagePreview = product.imageUrl || null;
+
+                // Load initial discount preview if applicable
+                this.updateDiscountPreview();
 
                 // Fetch product categories
                 this.productService.listProductCategories(this.productId!).subscribe({
@@ -131,6 +151,31 @@ export class EditProductComponent implements OnInit {
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load product' });
                 this.loading.set(false);
                 this.router.navigate(['/admin/dashboard/inventory']);
+            }
+        });
+    }
+
+    updateDiscountPreview() {
+        if (!this.productForm.price || !this.productForm.discount_type || !this.productForm.discount_value) {
+            this.discountPreview.set(null);
+            return;
+        }
+
+        const payload = {
+            discount_type: this.productForm.discount_type,
+            discount_value: this.productForm.discount_value,
+            discount_starts_at: this.productForm.discount_starts_at ? new Date(this.productForm.discount_starts_at).toISOString() : null,
+            discount_ends_at: this.productForm.discount_ends_at ? new Date(this.productForm.discount_ends_at).toISOString() : null,
+            price: this.productForm.price
+        };
+
+        this.productService.previewDiscount(payload).subscribe({
+            next: (res) => {
+                this.discountPreview.set(res);
+            },
+            error: (err) => {
+                console.error('Discount preview error:', err);
+                this.discountPreview.set(null);
             }
         });
     }
@@ -208,12 +253,15 @@ export class EditProductComponent implements OnInit {
 
         try {
             // 1. Update Basic Details
+            this.savingStatus.set('Updating basic details...');
             await firstValueFrom(this.productService.updateProduct({
                 ...this.productForm,
-                manualStockStatus: this.inventoryForm.manualStockStatus
+                discount_starts_at: this.productForm.discount_starts_at ? new Date(this.productForm.discount_starts_at).toISOString() : null,
+                discount_ends_at: this.productForm.discount_ends_at ? new Date(this.productForm.discount_ends_at).toISOString() : null
             } as Product));
 
             // 2. Handle Category Linking
+            this.savingStatus.set('Updating category links...');
             if (this.selectedCategoryIds && this.selectedCategoryIds.length >= 0) {
                 const categoryIds = this.selectedCategoryIds.map(id => id.toString());
                 await firstValueFrom(this.productService.updateProductCategories(productId, categoryIds));
@@ -225,10 +273,10 @@ export class EditProductComponent implements OnInit {
             const hasExistingPrimaryChange = this.newPrimaryImageId !== null && this.newPrimaryImageId !== this.initialPrimaryId;
 
             if (hasDeletes && !hasNewUploads && !hasExistingPrimaryChange && this.deletedImageIds.length === 1) {
-                // Individual delete if ONLY ONE image was deleted
+                this.savingStatus.set('Removing image...');
                 await firstValueFrom(this.productService.removeImage(productId, this.deletedImageIds[0]));
             } else if (hasNewUploads || hasDeletes) {
-                // Batch update if there are uploads or multiple deletes (or delete + change)
+                this.savingStatus.set('Uploading & processing images (resizing, optimizing)...');
                 await firstValueFrom(this.productService.batchUpdateImages(
                     productId,
                     hasExistingPrimaryChange ? this.newPrimaryImageId : undefined,
@@ -237,15 +285,9 @@ export class EditProductComponent implements OnInit {
                     this.deletedImageIds.length > 0 ? this.deletedImageIds : undefined
                 ));
             } else if (hasExistingPrimaryChange) {
-                // Individual primary update if ONLY the primary changed between existing images
+                this.savingStatus.set('Updating primary image...');
                 await firstValueFrom(this.productService.setPrimaryImage(productId, this.newPrimaryImageId!));
             }
-
-            // 4. Update Inventory
-            // Inventory is managed via a separate dialog in the inventory page. We do not want to blindly
-            // override quantity back to 0 here if it wasn't explicitly populated (the backend GET product query
-            // often doesn't return `stock` natively, meaning it defaults to 0 in this form logic).
-            // await firstValueFrom(this.productService.updateInventory(productId, this.inventoryForm.stock));
 
             this.productService.clearCache();
             this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully' });
@@ -258,6 +300,7 @@ export class EditProductComponent implements OnInit {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message || 'Failed to save product' });
         } finally {
             this.saving.set(false);
+            this.savingStatus.set('');
         }
     }
 

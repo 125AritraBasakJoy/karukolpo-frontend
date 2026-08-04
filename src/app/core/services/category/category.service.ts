@@ -1,11 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, of, from } from 'rxjs';
 import { map, catchError, tap, switchMap, mergeMap, toArray, shareReplay, finalize } from 'rxjs/operators';
-import { Category } from '../models/category.model';
-import { Product } from '../models/product.model';
-import { ApiService } from './api.service';
-import { ProductService } from './product.service';
-import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
+import { Category } from '../../../models/category.model';
+import { Product } from '../../../models/product.model';
+import { ApiService } from '../api/api.service';
+import { ProductService } from '../product/product.service';
+import { CATEGORIES_API } from './category.api';
+import { PRODUCTS_API } from '../product/product.api';
+import { buildListQuery } from '../api/helpers';
+
+const API_ENDPOINTS = {
+    CATEGORIES: CATEGORIES_API,
+    PRODUCTS: PRODUCTS_API
+} as const;
 import { signal, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 

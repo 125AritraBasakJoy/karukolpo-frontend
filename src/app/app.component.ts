@@ -2,42 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { OrderService } from './services/order.service';
-import { NotificationService } from './services/notification.service';
+import { OrderService, NotificationService, VersionService, TrackingService } from './core/services';;
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { CommonModule } from '@angular/common';
 import { LoadingComponent } from './components/loading/loading.component';
 import { filter } from 'rxjs/operators';
-import { VersionService } from './services/version.service';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, CommonModule, LoadingComponent],
-  template: `
-    <div class="app-layout">
-      <app-loading></app-loading>
-      <app-header *ngIf="!isAdminRoute"></app-header>
-      <div class="main-content">
-        <router-outlet></router-outlet>
-      </div>
-      <app-footer *ngIf="!isAdminRoute"></app-footer>
-      <p-toast position="top-center"></p-toast>
-    </div>
-  `,
-  styles: [`
-    .app-layout {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: calc(100vh - 160px); /* 80px header + estimated 80px footer minimum */
-    }
-  `]
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   title = 'karukolpo-frontend';
@@ -48,11 +24,13 @@ export class AppComponent implements OnInit {
     private messageService: MessageService,
     private _notificationService: NotificationService,
     private router: Router,
-    private versionService: VersionService
+    private versionService: VersionService,
+    private trackingService: TrackingService
   ) { }
 
   ngOnInit() {
     this.versionService.checkForUpdates();
+    this.trackingService.trackVisit();
 
     // Check if current route is admin - using window.location.pathname for initial load robustness
     this.isAdminRoute = window.location.pathname.startsWith('/admin');

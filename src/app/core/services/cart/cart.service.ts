@@ -1,9 +1,9 @@
 import { Injectable, signal, computed, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { CartItem } from '../models/cart.model';
-import { Product } from '../models/product.model';
+import { CartItem } from '../../../models/cart.model';
+import { Product } from '../../../models/product.model';
 import { MessageService } from 'primeng/api';
-import { ProductService } from './product.service';
+import { ProductService } from '../product/product.service';
 
 @Injectable({
   providedIn: 'root'

@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProductService } from '../../../services/product.service';
+import { ProductService } from '../../../core/services';;;
 import { Product } from '../../../models/product.model';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -8,7 +8,7 @@ import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs/operators';
-import { SiteConfigService } from '../../../services/site-config.service';
+import { SiteConfigService } from '../../../core/services';;;
 
 @Component({
     selector: 'app-best-seller-manager',

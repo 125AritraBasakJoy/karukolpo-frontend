@@ -1,0 +1,113 @@
+<div class="notification-btn-wrapper relative inline-flex">
+    <button pButton
+            type="button"
+            styleClass="p-button-outlined p-button-secondary border-circle w-3rem h-3rem p-0 flex align-items-center justify-content-center"
+            (click)="togglePanel($event, op)"
+            pTooltip="Notifications"
+            tooltipPosition="bottom">
+        <i class="pi pi-bell text-xl"></i>
+    </button>
+    <span *ngIf="unreadCount > 0" class="notif-badge-pill">
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
+    </span>
+</div>
+
+<p-overlayPanel #op [style]="{width: '380px'}" styleClass="notification-panel">
+    <ng-template pTemplate>
+        <div class="flex flex-column surface-card border-round-xl shadow-4 overflow-hidden">
+            <!-- Header -->
+            <div class="flex align-items-center justify-content-between p-3 border-bottom-1 surface-border bg-slate-900">
+                <div class="flex align-items-center gap-2">
+                    <i class="pi pi-bell text-primary text-xl"></i>
+                    <span class="font-bold text-lg text-white">Notifications</span>
+                </div>
+                <div class="flex align-items-center gap-1">
+                    <button *ngIf="unreadCount > 0"
+                            pButton label="Mark all read" [text]="true" size="small"
+                            styleClass="p-0 text-xs text-primary hover:text-primary-400 font-medium ml-1"
+                            (click)="markAllRead()"></button>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="flex p-2 gap-2 border-bottom-1 surface-border bg-slate-900/50">
+                <button pButton
+                        [label]="'All (' + notifications.length + ')'"
+                        [outlined]="unreadOnly"
+                        [text]="unreadOnly"
+                        size="small"
+                        styleClass="p-button-sm text-xs border-round-lg py-1 px-3"
+                        (click)="setFilter(false)"></button>
+                <button pButton
+                        [label]="'Unread (' + unreadCount + ')'"
+                        [outlined]="!unreadOnly"
+                        [text]="!unreadOnly"
+                        size="small"
+                        styleClass="p-button-sm text-xs border-round-lg py-1 px-3"
+                        (click)="setFilter(true)"></button>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center p-4">
+                <p-progressSpinner styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+            </div>
+
+            <!-- Notification List -->
+            <div *ngIf="!loading" class="notification-list custom-scrollbar" style="max-height: 380px; overflow-y: auto;">
+                <!-- Empty State -->
+                <div *ngIf="filteredNotifications.length === 0" class="flex flex-column align-items-center justify-content-center p-5 text-center text-500">
+                    <i class="pi pi-bell-slash text-4xl mb-3 opacity-40"></i>
+                    <span class="font-medium text-slate-300">No {{ unreadOnly ? 'unread' : '' }} notifications</span>
+                    <span class="text-xs text-slate-500 mt-1">You're all caught up with your updates.</span>
+                </div>
+
+                <!-- Items -->
+                <div *ngFor="let notif of filteredNotifications"
+                     class="notification-item p-3 border-bottom-1 surface-border cursor-pointer transition-colors transition-duration-150 flex gap-3 align-items-start"
+                     [class.unread-bg]="!(notif.is_read || notif.read)"
+                     [class.read-bg]="notif.is_read || notif.read"
+                     (click)="onNotificationClick(notif, op)">
+
+                    <!-- Icon Indicator -->
+                    <div class="flex-shrink-0 mt-1 relative">
+                        <div [class]="getNotificationIconBg(notif.type) + ' w-2rem h-2rem border-circle flex align-items-center justify-content-center'">
+                            <i [class]="getNotificationIcon(notif.type) + ' text-sm'"></i>
+                        </div>
+                        <span *ngIf="!(notif.is_read || notif.read)" class="unread-dot"></span>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="flex align-items-center justify-content-between mb-1">
+                            <span class="font-semibold text-sm line-height-2 truncate-1"
+                                  [class.text-white]="!(notif.is_read || notif.read)"
+                                  [class.text-slate-300]="notif.is_read || notif.read">
+                                {{ notif.title || 'Notification' }}
+                            </span>
+                            <span *ngIf="!(notif.is_read || notif.read)" class="new-badge-btn">NEW</span>
+                        </div>
+
+                        <div class="text-xs text-slate-400 line-height-3 mb-2 text-break">
+                            {{ notif.message || notif.content }}
+                        </div>
+
+                        <div class="text-3xs text-slate-500 flex align-items-center justify-content-between">
+                            <span class="flex align-items-center gap-1">
+                                <i class="pi pi-clock text-3xs"></i>
+                                {{ formatTime(notif.time || notif.created_at) }}
+                            </span>
+                            <span *ngIf="notif.type" class="uppercase font-medium tracking-wider text-slate-500 text-3xs">
+                                {{ notif.type }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-2 border-top-1 surface-border bg-slate-900/80 text-center">
+                <span class="text-xs text-slate-500">Click a notification to mark as read</span>
+            </div>
+        </div>
+    </ng-template>
+</p-overlayPanel>

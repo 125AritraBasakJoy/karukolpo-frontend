@@ -1,0 +1,9 @@
+.bg-orange-900-soft { background: rgba(124, 45, 18, 0.2); border: 1px solid rgba(251, 146, 60, 0.2); }
+.bg-green-900-soft { background: rgba(20, 83, 45, 0.2); border: 1px solid rgba(74, 222, 128, 0.2); }
+
+:host ::ng-deep .premium-card {
+  background: rgba(15, 23, 42, 0.6) !important;
+  
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+}

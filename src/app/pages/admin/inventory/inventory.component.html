@@ -6,68 +6,13 @@
                 <p class="text-slate-400 m-0 text-sm">Track stock levels and monitor product performance.</p>
             </div>
             <div class="flex gap-2 flex-shrink-0">
-                <app-notification-button></app-notification-button>
                 <p-button icon="pi pi-refresh" (onClick)="refreshProducts()" styleClass="premium-btn-primary"
                     pTooltip="Refresh Inventory" tooltipPosition="bottom"></p-button>
             </div>
         </div>
     </div>
 
-    <!-- Sales Summary Cards - 2 columns on mobile, 4 on desktop -->
-    <div class="stats-grid mb-5">
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle orange">
-                <i class="pi pi-box"></i>
-            </div>
-            <span class="stat-label">Total Products</span>
-            <h2 class="stat-value">{{ totalRecords() | number }}</h2>
-        </div>
 
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle blue">
-                <i class="pi pi-shopping-bag"></i>
-            </div>
-            <span class="stat-label">Units Sold</span>
-            <h2 class="stat-value">{{ totalUnitsSold() | number }}</h2>
-        </div>
-
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle green">
-                <i class="pi pi-wallet"></i>
-            </div>
-            <span class="stat-label">Total Revenue</span>
-            <h2 class="stat-value revenue">{{ totalRevenue() | currency:'BDT':'৳':'1.0-0' }}</h2>
-        </div>
-
-        <div class="stat-card glass-card">
-            <div class="stats-icon-circle purple">
-                <i class="pi pi-check-circle"></i>
-            </div>
-            <span class="stat-label">Completed Orders</span>
-            <h2 class="stat-value">{{ confirmedOrdersCount() | number }}</h2>
-        </div>
-    </div>
-
-    <div class="grid mb-5">
-        <div class="col-12">
-            <div class="chart-section-card">
-                <div class="chart-header">
-                    <div class="chart-icon">
-                        <i class="pi pi-chart-bar"></i>
-                    </div>
-                    <h3>Product Sales Performance</h3>
-                </div>
-                <div *ngIf="chartData; else loadingChart" class="chart-wrapper">
-                    <p-chart type="bar" [data]="chartData" [options]="chartOptions" height="250"></p-chart>
-                </div>
-                <ng-template #loadingChart>
-                    <div class="flex align-items-center justify-content-center" style="height: 200px">
-                        <p-progressSpinner styleClass="w-3rem h-3rem"></p-progressSpinner>
-                    </div>
-                </ng-template>
-            </div>
-        </div>
-    </div>
 
     <div class="glass-card fadein animation-duration-500">
         <p-table #dt [value]="products()" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'id', 'code']"
@@ -127,8 +72,7 @@
                                 (click)="editProduct(product)" pTooltip="Edit Product" tooltipPosition="top"></button>
                             <button pButton pRipple icon="pi pi-trash"
                                 class="p-button-rounded p-button-text action-btn danger-btn"
-                                (click)="deleteProduct(product)" pTooltip="Delete Product" tooltipPosition="top"
-                                [disabled]="true"></button>
+                                (click)="deleteProduct(product)" pTooltip="Delete Product" tooltipPosition="top"></button>
                         </div>
                     </td>
                 </tr>
@@ -171,19 +115,6 @@
             </label>
             <p-inputNumber id="stock" [(ngModel)]="inventoryForm.stock" [min]="0" mode="decimal" styleClass="w-full"
                 inputStyleClass="w-full premium-input"></p-inputNumber>
-        </div>
-
-        <div class="field mb-5">
-            <label for="manualStockStatus"
-                class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Stock Display Mode
-            </label>
-            <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
-                [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
-                styleClass="w-full premium-dropdown" appendTo="body"></p-dropdown>
-            <small class="block mt-2 text-slate-500 italic">
-                Force "In Stock" or "Out of Stock" labels regardless of quantity.
-            </small>
         </div>
 
         <div class="flex justify-content-end gap-3 mt-4">

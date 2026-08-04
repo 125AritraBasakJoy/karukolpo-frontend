@@ -1533,3 +1533,83 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
     color: #8da9e7 !important;
     fill: #8da9e7 !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   PREMIUM DISCOUNT BADGE DESIGN
+   ───────────────────────────────────────────────────────────────── */
+.discount-badge {
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px !important;
+    border-radius: 9999px !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    height: auto !important;
+    vertical-align: middle !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOSSY PREMIUM BADGES & COMPONENTS
+   ───────────────────────────────────────────────────────────────── */
+.glass-badge {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+    height: auto !important;
+    vertical-align: middle !important;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+}
+
+.glass-badge-green {
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-badge-blue {
+    background: rgba(59, 130, 246, 0.12) !important;
+    color: #60a5fa !important;
+    border: 1px solid rgba(59, 130, 246, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-badge-purple {
+    background: rgba(168, 85, 247, 0.12) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(168, 85, 247, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-badge-cyan {
+    background: rgba(6, 182, 212, 0.12) !important;
+    color: #22d3ee !important;
+    border: 1px solid rgba(6, 182, 212, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-badge-grey {
+    background: rgba(148, 163, 184, 0.08) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(148, 163, 184, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}

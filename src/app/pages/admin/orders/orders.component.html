@@ -25,8 +25,6 @@
             </div>
 
             <div class="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
-                <app-notification-button></app-notification-button>
-
                 <p-button icon="pi pi-file-excel" label="Export" (onClick)="downloadOrders()"
                     [loading]="exportLoading()"
                     styleClass="premium-btn-secondary surface-card border-none flex-grow-1 sm:flex-grow-0"
@@ -98,7 +96,7 @@
                 </ng-template>
 
                 <ng-template pTemplate="body" let-order>
-                    <tr>
+                    <tr [class.highlighted-order-row]="order.id === highlightedOrderId() || order.orderNumber === highlightedOrderId()">
                         <td>
                             <span class="id-tag">{{ order.orderNumber || order.id }}</span>
                         </td>

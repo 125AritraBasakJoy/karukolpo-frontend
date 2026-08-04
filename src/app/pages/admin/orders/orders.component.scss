@@ -275,3 +275,27 @@
         }
     }
 }
+
+:host ::ng-deep {
+    .highlighted-order-row {
+        background: rgba(245, 158, 11, 0.12) !important;
+        border-left: 4px solid #f59e0b !important;
+        animation: highlight-row-pulse 2.5s infinite ease-in-out;
+
+        td {
+            background: transparent !important;
+        }
+    }
+}
+
+@keyframes highlight-row-pulse {
+    0% {
+        background-color: rgba(245, 158, 11, 0.08);
+    }
+    50% {
+        background-color: rgba(245, 158, 11, 0.2);
+    }
+    100% {
+        background-color: rgba(245, 158, 11, 0.08);
+    }
+}

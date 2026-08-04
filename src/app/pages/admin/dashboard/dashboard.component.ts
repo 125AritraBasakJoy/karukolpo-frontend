@@ -1,14 +1,15 @@
-import { Component, OnInit, inject, signal, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
-import { AuthService } from '../../../services/auth.service';
-import { ThemeService } from '../../../services/theme.service';
+import { AuthService } from '../../../core/services';;;
+import { ThemeService } from '../../../core/services';;;
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { NotificationService } from '../../../services/notification.service';
+import { NotificationService } from '../../../core/services';;;
+import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { filter } from 'rxjs/operators';
 
 interface SidebarMenuItem {
@@ -20,12 +21,12 @@ interface SidebarMenuItem {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule],
+  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule, NotificationButtonComponent],
 
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss', '../admin-styles.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   sidebarCollapsed = signal<boolean>(false);
   mobileMenuOpen = signal<boolean>(false);
   isMobile = signal<boolean>(false);
@@ -40,6 +41,7 @@ export class DashboardComponent implements OnInit {
   private router = inject(Router);
 
   menuItems: SidebarMenuItem[] = [
+    { label: 'Analytics', icon: 'pi pi-chart-bar', route: 'analytics', section: 'Main' },
     { label: 'Inventory', icon: 'pi pi-box', route: 'inventory', section: 'Main' },
     { label: 'Orders', icon: 'pi pi-shopping-cart', route: 'orders', section: 'Main' },
     { label: 'Categories', icon: 'pi pi-tags', route: 'category-manager', section: 'Main' },
@@ -55,9 +57,21 @@ export class DashboardComponent implements OnInit {
     public themeService: ThemeService
   ) { }
 
+  get unreadOrderCount(): number {
+    const unreadList = this.notificationService.notificationsSignal().filter(n => !(n.is_read || n.read) && (n.type === 'order' || n.type === 'order_placed'));
+    if (unreadList.length === 0 && this.notificationService.unreadCountSignal() > 0) {
+      return this.notificationService.unreadCountSignal();
+    }
+    return unreadList.length;
+  }
+
   ngOnInit() {
     this.notificationService.init(this.messageService);
     this.checkScreenSize();
+    
+    // Expand all menu sections by default so options are visible immediately
+    this.expandedSections.set(new Set(this.getMenuSections()));
+    
     this.updateCurrentRoute(this.router.url);
 
     // Listen to route changes
@@ -69,6 +83,10 @@ export class DashboardComponent implements OnInit {
         this.mobileMenuOpen.set(false);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.notificationService.stop();
   }
 
   @HostListener('window:resize')

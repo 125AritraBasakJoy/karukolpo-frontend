@@ -1,0 +1,131 @@
+:host ::ng-deep .notification-panel .p-overlaypanel-content {
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+.notification-item {
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.notification-item:last-child {
+    border-bottom: none !important;
+}
+
+.unread-bg {
+    background-color: rgba(59, 130, 246, 0.08);
+}
+
+.unread-bg:hover {
+    background-color: rgba(59, 130, 246, 0.15);
+}
+
+.read-bg {
+    background-color: transparent;
+}
+
+.read-bg:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.unread-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    box-shadow: 0 0 6px #3b82f6;
+}
+
+.text-3xs {
+    font-size: 0.6875rem;
+}
+
+.truncate-1 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.text-break {
+    word-break: break-word;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.notification-btn-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-badge-pill {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+    border: 2px solid var(--surface-card, #0f172a);
+    z-index: 10;
+    pointer-events: none;
+    animation: pulse-red-bell 2s infinite;
+}
+
+.new-badge-btn {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #ffffff;
+    padding: 2.5px 8px;
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: inline-block;
+    transition: all 0.2s ease-in-out;
+}
+
+.new-badge-btn:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+}
+
+@keyframes pulse-red-bell {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}

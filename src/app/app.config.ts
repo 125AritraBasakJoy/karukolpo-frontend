@@ -3,8 +3,10 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
-import { loadingInterceptor } from './services/loading.interceptor';
+import { baseUrlInterceptor } from './core/interceptors/base-url.interceptor';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { deviceIdInterceptor } from './core/interceptors/device-id.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeuix/themes/lara';
 import { MessageService } from 'primeng/api';
@@ -17,7 +19,7 @@ export const appConfig: ApplicationConfig = {
       scrollPositionRestoration: 'top'
     })),
     provideAnimations(),
-    provideHttpClient(withInterceptors([loadingInterceptor, authInterceptor]), withFetch()),
+    provideHttpClient(withInterceptors([baseUrlInterceptor, loadingInterceptor, authInterceptor, deviceIdInterceptor]), withFetch()),
     providePrimeNG({
       theme: {
         preset: Lara,

@@ -2,8 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService } from '../../../../services/product.service';
-import { CategoryService } from '../../../../services/category.service';
+import { ProductService } from '../../../../core/services';;;
+import { CategoryService } from '../../../../core/services';;;
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -163,7 +163,7 @@ export class ProductFormComponent implements OnInit {
     removeExistingImage(img: ProductImage) {
         this.deletedImageIds.push(Number(img.id));
         this.existingImages = this.existingImages.filter(i => i.id !== img.id);
-        if (this.newPrimaryImageId === img.id) this.newPrimaryImageId = null;
+        if (this.newPrimaryImageId === Number(img.id)) this.newPrimaryImageId = null;
     }
 
     setAsPrimary(img: ProductImage) {
@@ -212,10 +212,10 @@ export class ProductFormComponent implements OnInit {
                 if (hasNewImages || hasDeletes || hasNewPrimary) {
                     await firstValueFrom(this.productService.batchUpdateImages(
                         pid,
-                        hasNewPrimary ? this.newPrimaryImageId : undefined,
+                        hasNewPrimary && this.newPrimaryImageId !== null ? String(this.newPrimaryImageId) : undefined,
                         this.selectedMainFile || undefined,
                         this.selectedAdditionalFiles.length > 0 ? this.selectedAdditionalFiles : undefined,
-                        this.deletedImageIds.length > 0 ? this.deletedImageIds : undefined
+                        this.deletedImageIds.length > 0 ? this.deletedImageIds.map(id => String(id)) : undefined
                     ));
                 }
             }

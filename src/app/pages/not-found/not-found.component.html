@@ -1,0 +1,28 @@
+<div class="not-found-page">
+  <div class="not-found-content">
+    <!-- Animated 404 -->
+    <div class="error-code">
+      <span class="digit">4</span>
+      <span class="digit zero">
+        <i class="pi pi-search"></i>
+      </span>
+      <span class="digit">4</span>
+    </div>
+
+    <h1 class="error-title">Page Not Found</h1>
+    <p class="error-description">
+      Oops! The page you're looking for doesn't exist or has been moved.
+      Let's get you back on track.
+    </p>
+
+    <div class="error-actions">
+      <button pButton label="Go Home" icon="pi pi-home" class="action-btn-primary" routerLink="/"></button>
+      <button pButton label="Go Back" icon="pi pi-arrow-left" class="action-btn-secondary" (click)="goBack()"></button>
+    </div>
+
+    <!-- Decorative dots -->
+    <div class="decorative-dots">
+      <span class="dot" *ngFor="let d of [1,2,3]"></span>
+    </div>
+  </div>
+</div>

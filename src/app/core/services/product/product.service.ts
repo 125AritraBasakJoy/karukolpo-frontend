@@ -1,10 +1,15 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, of, forkJoin } from 'rxjs';
-import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
-import { Product, ProductImage } from '../models/product.model';
-import { ApiService } from './api.service';
-import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
+import { Observable, of, forkJoin, timer } from 'rxjs';
+import { map, tap, catchError, switchMap, shareReplay, finalize, filter, take } from 'rxjs/operators';
+import { Product, ProductImage } from '../../../models/product.model';
+import { ApiService } from '../api/api.service';
+import { PRODUCTS_API } from './product.api';
+import { buildListQuery } from '../api/helpers';
+
+const API_ENDPOINTS = {
+  PRODUCTS: PRODUCTS_API
+} as const;
 
 /**
  * ProductService - Backend API Integration
@@ -199,14 +204,48 @@ export class ProductService {
    * Add image to product
    * POST /products/{productId}/images
    */
-  addImage(productId: string, file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('image', file);
-    return this.apiService.post(API_ENDPOINTS.PRODUCTS.ADD_IMAGE(productId), formData);
+  /**
+   * Get image upload job status
+   * GET /products/{product_id}/images/jobs/{job_id}
+   */
+  getImageJobStatus(productId: string, jobId: string): Observable<any> {
+    return this.apiService.get<any>(API_ENDPOINTS.PRODUCTS.GET_IMAGE_UPLOAD_JOB(productId, jobId));
   }
 
   /**
-   * Bulk upload images to product
+   * Poll image upload job status until SUCCESS or FAILURE
+   */
+  pollImageJob(productId: string, jobId: string, intervalMs = 1500, maxAttempts = 20): Observable<any[]> {
+    return timer(0, intervalMs).pipe(
+      switchMap(() => this.getImageJobStatus(productId, jobId)),
+      map(job => {
+        if (job.status === 'SUCCESS') {
+          return { done: true, images: job.images || [] };
+        } else if (job.status === 'FAILURE') {
+          throw new Error(job.error || 'Async image processing job failed');
+        }
+        return { done: false, images: null };
+      }),
+      filter(res => res.done),
+      take(1),
+      map(res => res.images!)
+    );
+  }
+
+  /**
+   * Add image to product (polls async job until finished)
+   * POST /products/{productId}/images
+   */
+  addImage(productId: string, file: File): Observable<any[]> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.apiService.post<{ job_id: string }>(API_ENDPOINTS.PRODUCTS.ADD_IMAGE(productId), formData).pipe(
+      switchMap(res => this.pollImageJob(productId, res.job_id))
+    );
+  }
+
+  /**
+   * Bulk upload images to product (polls async job until finished)
    * POST /products/{productId}/images/bulk
    */
   bulkUploadImages(productId: string, primaryFile: File, additionalFiles: File[]): Observable<any[]> {
@@ -215,7 +254,9 @@ export class ProductService {
     additionalFiles.forEach(file => {
       formData.append('gallery_images', file);
     });
-    return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.BULK_UPLOAD_IMAGES(productId), formData);
+    return this.apiService.post<{ job_id: string }>(API_ENDPOINTS.PRODUCTS.BULK_UPLOAD_IMAGES(productId), formData).pipe(
+      switchMap(res => this.pollImageJob(productId, res.job_id))
+    );
   }
 
   /**
@@ -235,7 +276,7 @@ export class ProductService {
   }
 
   /**
-   * Batch update images
+   * Batch update images (polls async job until finished)
    * PATCH /products/{productId}/images/batch?new_primary_id={newPrimaryId}
    */
   batchUpdateImages(
@@ -269,7 +310,29 @@ export class ProductService {
 
     const url = API_ENDPOINTS.PRODUCTS.BATCH_UPDATE_IMAGES(productId);
 
-    return this.apiService.patch<any[]>(url, formData);
+    return this.apiService.patch<{ job_id: string }>(url, formData).pipe(
+      switchMap(res => this.pollImageJob(productId, res.job_id))
+    );
+  }
+
+  /**
+   * Preview price of a hypothetical discount without saving
+   * POST /products/discount/preview
+   */
+  previewDiscount(payload: {
+    discount_type: string | null;
+    discount_value: number | string | null;
+    discount_starts_at?: string | null;
+    discount_ends_at?: string | null;
+    price: number | string;
+  }): Observable<{
+    price: string;
+    effective_price: string;
+    savings: string;
+    discount_percent: string;
+    is_active_now: boolean;
+  }> {
+    return this.apiService.post<any>(API_ENDPOINTS.PRODUCTS.DISCOUNT_PREVIEW, payload);
   }
 
   /**
@@ -469,10 +532,17 @@ export class ProductService {
         mainImageUrl = primaryImage.image_medium || primaryImage.image_large || primaryImage.image_thumb || primaryImage.image_path || mainImageUrl;
       }
 
-      // 2. Map all image records to their high-quality 'large' variant for the product details carousel
+      // 2. Map all image records to their high-quality 'large' variant for the product details carousel,
+      //    ensuring the primary image always appears first.
+      const galleryUrl = (img: any) => img.image_large || img.image_medium || img.image_thumb || img.image_path;
       galleryImages = data.images
-        .map((img: any) => img.image_large || img.image_medium || img.image_thumb || img.image_path)
-        .filter(Boolean);
+        .map(galleryUrl)
+        .filter(Boolean)
+        .sort((a: string, b: string) => {
+          const aPrimary = data.images.find((img: any) => galleryUrl(img) === a)?.is_primary;
+          const bPrimary = data.images.find((img: any) => galleryUrl(img) === b)?.is_primary;
+          return Number(bPrimary) - Number(aPrimary);
+        });
 
     } else if (data.image) {
       mainImageUrl = data.image;
@@ -507,7 +577,12 @@ export class ProductService {
       manualStockStatus: manualStatus,
       isInStock: isInStock,
       isHotDeal: !!(data.is_hot_deal || data.hot_deal),
-      isBestSeller: !!(data.is_best_seller || data.best_seller)
+      isBestSeller: !!(data.is_best_seller || data.best_seller),
+      discount_type: data.discount_type || null,
+      discount_value: data.discount_value !== undefined && data.discount_value !== null ? parseFloat(String(data.discount_value)) : null,
+      discount_starts_at: data.discount_starts_at || null,
+      discount_ends_at: data.discount_ends_at || null,
+      effective_price: data.effective_price !== undefined && data.effective_price !== null ? parseFloat(String(data.effective_price)) : (typeof data.price === 'string' ? parseFloat(data.price) : data.price)
     };
   }
 
@@ -550,15 +625,22 @@ export class ProductService {
       price: product.price,
       description: product.description || null
     };
-    
-    if (product.manualStockStatus && product.manualStockStatus !== 'AUTO') {
-      payload.manual_stock_status = product.manualStockStatus;
-      payload.stock_status = product.manualStockStatus; // fallback for some backends
-    } else if (product.manualStockStatus === 'AUTO') {
-      payload.manual_stock_status = 'AUTO';
-      payload.stock_status = 'AUTO';
+
+    if (product.cost != null) {
+      payload.cost = product.cost;
     }
-    
+
+    payload.discount_type = product.discount_type || null;
+    payload.discount_value = (product.discount_value != null && product.discount_type) ? product.discount_value : null;
+    payload.discount_starts_at = this.toIsoStringOrNull(product.discount_starts_at);
+    payload.discount_ends_at = this.toIsoStringOrNull(product.discount_ends_at);
+
     return payload;
+  }
+
+  private toIsoStringOrNull(value: Date | string | null | undefined): string | null {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    return isNaN(date.getTime()) ? null : date.toISOString();
   }
 }

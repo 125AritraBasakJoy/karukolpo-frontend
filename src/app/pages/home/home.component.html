@@ -87,6 +87,14 @@
                                         class="p-button-rounded glass-button"></button>
                                 </div>
 
+                                @if (product.discount_value && product.effective_price && product.effective_price < product.price) {
+                                <div class="absolute top-0 left-0 m-2 z-3">
+                                    <span class="discount-badge">
+                                        Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
+                                    </span>
+                                </div>
+                                }
+
                                 @if (isOutOfStock(product)) {
                                 <div class="absolute top-0 right-0 m-2 z-3">
                                     <span class="oos-badge">Out of Stock</span>
@@ -97,7 +105,14 @@
                             <div class="product-info-home p-3 flex-grow-1 flex flex-column">
                                 <div class="product-header-flex">
                                     <h3 class="product-title">{{ product.name }}</h3>
-                                    <div class="price-pill">{{ product.price | currency:'BDT':'৳' }}</div>
+                                    <div class="price-container flex flex-column align-items-end">
+                                        @if (product.effective_price && product.effective_price < product.price) {
+                                            <span class="old-price text-xs text-slate-500 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
+                                            <span class="price-pill discounted">{{ product.effective_price | currency:'BDT':'৳' }}</span>
+                                        } @else {
+                                            <span class="price-pill">{{ product.price | currency:'BDT':'৳' }}</span>
+                                        }
+                                    </div>
                                 </div>
 
                                 <div class="mt-auto">
@@ -155,6 +170,14 @@
                                         class="p-button-rounded glass-button"></button>
                                 </div>
 
+                                @if (product.discount_value && product.effective_price && product.effective_price < product.price) {
+                                <div class="absolute top-0 left-0 m-2 z-3">
+                                    <span class="discount-badge">
+                                        Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
+                                    </span>
+                                </div>
+                                }
+
                                 @if (isOutOfStock(product)) {
                                 <div class="absolute top-0 right-0 m-2 z-3">
                                     <span class="oos-badge">Out of Stock</span>
@@ -165,7 +188,14 @@
                             <div class="product-info-home p-3 flex-grow-1 flex flex-column">
                                 <div class="product-header-flex">
                                     <h3 class="product-title">{{ product.name }}</h3>
-                                    <div class="price-pill">{{ product.price | currency:'BDT':'৳' }}</div>
+                                    <div class="price-container flex flex-column align-items-end">
+                                        @if (product.effective_price && product.effective_price < product.price) {
+                                            <span class="old-price text-xs text-slate-500 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
+                                            <span class="price-pill discounted">{{ product.effective_price | currency:'BDT':'৳' }}</span>
+                                        } @else {
+                                            <span class="price-pill">{{ product.price | currency:'BDT':'৳' }}</span>
+                                        }
+                                    </div>
                                 </div>
 
                                 <div class="mt-auto">

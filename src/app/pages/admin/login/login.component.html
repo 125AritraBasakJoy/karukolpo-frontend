@@ -1,0 +1,107 @@
+<div class="login-split">
+  <!-- Left: Image Panel -->
+  <div class="login-image-panel">
+    <img src="assets/login-bg.png" alt="Karukolpo Crafts" class="login-image">
+    <div class="login-image-overlay"></div>
+    <div class="login-image-content">
+      <h1 class="brand-title">Karukolpo</h1>
+      <p class="brand-tagline">Authentic Bangladeshi Handcrafts</p>
+    </div>
+  </div>
+
+  <!-- Right: Login Panel -->
+  <div class="login-form-panel">
+    <div class="login-form-inner">
+      <div class="login-brand-header mb-5">
+        <div class="brand-icon-circle">
+          <i class="pi pi-shield"></i>
+        </div>
+        <div>
+          <h2 class="login-heading">Admin Login</h2>
+          <p class="login-subtitle">Dashboard Control Center</p>
+        </div>
+      </div>
+
+      <div class="p-fluid mt-4">
+        <div class="field mb-4">
+          <label for="email" class="form-label-premium">EMAIL ADDRESS</label>
+          <div class="p-inputgroup premium-form-inputgroup">
+            <span class="p-inputgroup-addon">
+              <i class="pi pi-envelope"></i>
+            </span>
+            <input type="email" pInputText id="email" [(ngModel)]="email" autocomplete="email" placeholder="admin@karukolpo.com">
+          </div>
+        </div>
+        <div class="field mb-5">
+          <label for="password" class="form-label-premium">PASSWORD</label>
+          <div class="p-inputgroup premium-form-inputgroup">
+            <span class="p-inputgroup-addon">
+              <i class="pi pi-lock"></i>
+            </span>
+            <p-password id="password" [(ngModel)]="password" [feedback]="false" autocomplete="current-password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" placeholder="••••••••"></p-password>
+          </div>
+        </div>
+      </div>
+
+      <button pButton label="Sign In to Dashboard" icon="pi pi-sign-in" (click)="login()" *ngIf="!loading()" class="w-full premium-login-btn"></button>
+
+      <div *ngIf="loading()" class="flex justify-content-center py-3">
+        <p-progressSpinner styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+      </div>
+
+      <div class="flex justify-content-center mt-5">
+        <button pButton label="Forgot Password?" icon="pi pi-key" class="p-button-text p-button-secondary p-button-sm forgot-link-btn" (click)="showForgotPassword()"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<p-dialog [(visible)]="displayForgotPasswordModal" [modal]="true" [style]="{width: '450px'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}" styleClass="premium-dialog forgot-password-dialog" [draggable]="false" [resizable]="false">
+  <ng-template pTemplate="header">
+    <div class="flex align-items-center gap-3">
+      <div class="header-icon-wrapper">
+         <i class="pi pi-lock-open text-2xl"></i>
+      </div>
+      <div>
+        <h2 class="m-0 text-xl font-bold text-white">Forgot Password</h2>
+        <p class="m-0 text-xs text-slate-400 mt-1">Admin Account Recovery</p>
+      </div>
+    </div>
+  </ng-template>
+  <div class="p-fluid modal-body-content pt-4">
+      <div class="instruction-card mb-4">
+        <i class="pi pi-info-circle text-blue-400"></i>
+        <p class="text-sm m-0">
+            Enter your admin email address below. If the account exists, we'll send a password reset link to your inbox.
+        </p>
+      </div>
+
+      <div class="field mb-0">
+          <label for="forgotEmail" class="form-label mb-2">EMAIL ADDRESS</label>
+          <div class="p-inputgroup premium-input-group">
+            <span class="p-inputgroup-addon">
+                <i class="pi pi-envelope"></i>
+            </span>
+            <input type="email" pInputText id="forgotEmail" [(ngModel)]="forgotEmail" class="w-full" placeholder="name@karukolpo.com">
+          </div>
+      </div>
+  </div>
+  <ng-template pTemplate="footer">
+      <div class="flex justify-content-end gap-3 mt-2">
+          <button pButton label="Cancel" icon="pi pi-times" class="p-button-text cancel-btn" (click)="displayForgotPasswordModal=false"></button>
+          <button
+              pButton
+              label="Send Reset Link"
+              icon="pi pi-send"
+              class="reset-btn"
+              (click)="sendForgotPassword()"
+              [disabled]="forgotPasswordLoading()"
+              *ngIf="!forgotPasswordLoading()">
+          </button>
+          <div *ngIf="forgotPasswordLoading()" class="loading-wrapper pr-4">
+            <p-progressSpinner styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+          </div>
+      </div>
+  </ng-template>
+</p-dialog>

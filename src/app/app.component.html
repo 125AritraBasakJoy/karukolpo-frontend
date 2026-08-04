@@ -1,0 +1,9 @@
+<div class="app-layout">
+  <app-loading></app-loading>
+  <app-header *ngIf="!isAdminRoute"></app-header>
+  <div class="main-content">
+    <router-outlet></router-outlet>
+  </div>
+  <app-footer *ngIf="!isAdminRoute"></app-footer>
+  <p-toast position="top-center"></p-toast>
+</div>

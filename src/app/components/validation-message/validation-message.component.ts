@@ -7,17 +7,8 @@ import { getValidatorErrorMessage } from '../../utils/validation-messages';
   selector: 'app-validation-message',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <small *ngIf="errorMessage !== null" class="error-message p-error block mt-1">
-      {{ errorMessage }}
-    </small>
-  `,
-  styles: [`
-    .error-message {
-      color: #ef4444;
-      font-size: 0.875rem;
-    }
-  `]
+  templateUrl: './validation-message.component.html',
+  styleUrls: ['./validation-message.component.scss']
 })
 export class ValidationMessageComponent {
   @Input() control: AbstractControl | null = null;

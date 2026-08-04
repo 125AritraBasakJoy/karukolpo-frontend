@@ -12,30 +12,8 @@ import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, CommonModule, LoadingComponent],
-  template: `
-    <div class="app-layout">
-      <app-loading></app-loading>
-      <app-header *ngIf="!isAdminRoute"></app-header>
-      <div class="main-content">
-        <router-outlet></router-outlet>
-      </div>
-      <app-footer *ngIf="!isAdminRoute"></app-footer>
-      <p-toast position="top-center"></p-toast>
-    </div>
-  `,
-  styles: [`
-    .app-layout {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: calc(100vh - 160px); /* 80px header + estimated 80px footer minimum */
-    }
-  `]
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   title = 'karukolpo-frontend';

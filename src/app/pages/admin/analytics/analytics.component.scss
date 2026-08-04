@@ -167,13 +167,19 @@
       background: rgba(245, 158, 11, 0.12);
       color: #fbbf24;
     }
+
+    &.red {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+    }
   }
 
   // Ambient glows based on color classes
   &.bg-glow-blue::after,
   &.bg-glow-green::after,
   &.bg-glow-purple::after,
-  &.bg-glow-orange::after {
+  &.bg-glow-orange::after,
+  &.bg-glow-red::after {
     content: '';
     position: absolute;
     bottom: -40px;
@@ -200,6 +206,10 @@
 
   &.bg-glow-orange::after {
     background: #f59e0b;
+  }
+
+  &.bg-glow-red::after {
+    background: #ef4444;
   }
 }
 

@@ -225,27 +225,42 @@
                 </div>
               </div>
 
-              <!-- High Profitability Products Table -->
+              <!-- High Profitability Products Table & Chart -->
               <div class="glass-panel p-4">
-                <h3 class="panel-title flex align-items-center gap-2 mb-4">
-                  <i class="pi pi-percentage text-emerald-500"></i> Most Profitable Products
-                </h3>
-                <p-table [value]="profitableProducts()" styleClass="premium-table-ui" [responsiveLayout]="'scroll'">
+                <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
+                  <h3 class="panel-title flex align-items-center gap-2">
+                    <i class="pi pi-percentage text-emerald-500"></i> Most Profitable Products
+                  </h3>
+                </div>
+
+                <!-- Profitable Products Bar Chart -->
+                <div class="chart-wrapper mb-4" style="position: relative; height: 260px;" *ngIf="charts['salesProfitable']">
+                  <p-chart type="bar" [data]="charts['salesProfitable'].data" [options]="charts['salesProfitable'].options"></p-chart>
+                </div>
+
+                <p-table [value]="profitableProducts()" styleClass="premium-table-ui text-xs sm:text-sm" [responsiveLayout]="'scroll'">
                   <ng-template ngTemplate="header">
                     <tr>
                       <th>Product Name</th>
-                      <th class="text-right">Unit Profit</th>
+                      <th class="text-right hidden sm:table-cell">Unit Profit</th>
                       <th class="text-right">Gross Profit</th>
-                      <th class="text-right">Margin (%)</th>
+                      <th class="text-right">Margin</th>
                     </tr>
                   </ng-template>
                   <ng-template ngTemplate="body" let-prod>
                     <tr>
-                      <td><span class="font-semibold text-white">{{ prod.name }}</span></td>
-                      <td class="text-right text-color-secondary">{{ prod.profit | number:'1.0-2' }} BDT</td>
-                      <td class="text-right text-emerald-400 font-semibold">{{ prod.revenue - prod.cost | number:'1.0-2' }} BDT</td>
+                      <td>
+                        <span class="font-semibold text-white block text-xs sm:text-sm" style="word-break: break-word;">{{ prod.name }}</span>
+                      </td>
+                      <td class="text-right text-color-secondary hidden sm:table-cell">{{ prod.profit | number:'1.0-0' }} BDT</td>
+                      <td class="text-right text-emerald-400 font-semibold">{{ (prod.revenue * prod.margin_percentage / 100) | number:'1.0-0' }} BDT</td>
                       <td class="text-right">
-                        <p-tag styleClass="premium-tag-green" [value]="prod.margin_percentage + '%'"></p-tag>
+                        <div class="flex flex-column align-items-end justify-content-center">
+                          <p-tag styleClass="premium-tag-green" [value]="(prod.margin_percentage | number:'1.0-0') + '%'"></p-tag>
+                          <div class="w-4rem bg-white-alpha-10 border-round overflow-hidden mt-1 hidden sm:block" style="height: 4px;">
+                            <div class="bg-emerald-500 h-full" [style.width]="prod.margin_percentage + '%'"></div>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   </ng-template>
@@ -462,40 +477,56 @@
         } @else {
           <!-- Inventory Health Grid -->
           <div class="grid mb-4" *ngIf="inventoryHealth()">
+            <!-- Total Catalog Products -->
             <div class="col-12 sm:col-6 lg:col-3">
-              <div class="premium-stat-card border-round p-3 flex align-items-center justify-content-between bg-white-alpha-5">
-                <div>
-                  <span class="label text-xs text-color-secondary block mb-1">Total Catalog Products</span>
-                  <span class="text-2xl font-bold text-white">{{ inventoryHealth()?.total_products }}</span>
+              <div class="premium-stat-card bg-glow-blue">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Total Products</span>
+                  <div class="icon-wrap blue"><i class="pi pi-objects-column"></i></div>
                 </div>
-                <i class="pi pi-objects-column text-2xl text-blue-400"></i>
+                <div class="value text-white">{{ inventoryHealth()?.total_products }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>In active catalog</span>
+                </div>
               </div>
             </div>
+            <!-- In Stock Products -->
             <div class="col-12 sm:col-6 lg:col-3">
-              <div class="premium-stat-card border-round p-3 flex align-items-center justify-content-between bg-white-alpha-5">
-                <div>
-                  <span class="label text-xs text-color-secondary block mb-1">In Stock Products</span>
-                  <span class="text-2xl font-bold text-emerald-400">{{ inventoryHealth()?.in_stock }}</span>
+              <div class="premium-stat-card bg-glow-green">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">In Stock</span>
+                  <div class="icon-wrap green"><i class="pi pi-check-circle"></i></div>
                 </div>
-                <i class="pi pi-check-circle text-2xl text-emerald-400"></i>
+                <div class="value text-emerald-400">{{ inventoryHealth()?.in_stock }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Available for order</span>
+                </div>
               </div>
             </div>
+            <!-- Low Stock Warning -->
             <div class="col-12 sm:col-6 lg:col-3">
-              <div class="premium-stat-card border-round p-3 flex align-items-center justify-content-between bg-white-alpha-5">
-                <div>
-                  <span class="label text-xs text-color-secondary block mb-1">Low Stock Warning</span>
-                  <span class="text-2xl font-bold text-orange-400">{{ inventoryHealth()?.low_stock }}</span>
+              <div class="premium-stat-card bg-glow-orange">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Low Stock</span>
+                  <div class="icon-wrap orange"><i class="pi pi-exclamation-triangle"></i></div>
                 </div>
-                <i class="pi pi-exclamation-triangle text-2xl text-orange-400"></i>
+                <div class="value text-orange-400">{{ inventoryHealth()?.low_stock }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Qty is 5 or less</span>
+                </div>
               </div>
             </div>
+            <!-- Out of Stock Alerts -->
             <div class="col-12 sm:col-6 lg:col-3">
-              <div class="premium-stat-card border-round p-3 flex align-items-center justify-content-between bg-white-alpha-5">
-                <div>
-                  <span class="label text-xs text-color-secondary block mb-1">Out of Stock Alerts</span>
-                  <span class="text-2xl font-bold text-red-400">{{ inventoryHealth()?.out_of_stock }}</span>
+              <div class="premium-stat-card bg-glow-red">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Out of Stock</span>
+                  <div class="icon-wrap red"><i class="pi pi-times-circle"></i></div>
                 </div>
-                <i class="pi pi-times-circle text-2xl text-red-400"></i>
+                <div class="value text-red-400">{{ inventoryHealth()?.out_of_stock }}</div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span>Requires restocking</span>
+                </div>
               </div>
             </div>
           </div>

@@ -117,19 +117,6 @@
                 inputStyleClass="w-full premium-input"></p-inputNumber>
         </div>
 
-        <div class="field mb-5">
-            <label for="manualStockStatus"
-                class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Stock Display Mode
-            </label>
-            <p-dropdown id="manualStockStatus" [options]="manualStockOptions"
-                [(ngModel)]="inventoryForm.manualStockStatus" placeholder="Select Stock Status"
-                styleClass="w-full premium-dropdown" appendTo="body"></p-dropdown>
-            <small class="block mt-2 text-slate-500 italic">
-                Force "In Stock" or "Out of Stock" labels regardless of quantity.
-            </small>
-        </div>
-
         <div class="flex justify-content-end gap-3 mt-4">
             <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary"
                 (click)="closeInventoryDialog()"></button>

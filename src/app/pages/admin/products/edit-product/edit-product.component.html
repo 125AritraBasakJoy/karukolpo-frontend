@@ -23,7 +23,7 @@
                 <h3 class="text-xl font-bold text-white mb-4 border-bottom-1 border-white-alpha-10 pb-2">Basic
                     Information</h3>
                 <div class="grid">
-                    <div class="col-12 md:col-8 field">
+                    <div class="col-12 md:col-6 field">
                         <label for="name"
                             class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Product
                             Name</label>
@@ -32,14 +32,25 @@
                         <app-validation-message [control]="name.control"></app-validation-message>
                     </div>
 
-                    <div class="col-12 md:col-4 field">
+                    <div class="col-12 md:col-3 field">
                         <label for="price"
                             class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Price
                             (BDT)</label>
                         <p-inputNumber id="price" [(ngModel)]="productForm.price" mode="currency" currency="BDT"
                             locale="en-US" styleClass="w-full" inputStyleClass="w-full premium-input"
-                            [style]="{'width':'100%'}" #price="ngModel" required></p-inputNumber>
+                            [style]="{'width':'100%'}" #price="ngModel" required
+                            (ngModelChange)="updateDiscountPreview()"></p-inputNumber>
                         <app-validation-message [control]="price.control"></app-validation-message>
+                    </div>
+
+                    <div class="col-12 md:col-3 field">
+                        <label for="cost"
+                            class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Cost Price
+                            (BDT)</label>
+                        <p-inputNumber id="cost" [(ngModel)]="productForm.cost" mode="currency" currency="BDT"
+                            locale="en-US" styleClass="w-full" inputStyleClass="w-full premium-input"
+                            [style]="{'width':'100%'}" #cost="ngModel"
+                            placeholder="0.00"></p-inputNumber>
                     </div>
 
                     <div class="col-12 field mt-3">
@@ -62,6 +73,113 @@
                                 </span>
                             </ng-template>
                         </p-editor>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discount Settings -->
+            <div class="discount-settings-card mb-5">
+                <div class="discount-header">
+                    <div class="flex align-items-center gap-3">
+                        <div class="discount-icon-wrapper">
+                            <i class="pi pi-tag"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white m-0">Discount Settings</h3>
+                            <p class="text-sm text-slate-500 m-0 mt-1">Configure pricing discount for this product</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="discount-body">
+                    <!-- Row 1: Type + Value -->
+                    <div class="grid">
+                        <div class="col-12 md:col-6 field">
+                            <label for="discount_type" class="discount-label">
+                                <i class="pi pi-sliders-v"></i> Discount Type
+                            </label>
+                            <p-dropdown id="discount_type" [options]="discountTypeOptions" [(ngModel)]="productForm.discount_type"
+                                (ngModelChange)="updateDiscountPreview()" placeholder="No Discount"
+                                styleClass="w-full premium-dropdown" [style]="{'width':'100%'}" appendTo="body"></p-dropdown>
+                        </div>
+
+                        <div class="col-12 md:col-6 field" *ngIf="productForm.discount_type">
+                            <label for="discount_value" class="discount-label">
+                                <i class="pi pi-money-bill"></i> {{ productForm.discount_type === 'PERCENT' ? 'Discount Percentage (%)' : 'Discount Amount (BDT)' }}
+                            </label>
+                            <p-inputNumber id="discount_value" [(ngModel)]="productForm.discount_value" 
+                                (ngModelChange)="updateDiscountPreview()"
+                                [mode]="productForm.discount_type === 'PERCENT' ? 'decimal' : 'currency'"
+                                [currency]="productForm.discount_type === 'PERCENT' ? '' : 'BDT'"
+                                [min]="0" [max]="productForm.discount_type === 'PERCENT' ? 100 : null" [suffix]="productForm.discount_type === 'PERCENT' ? '%' : ''"
+                                placeholder="0.00" styleClass="w-full" inputStyleClass="w-full premium-input" [style]="{'width':'100%'}"></p-inputNumber>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Date Range -->
+                    <div class="grid mt-2" *ngIf="productForm.discount_type">
+                        <div class="col-12 md:col-6 field">
+                            <label for="discount_starts_at" class="discount-label">
+                                <i class="pi pi-calendar-plus"></i> Start Date & Time
+                            </label>
+                            <p-calendar id="discount_starts_at" [(ngModel)]="productForm.discount_starts_at"
+                                [showTime]="true" [showIcon]="true" hourFormat="24" dateFormat="dd M yy"
+                                placeholder="Select start date..."
+                                (onSelect)="updateDiscountPreview()" (onBlur)="updateDiscountPreview()"
+                                styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
+                        </div>
+
+                        <div class="col-12 md:col-6 field">
+                            <label for="discount_ends_at" class="discount-label">
+                                <i class="pi pi-calendar-minus"></i> End Date & Time
+                            </label>
+                            <p-calendar id="discount_ends_at" [(ngModel)]="productForm.discount_ends_at"
+                                [showTime]="true" [showIcon]="true" hourFormat="24" dateFormat="dd M yy"
+                                placeholder="Select end date..."
+                                (onSelect)="updateDiscountPreview()" (onBlur)="updateDiscountPreview()"
+                                styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
+                        </div>
+                    </div>
+
+                    <!-- Discount Preview Box -->
+                    <div class="discount-preview-card mt-3" *ngIf="discountPreview()">
+                        <div class="grid">
+                            <div class="col-12 md:col-4">
+                                <div class="preview-stat preview-stat--primary">
+                                    <div class="preview-stat__icon">
+                                        <i class="pi pi-wallet"></i>
+                                    </div>
+                                    <div>
+                                        <span class="preview-stat__label">Effective Price</span>
+                                        <span class="preview-stat__value preview-stat__value--accent">BDT {{ discountPreview().effective_price }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 md:col-3">
+                                <div class="preview-stat">
+                                    <div>
+                                        <span class="preview-stat__label">Total Savings</span>
+                                        <span class="preview-stat__value">BDT {{ discountPreview().savings }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 md:col-3">
+                                <div class="preview-stat">
+                                    <div>
+                                        <span class="preview-stat__label">Discount</span>
+                                        <span class="preview-stat__value">{{ discountPreview().discount_percent }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-2 flex align-items-center justify-content-center">
+                                <span *ngIf="discountPreview().is_active_now" class="status-badge status-badge--active">
+                                    <i class="pi pi-circle-fill"></i> Active
+                                </span>
+                                <span *ngIf="!discountPreview().is_active_now" class="status-badge status-badge--scheduled">
+                                    <i class="pi pi-clock"></i> Scheduled
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -186,6 +304,12 @@
                     class="p-button-text p-button-secondary w-full" (click)="cancel()"></button>
             </div>
         </div>
+    </div>
+
+    <!-- Saving Status Overlay Loader -->
+    <div *ngIf="saving() && savingStatus()" class="fixed inset-0 z-5 bg-black-alpha-70 flex flex-column align-items-center justify-content-center">
+        <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
+        <p class="text-white mt-4 text-xl font-semibold tracking-wide">{{ savingStatus() }}</p>
     </div>
     }
 </div>

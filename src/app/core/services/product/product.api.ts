@@ -26,8 +26,12 @@ export const PRODUCTS_API = {
     ADD_IMAGE: (productId: string) => `${BASE}/${productId}/images`,
     BULK_UPLOAD_IMAGES: (productId: string) => `${BASE}/${productId}/images/bulk`,
     BATCH_UPDATE_IMAGES: (productId: string) => `${BASE}/${productId}/images/batch`,
+    GET_IMAGE_UPLOAD_JOB: (productId: string, jobId: string) => `${BASE}/${productId}/images/jobs/${jobId}`,
     REMOVE_IMAGE: (productId: string, imageId: string) => `${BASE}/${productId}/images/${imageId}`,
     SET_PRIMARY_IMAGE: (productId: string, imageId: string) => `${BASE}/${productId}/images/${imageId}/set-primary`,
+
+    // Discounts
+    DISCOUNT_PREVIEW: `${BASE}/discount/preview`,
 
     // Special Sections
     HOT_DEALS: `${BASE}/hot-deals`,

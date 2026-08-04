@@ -15,6 +15,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  cost?: number;
   imageUrl: string;
   images?: string[];
   imageObjects?: ProductImage[];
@@ -25,4 +26,9 @@ export interface Product {
   isInStock?: boolean;
   isHotDeal?: boolean;
   isBestSeller?: boolean;
+  discount_type?: string | null;
+  discount_value?: number | null;
+  discount_starts_at?: Date | string | null;
+  discount_ends_at?: Date | string | null;
+  effective_price?: number;
 }

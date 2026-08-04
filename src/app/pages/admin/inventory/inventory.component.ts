@@ -18,8 +18,6 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { DropdownModule } from 'primeng/dropdown';
-import { forkJoin, map, catchError, of } from 'rxjs';
 import { Router } from '@angular/router';
 
 @Component({
@@ -38,7 +36,6 @@ import { Router } from '@angular/router';
     FileUploadModule,
     DialogModule,
     InputNumberModule,
-    DropdownModule,
     FormsModule
   ],
   providers: [ConfirmationService],
@@ -54,19 +51,8 @@ export class InventoryComponent implements OnInit {
   inventoryDialogVisible = false;
   selectedProduct: Product | null = null;
   inventoryForm = {
-    stock: 0,
-    manualStockStatus: 'AUTO' as 'AUTO' | 'IN_STOCK' | 'OUT_OF_STOCK'
+    stock: 0
   };
-
-
-
-
-
-  manualStockOptions = [
-    { label: 'Auto (Based on Quantity)', value: 'AUTO' },
-    { label: 'In Stock (Force)', value: 'IN_STOCK' },
-    { label: 'Out of Stock (Force)', value: 'OUT_OF_STOCK' }
-  ];
 
   // Data Buffering
   productsBuffer: Product[] = [];
@@ -167,7 +153,6 @@ export class InventoryComponent implements OnInit {
   manageInventory(product: Product) {
     this.selectedProduct = product;
     this.inventoryForm.stock = product.stock || 0;
-    this.inventoryForm.manualStockStatus = product.manualStockStatus || 'AUTO';
     this.inventoryDialogVisible = true;
   }
 
@@ -177,14 +162,7 @@ export class InventoryComponent implements OnInit {
     this.savingInventory.set(true);
     const productId = this.selectedProduct.id;
 
-    // Update both quantity and manual status
-    const updateInventory = this.productService.updateInventory(productId, this.inventoryForm.stock);
-    const updateProductDetails = this.productService.updateProduct({
-      ...this.selectedProduct,
-      manualStockStatus: this.inventoryForm.manualStockStatus
-    } as Product);
-
-    forkJoin([updateInventory, updateProductDetails]).subscribe({
+    this.productService.updateInventory(productId, this.inventoryForm.stock).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Inventory updated successfully' });
         this.inventoryDialogVisible = false;

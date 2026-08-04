@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { SiteConfigService } from '../../services/site-config.service';
+import { SiteConfigService } from '../services';;;
 
 /**
  * MaintenanceGuard - Redirects users to /maintenance page if maintenance mode is enabled.

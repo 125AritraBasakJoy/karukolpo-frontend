@@ -1,9 +1,13 @@
 import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { ApiService } from './api.service';
-import { API_ENDPOINTS } from '../../core/api-endpoints';
+import { ApiService } from '../api/api.service';
+import { PAYMENTS_API } from './payment.api';
 import { Observable } from 'rxjs';
-import { Payment } from '../models/payment.model';
+import { Payment } from '../../../models/payment.model';
+
+const API_ENDPOINTS = {
+    PAYMENTS: PAYMENTS_API
+} as const;
 
 @Injectable({
     providedIn: 'root'

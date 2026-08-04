@@ -1,9 +1,9 @@
 import { Component, OnInit, signal, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OrderService } from '../../../services/order.service';
-import { ProductService } from '../../../services/product.service';
-import { PaymentService } from '../../../services/payment.service';
+import { OrderService } from '../../../core/services';;;
+import { ProductService } from '../../../core/services';;;
+import { PaymentService } from '../../../core/services';;;
 import { Order } from '../../../models/order.model';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -20,7 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
-import { NotificationService } from '../../../services/notification.service';
+import { NotificationService } from '../../../core/services';;;
 import { InvoiceComponent } from '../../../components/invoice/invoice.component';
 
 @Component({

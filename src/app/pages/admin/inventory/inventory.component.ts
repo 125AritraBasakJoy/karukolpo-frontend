@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { ProductService } from '../../../services/product.service';
+import { ProductService } from '../../../core/services';;;
 import { Product, ProductImage } from '../../../models/product.model';
 import { Category } from '../../../models/category.model';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';

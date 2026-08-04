@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LoadingService } from '../../services/loading.service';
+import { LoadingService } from '../../core/services';;;
 import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({

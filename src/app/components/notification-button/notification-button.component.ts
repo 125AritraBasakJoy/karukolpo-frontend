@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NotificationService } from '../../services/notification.service';
+import { NotificationService } from '../../core/services';;;
 import { NotificationRead } from '../../models/notification.model';
 import { ButtonModule } from 'primeng/button';
 import { BadgeModule } from 'primeng/badge';

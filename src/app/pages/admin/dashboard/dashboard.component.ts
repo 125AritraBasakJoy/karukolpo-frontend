@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
-import { AuthService } from '../../../services/auth.service';
-import { ThemeService } from '../../../services/theme.service';
+import { AuthService } from '../../../core/services';;;
+import { ThemeService } from '../../../core/services';;;
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { NotificationService } from '../../../services/notification.service';
+import { NotificationService } from '../../../core/services';;;
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { filter } from 'rxjs/operators';
 

@@ -4,12 +4,16 @@ import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { Subscription, Subject, Observable, of, interval } from 'rxjs';
 import { catchError, map, tap, switchMap, filter } from 'rxjs/operators';
-import { OrderService } from './order.service';
-import { ProductService } from './product.service';
-import { ApiService } from './api.service';
-import { AuthService } from './auth.service';
-import { API_ENDPOINTS } from '../../core/api-endpoints';
-import { NotificationRead, UnreadCountResponse } from '../models/notification.model';
+import { OrderService } from '../order/order.service';
+import { ProductService } from '../product/product.service';
+import { ApiService } from '../api/api.service';
+import { AuthService } from '../auth/auth.service';
+import { NOTIFICATIONS_API } from './notification.api';
+import { NotificationRead, UnreadCountResponse } from '../../../models/notification.model';
+
+const API_ENDPOINTS = {
+    NOTIFICATIONS: NOTIFICATIONS_API
+} as const;
 
 export type AppNotification = NotificationRead;
 

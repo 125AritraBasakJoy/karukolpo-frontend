@@ -2,14 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { OrderService } from './services/order.service';
-import { NotificationService } from './services/notification.service';
+import { OrderService, NotificationService, VersionService } from './core/services';;
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { CommonModule } from '@angular/common';
 import { LoadingComponent } from './components/loading/loading.component';
 import { filter } from 'rxjs/operators';
-import { VersionService } from './services/version.service';
 
 @Component({
   selector: 'app-root',

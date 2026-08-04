@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { BadgeModule } from 'primeng/badge';
-import { CartService } from '../../services/cart.service';
+import { CartService } from '../../core/services';;;
 import { NgOptimizedImage } from '@angular/common';
 
 @Component({

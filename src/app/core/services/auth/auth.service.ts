@@ -3,9 +3,12 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
-import { API_ENDPOINTS } from '../../core/api-endpoints';
-import { environment } from '../../environments/environment';
-import { CategoryService } from './category.service';
+import { ADMIN_API } from './admin.api';
+import { CategoryService } from '../category/category.service';
+
+const API_ENDPOINTS = {
+  ADMIN: ADMIN_API
+} as const;
 
 @Injectable({
   providedIn: 'root'
@@ -25,7 +28,7 @@ export class AuthService {
     }
   }
 
-  private baseUrl = environment.baseUrl;
+
 
   private hasToken(): boolean {
     if (isPlatformBrowser(this.platformId)) {
@@ -63,7 +66,7 @@ export class AuthService {
     };
 
     return this.http.post<{ access_token: string; refresh_token?: string; token_type: string }>(
-      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.LOGIN}`,
+      API_ENDPOINTS.ADMIN.LOGIN,
       payload,
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     ).pipe(
@@ -95,7 +98,7 @@ export class AuthService {
     }
 
     return this.http.post<any>(
-      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.REFRESH}`,
+      API_ENDPOINTS.ADMIN.REFRESH,
       { refresh_token: refreshToken }
     ).pipe(
       tap(response => {
@@ -141,7 +144,7 @@ export class AuthService {
    */
   forgotPassword(email: string): Observable<any> {
     return this.http.post<any>(
-      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.FORGOT_PASSWORD}`,
+      API_ENDPOINTS.ADMIN.FORGOT_PASSWORD,
       { email },
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     );
@@ -153,7 +156,7 @@ export class AuthService {
    */
   resetPassword(token: string, newPassword: string): Observable<any> {
     return this.http.post<any>(
-      `${this.baseUrl}/${API_ENDPOINTS.ADMIN.RESET_PASSWORD}`,
+      API_ENDPOINTS.ADMIN.RESET_PASSWORD,
       { token, new_password: newPassword },
       { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     );

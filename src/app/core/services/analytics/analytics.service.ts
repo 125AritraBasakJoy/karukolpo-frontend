@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
-import { API_ENDPOINTS } from '../../core/api-endpoints';
-import * as Models from '../models/analytics.model';
+import { ApiService } from '../api/api.service';
+import { ANALYTICS_API } from './analytics.api';
+import * as Models from '../../../models/analytics.model';
+
+const API_ENDPOINTS = {
+  ANALYTICS: ANALYTICS_API
+} as const;
 
 @Injectable({
   providedIn: 'root'

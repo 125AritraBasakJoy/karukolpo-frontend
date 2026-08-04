@@ -7,7 +7,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { SiteConfigService } from '../../../services/site-config.service';
+import { SiteConfigService } from '../../../core/services';;;
 
 @Component({
   selector: 'app-maintenance-control',

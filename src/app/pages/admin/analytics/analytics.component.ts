@@ -13,7 +13,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
-import { AnalyticsService } from '../../../services/analytics.service';
+import { AnalyticsService } from '../../../core/services';;;
 import * as Models from '../../../models/analytics.model';
 
 type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic';

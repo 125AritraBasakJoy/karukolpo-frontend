@@ -2,9 +2,14 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable, of, forkJoin } from 'rxjs';
 import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
-import { Product, ProductImage } from '../models/product.model';
-import { ApiService } from './api.service';
-import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
+import { Product, ProductImage } from '../../../models/product.model';
+import { ApiService } from '../api/api.service';
+import { PRODUCTS_API } from './product.api';
+import { buildListQuery } from '../api/helpers';
+
+const API_ENDPOINTS = {
+  PRODUCTS: PRODUCTS_API
+} as const;
 
 /**
  * ProductService - Backend API Integration

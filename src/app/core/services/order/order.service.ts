@@ -1,9 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
-import { Order } from '../models/order.model';
-import { ApiService } from './api.service';
-import { API_ENDPOINTS, buildListQuery } from '../../core/api-endpoints';
+import { Order } from '../../../models/order.model';
+import { ApiService } from '../api/api.service';
+import { ORDERS_API } from './order.api';
+import { PAYMENTS_API } from '../payment/payment.api';
+import { buildListQuery } from '../api/helpers';
+
+const API_ENDPOINTS = {
+  ORDERS: ORDERS_API,
+  PAYMENTS: PAYMENTS_API
+} as const;
 
 export interface PaymentCreate {
   payment_method: string;

@@ -176,3 +176,478 @@
         }
     }
 }
+
+.bg-white-alpha-5 {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+// ── Discount Settings Card ──────────────────────────────────────────────────
+.discount-settings-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+.discount-header {
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.discount-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a78bfa;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.discount-body {
+    padding: 1.5rem;
+}
+
+.discount-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.625rem;
+
+    i {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+}
+
+.discount-preview-card {
+    background: rgba(16, 185, 129, 0.04);
+    border: 1px solid rgba(16, 185, 129, 0.12);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+}
+
+.preview-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+
+    &__icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(16, 185, 129, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #34d399;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    &__label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    &__value {
+        display: block;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-top: 2px;
+
+        &--accent {
+            color: #34d399;
+            font-size: 1.35rem;
+        }
+    }
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    i {
+        font-size: 0.5rem;
+    }
+
+    &--active {
+        background: rgba(16, 185, 129, 0.12);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    &--scheduled {
+        background: rgba(234, 179, 8, 0.1);
+        color: #fbbf24;
+        border: 1px solid rgba(234, 179, 8, 0.2);
+    }
+}
+
+.z-5 {
+    z-index: 9999;
+}
+
+.bg-black-alpha-70 {
+    background: rgba(0, 0, 0, 0.75);
+}
+
+::ng-deep {
+    .premium-calendar.p-calendar,
+    .premium-calendar.p-datepicker,
+    .premium-calendar .p-calendar,
+    .premium-calendar .p-datepicker {
+        width: 100% !important;
+        font-family: inherit !important;
+        display: inline-flex !important;
+        align-items: stretch !important;
+        background: rgba(15, 23, 42, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+        &:focus-within, &.p-focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+            background: rgba(15, 23, 42, 0.8) !important;
+        }
+
+        .p-inputtext,
+        .p-datepicker-input {
+            background: transparent !important;
+            border: transparent !important;
+            color: #f8fafc !important;
+            border-radius: 12px 0 0 12px !important;
+            padding: 12px 16px !important;
+            width: 100% !important;
+            flex: 1 1 auto !important;
+            font-family: inherit !important;
+            font-size: 1rem !important;
+            height: auto !important;
+            box-shadow: none !important;
+
+            &::placeholder {
+                color: #64748b !important;
+            }
+        }
+
+        .p-datepicker-trigger,
+        .p-datepicker-dropdown {
+            background: transparent !important;
+            border: transparent !important;
+            color: #94a3b8 !important;
+            border-radius: 0 12px 12px 0 !important;
+            width: 3rem !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+            box-shadow: none !important;
+
+            &:hover {
+                color: #3b82f6 !important;
+                background: rgba(59, 130, 246, 0.1) !important;
+            }
+
+            .p-button-icon {
+                font-size: 0.95rem !important;
+            }
+        }
+    }
+
+    // ── Datepicker Panel (appended to body) ───────────────────────────────
+    .p-datepicker-panel,
+    div.p-datepicker:not(.p-inputwrapper) {
+        background: #1e293b !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #f8fafc !important;
+        border-radius: 16px !important;
+        box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.6),
+                    0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+        padding: 1rem !important;
+        font-family: inherit !important;
+        width: 320px !important;
+        max-width: calc(100vw - 2rem) !important;
+        box-sizing: border-box !important;
+
+        // Month/Year header bar
+        .p-datepicker-header {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            color: #f8fafc !important;
+            padding: 0 0 0.75rem 0 !important;
+            margin-bottom: 0.5rem !important;
+            font-family: inherit !important;
+
+            .p-datepicker-title {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0.5rem !important;
+
+                .p-datepicker-month,
+                .p-datepicker-year {
+                    color: #f8fafc !important;
+                    font-weight: 600 !important;
+                    font-size: 1rem !important;
+                    font-family: inherit !important;
+                    padding: 0.25rem 0.5rem !important;
+                    border-radius: 6px !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    line-height: 1.2 !important;
+
+                    &:hover {
+                        background: rgba(59, 130, 246, 0.1) !important;
+                        color: #60a5fa !important;
+                    }
+                }
+            }
+
+            .p-datepicker-prev,
+            .p-datepicker-next {
+                color: #94a3b8 !important;
+                width: 2rem !important;
+                height: 2rem !important;
+                border-radius: 8px !important;
+                transition: all 0.15s ease !important;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.1) !important;
+                    color: #3b82f6 !important;
+                }
+
+                span {
+                    font-size: 0.85rem !important;
+                }
+            }
+        }
+
+        // Day-of-week headers & tables
+        table {
+            width: 100% !important;
+            table-layout: fixed !important;
+
+            th {
+                color: #64748b !important;
+                font-weight: 600 !important;
+                font-size: 0.75rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.05em !important;
+                padding: 0.5rem 0 !important;
+                font-family: inherit !important;
+                text-align: center !important;
+            }
+
+            // Day cells
+            td {
+                padding: 2px 0 !important;
+                text-align: center !important;
+
+                > span {
+                    width: 2.25rem !important;
+                    height: 2.25rem !important;
+                    line-height: 2.25rem !important;
+                    border-radius: 8px !important;
+                    color: #e2e8f0 !important;
+                    font-size: 0.875rem !important;
+                    font-family: inherit !important;
+                    transition: all 0.15s ease !important;
+                    margin: 0 auto !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+
+                    &:hover {
+                        background: rgba(59, 130, 246, 0.12) !important;
+                        color: #60a5fa !important;
+                    }
+
+                    &.p-highlight {
+                        background: #3b82f6 !important;
+                        color: #ffffff !important;
+                        font-weight: 600 !important;
+                    }
+
+                    &.p-datepicker-today {
+                        background: rgba(255, 255, 255, 0.06) !important;
+                        color: #f8fafc !important;
+                        border: 1px solid rgba(59, 130, 246, 0.3) !important;
+                    }
+                }
+
+                &.p-datepicker-other-month > span {
+                    color: #475569 !important;
+                }
+            }
+        }
+
+        // Month/Year picker grids
+        .p-monthpicker,
+        .p-yearpicker {
+            .p-monthpicker-month,
+            .p-yearpicker-year {
+                color: #e2e8f0 !important;
+                border-radius: 8px !important;
+                padding: 0.5rem !important;
+                font-family: inherit !important;
+                transition: all 0.15s ease !important;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.1) !important;
+                    color: #60a5fa !important;
+                }
+
+                &.p-highlight {
+                    background: #3b82f6 !important;
+                    color: #ffffff !important;
+                }
+            }
+        }
+
+        // ── Time Picker ──────────────────────────────────────────────────
+        .p-timepicker {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+            padding: 1rem 0 0.5rem 0 !important;
+            margin-top: 0.5rem !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+
+            button {
+                color: #94a3b8 !important;
+                background: rgba(255, 255, 255, 0.04) !important;
+                border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                width: 2.5rem !important;
+                height: 1.75rem !important;
+                border-radius: 6px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.2s ease !important;
+                box-shadow: none !important;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.1) !important;
+                    color: #3b82f6 !important;
+                    border-color: rgba(59, 130, 246, 0.3) !important;
+                }
+
+                span {
+                    font-size: 0.75rem !important;
+                }
+            }
+
+            .p-separator {
+                color: #818cf8 !important;
+                font-size: 1.25rem !important;
+                font-weight: 600 !important;
+                margin: 0 0.75rem !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+
+                span {
+                    color: #818cf8 !important;
+                }
+            }
+
+            .p-ampm-picker {
+                background: rgba(59, 130, 246, 0.12) !important;
+                border: 1px solid rgba(59, 130, 246, 0.3) !important;
+                border-radius: 8px !important;
+                color: #93c5fd !important;
+                font-size: 0.85rem !important;
+                font-weight: 600 !important;
+                width: auto !important;
+                height: auto !important;
+                margin: 0 0 0 0.75rem !important;
+                height: 3.5rem !important;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.22) !important;
+                    color: #bfdbfe !important;
+                    border-color: rgba(59, 130, 246, 0.5) !important;
+                }
+            }
+
+            > div {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 0.25rem !important;
+
+                input {
+                    background: rgba(15, 23, 42, 0.6) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 8px !important;
+                    color: #f8fafc !important;
+                    font-size: 1.1rem !important;
+                    font-family: inherit !important;
+                    font-weight: 600 !important;
+                    padding: 0.35rem 0 !important;
+                    text-align: center !important;
+                    width: 2.5rem !important;
+                    height: 2rem !important;
+                    box-shadow: none !important;
+
+                    &:focus {
+                        outline: none !important;
+                        border-color: #3b82f6 !important;
+                        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+                    }
+                }
+            }
+        }
+
+        // ── Button bar (Today, Clear) ────────────────────────────────────
+        .p-datepicker-buttonbar {
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+            padding: 0.75rem 0 0 0 !important;
+
+            .p-button {
+                background: transparent !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                color: #94a3b8 !important;
+                border-radius: 8px !important;
+                font-family: inherit !important;
+                font-size: 0.85rem !important;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.1) !important;
+                    color: #60a5fa !important;
+                    border-color: rgba(59, 130, 246, 0.3) !important;
+                }
+            }
+        }
+    }
+}

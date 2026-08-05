@@ -841,6 +841,135 @@ textarea,
     }
 }
 
+/* PWA Install Dialog */
+.pwa-install-dialog {
+    .p-dialog-content {
+        padding: 2.25rem 2rem 1.5rem !important;
+    }
+
+    .p-dialog-footer {
+        padding: 0.75rem 2rem 1.5rem !important;
+    }
+}
+
+.pwa-install-content {
+    text-align: center;
+}
+
+.pwa-install-icon-wrapper {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 1.25rem;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px -8px rgba(59, 130, 246, 0.5);
+}
+
+.pwa-install-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.pwa-install-title {
+    margin: 0 0 0.5rem !important;
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    color: white !important;
+    letter-spacing: -0.01em;
+}
+
+.pwa-install-text {
+    margin: 0 !important;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.pwa-install-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+
+    &:hover:not(:disabled) {
+        background: linear-gradient(135deg, #60a5fa, #3b82f6) !important;
+    }
+}
+
+.pwa-dismiss-btn {
+    color: #94a3b8 !important;
+
+    &:hover {
+        color: white !important;
+    }
+}
+
+.pwa-installing {
+    .p-progress-spinner {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+}
+
+.pwa-ios-steps {
+    margin: 1rem auto 0;
+    padding: 0;
+    text-align: left;
+    list-style: none;
+    counter-reset: step;
+    max-width: 320px;
+
+    li {
+        counter-increment: step;
+        position: relative;
+        padding: 0.65rem 0 0.65rem 2.75rem;
+        color: #cbd5e1;
+        font-size: 0.95rem;
+        line-height: 1.5;
+
+        &::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0.55rem;
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            color: #60a5fa;
+            font-weight: 700;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        strong {
+            color: white;
+        }
+
+        .pi {
+            color: #60a5fa;
+            margin: 0 0.15rem;
+        }
+    }
+}
+
+.pwa-sidebar-btn {
+    justify-content: flex-start;
+    padding-left: 1rem;
+    color: #cbd5e1 !important;
+
+    &:hover {
+        color: #60a5fa !important;
+        background: rgba(59, 130, 246, 0.1) !important;
+    }
+}
+
 /* Premium Inputs */
 .premium-input {
     background: rgba(2, 6, 23, 0.5) !important;

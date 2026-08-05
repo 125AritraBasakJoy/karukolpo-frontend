@@ -123,7 +123,7 @@
                                 <i class="pi pi-calendar-plus"></i> Start Date & Time
                             </label>
                             <p-calendar id="discount_starts_at" [(ngModel)]="productForm.discount_starts_at"
-                                [showTime]="true" [showIcon]="true" hourFormat="24" dateFormat="dd M yy"
+                                [showTime]="true" [showIcon]="true" hourFormat="12" dateFormat="dd M yy"
                                 placeholder="Select start date..."
                                 (onSelect)="updateDiscountPreview()" (onBlur)="updateDiscountPreview()"
                                 styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
@@ -134,7 +134,7 @@
                                 <i class="pi pi-calendar-minus"></i> End Date & Time
                             </label>
                             <p-calendar id="discount_ends_at" [(ngModel)]="productForm.discount_ends_at"
-                                [showTime]="true" [showIcon]="true" hourFormat="24" dateFormat="dd M yy"
+                                [showTime]="true" [showIcon]="true" hourFormat="12" dateFormat="dd M yy"
                                 placeholder="Select end date..."
                                 (onSelect)="updateDiscountPreview()" (onBlur)="updateDiscountPreview()"
                                 styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>

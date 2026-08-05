@@ -64,7 +64,7 @@ export class OrderService {
         error: (err) => console.error('Order creation failed:', err)
       }),
       map(response => {
-        const mappedOrder = this.mapBackendToFrontend(response);
+        const mappedOrder = this.mapBackendOrder(response);
         // Notify admin of new order
         this.notifyAdmin(mappedOrder.id || '', 'new');
         return mappedOrder;
@@ -102,7 +102,7 @@ export class OrderService {
         if (!rawOrders || rawOrders.length === 0) {
           return [];
         }
-        return rawOrders.map(order => this.mapBackendToFrontend(order));
+        return rawOrders.map(order => this.mapBackendOrder(order));
       }),
       tap(orders => {
         if (skip === 0) {
@@ -144,7 +144,7 @@ export class OrderService {
     const orderId = id;
 
     return this.apiService.get<any>(API_ENDPOINTS.ORDERS.GET_BY_ID(orderId)).pipe(
-      map(order => this.mapBackendToFrontend(order))
+      map(order => this.mapBackendOrder(order))
     );
   }
 
@@ -165,7 +165,7 @@ export class OrderService {
    */
   trackOrdersByPhone(phone: string): Observable<Order[]> {
     return this.apiService.get<any[]>(API_ENDPOINTS.ORDERS.TRACK_BY_PHONE(phone)).pipe(
-      map(orders => orders.map(order => this.mapBackendToFrontend(order)))
+      map(orders => orders.map(order => this.mapBackendOrder(order)))
     );
   }
 
@@ -175,7 +175,7 @@ export class OrderService {
    */
   trackOrderByNumber(orderNumber: string): Observable<Order> {
     return this.apiService.get<any>(API_ENDPOINTS.ORDERS.TRACK_BY_NUMBER(orderNumber)).pipe(
-      map(order => this.mapBackendToFrontend(order))
+      map(order => this.mapBackendOrder(order))
     );
   }
 
@@ -189,7 +189,7 @@ export class OrderService {
         this.clearCache();
         this.notifyAdmin(id.toString(), 'cancel');
       }),
-      map(order => this.mapBackendToFrontend(order))
+      map(order => this.mapBackendOrder(order))
     );
   }
 
@@ -201,7 +201,7 @@ export class OrderService {
     // Use the specific admin confirm endpoint as requested (takes no body parameters per spec)
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(id), {}).pipe(
       tap(() => this.clearCache()),
-      map(order => this.mapBackendToFrontend(order)),
+      map(order => this.mapBackendOrder(order)),
       catchError((err: any) => {
         console.error('Admin Confirm Order Failed. Status:', err.status);
         throw err;
@@ -218,7 +218,7 @@ export class OrderService {
     // Try admin cancel endpoint first
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(id), {}).pipe(
       tap(() => this.clearCache()),
-      map(order => this.mapBackendToFrontend(order)),
+      map(order => this.mapBackendOrder(order)),
       catchError((err: any) => {
         console.warn('Admin Cancel Order Failed. Trying Customer Cancel Endpoint as fallback.', err);
         // Fallback to customer cancel endpoint
@@ -236,7 +236,7 @@ export class OrderService {
     // Use the specific admin complete endpoint (takes no body parameters per spec)
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_COMPLETE(id), {}).pipe(
       tap(() => this.clearCache()),
-      map(order => this.mapBackendToFrontend(order)),
+      map(order => this.mapBackendOrder(order)),
       catchError((err: any) => {
         console.error('Admin Complete Order Failed. Status:', err.status);
         throw err;
@@ -364,7 +364,7 @@ export class OrderService {
   /**
    * Map backend order format to frontend format
    */
-  private mapBackendToFrontend(backendOrder: any): Order {
+  mapBackendOrder(backendOrder: any): Order {
     // Robust payment method extraction
     let paymentMethod = null; // Default to null instead of 'COD'
     if (backendOrder.payment_method) {
@@ -478,7 +478,9 @@ export class OrderService {
       // Pass through raw objects for detailed display
       address: backendOrder.address,
       payments: backendOrder.payments || backendOrder.payment,
-      created_at: backendOrder.created_at
+      created_at: backendOrder.created_at,
+      channel: backendOrder.channel || 'online',
+      note: backendOrder.note || undefined
     };
   }
 

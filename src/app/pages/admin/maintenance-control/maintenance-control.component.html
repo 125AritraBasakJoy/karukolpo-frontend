@@ -2,6 +2,14 @@
   <div class="flex flex-column gap-4 max-w-30rem mx-auto">
     <h1 class="text-3xl font-bold text-white mb-2">System Controls</h1>
 
+    @if (loading()) {
+    <p-card styleClass="premium-card shadow-lg">
+      <div class="flex flex-column align-items-center gap-3 py-6 text-slate-400">
+        <i class="pi pi-spin pi-cog text-4xl"></i>
+        <span>Loading maintenance state...</span>
+      </div>
+    </p-card>
+    } @else {
     <p-card header="Maintenance Control" subheader="Manage storefront visibility" styleClass="premium-card shadow-lg">
       <div class="flex flex-column gap-4 py-2">
         <div class="flex align-items-center justify-content-between p-3 bg-slate-800 border-round-xl border-1 border-slate-700">
@@ -10,20 +18,53 @@
             <span class="text-slate-400 text-sm">When active, customers will be redirected to the maintenance page.</span>
           </div>
           <p-toggleSwitch
-            [(ngModel)]="isMaintenanceMode"
+            [(ngModel)]="enabled"
             (onChange)="onToggleChange($event)">
           </p-toggleSwitch>
         </div>
 
         <div class="status-indicator flex align-items-center gap-2 p-2 border-round-lg"
-          [ngClass]="siteConfigService.siteConfig().isMaintenanceMode ? 'bg-orange-900-soft text-orange-400' : 'bg-green-900-soft text-green-400'">
-          <i class="pi" [ngClass]="siteConfigService.siteConfig().isMaintenanceMode ? 'pi-lock' : 'pi-check-circle'"></i>
+          [ngClass]="enabled ? 'bg-orange-900-soft text-orange-400' : 'bg-green-900-soft text-green-400'">
+          <i class="pi" [ngClass]="enabled ? 'pi-lock' : 'pi-check-circle'"></i>
           <span class="font-semibold">
-            Status: {{ siteConfigService.siteConfig().isMaintenanceMode ? 'Maintenance Active' : 'System Live' }}
+            Status: {{ enabled ? 'Maintenance Active' : 'System Live' }}
           </span>
         </div>
+
+        <div class="field flex flex-column gap-2">
+          <label class="text-sm font-semibold text-slate-300" for="maintenanceMessage">Maintenance Message
+            (Optional)</label>
+          <textarea pInputTextarea id="maintenanceMessage" [(ngModel)]="message" rows="3"
+            placeholder="Message shown to customers on the maintenance page." maxlength="500"
+            class="maintenance-input w-full"></textarea>
+          <small class="text-slate-400 text-right">{{ message.length }}/500</small>
+        </div>
+
+        <div class="field flex flex-column gap-2">
+          <label class="text-sm font-semibold text-slate-300" for="maintenanceEndsAt">Auto End Time (Optional)</label>
+          <p-calendar id="maintenanceEndsAt" [(ngModel)]="endsAt" [showTime]="true" [showIcon]="true"
+            [showButtonBar]="true" [readonlyInput]="false" dateFormat="dd/mm/yy" placeholder="Schedule when maintenance ends"
+            styleClass="w-full" inputStyleClass="maintenance-input"></p-calendar>
+          <small class="text-slate-400">Customers will see an estimated return time. Leave empty to keep it open-ended.</small>
+        </div>
+
+        <button pButton label="Save Settings" icon="pi pi-save" class="w-full p-button-lg"
+          (click)="save()" [loading]="saving()"></button>
+
+        @if (updatedAt || updatedBy) {
+        <div class="audit-info flex align-items-center gap-2 p-3 bg-slate-800 border-round-xl border-1 border-slate-700">
+          <i class="pi pi-history text-slate-400"></i>
+          <div class="flex flex-column gap-1 text-sm">
+            <span class="text-slate-300">Last updated {{ updatedAt | date:'medium' }}</span>
+            @if (updatedBy) {
+            <span class="text-slate-400">by {{ updatedBy }}</span>
+            }
+          </div>
+        </div>
+        }
       </div>
     </p-card>
+    }
   </div>
 </div>
 

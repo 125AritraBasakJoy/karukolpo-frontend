@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, ViewChildren, QueryList, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../../../../core/services';;;
@@ -15,7 +15,7 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { CalendarModule } from 'primeng/calendar';
+import { CalendarModule, Calendar } from 'primeng/calendar';
 import { InventoryModalComponent } from '../inventory-modal/inventory-modal.component';
 import { firstValueFrom, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -43,7 +43,10 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
     styleUrl: './add-product.component.scss',
     templateUrl: './add-product.component.html'
 })
-export class AddProductComponent {
+export class AddProductComponent implements OnInit, OnDestroy {
+    @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
+    private scrollListener: any;
+
     product = {
         name: '',
         description: '',
@@ -68,8 +71,7 @@ export class AddProductComponent {
 
     discountTypeOptions = [
         { label: 'No Discount', value: null },
-        { label: 'Fixed Amount (BDT)', value: 'FIXED' },
-        { label: 'Percentage (%)', value: 'PERCENT' }
+        { label: 'Fixed Amount (BDT)', value: 'FIXED' }
     ];
 
     // Image handling
@@ -82,9 +84,38 @@ export class AddProductComponent {
         private productService: ProductService,
         private categoryService: CategoryService,
         private messageService: MessageService,
-        private router: Router
+        private router: Router,
+        @Inject(PLATFORM_ID) private platformId: Object
     ) {
+    }
+
+    ngOnInit() {
         this.loadCategories();
+
+        if (isPlatformBrowser(this.platformId)) {
+            this.scrollListener = (event: Event) => {
+                const target = event.target;
+                const isContentScroll = (target instanceof HTMLElement && target.classList.contains('content-body')) ||
+                    target === document ||
+                    target === document.documentElement;
+                if (isContentScroll) {
+                    if (this.calendars) {
+                        this.calendars.forEach(calendar => {
+                            if (calendar.overlayVisible) {
+                                calendar.hideOverlay();
+                            }
+                        });
+                    }
+                }
+            };
+            window.addEventListener('scroll', this.scrollListener, true);
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.scrollListener) {
+            window.removeEventListener('scroll', this.scrollListener, true);
+        }
     }
 
     loadCategories() {

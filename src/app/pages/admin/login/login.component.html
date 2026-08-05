@@ -105,3 +105,53 @@
       </div>
   </ng-template>
 </p-dialog>
+
+<!-- PWA Install Prompt -->
+<p-dialog [visible]="displayInstallDialog()" [modal]="true" [closable]="false" [style]="{width: 'min(90vw, 420px)'}" styleClass="premium-dialog pwa-install-dialog" [draggable]="false" [resizable]="false" [showHeader]="false">
+  <div class="pwa-install-content">
+    <div class="pwa-install-icon-wrapper">
+      <img src="icons/apple-touch-icon.png" alt="Karukolpo Admin" class="pwa-install-icon">
+    </div>
+    <h2 class="pwa-install-title">Install Karukolpo Admin?</h2>
+    <p class="pwa-install-text">Add a shortcut to your home screen so you can open the admin panel in one tap, even when you're offline.</p>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-between gap-3 w-full">
+      <button pButton label="Not now" icon="pi pi-times" class="p-button-text pwa-dismiss-btn" (click)="dismissInstall()"></button>
+      <button
+        pButton
+        label="Yes, Install"
+        icon="pi pi-download"
+        class="pwa-install-btn"
+        (click)="confirmInstall()"
+        [disabled]="installing()"
+        *ngIf="!installing()">
+      </button>
+      <div *ngIf="installing()" class="flex align-items-center gap-2 pwa-installing">
+        <p-progressSpinner styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+        <span class="text-sm text-slate-400">Installing…</span>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- iOS "Add to Home Screen" Instructions -->
+<p-dialog [visible]="displayIosInstallDialog()" [modal]="true" [closable]="true" [style]="{width: 'min(90vw, 420px)'}" styleClass="premium-dialog pwa-install-dialog" [draggable]="false" [resizable]="false" [showHeader]="false" (onHide)="dismissInstall()">
+  <div class="pwa-install-content">
+    <div class="pwa-install-icon-wrapper">
+      <img src="icons/apple-touch-icon.png" alt="Karukolpo Admin" class="pwa-install-icon">
+    </div>
+    <h2 class="pwa-install-title">Add to Home Screen</h2>
+    <p class="pwa-install-text">To install Karukolpo Admin on your iPhone or iPad:</p>
+    <ol class="pwa-ios-steps">
+      <li>Tap the <strong>Share</strong> button <i class="pi pi-share-alt"></i> in Safari.</li>
+      <li>Scroll and tap <strong>Add to Home Screen</strong>.</li>
+      <li>Tap <strong>Add</strong> in the top-right corner.</li>
+    </ol>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-end w-full">
+      <button pButton label="Got it" icon="pi pi-check" class="pwa-install-btn" (click)="dismissInstall()"></button>
+    </div>
+  </ng-template>
+</p-dialog>

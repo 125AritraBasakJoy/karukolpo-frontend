@@ -44,4 +44,6 @@ export interface Order {
     transaction_id: string;
   };
   created_at?: string;
+  channel?: 'online' | 'offline' | string;
+  note?: string;
 }

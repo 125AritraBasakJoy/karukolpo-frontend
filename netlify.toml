@@ -25,12 +25,22 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), camera=(), microphone=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.karukolpocrafts.com https://*.cloudinary.com http://127.0.0.1:8000 http://localhost:8000; connect-src 'self' https://api.karukolpocrafts.com http://127.0.0.1:8000 http://localhost:8000;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.karukolpocrafts.com https://*.cloudinary.com https://www.google-analytics.com http://127.0.0.1:8000 http://localhost:8000; connect-src 'self' https://api.karukolpocrafts.com https://www.google-analytics.com https://analytics.google.com http://127.0.0.1:8000 http://localhost:8000;"
 
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
 
 [[headers]]
   for = "/*.js"

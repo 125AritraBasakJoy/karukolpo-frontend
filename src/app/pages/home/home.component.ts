@@ -1,12 +1,14 @@
 import {
     ChangeDetectionStrategy,
     Component,
+    ElementRef,
     Inject,
     OnDestroy,
     OnInit,
     PLATFORM_ID,
     QueryList,
     signal,
+    ViewChild,
     ViewChildren
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
@@ -39,6 +41,7 @@ import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
 import { Order } from '../../models/order.model';
 import { CartService } from '../../core/services';;;
+import { GtagService } from '../../core/services';;;
 import { TooltipModule } from 'primeng/tooltip';
 import { DividerModule } from 'primeng/divider';
 
@@ -80,6 +83,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     selectedProduct: Product | null = null;
     activeIndex: number = 0;
     @ViewChildren(NgModel) formControls!: QueryList<NgModel>;
+    @ViewChild('bestSellingList') bestSellingListEl!: ElementRef<HTMLElement>;
+    @ViewChild('hotDealsList') hotDealsListEl!: ElementRef<HTMLElement>;
     checkoutForm = {
         fullName: '',
         email: '',
@@ -169,6 +174,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     phoneRegex = /^(?:\+88|88)?(01[3-9]\d{8})$/; // Bangladeshi Phone Number
     postalCodeRegex = /^\d{4}$/; // Exact 4 digits
     private storageListener: (() => void) | null = null;
+    private autoScrollTimer: any = null;
+    private resumeAutoScrollTimer: any = null;
+    private readonly mobileMediaQuery = '(max-width: 768px)';
+    private readonly autoScrollInteractionHandler = (event: Event) => this.pauseAutoScroll(event);
 
     constructor(
         private productService: ProductService,
@@ -183,6 +192,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         private deliveryService: DeliveryService,
         private categoryService: CategoryService,
         public cartService: CartService,
+        private gtagService: GtagService,
         private route: ActivatedRoute,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -295,6 +305,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         });
 
         this.updateSeo();
+
+        this.startAutoScroll();
+        if (isPlatformBrowser(this.platformId)) {
+            document.addEventListener('touchstart', this.autoScrollInteractionHandler, { passive: true });
+        }
     }
 
     updateSeo() {
@@ -403,6 +418,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (this.storageListener && isPlatformBrowser(this.platformId)) {
             window.removeEventListener('storage', this.storageListener);
         }
+        this.stopAutoScroll();
+        if (isPlatformBrowser(this.platformId)) {
+            document.removeEventListener('touchstart', this.autoScrollInteractionHandler);
+        }
     }
 
     scrollLeft(element: HTMLElement) {
@@ -411,6 +430,57 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     scrollRight(element: HTMLElement) {
         element.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+
+    private startAutoScroll() {
+        if (!isPlatformBrowser(this.platformId) || this.autoScrollTimer) {
+            return;
+        }
+        this.autoScrollTimer = setInterval(() => {
+            this.autoScrollStep();
+        }, 3000);
+    }
+
+    private stopAutoScroll() {
+        if (this.autoScrollTimer) {
+            clearInterval(this.autoScrollTimer);
+            this.autoScrollTimer = null;
+        }
+        if (this.resumeAutoScrollTimer) {
+            clearTimeout(this.resumeAutoScrollTimer);
+            this.resumeAutoScrollTimer = null;
+        }
+    }
+
+    private pauseAutoScroll(event: Event) {
+        const target = event.target as HTMLElement | null;
+        if (!target || !target.closest('.product-swipe-container')) {
+            return;
+        }
+        this.stopAutoScroll();
+        this.resumeAutoScrollTimer = setTimeout(() => this.startAutoScroll(), 6000);
+    }
+
+    private autoScrollStep() {
+        if (!isPlatformBrowser(this.platformId) || !window.matchMedia(this.mobileMediaQuery).matches) {
+            return;
+        }
+        const containers = [this.bestSellingListEl, this.hotDealsListEl]
+            .filter((ref): ref is ElementRef<HTMLElement> => !!ref && !!ref.nativeElement)
+            .map(ref => ref.nativeElement);
+
+        for (const el of containers) {
+            const maxScroll = el.scrollWidth - el.clientWidth;
+            if (maxScroll <= 0) {
+                continue;
+            }
+            const step = Math.max(el.clientWidth * 0.6, 180);
+            if (el.scrollLeft + step >= maxScroll - 1) {
+                el.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                el.scrollBy({ left: step, behavior: 'smooth' });
+            }
+        }
     }
 
     showProductDetails(product: Product) {
@@ -707,6 +777,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];
+            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
             this.cartService.clearCart(); // Use CartService
             this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();
@@ -771,6 +842,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];
+            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
             this.cartService.clearCart(); // Use CartService
             this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();

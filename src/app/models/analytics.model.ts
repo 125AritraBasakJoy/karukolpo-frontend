@@ -237,3 +237,15 @@ export interface ConversionStep {
 export interface TrafficConversionResponse {
   steps: ConversionStep[];
 }
+
+export interface SalesBySourceItem {
+  key: string;
+  orders: number;
+  goods_revenue: number;
+  total_revenue: number;
+}
+
+export interface SalesBySourceResponse {
+  period: string;
+  by_source: SalesBySourceItem[];
+}

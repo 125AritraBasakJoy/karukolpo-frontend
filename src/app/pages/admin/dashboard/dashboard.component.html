@@ -42,6 +42,10 @@
 
         <!-- Sidebar Footer -->
         <div class="sidebar-footer">
+            <button *ngIf="canShowInstallButton()" pButton
+                [label]="(sidebarCollapsed() && !isMobile()) ? '' : 'Install App'" icon="pi pi-download"
+                (click)="installApp()" class="p-button-text w-full mb-2 pwa-sidebar-btn"
+                [pTooltip]="(sidebarCollapsed() && !isMobile()) ? 'Install App' : ''" tooltipPosition="right"></button>
             <button pButton [label]="(sidebarCollapsed() && !isMobile()) ? '' : 'Logout'" icon="pi pi-sign-out"
                 (click)="logout()" class="p-button-danger w-full"
                 [pTooltip]="(sidebarCollapsed() && !isMobile()) ? 'Logout' : ''" tooltipPosition="right"></button>
@@ -81,3 +85,24 @@
 
     <!-- Toast Notifications -->
 </div>
+
+<!-- iOS "Add to Home Screen" Instructions -->
+<p-dialog [(visible)]="displayIosInstallDialog" [modal]="true" [closable]="true" [style]="{width: 'min(90vw, 420px)'}" styleClass="premium-dialog pwa-install-dialog" [draggable]="false" [resizable]="false" [showHeader]="false" (onHide)="displayIosInstallDialog=false">
+  <div class="pwa-install-content">
+    <div class="pwa-install-icon-wrapper">
+      <img src="icons/apple-touch-icon.png" alt="Karukolpo Admin" class="pwa-install-icon">
+    </div>
+    <h2 class="pwa-install-title">Add to Home Screen</h2>
+    <p class="pwa-install-text">To install Karukolpo Admin on your iPhone or iPad:</p>
+    <ol class="pwa-ios-steps">
+      <li>Tap the <strong>Share</strong> button <i class="pi pi-share-alt"></i> in Safari.</li>
+      <li>Scroll and tap <strong>Add to Home Screen</strong>.</li>
+      <li>Tap <strong>Add</strong> in the top-right corner.</li>
+    </ol>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-end w-full">
+      <button pButton label="Got it" icon="pi pi-check" class="pwa-install-btn" (click)="displayIosInstallDialog=false"></button>
+    </div>
+  </ng-template>
+</p-dialog>

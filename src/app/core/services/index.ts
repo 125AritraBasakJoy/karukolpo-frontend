@@ -12,9 +12,15 @@ export * from './contact/contact.service';
 export * from './delivery/delivery.service';
 export * from './loading/loading.service';
 export * from './site-config/site-config.service';
+export * from './maintenance/maintenance.service';
+export * from './maintenance/maintenance.api';
+export * from './out-sales/out-sales.service';
+export * from './out-sales/out-sales.api';
 export * from './theme/theme.service';
 export * from './version/version.service';
 export * from './tracking/tracking.service';
+export * from './pwa/pwa-install.service';
+export * from './gtag/gtag.service';
 
 // APIs & Helpers
 export * from './api/api-config';
@@ -35,6 +41,8 @@ import { PAYMENTS_API } from './payment/payment.api';
 import { ADMIN_API } from './auth/admin.api';
 import { NOTIFICATIONS_API } from './notification/notification.api';
 import { ANALYTICS_API } from './analytics/analytics.api';
+import { MAINTENANCE_API } from './maintenance/maintenance.api';
+import { OUT_SALES_API } from './out-sales/out-sales.api';
 
 export const API_ENDPOINTS = {
     PRODUCTS: PRODUCTS_API,
@@ -44,4 +52,6 @@ export const API_ENDPOINTS = {
     ADMIN: ADMIN_API,
     NOTIFICATIONS: NOTIFICATIONS_API,
     ANALYTICS: ANALYTICS_API,
+    MAINTENANCE: MAINTENANCE_API,
+    OUT_SALES: OUT_SALES_API,
 } as const;

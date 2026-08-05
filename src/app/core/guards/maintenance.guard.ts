@@ -1,15 +1,15 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { SiteConfigService } from '../services';;;
+import { MaintenanceService } from '../services';;;
 
 /**
  * MaintenanceGuard - Redirects users to /maintenance page if maintenance mode is enabled.
  * Excludes the /maintenance path itself and /admin paths to allow management.
  */
 export const maintenanceGuard: CanActivateFn = (route, state) => {
-    const siteConfigService = inject(SiteConfigService);
+    const maintenanceService = inject(MaintenanceService);
     const router = inject(Router);
-    const isMaintenance = siteConfigService.siteConfig().isMaintenanceMode;
+    const isMaintenance = maintenanceService.status().enabled;
 
     // Allow access to maintenance page and admin pages even during maintenance
     const isMaintenancePath = state.url.startsWith('/maintenance');

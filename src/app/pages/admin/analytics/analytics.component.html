@@ -315,11 +315,64 @@
               </div>
             </div>
           </div>
+
+          <!-- Out Sales by Source -->
+          <div class="grid mt-4">
+            <div class="col-12">
+              <div class="glass-panel p-4">
+                <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
+                  <div>
+                    <h3 class="panel-title flex align-items-center gap-2">
+                      <i class="pi pi-receipt text-amber-500"></i> Out Sales by Source
+                    </h3>
+                  </div>
+                </div>
+
+                @if (salesBySource() && salesBySource()!.by_source.length > 0) {
+                  <div class="grid">
+                    <div class="col-12 lg:col-5" *ngIf="charts['outSalesSource']">
+                      <div class="chart-wrapper" style="position: relative; height: 300px;">
+                        <p-chart type="doughnut" [data]="charts['outSalesSource'].data" [options]="charts['outSalesSource'].options"></p-chart>
+                      </div>
+                    </div>
+                    <div class="col-12 lg:col-7">
+                      <p-table [value]="salesBySource()!.by_source" styleClass="premium-table-ui text-xs sm:text-sm" [responsiveLayout]="'scroll'">
+                        <ng-template pTemplate="header">
+                          <tr>
+                            <th>Source</th>
+                            <th class="text-right">Orders</th>
+                            <th class="text-right">Goods Revenue</th>
+                            <th class="text-right">Total Revenue</th>
+                          </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row>
+                          <tr>
+                            <td><span class="font-semibold text-white">{{ row.key === 'unspecified' ? 'Unspecified' : row.key }}</span></td>
+                            <td class="text-right text-color-secondary">{{ row.orders | number }}</td>
+                            <td class="text-right text-emerald-400">{{ row.goods_revenue | number:'1.0-0' }} BDT</td>
+                            <td class="text-right text-emerald-400 font-semibold">{{ row.total_revenue | number:'1.0-0' }} BDT</td>
+                          </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                          <tr>
+                            <td colspan="4" class="text-center py-4 text-color-secondary">No out-sales records for this period.</td>
+                          </tr>
+                        </ng-template>
+                      </p-table>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="text-center py-5 text-color-secondary flex flex-column align-items-center gap-2">
+                    <i class="pi pi-receipt text-2xl text-slate-600"></i>
+                    <span class="text-xs">No out-sales data for the selected period.</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
         }
       </div>
     }
-
-    <!-- 3. CUSTOMER INSIGHTS TAB -->
     @if (activeTab() === 'customers') {
       <div class="tab-pane animate-fade-in">
         @if (loadingStates.customers()) {

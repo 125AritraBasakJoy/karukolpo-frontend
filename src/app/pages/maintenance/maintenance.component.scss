@@ -152,6 +152,17 @@
   color: #94a3b8;
 }
 
+.back-by-card {
+  display: inline-flex;
+  margin: 0 0 2rem 0;
+}
+
+.back-by-card strong {
+  color: #f59e0b;
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
 .contact-hint strong {
   color: #cbd5e1;
 }

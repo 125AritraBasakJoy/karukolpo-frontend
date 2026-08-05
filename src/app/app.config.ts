@@ -7,6 +7,7 @@ import { baseUrlInterceptor } from './core/interceptors/base-url.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { deviceIdInterceptor } from './core/interceptors/device-id.interceptor';
+import { maintenanceInterceptor } from './core/interceptors/maintenance.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeuix/themes/lara';
 import { MessageService } from 'primeng/api';
@@ -19,7 +20,7 @@ export const appConfig: ApplicationConfig = {
       scrollPositionRestoration: 'top'
     })),
     provideAnimationsAsync(),
-    provideHttpClient(withInterceptors([baseUrlInterceptor, loadingInterceptor, authInterceptor, deviceIdInterceptor]), withFetch()),
+    provideHttpClient(withInterceptors([baseUrlInterceptor, loadingInterceptor, authInterceptor, deviceIdInterceptor, maintenanceInterceptor]), withFetch()),
     providePrimeNG({
       theme: {
         preset: Lara,

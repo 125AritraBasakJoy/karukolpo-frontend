@@ -7,3 +7,28 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.5rem;
 }
+
+.maintenance-input {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0.75rem !important;
+  color: #fff !important;
+  padding: 0.75rem 1rem !important;
+  box-shadow: none !important;
+
+  &::placeholder {
+    color: var(--text-color-secondary);
+  }
+
+  &:focus,
+  &:hover {
+    border-color: rgba(251, 146, 60, 0.5) !important;
+    outline: none !important;
+  }
+}
+
+:host ::ng-deep .p-calendar .p-datepicker {
+  background: rgba(15, 23, 42, 0.98) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}

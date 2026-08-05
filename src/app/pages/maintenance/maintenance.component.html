@@ -11,10 +11,23 @@
     </div>
 
     <h1 class="maintenance-title">Under Maintenance</h1>
+    @if (status.message) {
+    <p class="maintenance-description">
+      {{ status.message }}
+    </p>
+    } @else {
     <p class="maintenance-description">
       We're currently improving things behind the scenes.<br>
       Our team is working hard to bring you a better experience. We'll be back shortly!
     </p>
+    }
+
+    @if (status.ends_at) {
+    <div class="info-card back-by-card">
+      <i class="pi pi-clock"></i>
+      <span>We expect to be back by <strong>{{ status.ends_at | date:'MMMM d, h:mm a' }}</strong></span>
+    </div>
+    }
 
     <div class="info-cards">
       <div class="info-card">

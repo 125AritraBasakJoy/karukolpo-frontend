@@ -2,7 +2,7 @@ import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { OrderService, NotificationService, VersionService, TrackingService } from './core/services';;
+import { OrderService, NotificationService, VersionService, TrackingService, MaintenanceService } from './core/services';;
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -26,6 +26,7 @@ export class AppComponent implements OnInit {
     private router: Router,
     private versionService: VersionService,
     private trackingService: TrackingService,
+    private maintenanceService: MaintenanceService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
@@ -35,6 +36,9 @@ export class AppComponent implements OnInit {
         this.versionService.checkForUpdates();
         this.trackingService.trackVisit();
       }, 2000);
+
+      // Keep storefront maintenance state in sync with the backend
+      this.maintenanceService.startPolling();
     }
 
     // Check if current route is admin - using window.location.pathname for initial load robustness

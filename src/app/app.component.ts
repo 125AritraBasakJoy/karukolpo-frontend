@@ -45,6 +45,7 @@ export class AppComponent implements OnInit {
       defer(() => {
         this.versionService.checkForUpdates();
         this.trackingService.trackVisit();
+        this.initGoogleAnalytics();
         // Keep storefront maintenance state in sync with the backend
         this.maintenanceService.startPolling();
       });
@@ -61,6 +62,24 @@ export class AppComponent implements OnInit {
     });
 
     // Notification logic consolidated in NotificationService
+  }
+
+  private initGoogleAnalytics() {
+    if (isPlatformBrowser(this.platformId) && !window.location.pathname.startsWith('/admin')) {
+      const script1 = document.createElement('script');
+      script1.async = true;
+      script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-2LZ6GZQF66';
+      document.head.appendChild(script1);
+
+      const script2 = document.createElement('script');
+      script2.innerHTML = `
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-2LZ6GZQF66');
+      `;
+      document.head.appendChild(script2);
+    }
   }
 
   private checkRoute(url: string): void {

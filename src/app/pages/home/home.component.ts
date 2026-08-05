@@ -176,7 +176,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     private storageListener: (() => void) | null = null;
     private autoScrollTimer: any = null;
     private resumeAutoScrollTimer: any = null;
-    private readonly mobileMediaQuery = '(max-width: 768px)';
     private readonly autoScrollInteractionHandler = (event: Event) => this.pauseAutoScroll(event);
 
     constructor(
@@ -315,7 +314,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     updateSeo() {
         const title = 'Karukolpo | Authentic Bangladeshi Handcrafts';
         const description = 'Discover Karukolpo: Premium Bangladeshi handcrafted heritage products, home decor, and authentic artisan creations. Support local craftsmen.';
-        const imageUrl = 'https://karukolpo.com/assets/landing-bg.webp';
+        // Resolve the image against the domain actually serving the app, so the
+        // social-share image never points at a stale/wrong host.
+        const imageUrl = isPlatformBrowser(this.platformId)
+            ? `${window.location.origin}/assets/landing-bg.webp`
+            : 'https://karukolpo.com/assets/landing-bg.webp';
         const siteUrl = 'https://karukolpo.com/';
 
         this.titleService.setTitle(title);
@@ -462,7 +465,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     private autoScrollStep() {
-        if (!isPlatformBrowser(this.platformId) || !window.matchMedia(this.mobileMediaQuery).matches) {
+        if (!isPlatformBrowser(this.platformId)) {
             return;
         }
         const containers = [this.bestSellingListEl, this.hotDealsListEl]

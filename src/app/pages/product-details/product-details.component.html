@@ -170,7 +170,7 @@
                 <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden" [routerLink]="['/products', p.id]">
                     <div class="product-image-wrapper">
                         <img [ngSrc]="p.imageUrl" [alt]="p.name" fill class="product-image"
-                            sizes="(max-width: 767px) 45vw, (max-width: 991px) 25vw, 15vw" priority="false">
+                            sizes="(max-width: 767px) 45vw, (max-width: 991px) 25vw, 15vw" [priority]="false">
 
                         <div class="quick-actions-overlay">
                             <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>

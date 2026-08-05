@@ -16,6 +16,7 @@ export class InvoiceComponent {
     @Input() orderPaymentMethod: string = '';
     @Input() orderDeliveryCharge: number = 0;
     @Input() orderTotal: number = 0;
+    @Input() orderDiscount: number = 0;
     @Input() placedOrderId: string = '';
     @Input() placedOrderNumber: string = '';
 
@@ -61,13 +62,14 @@ export class InvoiceComponent {
     get subtotal(): number {
         if (!this.orderedItems || this.orderedItems.length === 0) return 0;
         return this.orderedItems.reduce((sum: number, item: any) => {
-            const price = item.product?.price || 0;
+            const price = item.price_at_purchase ?? item.price ?? item.product?.price ?? 0;
             const qty = item.quantity || 0;
             return sum + (price * qty);
         }, 0);
     }
 
     get discount(): number {
+        if (this.orderDiscount > 0) return this.orderDiscount;
         const computed = this.subtotal + this.orderDeliveryCharge;
         if (this.orderTotal < computed) {
             return computed - this.orderTotal;
@@ -315,7 +317,7 @@ export class InvoiceComponent {
             const nameImageData = this.hasBengali(name) ? this.renderTextAsImage(name, { fontSize: 11, color: '#1e293b', bold: true }) : null;
 
             const qty = item.quantity || 0;
-            const price = item.product?.price || 0;
+            const price = item.price_at_purchase ?? item.price ?? item.product?.price ?? 0;
             const lineTotal = price * qty;
 
             return [
@@ -409,11 +411,17 @@ export class InvoiceComponent {
             text(value, totalsX + totalsW, yPos, { size: 9, color: opts.color || midGray, align: 'right', bold: opts.bold });
         };
 
-        totRow('Subtotal:', `BDT ${this.subtotal.toLocaleString()}`, y);
-        totRow('Delivery Fee:', `BDT ${this.orderDeliveryCharge.toLocaleString()}`, y + 6);
+        let currentY = y;
+        totRow('Subtotal:', `BDT ${this.subtotal.toLocaleString()}`, currentY);
+        currentY += 6;
+        totRow('Delivery Fee:', `BDT ${this.orderDeliveryCharge.toLocaleString()}`, currentY);
+        if (this.discount > 0) {
+            currentY += 6;
+            totRow('Discount:', `- BDT ${this.discount.toLocaleString()}`, currentY, { color: [220, 38, 38] }); // red color
+        }
 
         // Grand Total
-        y += 16;
+        y = currentY + 10;
         hLine(y, borderColor, 0.8);
         y += 7;
 

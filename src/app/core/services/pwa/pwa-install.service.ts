@@ -89,6 +89,18 @@ export class PwaInstallService {
     }
 
     private bindListeners(): void {
+        // Pick up early-captured event if present
+        if (typeof window !== 'undefined' && (window as any).deferredPrompt) {
+            this.deferredPrompt = (window as any).deferredPrompt;
+            this.canInstall.set(true);
+        }
+
+        // Listen for custom event dispatch from index.html
+        window.addEventListener('pwa-beforeinstallprompt', (event: any) => {
+            this.deferredPrompt = event.detail;
+            this.canInstall.set(true);
+        });
+
         window.addEventListener('beforeinstallprompt', (event: any) => {
             event.preventDefault();
             this.deferredPrompt = event;

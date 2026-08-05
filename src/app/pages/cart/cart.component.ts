@@ -72,6 +72,8 @@ export class CartComponent implements OnInit {
     orderPaymentMethod = '';
     orderDeliveryCharge = 0;
     orderTotal = 0;
+    orderDiscount = 0;
+    private createdOrderObj: any = null;
 
     // Validation patterns
     emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -180,7 +182,8 @@ export class CartComponent implements OnInit {
         this.orderFormSnapshot = { ...this.checkoutForm };
         this.orderPaymentMethod = paymentMethod;
         this.orderDeliveryCharge = this.currentDeliveryCharge;
-        this.orderTotal = this.getTotalPrice();
+        this.orderTotal = this.createdOrderObj?.totalAmount ?? this.getTotalPrice();
+        this.orderDiscount = this.createdOrderObj?.discountAmount ?? 0;
     }
 
     async confirmCOD() {
@@ -189,6 +192,7 @@ export class CartComponent implements OnInit {
 
         try {
             const order = await lastValueFrom(this.orderService.createOrder(orderData));
+            this.createdOrderObj = order;
             this.placedOrderId = order.id || '';
             this.placedOrderNumber = order.orderNumber || this.placedOrderId;
             this.messageService.add({ severity: 'success', summary: 'Order Confirmed', detail: 'Your COD order has been placed successfully.' });
@@ -222,6 +226,7 @@ export class CartComponent implements OnInit {
             const orderData = this.prepareOrderData('bKash');
             try {
                 const order = await lastValueFrom(this.orderService.createOrder(orderData));
+                this.createdOrderObj = order;
                 this.placedOrderId = order.id || '';
                 this.placedOrderNumber = order.orderNumber || this.placedOrderId;
             } catch (err) {

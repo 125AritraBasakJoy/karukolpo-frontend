@@ -48,7 +48,7 @@
   background: rgba(59, 130, 246, 0.1) !important;
   border: 1px solid rgba(59, 130, 246, 0.2) !important;
   color: var(--accent-color) !important;
-  transition: all 0.3s ease !important;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
 
   &:hover {
     background: rgba(59, 130, 246, 0.2) !important;

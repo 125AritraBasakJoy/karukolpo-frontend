@@ -2,7 +2,7 @@ import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { OrderService, NotificationService, VersionService, TrackingService, MaintenanceService } from './core/services';;
+import { OrderService, NotificationService, VersionService, TrackingService, MaintenanceService, PwaInstallService } from './core/services';;
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -27,6 +27,7 @@ export class AppComponent implements OnInit {
     private versionService: VersionService,
     private trackingService: TrackingService,
     private maintenanceService: MaintenanceService,
+    private pwaInstallService: PwaInstallService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 

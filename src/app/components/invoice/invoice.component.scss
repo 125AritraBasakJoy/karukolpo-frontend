@@ -275,6 +275,11 @@
     }
 }
 
+.od-total-row.od-discount-row {
+    color: #ef4444 !important;
+    font-weight: 600;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 480px) {
     .od-actions {

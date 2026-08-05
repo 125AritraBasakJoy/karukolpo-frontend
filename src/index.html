@@ -14,6 +14,13 @@
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'G-2LZ6GZQF66');
+
+    // Prevent browser PWA install pop-ups automatically
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      window.dispatchEvent(new CustomEvent('pwa-beforeinstallprompt', { detail: e }));
+    });
   </script>
   <meta name="description" content="Discover Karukolpo: Premium Bangladeshi handcrafted heritage products, home decor, and authentic artisan creations. Support local craftsmen and find unique gifts.">
   <meta name="keywords" content="handicrafts, Bangladesh crafts, home decor, artisan products, handmade jewelry, Karukolpo, traditional crafts">

@@ -436,5 +436,6 @@
 <div style="position: fixed; left: -9999px; top: 0; width: 800px; pointer-events: none; opacity: 0;">
     <app-invoice #adminInvoice [orderedItems]="invoiceOrderData.items" [orderFormSnapshot]="invoiceOrderData.snapshot"
         [orderPaymentMethod]="invoiceOrderData.method" [orderDeliveryCharge]="invoiceOrderData.deliveryCharge"
-        [orderTotal]="invoiceOrderData.total" [placedOrderId]="invoiceOrderData.id" [placedOrderNumber]="invoiceOrderData.orderNumber"></app-invoice>
+        [orderTotal]="invoiceOrderData.total" [orderDiscount]="invoiceOrderData.discount" 
+        [placedOrderId]="invoiceOrderData.id" [placedOrderNumber]="invoiceOrderData.orderNumber"></app-invoice>
 </div>

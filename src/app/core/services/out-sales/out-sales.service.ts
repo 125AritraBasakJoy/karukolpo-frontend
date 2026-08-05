@@ -27,6 +27,7 @@ export interface OfflineSaleCreate {
     delivery_charge?: number | null;
     customer?: OfflineSaleCustomer | null;
     note?: string | null;
+    source?: string | null;
 }
 
 @Injectable({

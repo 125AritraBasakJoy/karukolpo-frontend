@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services';;;
 import { ThemeService } from '../../../core/services';;;
+import { PwaInstallService } from '../../../core/services';;;
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { DialogModule } from 'primeng/dialog';
 import { NotificationService } from '../../../core/services';;;
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
 import { filter } from 'rxjs/operators';
@@ -21,7 +23,7 @@ interface SidebarMenuItem {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule, NotificationButtonComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule, DialogModule, NotificationButtonComponent],
 
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss', '../admin-styles.scss']
@@ -39,6 +41,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private messageService = inject(MessageService);
   private router = inject(Router);
+  private pwaInstallService = inject(PwaInstallService);
+  displayIosInstallDialog = false;
 
   menuItems: SidebarMenuItem[] = [
     { label: 'Analytics', icon: 'pi pi-chart-bar', route: 'analytics', section: 'Main' },
@@ -218,5 +222,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   logout() {
     this.authService.logout();
+  }
+
+  canShowInstallButton(): boolean {
+    if (this.pwaInstallService.isStandalone()) return false;
+    return this.pwaInstallService.canInstall() || this.pwaInstallService.isIOS();
+  }
+
+  installApp() {
+    if (this.pwaInstallService.isIOS()) {
+      this.displayIosInstallDialog = true;
+      return;
+    }
+    this.pwaInstallService.promptInstall();
   }
 }

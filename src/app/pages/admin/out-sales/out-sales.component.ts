@@ -61,6 +61,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   soldAt: Date = new Date();
   deliveryCharge = 0;
   note = '';
+  source = '';
   customer = { name: '', phone: '', district: '', subdistrict: '' };
 
   readonly paymentMethods = PAYMENT_METHODS;
@@ -121,6 +122,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     this.soldAt = new Date();
     this.deliveryCharge = 0;
     this.note = '';
+    this.source = '';
     this.customer = { name: '', phone: '', district: '', subdistrict: '' };
   }
 
@@ -187,7 +189,8 @@ export class OutSalesComponent implements OnInit, OnDestroy {
         district: this.customer.district || null,
         subdistrict: this.customer.subdistrict || null
       } : null,
-      note: this.note.trim() ? this.note.trim() : null
+      note: this.note.trim() ? this.note.trim() : null,
+      source: this.source.trim() ? this.source.trim() : null
     };
 
     this.outSalesService.createSale(payload).subscribe({

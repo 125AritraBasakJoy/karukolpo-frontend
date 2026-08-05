@@ -32,13 +32,21 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
-      setTimeout(() => {
+      // Defer non-critical background work until the browser is idle,
+      // so it doesn't compete with the home page's first paint / initial data.
+      const defer = (fn: () => void) => {
+        if ('requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(() => fn(), { timeout: 4000 });
+        } else {
+          setTimeout(fn, 3000);
+        }
+      };
+      defer(() => {
         this.versionService.checkForUpdates();
         this.trackingService.trackVisit();
-      }, 2000);
-
-      // Keep storefront maintenance state in sync with the backend
-      this.maintenanceService.startPolling();
+        // Keep storefront maintenance state in sync with the backend
+        this.maintenanceService.startPolling();
+      });
     }
 
     // Check if current route is admin - using window.location.pathname for initial load robustness

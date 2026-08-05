@@ -78,6 +78,7 @@ export class AnalyticsComponent implements OnInit {
   slowMovers = signal<Models.SlowMoversResponse | null>(null);
   ordersRisk = signal<Models.OrdersRiskResponse | null>(null);
   profitableProducts = signal<Models.ProfitableProduct[]>([]);
+  salesBySource = signal<Models.SalesBySourceResponse | null>(null);
   marketingAttribution = signal<Models.AttributionResponse | null>(null);
   trafficOverview = signal<Models.TrafficOverviewResponse | null>(null);
   trafficSources = signal<Models.TrafficSourcesResponse | null>(null);
@@ -321,7 +322,8 @@ export class AnalyticsComponent implements OnInit {
       breakdown: this.analyticsService.getOrdersBreakdown(period).pipe(catchError(() => of({}))),
       profitable: this.analyticsService.getProfitableProducts(period, 10).pipe(catchError(() => of([]))),
       discounts: this.analyticsService.getDiscounts(period).pipe(catchError(() => of({}))),
-      risk: this.analyticsService.getOrdersRisk(period).pipe(catchError(() => of({ orders: [] })))
+      risk: this.analyticsService.getOrdersRisk(period).pipe(catchError(() => of({ orders: [] }))),
+      salesBySource: this.analyticsService.getSalesBySource(period).pipe(catchError(() => of({ by_source: [] })))
     })
     .pipe(finalize(() => this.loadingStates.sales.set(false)))
     .subscribe(res => {
@@ -376,13 +378,9 @@ export class AnalyticsComponent implements OnInit {
       });
 
       // Map profitable products
-      const dummyNames = new Set([
-        'শঙ্খ-লহরী', 'শঙ্খলহরী', 'দীপালিকা', 'পল্লব', 'হংসবলাকা', 
-        'পদ্মপ্রভা', 'আভা', 'শ্যামা-রূপসী', 'শিউলিতরু', 'শিউলি তরু', 
-        'সিন্দুরগা', 'সিন্দুরদা', 'সিন্দুর', 'সিন্দুরা', 'আকাশদীপ'
-      ]);
-
-      let mappedProfitable: Models.ProfitableProduct[] = (res.profitable || [])
+      const rawProfitable = res.profitable as any;
+      const productsArray = Array.isArray(rawProfitable) ? rawProfitable : (rawProfitable?.products || []);
+      const mappedProfitable: Models.ProfitableProduct[] = productsArray
         .map((p: any) => {
           const costVal = p.cost ? parseFloat(p.cost) : 0;
           const revenueVal = p.revenue ? parseFloat(p.revenue) : 0;
@@ -397,8 +395,7 @@ export class AnalyticsComponent implements OnInit {
             margin_percentage: marginVal,
             units: p.units ? parseInt(p.units, 10) : (p.units_sold ? parseInt(p.units_sold, 10) : (p.quantity ? parseInt(p.quantity, 10) : 0))
           };
-        })
-        .filter((p: Models.ProfitableProduct) => !dummyNames.has(p.name?.trim() || ''));
+        });
 
       this.profitableProducts.set(mappedProfitable);
 
@@ -453,7 +450,21 @@ export class AnalyticsComponent implements OnInit {
         orders: mappedRiskOrders.length > 0 ? mappedRiskOrders : (rawRisk.orders || [])
       });
 
+      // Map sales by source (offline/out-sales breakdown)
+      const rawSource = res.salesBySource as any;
+      const mappedSourceList: Models.SalesBySourceItem[] = (rawSource?.by_source || []).map((s: any) => ({
+        key: s.key || 'unspecified',
+        orders: s.orders || 0,
+        goods_revenue: s.goods_revenue ? parseFloat(s.goods_revenue) : 0,
+        total_revenue: s.total_revenue ? parseFloat(s.total_revenue) : 0
+      }));
+      this.salesBySource.set({
+        period: rawSource?.period || period,
+        by_source: mappedSourceList
+      });
+
       this.buildSalesCharts();
+      this.buildOutSalesCharts();
     });
   }
 
@@ -915,10 +926,27 @@ export class AnalyticsComponent implements OnInit {
     }
   }
 
+  private buildOutSalesCharts(): void {
+    const src = this.salesBySource();
+    if (src && src.by_source.length > 0) {
+      const palette = ['#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#3b82f6', '#ef4444', '#84cc16', '#f97316', '#14b8a6', '#a855f7', '#64748b'];
+      this.charts['outSalesSource'] = {
+        data: {
+          labels: src.by_source.map(s => s.key === 'unspecified' ? 'Unspecified' : s.key),
+          datasets: [{
+            data: src.by_source.map(s => s.orders),
+            backgroundColor: palette,
+            borderWidth: 0
+          }]
+        },
+        options: this.getDoughnutOptions()
+      };
+    }
+  }
+
   private buildCustomersCharts(): void {
     const segs = this.customerSegments();
     const patterns = this.patternsTime();
-
     // 1. Customer Segments Doughnut
     if (segs && segs.segments.length > 0) {
       this.charts['customerSegments'] = {

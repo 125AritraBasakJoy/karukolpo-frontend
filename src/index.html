@@ -25,21 +25,21 @@
   <meta property="twitter:image" content="https://karukolpo.com/assets/landing-bg.webp">
 
   <!-- Canonical URL -->
-  <link rel="canonical" href="https://karukolpo.com/" />
+  <link rel="canonical" href="https://karukolpo.com/"/>
 
   <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://api.karukolpocrafts.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="preconnect" href="https://api.karukolpocrafts.com" crossorigin="">
 
   <!-- Preload Critical API Data - Breaks the 5s serial chain -->
-  <link rel="preload" as="fetch" href="https://api.karukolpocrafts.com/categories?skip=0&limit=100" crossorigin>
-  <link rel="preload" as="fetch" href="https://api.karukolpocrafts.com/products/hot-deals" crossorigin>
-  <link rel="preload" as="fetch" href="https://api.karukolpocrafts.com/products/best-sellers" crossorigin>
+  <link rel="preload" as="fetch" href="https://api.karukolpocrafts.com/categories?skip=0&amp;limit=100" crossorigin="">
+  <link rel="preload" as="fetch" href="https://api.karukolpocrafts.com/products/hot-deals" crossorigin="">
+  <link rel="preload" as="fetch" href="https://api.karukolpocrafts.com/products/best-sellers" crossorigin="">
 
   <!-- Preload Critical Assets FIRST -->
   <link rel="preload" as="image" href="assets/landing-bg.webp" type="image/webp" fetchpriority="high">
-  <link rel="preload" as="font" href="https://fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwY.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="font" href="https://fonts.gstatic.com/s/inter/v20/UcCo3FwrK3iLTcviYwY.woff2" type="font/woff2" crossorigin="">
 
   <!-- Inline Critical CSS: Zero-flicker shell -->
   <style>
@@ -55,7 +55,7 @@
   </style>
 
   <!-- Non-render-blocking fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"></noscript>
   
   <!-- Structured Data -->
@@ -101,6 +101,13 @@
     ]
   }
   </script>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Karukolpo">
 </head>
 
 <body>
@@ -115,8 +122,7 @@
 
     <!-- Hero Shell -->
     <div class="hero-shell">
-      <img src="assets/landing-bg.webp" class="hero-image" alt="Karukolpo Official Hero Banner"
-           fetchpriority="high" decoding="async" loading="eager">
+      <img src="assets/landing-bg.webp" class="hero-image" alt="Karukolpo Official Hero Banner" fetchpriority="high" decoding="async" loading="eager">
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <h1 class="hero-title">Karukolpo</h1>

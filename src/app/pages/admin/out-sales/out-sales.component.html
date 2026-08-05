@@ -57,14 +57,14 @@
  
             <!-- Payment / date / delivery -->
             <div class="grid mb-4">
-                <div class="field col-12 sm:col-6 lg:col-4">
+                <div class="field col-12 sm:col-6 lg:col-3">
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Payment
                         Method</label>
                     <p-dropdown [options]="paymentMethods" optionLabel="label" optionValue="value"
                         [(ngModel)]="paymentMethod" [ngModelOptions]="{ standalone: true }" styleClass="w-full"
                         inputStyleClass="premium-input"></p-dropdown>
                 </div>
-                <div class="field col-12 sm:col-6 lg:col-4">
+                <div class="field col-12 sm:col-6 lg:col-3">
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
                         <i class="pi pi-calendar"></i> Sale Date & Time
                     </label>
@@ -72,11 +72,18 @@
                         placeholder="Select date & time..." hourFormat="12"
                         styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
                 </div>
-                <div class="field col-12 sm:col-6 lg:col-4">
+                <div class="field col-12 sm:col-6 lg:col-3">
                     <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Delivery
                         Charge</label>
                     <p-inputNumber [(ngModel)]="deliveryCharge" [min]="0" mode="decimal" styleClass="w-full"
                         inputStyleClass="w-full premium-input"></p-inputNumber>
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
+                        <i class="pi pi-store"></i> Source of Sell
+                    </label>
+                    <input pInputText [(ngModel)]="source" name="saleSource" placeholder="e.g. Facebook, WhatsApp, Stall…"
+                        maxlength="100" class="w-full premium-input">
                 </div>
             </div>
 

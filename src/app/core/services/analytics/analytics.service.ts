@@ -110,6 +110,12 @@ export class AnalyticsService {
     );
   }
 
+  getSalesBySource(period = '30d'): Observable<Models.SalesBySourceResponse> {
+    return this.apiService.get<Models.SalesBySourceResponse>(
+      API_ENDPOINTS.ANALYTICS.SALES_BY_SOURCE(period)
+    );
+  }
+
   getMarketingAttribution(period = '30d'): Observable<Models.AttributionResponse> {
     return this.apiService.get<Models.AttributionResponse>(
       API_ENDPOINTS.ANALYTICS.MARKETING_ATTRIBUTION(period)

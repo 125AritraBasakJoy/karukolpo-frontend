@@ -4,7 +4,7 @@
   margin-top: auto;
   border-top: 1px solid var(--surface-border);
   min-height: 400px; /* Reserve space for footer on desktop */
-  contain: layout; /* Helps with rendering stability */
+  contain: layout style; /* Helps with rendering stability */
 
   @media (max-width: 768px) {
     min-height: 600px; /* More space on mobile for stacked content */

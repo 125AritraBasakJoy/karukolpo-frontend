@@ -27,4 +27,5 @@ export const ANALYTICS_API = {
     TRAFFIC_LANDING: (period = '30d') => `${BASE}/traffic/landing?period=${period}`,
     TRAFFIC_GEO: (period = '30d') => `${BASE}/traffic/geo?period=${period}`,
     TRAFFIC_CONVERSION: (period = '30d') => `${BASE}/traffic/conversion?period=${period}`,
+    SALES_BY_SOURCE: (period = '30d') => `${BASE}/sales-by-source?period=${period}`,
 } as const;

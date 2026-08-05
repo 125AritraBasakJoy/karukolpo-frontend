@@ -69,7 +69,6 @@ import { DividerModule } from 'primeng/divider';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HomeComponent implements OnInit, OnDestroy {
-    products = signal<Product[]>([]);
     // cart = signal<CartItem[]>([]); // Removed, using CartService
     loading = signal<boolean>(false);
     displayProductModal = false;
@@ -118,7 +117,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     placedOrderNumber = '';
     currentPaymentId: number | null = null;
     transactionId = '';
-    landingPageImage = signal<string>('assets/landing-bg.webp');
     landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
     categoryImages: { [key: string]: string } = {
         'Prodip': 'assets/categories/prodip.webp',
@@ -130,7 +128,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     };
     categories = this.categoryService.categories;
     selectedCategory: Category | null = null;
-    filteredProducts = signal<Product[]>([]);
     hotDeals = signal<Product[]>([]);
     bestSelling = signal<Product[]>([]);
     dropdownOpen = false;
@@ -347,19 +344,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     loadProducts() {
-        this.loading.set(true);
-        this.productService.getProducts().subscribe({
-            next: (products) => {
-                this.products.set(products);
-                this.filteredProducts.set(products);
-                this.loading.set(false);
-            },
-            error: (err) => {
-                console.error('Error fetching products', err);
-                this.loading.set(false);
-            }
-        });
-
         this.loadSpecialSections();
     }
 

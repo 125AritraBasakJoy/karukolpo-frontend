@@ -63,19 +63,28 @@
     @defer (on viewport) {
     @if (bestSelling().length > 0) {
     <div id="best-selling" class="surface-ground">
-        <div class="container px-4">
-            <p-divider align="center" styleClass="m-0">
-                <div class="elegant-header px-4">
-                    <span class="subtitle text-primary">Curated Collection</span>
-                    <h2 class="title m-0">Best Selling</h2>
-                </div>
-            </p-divider>
+        <div class="container px-4 relative">
+            <div class="section-header-container">
+                <p-divider align="center" styleClass="m-0">
+                    <div class="elegant-header px-4">
+                        <span class="subtitle text-primary">Curated Collection</span>
+                        <h2 class="title m-0">Best Selling</h2>
+                    </div>
+                </p-divider>
+            </div>
 
-            <p-carousel [value]="bestSelling()" [numVisible]="6" [numScroll]="1" [circular]="true"
-                styleClass="carousel-stable" [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000"
-                [showNavigators]="false" [showIndicators]="bestSelling().length > 6">
-                <ng-template let-product pTemplate="item">
-                    <div class="px-2 h-full">
+
+
+            <div class="swipe-section-wrapper">
+                @if (bestSelling().length > 6) {
+                <button pButton icon="pi pi-chevron-left" 
+                    class="swipe-nav-btn prev-btn p-button-rounded p-button-outlined" 
+                    (click)="scrollLeft(bestSellingList)"></button>
+                }
+
+                <div class="product-swipe-container" #bestSellingList>
+                    @for (product of bestSelling(); track product.id) {
+                    <div class="swipe-card-wrapper px-2">
                         <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                                 <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
@@ -123,8 +132,29 @@
                             </div>
                         </div>
                     </div>
-                </ng-template>
-            </p-carousel>
+                    }
+                    <!-- View All Card at the end of Best Selling -->
+                    <div class="swipe-card-wrapper px-2">
+                        <div class="product-card premium-product-card view-all-product-card flex flex-column align-items-center justify-content-center h-full cursor-pointer text-center"
+                            [routerLink]="['/all-products']" [queryParams]="{ filter: 'best-selling' }">
+                            <div class="view-more-card-content flex flex-column align-items-center justify-content-center py-6 h-full w-full">
+                                <div class="view-more-icon-circle mb-3 flex align-items-center justify-content-center">
+                                    <i class="pi pi-arrow-right text-xl"></i>
+                                </div>
+                                <span class="view-more-card-text">View All</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (bestSelling().length > 6) {
+                <button pButton icon="pi pi-chevron-right" 
+                    class="swipe-nav-btn next-btn p-button-rounded p-button-outlined" 
+                    (click)="scrollRight(bestSellingList)"></button>
+                }
+            </div>
+
+
         </div>
     </div>
     }
@@ -146,19 +176,28 @@
     @defer (on viewport) {
     @if (hotDeals().length > 0) {
     <div id="hot-deals">
-        <div class="container px-4">
-            <p-divider align="center" styleClass="m-0">
-                <div class="elegant-header px-4">
-                    <span class="subtitle text-primary">Special Offers</span>
-                    <h2 class="title m-0">Hot Deals</h2>
-                </div>
-            </p-divider>
+        <div class="container px-4 relative">
+            <div class="section-header-container">
+                <p-divider align="center" styleClass="m-0">
+                    <div class="elegant-header px-4">
+                        <span class="subtitle text-primary">Special Offers</span>
+                        <h2 class="title m-0">Hot Deals</h2>
+                    </div>
+                </p-divider>
+            </div>
 
-            <p-carousel [value]="hotDeals()" [numVisible]="6" [numScroll]="1" [circular]="true"
-                styleClass="carousel-stable" [responsiveOptions]="responsiveOptions" [autoplayInterval]="3000"
-                [showNavigators]="false" [showIndicators]="hotDeals().length > 6">
-                <ng-template let-product pTemplate="item">
-                    <div class="px-2 h-full">
+
+
+            <div class="swipe-section-wrapper">
+                @if (hotDeals().length > 6) {
+                <button pButton icon="pi pi-chevron-left" 
+                    class="swipe-nav-btn prev-btn p-button-rounded p-button-outlined" 
+                    (click)="scrollLeft(hotDealsList)"></button>
+                }
+
+                <div class="product-swipe-container" #hotDealsList>
+                    @for (product of hotDeals(); track product.id) {
+                    <div class="swipe-card-wrapper px-2">
                         <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                                 <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
@@ -206,8 +245,29 @@
                             </div>
                         </div>
                     </div>
-                </ng-template>
-            </p-carousel>
+                    }
+                    <!-- View All Card at the end of Hot Deals -->
+                    <div class="swipe-card-wrapper px-2">
+                        <div class="product-card premium-product-card view-all-product-card flex flex-column align-items-center justify-content-center h-full cursor-pointer text-center"
+                            [routerLink]="['/all-products']" [queryParams]="{ filter: 'hot-deals' }">
+                            <div class="view-more-card-content flex flex-column align-items-center justify-content-center py-6 h-full w-full">
+                                <div class="view-more-icon-circle mb-3 flex align-items-center justify-content-center">
+                                    <i class="pi pi-arrow-right text-xl"></i>
+                                </div>
+                                <span class="view-more-card-text">View All</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (hotDeals().length > 6) {
+                <button pButton icon="pi pi-chevron-right" 
+                    class="swipe-nav-btn next-btn p-button-rounded p-button-outlined" 
+                    (click)="scrollRight(hotDealsList)"></button>
+                }
+            </div>
+
+
         </div>
     </div>
     }
@@ -227,7 +287,7 @@
     <!-- Crafted by Hands Section -->
     @defer (on viewport) {
     <section class="crafted-section">
-        <div class="container">
+        <div class="container px-4">
             <p-divider align="center" styleClass="mb-4">
                 <div class="elegant-header px-4">
                     <span class="subtitle text-primary">Our Story</span>
@@ -265,7 +325,7 @@
         </div>
     </section>
     } @placeholder {
-    <div class="container py-8">
+    <div class="container px-4 py-8">
         <div class="skeleton-loader h-20rem w-full border-round-xl"></div>
     </div>
     }

@@ -236,10 +236,10 @@ export class AnalyticsComponent implements OnInit {
   private fetchOverviewTab(period: string): void {
     this.loadingStates.overview.set(true);
     forkJoin({
-      overview: this.analyticsService.getOverview(period).pipe(catchError(() => of(this.getFallbackOverview()))),
-      timeseries: this.analyticsService.getRevenueTimeseries(period, 'day').pipe(catchError(() => of(this.getFallbackTimeseries(period)))),
-      traffic: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => of(this.getFallbackTrafficOverview()))),
-      conversion: this.analyticsService.getTrafficConversion(period).pipe(catchError(() => of(this.getFallbackConversion())))
+      overview: this.analyticsService.getOverview(period).pipe(catchError(() => of({}))),
+      timeseries: this.analyticsService.getRevenueTimeseries(period, 'day').pipe(catchError(() => of({}))),
+      traffic: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => of({}))),
+      conversion: this.analyticsService.getTrafficConversion(period).pipe(catchError(() => of({})))
     })
     .pipe(finalize(() => this.loadingStates.overview.set(false)))
     .subscribe(res => {
@@ -259,8 +259,8 @@ export class AnalyticsComponent implements OnInit {
       const rawTraffic = res.traffic as any;
       const mappedTraffic: Models.TrafficOverviewResponse = {
         total_sessions: rawTraffic?.total_visits ?? (rawTraffic?.total_sessions ?? 0),
-        bounce_rate: rawTraffic?.bounce_rate ?? 42.5,
-        avg_session_duration: rawTraffic?.avg_session_duration ?? 184
+        bounce_rate: rawTraffic?.bounce_rate ?? 0,
+        avg_session_duration: rawTraffic?.avg_session_duration ?? 0
       };
 
       // Map conversion
@@ -317,12 +317,11 @@ export class AnalyticsComponent implements OnInit {
   private fetchSalesTab(period: string, granularity: string): void {
     this.loadingStates.sales.set(true);
     forkJoin({
-      timeseries: this.analyticsService.getRevenueTimeseries(period, granularity).pipe(catchError(() => of(this.getFallbackTimeseries(period)))),
-      breakdown: this.analyticsService.getOrdersBreakdown(period).pipe(catchError(() => of(this.getFallbackBreakdown()))),
+      timeseries: this.analyticsService.getRevenueTimeseries(period, granularity).pipe(catchError(() => of({}))),
+      breakdown: this.analyticsService.getOrdersBreakdown(period).pipe(catchError(() => of({}))),
       profitable: this.analyticsService.getProfitableProducts(period, 10).pipe(catchError(() => of([]))),
-      discounts: this.analyticsService.getDiscounts(period).pipe(catchError(() => of(this.getFallbackDiscounts()))),
-      risk: this.analyticsService.getOrdersRisk(period).pipe(catchError(() => of({ orders: [] }))),
-      allProducts: this.productService.getProducts(0, 100, undefined, true).pipe(catchError(() => of({ products: [], total: 0 })))
+      discounts: this.analyticsService.getDiscounts(period).pipe(catchError(() => of({}))),
+      risk: this.analyticsService.getOrdersRisk(period).pipe(catchError(() => of({ orders: [] })))
     })
     .pipe(finalize(() => this.loadingStates.sales.set(false)))
     .subscribe(res => {
@@ -377,48 +376,29 @@ export class AnalyticsComponent implements OnInit {
       });
 
       // Map profitable products
-      let mappedProfitable: Models.ProfitableProduct[] = (res.profitable || []).map((p: any) => {
-        const costVal = p.cost ? parseFloat(p.cost) : 0;
-        const revenueVal = p.revenue ? parseFloat(p.revenue) : 0;
-        const profitVal = p.profit ? parseFloat(p.profit) : (revenueVal - costVal);
-        const marginVal = revenueVal > 0 ? (profitVal / revenueVal) * 100 : 0;
-        return {
-          product_id: p.product_id,
-          name: p.name,
-          cost: costVal,
-          revenue: revenueVal,
-          profit: profitVal,
-          margin_percentage: marginVal
-        };
-      });
+      const dummyNames = new Set([
+        'শঙ্খ-লহরী', 'শঙ্খলহরী', 'দীপালিকা', 'পল্লব', 'হংসবলাকা', 
+        'পদ্মপ্রভা', 'আভা', 'শ্যামা-রূপসী', 'শিউলিতরু', 'শিউলি তরু', 
+        'সিন্দুরগা', 'সিন্দুরদা', 'সিন্দুর', 'সিন্দুরা', 'আকাশদীপ'
+      ]);
 
-      // Fallback: If no profitable products returned by backend (e.g. no orders placed yet),
-      // we generate profitability records using products in the database!
-      const dbProducts = Array.isArray(res.allProducts) 
-        ? res.allProducts 
-        : ((res.allProducts as any)?.products || []);
-
-      if (mappedProfitable.length === 0 && dbProducts.length > 0) {
-        mappedProfitable = dbProducts.map((p: any) => {
-          const price = p.price || 0;
-          const cost = p.cost || (price * 0.65); // Fallback: 65% cost of price (35% margin)
-          const profit = price - cost;
-          const margin = price > 0 ? (profit / price) * 100 : 0;
-          // Simulate some sales revenue to make the dashboard look premium and realistic
-          const simulatedSales = ((p.id ? String(p.id).charCodeAt(0) : 1) % 15) + 5; // Deterministic simulated sales count
-          const revenue = price * simulatedSales;
+      let mappedProfitable: Models.ProfitableProduct[] = (res.profitable || [])
+        .map((p: any) => {
+          const costVal = p.cost ? parseFloat(p.cost) : 0;
+          const revenueVal = p.revenue ? parseFloat(p.revenue) : 0;
+          const profitVal = p.profit ? parseFloat(p.profit) : (revenueVal - costVal);
+          const marginVal = revenueVal > 0 ? (profitVal / revenueVal) * 100 : 0;
           return {
-            product_id: p.id,
+            product_id: p.product_id,
             name: p.name,
-            cost: cost,
-            revenue: revenue,
-            profit: profit,
-            margin_percentage: margin
+            cost: costVal,
+            revenue: revenueVal,
+            profit: profitVal,
+            margin_percentage: marginVal,
+            units: p.units ? parseInt(p.units, 10) : (p.units_sold ? parseInt(p.units_sold, 10) : (p.quantity ? parseInt(p.quantity, 10) : 0))
           };
         })
-        .sort((a: any, b: any) => b.margin_percentage - a.margin_percentage)
-        .slice(0, 10);
-      }
+        .filter((p: Models.ProfitableProduct) => !dummyNames.has(p.name?.trim() || ''));
 
       this.profitableProducts.set(mappedProfitable);
 
@@ -480,10 +460,10 @@ export class AnalyticsComponent implements OnInit {
   private fetchCustomersTab(period: string, geoGroupBy: string): void {
     this.loadingStates.customers.set(true);
     forkJoin({
-      customers: this.analyticsService.getCustomers(period, 10).pipe(catchError(() => of(this.getFallbackCustomers()))),
-      segments: this.analyticsService.getCustomerSegments(period).pipe(catchError(() => of(this.getFallbackSegments()))),
+      customers: this.analyticsService.getCustomers(period, 10).pipe(catchError(() => of({}))),
+      segments: this.analyticsService.getCustomerSegments(period).pipe(catchError(() => of({}))),
       cohorts: this.analyticsService.getCustomerCohorts(6).pipe(catchError(() => of({ cohorts: [] }))),
-      timePatterns: this.analyticsService.getPatternsTime(period).pipe(catchError(() => of(this.getFallbackTimePatterns()))),
+      timePatterns: this.analyticsService.getPatternsTime(period).pipe(catchError(() => of({}))),
       geo: this.analyticsService.getGeography(period, geoGroupBy).pipe(catchError(() => of({ data: [] })))
     })
     .pipe(finalize(() => this.loadingStates.customers.set(false)))
@@ -579,7 +559,7 @@ export class AnalyticsComponent implements OnInit {
     forkJoin({
       topProdRev: this.analyticsService.getTopProducts(period, 'revenue', 8).pipe(catchError(() => of([]))),
       topCat: this.analyticsService.getTopCategories(period, 8).pipe(catchError(() => of([]))),
-      health: this.analyticsService.getInventoryHealth().pipe(catchError(() => of(this.getFallbackInventoryHealth()))),
+      health: this.analyticsService.getInventoryHealth().pipe(catchError(() => of({}))),
       slowMovers: this.analyticsService.getInventorySlowMovers(period).pipe(catchError(() => of({ products: [] }))),
       basket: this.analyticsService.getPatternsBasket(period, 8).pipe(catchError(() => of({ pairs: [] }))),
       products: this.productService.getProducts(0, 1000, undefined, true).pipe(catchError(() => of([])))
@@ -639,7 +619,7 @@ export class AnalyticsComponent implements OnInit {
         frozen_value: sm.frozen_value ? parseFloat(sm.frozen_value) : 0
       }));
       this.slowMovers.set({
-        products: mappedSlowProducts.length > 0 ? mappedSlowProducts : this.getFallbackSlowMovers(productsList)
+        products: mappedSlowProducts
       });
 
       // Map Basket Pairs
@@ -648,7 +628,7 @@ export class AnalyticsComponent implements OnInit {
         product_a: pair.product_a,
         product_b: pair.product_b,
         support: rawBasket.orders > 0 ? (pair.count / rawBasket.orders) * 100 : 0,
-        confidence: 80,
+        confidence: pair.confidence || 0,
         co_occurrences: pair.count || 0
       }));
       this.patternsBasket.set({
@@ -662,7 +642,7 @@ export class AnalyticsComponent implements OnInit {
   private fetchTrafficTab(period: string): void {
     this.loadingStates.traffic.set(true);
     forkJoin({
-      overview: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => of(this.getFallbackTrafficOverview()))),
+      overview: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => of({}))),
       sources: this.analyticsService.getTrafficSources(period).pipe(catchError(() => of({ sources: [] }))),
       landing: this.analyticsService.getTrafficLanding(period).pipe(catchError(() => of({ pages: [] }))),
       geo: this.analyticsService.getTrafficGeo(period).pipe(catchError(() => of({ regions: [] }))),
@@ -675,8 +655,8 @@ export class AnalyticsComponent implements OnInit {
       const rawTraffic = res.overview as any;
       this.trafficOverview.set({
         total_sessions: rawTraffic?.total_visits || 0,
-        bounce_rate: 42.5,
-        avg_session_duration: 184
+        bounce_rate: rawTraffic?.bounce_rate || 0,
+        avg_session_duration: rawTraffic?.avg_session_duration || 0
       });
 
       // Map Traffic Sources
@@ -696,7 +676,7 @@ export class AnalyticsComponent implements OnInit {
       const mappedLandingList: Models.LandingPageTraffic[] = (rawLanding?.landing_pages || []).map((l: any) => ({
         path: l.path || '/',
         sessions: l.visits || 0,
-        bounce_rate: 40.0
+        bounce_rate: l.bounce_rate || 0
       }));
       this.trafficLanding.set({
         pages: mappedLandingList.length > 0 ? mappedLandingList : (rawLanding.pages || [])
@@ -1220,174 +1200,5 @@ export class AnalyticsComponent implements OnInit {
         }
       }
     };
-  }
-
-  // --- FALLBACK MOCK DATA ---
-
-  private getFallbackOverview(): Models.OverviewResponse {
-    return {
-      total_revenue: 124850,
-      revenue_growth_percentage: 12.4,
-      total_orders: 840,
-      orders_growth_percentage: 8.2,
-      average_order_value: 148.6,
-      conversion_rate: 3.12,
-      active_customers: 650
-    };
-  }
-
-  private getFallbackTimeseries(period: string): Models.RevenueTimeseriesResponse {
-    const pointsCount = period === '7d' ? 7 : period === '30d' ? 10 : period === '90d' ? 12 : 12;
-    const data: Models.RevenueTimeseriesPoint[] = [];
-    const date = new Date();
-
-    for (let i = pointsCount - 1; i >= 0; i--) {
-      const d = new Date();
-      if (period === '12m') {
-        d.setMonth(date.getMonth() - i);
-      } else {
-        d.setDate(date.getDate() - i * (period === '90d' ? 7 : 1));
-      }
-
-      const dateStr = period === '12m' 
-        ? d.toLocaleString('default', { month: 'short' }) 
-        : d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
-
-      data.push({
-        date: dateStr,
-        revenue: 3000 + Math.floor(Math.random() * 8000),
-        orders: 15 + Math.floor(Math.random() * 35)
-      });
-    }
-
-    return {
-      data,
-      period,
-      granularity: 'day'
-    };
-  }
-
-  private getFallbackTrafficOverview(): Models.TrafficOverviewResponse {
-    return {
-      total_sessions: 24500,
-      bounce_rate: 42.5,
-      avg_session_duration: 184
-    };
-  }
-
-  private getFallbackConversion(): Models.TrafficConversionResponse {
-    return {
-      steps: [
-        { step_name: 'Visits', count: 24500, drop_off_percentage: 0 },
-        { step_name: 'Product Views', count: 12800, drop_off_percentage: 47.7 },
-        { step_name: 'Cart Adds', count: 3200, drop_off_percentage: 75.0 },
-        { step_name: 'Purchased', count: 764, drop_off_percentage: 76.1 }
-      ]
-    };
-  }
-
-  private getFallbackBreakdown(): Models.OrdersBreakdownResponse {
-    return {
-      by_status: [
-        { status: 'Completed', count: 620, value: 92300 },
-        { status: 'Pending', count: 120, value: 18500 },
-        { status: 'Processing', count: 80, value: 11200 },
-        { status: 'Cancelled', count: 20, value: 2850 }
-      ],
-      by_payment_method: [
-        { method: 'bKash', count: 480, value: 71200 },
-        { method: 'Nagad', count: 210, value: 31000 },
-        { method: 'Cash on Delivery', count: 130, value: 19800 },
-        { method: 'Card', count: 20, value: 2850 }
-      ]
-    };
-  }
-
-  private getFallbackDiscounts(): Models.DiscountsResponse {
-    return {
-      total_discount_amount: 8450,
-      promo_code_usage: [
-        { code: 'EID2026', count: 140, discount_value: 4200 },
-        { code: 'WELCOME10', count: 85, discount_value: 1850 },
-        { code: 'FREESHIP', count: 120, discount_value: 2400 }
-      ],
-      discount_impact: 6.8
-    };
-  }
-
-  private getFallbackCustomers(): Models.CustomersResponse {
-    return {
-      total_customers: 1240,
-      new_customers: 340,
-      returning_customers: 900,
-      top_customers: [
-        { customer_name: 'Aritra Basak Joy', email: 'aritra@example.com', orders_count: 14, total_spent: 42500 },
-        { customer_name: 'Anika Rahman', email: 'anika@example.com', orders_count: 11, total_spent: 28900 },
-        { customer_name: 'Tanvir Hassan', email: 'tanvir@example.com', orders_count: 8, total_spent: 19400 }
-      ]
-    };
-  }
-
-  private getFallbackSegments(): Models.CustomerSegmentsResponse {
-    return {
-      segments: [
-        { name: 'Loyal', count: 320, description: 'Multiple high-value purchases', revenue_contribution: 45 },
-        { name: 'New Customers', count: 180, description: 'First-time buyers', revenue_contribution: 15 },
-        { name: 'At Risk', count: 120, description: 'Idle for more than 45 days', revenue_contribution: 10 },
-        { name: 'Sleeper', count: 220, description: 'Has not purchased in 6 months', revenue_contribution: 8 }
-      ]
-    };
-  }
-
-  private getFallbackTimePatterns(): Models.PatternsTimeResponse {
-    return {
-      by_day_of_week: [
-        { day: 'Mon', revenue: 15400, orders: 110 },
-        { day: 'Tue', revenue: 14200, orders: 98 },
-        { day: 'Wed', revenue: 16800, orders: 122 },
-        { day: 'Thu', revenue: 17500, orders: 130 },
-        { day: 'Fri', revenue: 21000, orders: 165 },
-        { day: 'Sat', revenue: 23500, orders: 180 },
-        { day: 'Sun', revenue: 16400, orders: 115 }
-      ],
-      by_hour: Array.from({ length: 12 }, (_, idx) => {
-        const hour = 8 + idx;
-        return {
-          hour,
-          revenue: 1200 + Math.floor(Math.random() * 4500),
-          orders: 5 + Math.floor(Math.random() * 25)
-        };
-      })
-    };
-  }
-
-  private getFallbackInventoryHealth(): Models.InventoryHealthResponse {
-    return {
-      total_products: 142,
-      in_stock: 118,
-      out_of_stock: 12,
-      low_stock: 12,
-      estimated_value: 485000
-    };
-  }
-
-  private getFallbackSlowMovers(products: any[]): Models.SlowMover[] {
-    const active = (Array.isArray(products) ? products : []).filter(p => p.isInStock && p.stock !== undefined && p.stock > 0);
-    if (active.length === 0) {
-      return [
-        { name: 'Premium Cotton Kurta', sold: 0, on_hand: 42, sell_through_pct: 0, frozen_value: 84000 },
-        { name: 'Embroidered Panjabi', sold: 0, on_hand: 28, sell_through_pct: 0, frozen_value: 56000 },
-        { name: 'Classic Chino Trouser', sold: 0, on_hand: 35, sell_through_pct: 0, frozen_value: 43750 },
-        { name: 'Handloom Scarf', sold: 0, on_hand: 60, sell_through_pct: 0, frozen_value: 27000 }
-      ];
-    }
-    const sorted = [...active].sort((a, b) => ((a.stock || 0) * (a.price || 0)) - ((b.stock || 0) * (b.price || 0)));
-    return sorted.slice(0, 8).map(p => ({
-      name: p.name,
-      sold: 0,
-      on_hand: p.stock,
-      sell_through_pct: 0,
-      frozen_value: (p.price || 0) * (p.stock || 0)
-    }));
   }
 }

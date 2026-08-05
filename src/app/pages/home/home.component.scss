@@ -345,6 +345,8 @@
   box-shadow: none;
   min-height: auto;
   display: block;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
 
   .crafted-image-wrapper {
     position: relative;
@@ -527,9 +529,15 @@
 
 #hot-deals,
 #best-selling,
-.crafted-section,
 #contact {
   padding: 0.75rem 0;
+  scroll-margin-top: 1rem;
+  display: block;
+}
+
+.crafted-section {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
   scroll-margin-top: 1rem;
   display: block;
 }
@@ -724,4 +732,185 @@
 // Carousel custom indicators override for better clickability/accessibility
 :host ::ng-deep .p-carousel-indicators {
   padding: 0.5rem 0 0 0; // Tightened to reduce gap after products
+}
+
+.section-header-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
+}
+
+
+
+.swipe-section-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  
+  .swipe-nav-btn {
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    width: 46px !important;
+    height: 46px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+
+    &:hover {
+      background: #fff !important;
+      border-color: #fff !important;
+      color: #0b0f19 !important;
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.4) !important;
+    }
+
+    &.prev-btn {
+      left: 1rem;
+    }
+
+    &.next-btn {
+      right: 1rem;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .swipe-nav-btn {
+      display: none !important; // Hide buttons on mobile/tablet, rely on native touch scroll
+    }
+  }
+}
+
+.product-swipe-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; // Firefox
+  &::-webkit-scrollbar {
+    display: none; // Chrome, Safari, Opera
+  }
+  width: 100%;
+  padding: 1rem 0;
+  margin: 0;
+  
+  // Smooth snapping behavior
+  scroll-snap-type: x mandatory;
+}
+
+.swipe-card-wrapper {
+  flex: 0 0 auto;
+  width: 16.666667%; // 6 items on big screens
+  scroll-snap-align: start;
+  box-sizing: border-box;
+
+  @media (max-width: 1400px) {
+    width: 20%; // 5 items
+  }
+
+  @media (max-width: 1200px) {
+    width: 25%; // 4 items
+  }
+
+  @media (max-width: 991px) {
+    width: 33.333333%; // 3 items
+  }
+
+  @media (max-width: 768px) {
+    width: 45%; // 2 items fully visible with peeking at the next
+  }
+  
+  @media (max-width: 480px) {
+    width: 70%; // Focuses on 1.5 items on very small screen
+  }
+}
+
+// Special View All card styling at the end of rows
+.view-all-product-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)) !important;
+  border: 1px dashed color-mix(in srgb, var(--primary-500) 30%, transparent) !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  
+  .view-more-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    .view-more-icon-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--primary-500) 10%, transparent) !important;
+      border: 1px solid color-mix(in srgb, var(--primary-500) 25%, transparent) !important;
+      color: var(--primary-500) !important;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      i {
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        color: var(--primary-500) !important;
+      }
+    }
+
+    .view-more-card-text {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--primary-500) !important;
+      opacity: 0.85;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+  }
+
+  &:hover {
+    background: rgba(15, 23, 42, 0.9) !important;
+    border-style: solid !important;
+    border-color: var(--primary-500) !important;
+    box-shadow: 0 15px 35px color-mix(in srgb, var(--primary-500) 35%, transparent) !important;
+    transform: translateY(-8px) !important;
+
+    .view-more-icon-circle {
+      background-color: var(--primary-500) !important;
+      color: var(--primary-color-text) !important;
+      border-color: var(--primary-500) !important;
+      box-shadow: 0 0 15px color-mix(in srgb, var(--primary-500) 45%, transparent) !important;
+
+      i {
+        transform: translateX(4px);
+        color: var(--primary-color-text) !important;
+      }
+    }
+
+    .view-more-card-text {
+      color: #ffffff !important;
+      opacity: 1;
+      letter-spacing: 0.12em;
+    }
+  }
 }

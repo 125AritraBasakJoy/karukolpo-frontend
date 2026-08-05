@@ -431,6 +431,14 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
     }
 
+    scrollLeft(element: HTMLElement) {
+        element.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+
+    scrollRight(element: HTMLElement) {
+        element.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+
     showProductDetails(product: Product) {
         // Navigate to product details page instead of modal
         this.router.navigate(['/products', product.id]);

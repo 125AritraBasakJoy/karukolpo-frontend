@@ -70,6 +70,7 @@ export class OrdersComponent implements OnInit {
     method: '',
     deliveryCharge: 0,
     total: 0,
+    discount: 0,
     id: ''
   };
 
@@ -659,6 +660,7 @@ export class OrdersComponent implements OnInit {
           method: finalOrder.paymentMethod || 'COD',
           deliveryCharge: finalOrder.deliveryCharge || 0,
           total: finalOrder.totalAmount || 0,
+          discount: finalOrder.discountAmount || 0,
           id: orderIdStr,
           orderNumber: finalOrder.orderNumber || orderIdStr
         };

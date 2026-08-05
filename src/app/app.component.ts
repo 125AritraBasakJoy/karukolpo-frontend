@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID, isDevMode } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -33,6 +33,17 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
+      // Programmatically unregister any old/leftover service worker in development mode
+      if (isDevMode() && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for (const registration of registrations) {
+            registration.unregister().then(() => {
+              console.log('Unregistered active service worker in development mode');
+            });
+          }
+        });
+      }
+
       // Defer non-critical background work until the browser is idle,
       // so it doesn't compete with the home page's first paint / initial data.
       const defer = (fn: () => void) => {

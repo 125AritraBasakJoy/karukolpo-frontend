@@ -520,7 +520,7 @@ export class ProductService {
     const manualStatus = rawStatus as 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO';
 
     // Map Images
-    let mainImageUrl = data.primary_image_url || data.imageUrl || 'assets/images/placeholder.jpg';
+    let mainImageUrl = data.primary_image_url || data.imageUrl || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%231e293b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364748b" font-family="system-ui, sans-serif" font-size="14" font-weight="500">No Image</text></svg>';
     let galleryImages: string[] = [];
 
     if (data.images && Array.isArray(data.images) && data.images.length > 0) {

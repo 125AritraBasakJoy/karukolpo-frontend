@@ -39,7 +39,7 @@ export class AboutComponent {
         {
             name: 'Aritra Basak',
             role: 'Founder & CEO',
-            image: 'assets/team/placeholder.jpg',
+            image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%231e293b"/><circle cx="150" cy="120" r="50" fill="%23475569"/><path d="M70,240 C70,180 230,180 230,240" fill="%23475569"/></svg>',
             description: 'Passionate about preserving Bangladeshi heritage through handcrafts.'
         }
     ];

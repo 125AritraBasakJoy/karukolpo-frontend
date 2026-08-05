@@ -15,7 +15,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { forkJoin, lastValueFrom, of } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
-import { DataViewModule } from 'primeng/dataview';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule, NgModel } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -26,8 +25,6 @@ import { ProductService } from '../../core/services';;;
 import { OrderService } from '../../core/services';;;
 import { Product } from '../../models/product.model';
 import { CartItem } from '../../models/cart.model';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { GalleriaModule } from 'primeng/galleria';
 import { ContactService } from '../../core/services';;;
 import { DropdownModule } from 'primeng/dropdown';
 import { District, districts } from '../../data/bangladesh-data';
@@ -37,14 +34,12 @@ import { DeliveryService } from '../../core/services';;;
 import { SiteConfigService } from '../../core/services';;;
 import { CategoryService } from '../../core/services';;;
 import { Category } from '../../models/category.model';
-import { RadioButtonModule } from 'primeng/radiobutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
 import { Order } from '../../models/order.model';
 import { CartService } from '../../core/services';;;
 import { TooltipModule } from 'primeng/tooltip';
-import { CarouselModule } from 'primeng/carousel';
 import { DividerModule } from 'primeng/divider';
 
 @Component({
@@ -53,21 +48,16 @@ import { DividerModule } from 'primeng/divider';
         CommonModule,
         ButtonModule,
         DialogModule,
-        DataViewModule,
         InputNumberModule,
         FormsModule,
         InputTextModule,
         TextareaModule,
         ToastModule,
-        GalleriaModule,
-        ProgressSpinnerModule,
         DropdownModule,
-        RadioButtonModule,
         SkeletonModule,
         BadgeModule,
         TagModule,
         TooltipModule,
-        CarouselModule,
         DividerModule,
         CurrencyPipe,
         DatePipe,

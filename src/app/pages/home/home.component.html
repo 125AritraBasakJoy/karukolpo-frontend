@@ -89,7 +89,7 @@
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                                 <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
                                     sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                    priority="false" style="object-fit: cover;" class="product-image">
+                                    loading="lazy" style="object-fit: cover;" class="product-image">
 
                                 <div class="quick-actions-overlay">
                                     <button pButton icon="pi pi-search-plus" label="Details"
@@ -202,7 +202,7 @@
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                                 <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
                                     sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                    priority="false" style="object-fit: cover;" class="product-image">
+                                    loading="lazy" style="object-fit: cover;" class="product-image">
 
                                 <div class="quick-actions-overlay">
                                     <button pButton icon="pi pi-search-plus" label="Details"
@@ -298,7 +298,7 @@
                 <div class="col-12 md:col-4 mb-4 md:mb-0">
                     <div class="crafted-image-wrapper" style="aspect-ratio: 4/3; position: relative;">
                         <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Artisan weaving traditional fabrics"
-                            sizes="(max-width: 768px) 90vw, 33vw" priority="false" loading="lazy"
+                            sizes="(max-width: 768px) 90vw, 33vw" loading="lazy"
                             class="border-round-xl shadow-4 crafted-image">
                     </div>
                 </div>
@@ -642,7 +642,7 @@
                             [class.active]="selectedPaymentMethod === 'bKash'"
                             (click)="selectedPaymentMethod = 'bKash'">
                             <div class="bg-pink-900/20 p-3 border-circle">
-                                <img src="assets/bkash-logo.png" alt="bKash" height="30" loading="lazy">
+                                <img src="assets/bkash-logo.png" alt="bKash" width="97" height="30" loading="lazy">
                             </div>
                             <div class="font-bold text-color">bKash Payment</div>
                         </div>
@@ -657,7 +657,7 @@
                             class="inline-flex align-items-center justify-content-center surface-100 px-3 py-1 border-round-pill mb-3">
                             <span class="text-pink-400 font-bold text-sm">Scan to Pay</span>
                         </div>
-                        <img src="assets/bkash-qr.png" alt="bKash QR" width="160"
+                        <img src="assets/bkash-qr.png" alt="bKash QR" width="160" height="160"
                             class="border-round shadow-2 block mx-auto bg-white p-2" loading="lazy">
                     </div>
 

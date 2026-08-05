@@ -514,11 +514,9 @@ textarea,
 /* ── Universal Premium Product Card Design ───────────────────── */
 .premium-product-card {
     border-radius: 20px !important;
-    background: rgba(15, 23, 42, 0.6) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+    background: rgba(15, 23, 42, 0.85) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     z-index: 1;
     overflow: hidden;
     padding: 0.75rem !important; // Some breathing room inside

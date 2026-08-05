@@ -416,6 +416,7 @@
 <!-- I'll keep it but it won't be triggered. -->
 
 <!-- Checkout Modal (Step 1: Shipping) -->
+@if (displayCheckoutModal) {
 <p-dialog [(visible)]="displayCheckoutModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
     header="Checkout" [dismissableMask]="false">
     <ng-template pTemplate="content">
@@ -552,8 +553,10 @@
         </div>
     </ng-template>
 </p-dialog>
+}
 
 <!-- Track Order Modal -->
+@if (displayTrackOrderModal) {
 <p-dialog [(visible)]="displayTrackOrderModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
     header="Track Order">
     <div class="p-fluid">
@@ -607,8 +610,10 @@
         }
     </div>
 </p-dialog>
+}
 
 <!-- Order Success & Payment Selection Modal -->
+@if (displayOrderSuccessModal) {
 <p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}"
     header="Order Created!" [closable]="false" styleClass="premium-dialog" (onShow)="selectedPaymentMethod = null">
     <ng-template pTemplate="content">
@@ -693,8 +698,10 @@
         </div>
     </ng-template>
 </p-dialog>
+}
 
 <!-- Final Global Success Modal -->
+@if (displayFinalSuccessModal) {
 <p-dialog [(visible)]="displayFinalSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Order Confirmed"
     [closable]="true">
     <div class="flex flex-column align-items-center text-center p-4">
@@ -708,3 +715,4 @@
             (click)="displayFinalSuccessModal = false"></button>
     </div>
 </p-dialog>
+}

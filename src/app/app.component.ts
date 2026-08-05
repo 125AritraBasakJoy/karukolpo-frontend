@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { OrderService, NotificationService, VersionService, TrackingService } from './core/services';;
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { LoadingComponent } from './components/loading/loading.component';
 import { filter } from 'rxjs/operators';
 
@@ -25,12 +25,17 @@ export class AppComponent implements OnInit {
     private _notificationService: NotificationService,
     private router: Router,
     private versionService: VersionService,
-    private trackingService: TrackingService
+    private trackingService: TrackingService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
   ngOnInit() {
-    this.versionService.checkForUpdates();
-    this.trackingService.trackVisit();
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        this.versionService.checkForUpdates();
+        this.trackingService.trackVisit();
+      }, 2000);
+    }
 
     // Check if current route is admin - using window.location.pathname for initial load robustness
     this.isAdminRoute = window.location.pathname.startsWith('/admin');

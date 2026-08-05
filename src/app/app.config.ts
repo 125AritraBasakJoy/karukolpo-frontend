@@ -1,6 +1,6 @@
 import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { baseUrlInterceptor } from './core/interceptors/base-url.interceptor';
@@ -18,7 +18,7 @@ export const appConfig: ApplicationConfig = {
       anchorScrolling: 'enabled',
       scrollPositionRestoration: 'top'
     })),
-    provideAnimations(),
+    provideAnimationsAsync(),
     provideHttpClient(withInterceptors([baseUrlInterceptor, loadingInterceptor, authInterceptor, deviceIdInterceptor]), withFetch()),
     providePrimeNG({
       theme: {

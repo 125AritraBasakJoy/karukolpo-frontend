@@ -2,7 +2,7 @@ import { Component, OnInit, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID
 import { CommonModule, CurrencyPipe, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { Title, Meta } from '@angular/platform-browser';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../core/services';;;
 import { CartService } from '../../core/services';;;
@@ -48,6 +48,7 @@ export class AllProductsComponent implements OnInit {
     searchQuery = signal<string>('');
     selectedCategoryId = signal<string | null>(null);
     sortOrder = signal<string>('featured');
+    filterType = signal<string | null>(null);
     
     categories = this.categoryService.categories;
 
@@ -113,6 +114,14 @@ export class AllProductsComponent implements OnInit {
             });
         }
 
+        // 2.5. Special Filter (Hot Deals / Best Sellers)
+        const filter = this.filterType();
+        if (filter === 'hot-deals') {
+            result = result.filter(p => p.isHotDeal);
+        } else if (filter === 'best-selling') {
+            result = result.filter(p => p.isBestSeller);
+        }
+
         // 3. Sorting & Prioritization
         switch (this.sortOrder()) {
             case 'price-low':
@@ -145,6 +154,7 @@ export class AllProductsComponent implements OnInit {
 
     constructor(
         private router: Router,
+        private route: ActivatedRoute,
         private productService: ProductService,
         public cartService: CartService,
         private categoryService: CategoryService,
@@ -157,7 +167,14 @@ export class AllProductsComponent implements OnInit {
         if (isPlatformBrowser(this.platformId)) {
             window.scrollTo({ top: 0, behavior: 'instant' });
         }
-        this.updateSeo();
+        this.route.queryParams.subscribe(params => {
+            if (params['filter']) {
+                this.filterType.set(params['filter']);
+            } else {
+                this.filterType.set(null);
+            }
+            this.updateSeo();
+        });
         this.cartService.refreshCartProducts();
         this.loadProducts();
     }
@@ -177,8 +194,27 @@ export class AllProductsComponent implements OnInit {
     }
 
     updateSeo() {
-        this.titleService.setTitle('Our Collections | Karukolpo');
-        this.metaService.updateTag({ name: 'description', content: 'Explore our full collection of authentic Bangladeshi handcrafted items, from traditional Shora to modern home decor.' });
+        const filter = this.filterType();
+        if (filter === 'hot-deals') {
+            this.titleService.setTitle('Hot Deals | Karukolpo');
+            this.metaService.updateTag({ name: 'description', content: 'Explore our hot deals and special offers on authentic Bangladeshi handcrafted items.' });
+        } else if (filter === 'best-selling') {
+            this.titleService.setTitle('Best Selling | Karukolpo');
+            this.metaService.updateTag({ name: 'description', content: 'Shop our best-selling authentic Bangladeshi handcrafted items.' });
+        } else {
+            this.titleService.setTitle('Our Collections | Karukolpo');
+            this.metaService.updateTag({ name: 'description', content: 'Explore our full collection of authentic Bangladeshi handcrafted items, from traditional Shora to modern home decor.' });
+        }
+    }
+
+    getPageTitle(): string {
+        const filter = this.filterType();
+        if (filter === 'hot-deals') {
+            return 'Hot Deals';
+        } else if (filter === 'best-selling') {
+            return 'Best Selling';
+        }
+        return 'Our Collections';
     }
 
     showProductDetails(product: Product) {

@@ -175,6 +175,8 @@ export interface ProfitableProduct {
   revenue: number;
   profit: number;
   margin_percentage: number;
+  units_sold?: number;
+  units?: number;
 }
 
 export interface MarketingChannel {

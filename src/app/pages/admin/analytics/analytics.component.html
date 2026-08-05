@@ -241,10 +241,11 @@
                 <p-table [value]="profitableProducts()" styleClass="premium-table-ui text-xs sm:text-sm" [responsiveLayout]="'scroll'">
                   <ng-template pTemplate="header">
                     <tr>
-                      <th>Product Name</th>
-                      <th class="text-right hidden sm:table-cell">Unit Profit</th>
-                      <th class="text-right">Gross Profit</th>
-                      <th class="text-right">Margin</th>
+                      <th>Name</th>
+                      <th class="text-right">Units</th>
+                      <th class="text-right">Revenue</th>
+                      <th class="text-right">Cost</th>
+                      <th class="text-right">Profit</th>
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="body" let-prod>
@@ -252,21 +253,15 @@
                       <td>
                         <span class="font-semibold text-white block text-xs sm:text-sm" style="word-break: break-word;">{{ prod.name }}</span>
                       </td>
-                      <td class="text-right text-color-secondary hidden sm:table-cell">{{ prod.profit | number:'1.0-0' }} BDT</td>
-                      <td class="text-right text-emerald-400 font-semibold">{{ (prod.revenue * prod.margin_percentage / 100) | number:'1.0-0' }} BDT</td>
-                      <td class="text-right">
-                        <div class="flex flex-column align-items-end justify-content-center">
-                          <p-tag styleClass="premium-tag-green" [value]="(prod.margin_percentage | number:'1.0-0') + '%'"></p-tag>
-                          <div class="w-4rem bg-white-alpha-10 border-round overflow-hidden mt-1 hidden sm:block" style="height: 4px;">
-                            <div class="bg-emerald-500 h-full" [style.width]="prod.margin_percentage + '%'"></div>
-                          </div>
-                        </div>
-                      </td>
+                      <td class="text-right text-color-secondary">{{ prod.units ?? 0 | number }}</td>
+                      <td class="text-right text-emerald-400 font-semibold">{{ prod.revenue | number:'1.0-0' }} BDT</td>
+                      <td class="text-right text-color-secondary">{{ prod.cost | number:'1.0-0' }} BDT</td>
+                      <td class="text-right text-emerald-400 font-semibold">{{ prod.profit | number:'1.0-0' }} BDT</td>
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="emptymessage">
                     <tr>
-                      <td colspan="4" class="text-center py-4 text-color-secondary">No profitability records available.</td>
+                      <td colspan="5" class="text-center py-4 text-color-secondary">No profitability records available.</td>
                     </tr>
                   </ng-template>
                 </p-table>

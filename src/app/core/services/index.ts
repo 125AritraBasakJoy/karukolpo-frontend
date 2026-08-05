@@ -20,6 +20,7 @@ export * from './theme/theme.service';
 export * from './version/version.service';
 export * from './tracking/tracking.service';
 export * from './pwa/pwa-install.service';
+export * from './gtag/gtag.service';
 
 // APIs & Helpers
 export * from './api/api-config';

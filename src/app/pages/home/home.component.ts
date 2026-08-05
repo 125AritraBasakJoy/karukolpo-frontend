@@ -41,6 +41,7 @@ import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
 import { Order } from '../../models/order.model';
 import { CartService } from '../../core/services';;;
+import { GtagService } from '../../core/services';;;
 import { TooltipModule } from 'primeng/tooltip';
 import { DividerModule } from 'primeng/divider';
 
@@ -191,6 +192,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         private deliveryService: DeliveryService,
         private categoryService: CategoryService,
         public cartService: CartService,
+        private gtagService: GtagService,
         private route: ActivatedRoute,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -775,6 +777,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];
+            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
             this.cartService.clearCart(); // Use CartService
             this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();
@@ -839,6 +842,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];
+            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
             this.cartService.clearCart(); // Use CartService
             this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();

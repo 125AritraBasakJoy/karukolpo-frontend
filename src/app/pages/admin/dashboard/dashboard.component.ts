@@ -46,6 +46,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { label: 'Orders', icon: 'pi pi-shopping-cart', route: 'orders', section: 'Main' },
     { label: 'Categories', icon: 'pi pi-tags', route: 'category-manager', section: 'Main' },
     { label: 'Maintenance Control', icon: 'pi pi-cog', route: 'maintenance-control', section: 'Main' },
+    { label: 'Out Sales', icon: 'pi pi-receipt', route: 'out-sales', section: 'Main' },
     { label: 'Add Product', icon: 'pi pi-plus-circle', route: 'products/add', section: 'Products' },
     { label: 'Control Hot Deals', icon: 'pi pi-bolt', route: 'hot-deals', section: 'Main' },
     { label: 'Best Selling', icon: 'pi pi-star', route: 'best-selling', section: 'Main' },

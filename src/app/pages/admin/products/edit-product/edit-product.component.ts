@@ -1,9 +1,9 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, signal, ViewChildren, QueryList, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ProductService } from '../../../../core/services';;;
-import { CategoryService } from '../../../../core/services';;;
+import { ProductService } from '../../../../core/services';
+import { CategoryService } from '../../../../core/services';
 import { MessageService } from 'primeng/api';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,7 +15,7 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { CalendarModule } from 'primeng/calendar';
+import { CalendarModule, Calendar } from 'primeng/calendar';
 import { TooltipModule } from 'primeng/tooltip';
 import { Product, ProductImage } from '../../../../models/product.model';
 import { firstValueFrom, forkJoin, of } from 'rxjs';
@@ -46,7 +46,10 @@ import { ValidationMessageComponent } from '../../../../components/validation-me
     templateUrl: './edit-product.component.html',
     styleUrls: ['./edit-product.component.scss']
 })
-export class EditProductComponent implements OnInit {
+export class EditProductComponent implements OnInit, OnDestroy {
+    @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
+    private scrollListener: any;
+
     productId: string | null = null;
     product = signal<Product | null>(null);
     loading = signal<boolean>(false);
@@ -63,8 +66,7 @@ export class EditProductComponent implements OnInit {
     categories = this.categoryService.categories;
     discountTypeOptions = [
         { label: 'No Discount', value: null },
-        { label: 'Fixed Amount (BDT)', value: 'FIXED' },
-        { label: 'Percentage (%)', value: 'PERCENT' }
+        { label: 'Fixed Amount (BDT)', value: 'FIXED' }
     ];
 
     // Image handling
@@ -83,7 +85,8 @@ export class EditProductComponent implements OnInit {
         private router: Router,
         private productService: ProductService,
         private categoryService: CategoryService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        @Inject(PLATFORM_ID) private platformId: Object
     ) { }
 
     ngOnInit() {
@@ -94,6 +97,31 @@ export class EditProductComponent implements OnInit {
         } else {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Invalid Product ID' });
             this.router.navigate(['/admin/dashboard/inventory']);
+        }
+
+        if (isPlatformBrowser(this.platformId)) {
+            this.scrollListener = (event: Event) => {
+                const target = event.target;
+                const isContentScroll = (target instanceof HTMLElement && target.classList.contains('content-body')) ||
+                    target === document ||
+                    target === document.documentElement;
+                if (isContentScroll) {
+                    if (this.calendars) {
+                        this.calendars.forEach(calendar => {
+                            if (calendar.overlayVisible) {
+                                calendar.hideOverlay();
+                            }
+                        });
+                    }
+                }
+            };
+            window.addEventListener('scroll', this.scrollListener, true);
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.scrollListener) {
+            window.removeEventListener('scroll', this.scrollListener, true);
         }
     }
 

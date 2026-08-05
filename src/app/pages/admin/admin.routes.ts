@@ -53,6 +53,10 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./maintenance-control/maintenance-control.component').then(m => m.MaintenanceControlComponent)
       },
       {
+        path: 'out-sales',
+        loadComponent: () => import('./out-sales/out-sales.component').then(m => m.OutSalesComponent)
+      },
+      {
         path: 'products/add',
         loadComponent: () => import('./products/add-product/add-product.component').then(m => m.AddProductComponent)
       },

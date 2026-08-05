@@ -1,0 +1,138 @@
+<div class="out-sales-container p-3 sm:p-4 min-h-screen">
+    <div class="header-section mb-4">
+        <h1 class="page-title m-0 mb-1">Out Sales</h1>
+        <p class="text-slate-400 m-0 text-sm">Record a manual sale made without the website. Fill in the details and
+            press Record Sale.</p>
+    </div>
+
+    <div class="glass-card fadein animation-duration-500 p-3 sm:p-5">
+        <div>
+            <!-- Line items -->
+            <div class="field mb-4">
+                <div class="flex align-items-center justify-content-between mb-2">
+                    <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Items</label>
+                    <button type="button" pButton label="Add Item" icon="pi pi-plus"
+                        styleClass="premium-btn-primary p-button-sm" (click)="addItem()"></button>
+                </div>
+
+                <div class="flex flex-column gap-2">
+                    @for (item of items; track $index) {
+                    <div class="sale-item-row p-2 sm:p-3 border-round-xl border-1 border-slate-700">
+                        <div class="grid align-items-end">
+                            <div class="col-12 md:col-5">
+                                <label class="text-xs text-slate-500 mb-1 block">Product</label>
+                                <p-dropdown [options]="products()" optionLabel="name" optionValue="id"
+                                    [(ngModel)]="item.product_id" [ngModelOptions]="{ standalone: true }"
+                                    (onChange)="onProductSelect(item, $event.value)" placeholder="Select product"
+                                    [filter]="true" filterBy="name" [showClear]="true" styleClass="w-full"
+                                    inputStyleClass="premium-input" appendTo="body"></p-dropdown>
+                            </div>
+                            <div class="col-3 md:col-2">
+                                <label class="text-xs text-slate-500 mb-1 block">Qty</label>
+                                <p-inputNumber [(ngModel)]="item.quantity" [min]="1" mode="decimal"
+                                    styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                            </div>
+                            <div class="col-6 md:col-4">
+                                <label class="text-xs text-slate-500 mb-1 block">Unit Price</label>
+                                <p-inputNumber [(ngModel)]="item.unit_price" [min]="0" mode="decimal"
+                                    styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                            </div>
+                            <div class="col-3 md:col-1 flex flex-column justify-content-end align-items-end">
+                                <span class="text-xs mb-1 block opacity-0 select-none">Remove</span>
+                                <button type="button" pButton pRipple icon="pi pi-times"
+                                    class="p-button-rounded p-button-text action-btn danger-btn"
+                                    (click)="removeItem($index)" pTooltip="Remove item" tooltipPosition="top"></button>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+
+                <div class="text-xs text-slate-500 mt-2 helper-text">
+                    <span *ngIf="productsLoading()" class="flex align-items-center gap-2">
+                        <i class="pi pi-spin pi-spinner"></i> Loading products…
+                    </span>
+                </div>
+            </div>
+ 
+            <!-- Payment / date / delivery -->
+            <div class="grid mb-4">
+                <div class="field col-12 sm:col-6 lg:col-4">
+                    <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Payment
+                        Method</label>
+                    <p-dropdown [options]="paymentMethods" optionLabel="label" optionValue="value"
+                        [(ngModel)]="paymentMethod" [ngModelOptions]="{ standalone: true }" styleClass="w-full"
+                        inputStyleClass="premium-input"></p-dropdown>
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-4">
+                    <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
+                        <i class="pi pi-calendar"></i> Sale Date & Time
+                    </label>
+                    <p-calendar [(ngModel)]="soldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy"
+                        placeholder="Select date & time..." hourFormat="12"
+                        styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-4">
+                    <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Delivery
+                        Charge</label>
+                    <p-inputNumber [(ngModel)]="deliveryCharge" [min]="0" mode="decimal" styleClass="w-full"
+                        inputStyleClass="w-full premium-input"></p-inputNumber>
+                </div>
+            </div>
+
+            <!-- Customer -->
+            <div class="field mb-4">
+                <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Customer
+                    (Optional)</label>
+                <div class="grid">
+                    <div class="field col-12 sm:col-6 lg:col-3">
+                        <input pInputText [(ngModel)]="customer.name" name="custName" placeholder="Full name"
+                            class="w-full premium-input">
+                    </div>
+                    <div class="field col-12 sm:col-6 lg:col-3">
+                        <input pInputText [(ngModel)]="customer.phone" name="custPhone" placeholder="Phone"
+                            class="w-full premium-input">
+                    </div>
+                    <div class="field col-12 sm:col-6 lg:col-3">
+                        <input pInputText [(ngModel)]="customer.district" name="custDistrict" placeholder="District"
+                            class="w-full premium-input">
+                    </div>
+                    <div class="field col-12 sm:col-6 lg:col-3">
+                        <input pInputText [(ngModel)]="customer.subdistrict" name="custSubdistrict"
+                            placeholder="Sub-district" class="w-full premium-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Note -->
+            <div class="field mb-4">
+                <label class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Note
+                    (Optional)</label>
+                <textarea pInputTextarea [(ngModel)]="note" name="note" rows="2" placeholder="Any additional details"
+                    maxlength="500" class="w-full premium-input"></textarea>
+            </div>
+
+            <!-- Totals + submit -->
+            <div class="border-top-1 border-slate-700 pt-3 flex flex-column-reverse sm:flex-row align-items-end sm:align-items-center justify-content-between gap-3">
+                <div class="flex flex-column align-items-start sm:align-items-end gap-1 w-full sm:w-auto">
+                    <div class="flex justify-content-between gap-6 w-full sm:w-auto">
+                        <span class="text-slate-400">Subtotal</span>
+                        <span class="font-medium text-white">{{ subtotal | currency:'BDT':'৳' }}</span>
+                    </div>
+                    <div class="flex gap-6 w-full sm:w-auto">
+                        <span class="text-slate-400">Delivery</span>
+                        <span class="font-medium text-white">{{ deliveryCharge | currency:'BDT':'৳' }}</span>
+                    </div>
+                    <div class="flex gap-6 w-full sm:w-auto text-lg">
+                        <span class="font-bold text-white">Total</span>
+                        <span class="font-bold text-primary">{{ grandTotal | currency:'BDT':'৳' }}</span>
+                    </div>
+                </div>
+                <div class="w-full sm:w-auto flex justify-content-end">
+                    <button type="button" pButton label="Record Sale" icon="pi pi-check" [loading]="saving()"
+                        (click)="saveSale()" class="w-full sm:w-auto"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

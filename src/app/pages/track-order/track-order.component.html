@@ -6,11 +6,11 @@
     <div class="glass-card search-card p-5 mb-6">
       <div class="search-section">
         <h1 class="text-4xl font-bold mb-2 text-white">Track Your Order</h1>
-        <p class="text-slate-400 mb-5 text-lg">Enter your order ID (e.g. ORD-...) or registered phone number</p>
+        <p class="text-slate-400 mb-5 text-lg">Enter your registered phone number</p>
 
         <div
           class="flex flex-column sm:flex-row align-items-center justify-content-center gap-3 w-full md:w-30rem mx-auto">
-          <input type="text" pInputText placeholder="Enter Order # or Phone" [(ngModel)]="orderId" (keyup.enter)="trackOrder()"
+          <input type="text" pInputText placeholder="Enter Phone Number (e.g. 01XXXXXXXXX)" [(ngModel)]="orderId" (keyup.enter)="trackOrder()"
             class="w-full premium-input">
           <button type="button" pButton icon="pi pi-search" (click)="trackOrder()"
             class="premium-btn-primary p-button-icon-only w-full sm:w-auto px-5"></button>
@@ -154,4 +154,30 @@
   </div>
 </div>
 
-<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+<!-- Cancel Verification Modal -->
+<p-dialog [(visible)]="displayCancelModal" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}"
+    header="Cancel Order Request" [closable]="true" styleClass="premium-dialog">
+    <div class="p-fluid mt-2">
+        <div class="mb-4">
+            <p class="text-slate-400 text-sm">To verify cancellation, please enter the registered phone number and order number.</p>
+        </div>
+        
+        <div class="field mb-3">
+            <label for="cancel_phone" class="font-semibold text-slate-300 block mb-2">Registered Phone Number</label>
+            <input pInputText id="cancel_phone" [(ngModel)]="cancelPhone" placeholder="e.g. 01XXXXXXXXX"
+                class="w-full premium-input">
+        </div>
+        
+        <div class="field mb-3">
+            <label for="cancel_order_no" class="font-semibold text-slate-300 block mb-2">Order Number</label>
+            <input pInputText id="cancel_order_no" [(ngModel)]="cancelOrderNo" placeholder="e.g. ORD-XXXX"
+                class="w-full premium-input">
+        </div>
+        
+        <div class="flex flex-column sm:flex-row gap-3 justify-content-end mt-4">
+            <button pButton label="Cancel" class="p-button-text text-white w-full sm:w-auto" (click)="displayCancelModal = false"></button>
+            <button pButton label="Submit" class="p-button-danger w-full sm:w-auto px-4" (click)="submitCancelRequest()"
+                [disabled]="!cancelPhone || !cancelOrderNo" [loading]="cancelLoading"></button>
+        </div>
+    </div>
+</p-dialog>

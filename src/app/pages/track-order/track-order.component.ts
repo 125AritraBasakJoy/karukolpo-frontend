@@ -16,14 +16,12 @@ import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ProductService } from '../../core/services';;;
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-track-order',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, ThemeToggleComponent, ConfirmDialogModule],
-  providers: [ConfirmationService],
+  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, ThemeToggleComponent, DialogModule],
   templateUrl: './track-order.component.html',
   styleUrls: ['./track-order.component.scss']
 })
@@ -33,11 +31,16 @@ export class TrackOrderComponent {
   loading = signal<boolean>(false);
   events: any[];
 
+  // Cancellation Modal State
+  displayCancelModal = false;
+  cancelPhone = '';
+  cancelOrderNo = '';
+  cancelLoading = false;
+
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService,
     private router: Router
   ) {
     this.events = [
@@ -71,105 +74,79 @@ export class TrackOrderComponent {
     this.loading.set(true);
     this.order.set(null);
 
-    // Check if input looks like a phone number (contains only digits, possibly with +88 prefix)
     const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
     const isPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanPhone);
-    const isOrderNumber = this.orderId.trim().toUpperCase().startsWith('ORD-');
 
-    if (isPhone) {
-      // Normalize phone number to 11 digits (01XXXXXXXXX format)
-      let normalizedPhone = cleanPhone;
-
-      // Remove +88 or 88 prefix if present
-      normalizedPhone = normalizedPhone.replace(/^(\+?88)/, '');
-
-      // Ensure it starts with 0
-      if (!normalizedPhone.startsWith('0')) {
-        normalizedPhone = '0' + normalizedPhone;
-      }
-
-
-      this.orderService.trackOrdersByPhone(normalizedPhone).subscribe({
-        next: (orders) => {
-          if (orders && orders.length > 0) {
-            // Sort by date descending and get the most recent order
-            const sorted = orders.sort((a, b) =>
-              new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
-            );
-
-            this.resolveProductNames(sorted[0]).subscribe(resolvedOrder => {
-              this.order.set(resolvedOrder);
-              this.loading.set(false);
-            });
-          } else {
-            this.messageService.add({ life: 2000,
-              severity: 'info',
-              summary: 'Not Found',
-              detail: 'No orders found for this phone number'
-            });
-            this.loading.set(false);
-          }
-        },
-        error: (err) => {
-          console.error('Phone tracking error:', err);
-          this.loading.set(false);
-          this.messageService.add({ life: 2000,
-            severity: 'error',
-            summary: 'Error',
-            detail: err.error?.detail || 'Failed to track order by phone number'
-          });
-        }
+    if (!isPhone) {
+      this.messageService.add({
+        life: 3000,
+        severity: 'error',
+        summary: 'Invalid Phone',
+        detail: 'Please enter a valid phone number.'
       });
-    } else if (isOrderNumber) {
-        // Track by human-readable Order Number
-        this.orderService.trackOrderByNumber(this.orderId.trim().toUpperCase()).subscribe({
-          next: (order) => {
-            if (order) {
-              this.resolveProductNames(order).subscribe(resolvedOrder => {
+      this.loading.set(false);
+      return;
+    }
+
+    // Normalize phone number to 11 digits (01XXXXXXXXX format)
+    let normalizedPhone = cleanPhone;
+
+    // Remove +88 or 88 prefix if present
+    normalizedPhone = normalizedPhone.replace(/^(\+?88)/, '');
+
+    // Ensure it starts with 0
+    if (!normalizedPhone.startsWith('0')) {
+      normalizedPhone = '0' + normalizedPhone;
+    }
+
+    this.orderService.trackOrdersByPhone(normalizedPhone).subscribe({
+      next: (orders) => {
+        if (orders && orders.length > 0) {
+          // Sort by date descending and get the most recent order
+          const sorted = orders.sort((a, b) =>
+            new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+          );
+
+          const mostRecent = sorted[0];
+
+          // Fetch the FULL order details using the order_number and phone to populate ID, items, and address
+          this.orderService.trackOrderByNumber(mostRecent.orderNumber || '', normalizedPhone).subscribe({
+            next: (fullOrder) => {
+              this.resolveProductNames(fullOrder).subscribe(resolvedOrder => {
+                this.order.set(resolvedOrder);
+                this.loading.set(false);
+              });
+            },
+            error: (err) => {
+              console.error('Failed to fetch full order details:', err);
+              // Fallback to trimmed order if full lookup fails
+              this.resolveProductNames(mostRecent).subscribe(resolvedOrder => {
                 this.order.set(resolvedOrder);
                 this.loading.set(false);
               });
             }
-          },
-          error: (err) => {
-            console.error('Order number tracking error:', err);
-            this.loading.set(false);
-            this.messageService.add({ life: 2000,
-              severity: 'error',
-              summary: 'Not Found',
-              detail: 'Order number not found'
-            });
-          }
-        });
-    } else {
-      // Assume it's an internal UUID/ID
-      this.orderService.getOrderById(this.orderId.trim()).subscribe({
-        next: (order) => {
-          if (order) {
-            this.resolveProductNames(order).subscribe(resolvedOrder => {
-              this.order.set(resolvedOrder);
-              this.loading.set(false);
-            });
-          } else {
-            this.messageService.add({ life: 2000,
-              severity: 'error',
-              summary: 'Not Found',
-              detail: 'Order not found'
-            });
-            this.loading.set(false);
-          }
-        },
-        error: (err) => {
-          console.error('Order ID tracking error:', err);
-          this.loading.set(false);
-          this.messageService.add({ life: 2000,
-            severity: 'error',
-            summary: 'Not Found',
-            detail: 'Order not found'
           });
+        } else {
+          this.messageService.add({
+            life: 2000,
+            severity: 'info',
+            summary: 'Not Found',
+            detail: 'No orders found for this phone number'
+          });
+          this.loading.set(false);
         }
-      });
-    }
+      },
+      error: (err) => {
+        console.error('Phone tracking error:', err);
+        this.loading.set(false);
+        this.messageService.add({
+          life: 2000,
+          severity: 'error',
+          summary: 'Error',
+          detail: err.error?.detail || 'Failed to track order by phone number'
+        });
+      }
+    });
   }
 
   /**
@@ -219,34 +196,92 @@ export class TrackOrderComponent {
   }
 
   cancelOrder() {
-    const currentOrder = this.order();
-    if (!currentOrder || !currentOrder.id) return;
+    this.cancelPhone = '';
+    this.cancelOrderNo = '';
+    this.displayCancelModal = true;
+  }
 
-    this.confirmationService.confirm({
-      message: 'Are you sure you want to cancel this order?',
-      header: 'Confirm Cancellation',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.loading.set(true);
-        this.orderService.cancelOrder(currentOrder.id!).subscribe({
-          next: (updatedOrder) => {
-            this.order.set(updatedOrder);
-            this.loading.set(false);
-            this.messageService.add({ life: 2000,
-              severity: 'success',
-              summary: 'Cancelled',
-              detail: 'Your order has been cancelled successfully'
-            });
-          },
-          error: (err) => {
-            console.error('Cancellation error:', err);
-            this.loading.set(false);
-            this.messageService.add({ life: 2000,
-              severity: 'error',
-              summary: 'Error',
-              detail: err.error?.detail || 'Failed to cancel order'
-            });
-          }
+  private normalizePhoneNumber(phone: string): string {
+    const clean = phone.replace(/[\s\-\(\)\+]/g, '');
+    let normalized = clean;
+    if (normalized.startsWith('88')) {
+      normalized = normalized.substring(2);
+    }
+    if (!normalized.startsWith('0') && normalized.length === 10) {
+      normalized = '0' + normalized;
+    }
+    return normalized;
+  }
+
+  submitCancelRequest() {
+    const currentOrder = this.order();
+    if (!currentOrder || !currentOrder.id) {
+      console.warn('Cannot cancel order: currentOrder or order ID is missing.', currentOrder);
+      return;
+    }
+
+    const enteredPhone = this.cancelPhone.trim();
+    const enteredOrderNo = this.cancelOrderNo.trim().toUpperCase();
+    
+    const correctPhone = currentOrder.phoneNumber || '';
+    const correctOrderNo = (currentOrder.orderNumber || '').toUpperCase();
+    const correctOrderId = currentOrder.id.toUpperCase();
+
+    // Normalize phone numbers to compare
+    const normEntered = this.normalizePhoneNumber(enteredPhone);
+    const normCorrect = this.normalizePhoneNumber(correctPhone);
+
+    console.log('Verifying cancellation info:', {
+      enteredPhone,
+      enteredOrderNo,
+      correctPhone,
+      correctOrderNo,
+      correctOrderId,
+      normEntered,
+      normCorrect
+    });
+
+    if (normEntered !== normCorrect) {
+      this.messageService.add({
+        life: 3000,
+        severity: 'error',
+        summary: 'Verification Failed',
+        detail: 'Registered phone number does not match this order.'
+      });
+      return;
+    }
+
+    if (enteredOrderNo !== correctOrderNo && enteredOrderNo !== correctOrderId) {
+      this.messageService.add({
+        life: 3000,
+        severity: 'error',
+        summary: 'Verification Failed',
+        detail: 'Order number does not match this order.'
+      });
+      return;
+    }
+
+    this.cancelLoading = true;
+    this.orderService.cancelOrder(currentOrder.id, enteredPhone, { reason: 'Cancelled by customer' }).subscribe({
+      next: (updatedOrder) => {
+        this.order.set(updatedOrder);
+        this.cancelLoading = false;
+        this.displayCancelModal = false;
+        this.messageService.add({
+          life: 3000,
+          severity: 'success',
+          summary: 'Order Cancelled',
+          detail: 'Your order has been cancelled successfully.'
+        });
+      },
+      error: (err) => {
+        console.error('Order cancellation failed:', err);
+        this.cancelLoading = false;
+        this.messageService.add({
+          life: 3000,
+          severity: 'error',
+          summary: 'Cancellation Failed',
+          detail: err.error?.detail || 'Failed to cancel the order. Please try again.'
         });
       }
     });

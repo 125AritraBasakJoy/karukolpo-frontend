@@ -58,14 +58,14 @@ export class OrdersComponent implements OnInit {
   loading = signal<boolean>(false);
   exportLoading = signal<boolean>(false);
   downloadingOrderId = signal<string | null>(null);
-  selectedOrder: Order | null = null;
-  displayOrderDialog = false;
-  loadingDetails = false;
+  selectedOrder = signal<Order | null>(null);
+  displayOrderDialog = signal(false);
+  loadingDetails = signal(false);
   lastOpenedOrderId: string | null = null;
   lastLazyLoadEvent: TableLazyLoadEvent | null = null;
 
   // Invoice Mapping State
-  invoiceOrderData: any = {
+  invoiceOrderData = signal<any>({
     items: [],
     snapshot: {},
     method: '',
@@ -73,7 +73,7 @@ export class OrdersComponent implements OnInit {
     total: 0,
     discount: 0,
     id: ''
-  };
+  });
 
   // Search state
   searchQuery = signal<string>('');
@@ -299,27 +299,27 @@ export class OrdersComponent implements OnInit {
   }
 
   viewOrder(order: Order) {
-    this.selectedOrder = JSON.parse(JSON.stringify(order));
-    this.displayOrderDialog = true;
-    this.loadingDetails = true;
+    this.selectedOrder.set(JSON.parse(JSON.stringify(order)));
+    this.displayOrderDialog.set(true);
+    this.loadingDetails.set(true);
 
     // Fetch fresh order details from backend to get latest payment info
     this.orderService.getOrderById(order.id!).pipe(
       switchMap((fullOrder: Order | undefined) => {
-        const targetOrder = fullOrder || this.selectedOrder!;
+        const targetOrder = fullOrder || this.selectedOrder()!;
         return this.ensureProductDetails(targetOrder);
       })
     ).subscribe({
       next: (finalOrder: Order) => {
-        this.selectedOrder = finalOrder;
-        this.loadingDetails = false;
+        this.selectedOrder.set(finalOrder);
+        this.loadingDetails.set(false);
       },
       error: (err: any) => {
         console.error('Failed to fetch full order details', err);
         // Fallback to existing data if fetch fails
-        this.ensureProductDetails(this.selectedOrder!).subscribe((final: Order) => {
-          this.selectedOrder = final;
-          this.loadingDetails = false;
+        this.ensureProductDetails(this.selectedOrder()!).subscribe((final: Order) => {
+          this.selectedOrder.set(final);
+          this.loadingDetails.set(false);
         });
       }
     });
@@ -327,7 +327,7 @@ export class OrdersComponent implements OnInit {
 
   openOrderById(orderId: string) {
     // Avoid double-open when both the click-subject and the highlight query param fire
-    if (this.lastOpenedOrderId === orderId && this.displayOrderDialog) {
+    if (this.lastOpenedOrderId === orderId && this.displayOrderDialog()) {
       return;
     }
     this.lastOpenedOrderId = orderId;
@@ -336,8 +336,8 @@ export class OrdersComponent implements OnInit {
     if (existingOrder) {
       this.viewOrder(existingOrder);
     } else {
-      this.loadingDetails = true;
-      this.displayOrderDialog = true;
+      this.loadingDetails.set(true);
+      this.displayOrderDialog.set(true);
       this.orderService.getOrderById(orderId).subscribe({
         next: (order) => {
           if (order) {
@@ -350,17 +350,17 @@ export class OrdersComponent implements OnInit {
                 this.viewOrder(matched);
               } else {
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Order not found' });
-                this.displayOrderDialog = false;
+                this.displayOrderDialog.set(false);
               }
-              this.loadingDetails = false;
+              this.loadingDetails.set(false);
             });
           }
         },
         error: (err) => {
           console.error('Failed to load order for highlight', err);
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load order details' });
-          this.displayOrderDialog = false;
-          this.loadingDetails = false;
+          this.displayOrderDialog.set(false);
+          this.loadingDetails.set(false);
         }
       });
     }
@@ -428,8 +428,8 @@ export class OrdersComponent implements OnInit {
           // Force reload to ensure status is persisted and we get latest data
           this.refreshOrders();
 
-          if (this.selectedOrder && this.selectedOrder.id === order.id) {
-            this.selectedOrder.status = status;
+          if (this.selectedOrder() && this.selectedOrder()!.id === order.id) {
+            this.selectedOrder.update(o => o ? { ...o, status } : o);
           }
         },
         error: (err) => {
@@ -485,8 +485,8 @@ export class OrdersComponent implements OnInit {
           // If backend sends "Bkash Confirmed", we use it.
 
           // Update modal
-          if (this.selectedOrder && this.selectedOrder.id === order.id) {
-            this.selectedOrder.paymentStatus = newPaymentStatus;
+          if (this.selectedOrder() && this.selectedOrder()!.id === order.id) {
+            this.selectedOrder.update(o => o ? { ...o, paymentStatus: newPaymentStatus } : o);
           }
 
           // Update list locally to avoid stale data from immediate reload
@@ -513,8 +513,8 @@ export class OrdersComponent implements OnInit {
           const newStatus = res.status || 'Paid';
 
           // Update modal
-          if (this.selectedOrder && this.selectedOrder.id === order.id) {
-            this.selectedOrder.paymentStatus = newStatus;
+          if (this.selectedOrder() && this.selectedOrder()!.id === order.id) {
+            this.selectedOrder.update(o => o ? { ...o, paymentStatus: newStatus } : o);
           }
 
           // Update list locally
@@ -628,7 +628,7 @@ export class OrdersComponent implements OnInit {
     this.ensureProductDetails(order).subscribe({
       next: (finalOrder: Order) => {
         // Map order data to common invoice format
-        this.invoiceOrderData = {
+        this.invoiceOrderData.set({
           items: finalOrder.items || [],
           snapshot: {
             fullName: finalOrder.address?.full_name || finalOrder.fullName,
@@ -645,7 +645,7 @@ export class OrdersComponent implements OnInit {
           discount: finalOrder.discountAmount || 0,
           id: orderIdStr,
           orderNumber: finalOrder.orderNumber || orderIdStr
-        };
+        });
 
         // Use a small timeout to let Angular update the inputs on the hidden app-invoice
         setTimeout(() => {

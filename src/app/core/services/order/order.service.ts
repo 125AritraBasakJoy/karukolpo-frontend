@@ -173,18 +173,27 @@ export class OrderService {
    * Track order by human-readable order number
    * GET /orders/order-number/{order_number}
    */
-  trackOrderByNumber(orderNumber: string): Observable<Order> {
-    return this.apiService.get<any>(API_ENDPOINTS.ORDERS.TRACK_BY_NUMBER(orderNumber)).pipe(
+  trackOrderByNumber(orderNumber: string, phone?: string): Observable<Order> {
+    let url = API_ENDPOINTS.ORDERS.TRACK_BY_NUMBER(orderNumber);
+    if (phone) {
+      url += `?phone=${encodeURIComponent(phone)}`;
+    }
+    return this.apiService.get<any>(url).pipe(
       map(order => this.mapBackendOrder(order))
     );
   }
 
   /**
    * Cancel an order (Customer/Public endpoint)
-   * PATCH /orders/{id}/cancel
+   * PATCH /orders/{id}/cancel?phone={phone}
    */
-  cancelOrder(id: number | string): Observable<Order> {
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.CANCEL(id), {}).pipe(
+  cancelOrder(id: number | string, phone?: string, data?: any): Observable<Order> {
+    let url = API_ENDPOINTS.ORDERS.CANCEL(id);
+    if (phone) {
+      url += `?phone=${encodeURIComponent(phone)}`;
+    }
+    const body = data || null;
+    return this.apiService.patch<any>(url, body).pipe(
       tap(() => {
         this.clearCache();
         this.notifyAdmin(id.toString(), 'cancel');

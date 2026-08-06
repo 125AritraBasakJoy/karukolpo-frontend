@@ -45,8 +45,7 @@
                         <th>Customer</th>
                         <th>Date and Time</th>
                         <th>Total</th>
-                        <th>Payment</th>
-                        <th>Status</th>
+                        <th>Payment</th>                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </ng-template>
@@ -75,7 +74,7 @@
         </div>
         }
 
-        @if (!loading() || totalRecords() > 0) {
+        @else {
         <div class="border-round-2xl overflow-hidden overflow-x-auto custom-scrollbar">
             <p-table [value]="orders()" [tableStyle]="{'min-width': '60rem'}" [paginator]="true" [rows]="10"
                 [rowsPerPageOptions]="[10, 25, 50, 100]" [lazy]="true" (onLazyLoad)="loadOrders($event)"
@@ -185,34 +184,36 @@
             </div>
             <div>
                 <span class="text-2xl font-bold block">Order Details</span>
-                <span class="text-gray-400 font-mono text-base">{{ selectedOrder?.orderNumber || selectedOrder?.id }}</span>
+                <span class="text-gray-400 font-mono text-base">{{ selectedOrder()?.orderNumber || selectedOrder()?.id }}</span>
             </div>
         </div>
     </ng-template>
 
-    @if (loadingDetails && !selectedOrder) {
+    @if (loadingDetails() && !selectedOrder()) {
     <div class="flex flex-column align-items-center justify-content-center p-6" style="min-height: 300px;">
         <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4"></p-progressSpinner>
         <span class="text-gray-400 mt-4">Loading order details...</span>
     </div>
-    } @else if (selectedOrder) {
+    }
+
+    @if (selectedOrder()) {
     <div class="dialog-content fade-in animation-duration-300">
         <!-- Status Banner -->
         <div class="status-banner mb-5 p-4 border-round-2xl flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between shadow-2 gap-3"
-            [ngClass]="getSeverity(selectedOrder.status)"
+            [ngClass]="getSeverity(selectedOrder()!.status)"
             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
             <div class="flex align-items-center gap-3">
                 <i
-                    [class]="'pi text-2xl ' + (selectedOrder.status === 'Completed' ? 'pi-check-circle text-green-400' : 'pi-clock text-blue-400')"></i>
+                    [class]="'pi text-2xl ' + (selectedOrder()!.status === 'Completed' ? 'pi-check-circle text-green-400' : 'pi-clock text-blue-400')"></i>
                 <div class="flex flex-column">
                     <span class="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Current
                         Status</span>
-                    <span class="text-xl font-bold">{{ selectedOrder.status }}</span>
+                    <span class="text-xl font-bold">{{ selectedOrder()!.status }}</span>
                 </div>
             </div>
             <div class="text-left md:text-right">
                 <span class="text-sm text-gray-400 block mb-1">Ordered On</span>
-                <span class="text-base font-medium">{{ (selectedOrder.created_at || selectedOrder.orderDate) |
+                <span class="text-base font-medium">{{ (selectedOrder()!.created_at || selectedOrder()!.orderDate) |
                     date:'medium' }}</span>
             </div>
         </div>
@@ -231,39 +232,39 @@
 
                             <div class="p-4 border-round-xl"
                                 style="background: rgba(2, 6, 23, 0.5); border: 1px solid rgba(255, 255, 255, 0.05);">
-                                @if (selectedOrder.address) {
+                                @if (selectedOrder()!.address) {
                                 <div class="mb-4">
                                     <span class="text-gray-400 text-sm block mb-1">Full Name</span>
-                                    <div class="text-white text-xl font-bold">{{ selectedOrder.address.full_name }}
+                                    <div class="text-white text-xl font-bold">{{ selectedOrder()!.address!.full_name }}
                                     </div>
                                 </div>
                                 <div class="mb-4">
                                     <span class="text-gray-400 text-sm block mb-1">Phone Number</span>
-                                    <div class="text-white text-lg font-medium font-mono">{{ selectedOrder.address.phone
+                                    <div class="text-white text-lg font-medium font-mono">{{ selectedOrder()!.address!.phone
                                         }}</div>
                                 </div>
                                 <div>
                                     <span class="text-gray-400 text-sm block mb-1">Shipping Address</span>
                                     <div class="text-white text-base line-height-3 break-word">
-                                        {{ selectedOrder.address.address_line }}<br>
-                                        {{ selectedOrder.address.subdistrict }}, {{ selectedOrder.address.district }}
+                                        {{ selectedOrder()!.address!.address_line }}<br>
+                                        {{ selectedOrder()!.address!.subdistrict }}, {{ selectedOrder()!.address!.district }}
                                     </div>
                                 </div>
                                 } @else {
                                 <div class="mb-4">
                                     <span class="text-gray-400 text-sm block mb-1">Full Name</span>
-                                    <div class="text-white text-xl font-bold">{{ selectedOrder.fullName }}</div>
+                                    <div class="text-white text-xl font-bold">{{ selectedOrder()!.fullName }}</div>
                                 </div>
                                 <div class="mb-4">
                                     <span class="text-gray-400 text-sm block mb-1">Phone Number</span>
-                                    <div class="text-white text-lg font-medium font-mono">{{ selectedOrder.phoneNumber
+                                    <div class="text-white text-lg font-medium font-mono">{{ selectedOrder()!.phoneNumber
                                         }}</div>
                                 </div>
                                 <div>
                                     <span class="text-gray-400 text-sm block mb-1">Shipping Address</span>
                                     <div class="text-white text-base line-height-3 break-word">
-                                        {{ selectedOrder.fullAddress }}<br>
-                                        {{ selectedOrder.subDistrict }} {{ selectedOrder.district }}
+                                        {{ selectedOrder()!.fullAddress }}<br>
+                                        {{ selectedOrder()!.subDistrict }} {{ selectedOrder()!.district }}
                                     </div>
                                 </div>
                                 }
@@ -283,34 +284,34 @@
                                 style="background: rgba(2, 6, 23, 0.5); border: 1px solid rgba(255, 255, 255, 0.05);">
                                 <div class="flex justify-content-between align-items-center mb-2">
                                     <span class="text-gray-400 text-sm">Method</span>
-                                    <span class="text-white font-bold text-lg">{{ selectedOrder.paymentMethod || 'COD'
+                                    <span class="text-white font-bold text-lg">{{ selectedOrder()!.paymentMethod || 'COD'
                                         }}</span>
                                 </div>
 
                                 <div class="flex justify-content-between align-items-center mb-2">
                                     <span class="text-gray-400 text-sm">Payment Status</span>
-                                    <p-tag [value]="selectedOrder.paymentStatus || 'Pending'"
-                                        [severity]="getPaymentSeverity(selectedOrder.paymentStatus)"
+                                    <p-tag [value]="selectedOrder()!.paymentStatus || 'Pending'"
+                                        [severity]="getPaymentSeverity(selectedOrder()!.paymentStatus)"
                                         styleClass="uppercase font-bold text-xs px-2"></p-tag>
                                 </div>
 
-                                @if (selectedOrder.bkashNumber) {
+                                @if (selectedOrder()!.bkashNumber) {
                                 <div class="mb-2">
                                     <span class="text-gray-400 text-sm block mb-1">Sender Phone</span>
                                     <div class="flex align-items-center gap-2">
                                         <i class="pi pi-phone text-blue-400 text-sm"></i>
-                                        <span class="font-mono text-white text-base">{{ selectedOrder.bkashNumber
+                                        <span class="font-mono text-white text-base">{{ selectedOrder()!.bkashNumber
                                             }}</span>
                                     </div>
                                 </div>
                                 }
 
-                                @if (selectedOrder.transactionId) {
+                                @if (selectedOrder()!.transactionId) {
                                 <div>
                                     <span class="text-gray-400 text-sm block mb-1">Transaction ID</span>
                                     <div class="flex align-items-center gap-2">
                                         <i class="pi pi-receipt text-blue-400 text-sm"></i>
-                                        <span class="font-mono text-white text-base">{{ selectedOrder.transactionId
+                                        <span class="font-mono text-white text-base">{{ selectedOrder()!.transactionId
                                             }}</span>
                                     </div>
                                 </div>
@@ -333,7 +334,7 @@
 
                     <div class="flex-grow-1 overflow-y-auto mb-4 custom-scrollbar" style="max-height: 400px;">
                         <div class="flex flex-column gap-3">
-                            @for (item of selectedOrder.items; track item.product.id) {
+                            @for (item of selectedOrder()!.items; track item.product.id) {
                             <div class="flex flex-column sm:flex-row align-items-start sm:align-items-center p-3 border-round-xl transition-colors hover:surface-ground gap-3"
                                 style="background: rgba(2, 6, 23, 0.5); border: 1px solid rgba(255, 255, 255, 0.05);">
                                 <div class="product-img-container mr-3 border-round overflow-hidden"
@@ -372,21 +373,21 @@
                         style="background: rgba(2, 6, 23, 0.5) !important;">
                         <div class="flex justify-content-between align-items-center mb-3">
                             <span class="text-gray-300 text-lg">Subtotal</span>
-                            <span class="text-white text-lg font-medium">{{ (selectedOrder.subtotal ||
-                                selectedOrder.totalAmount - (selectedOrder.deliveryCharge || 0)) |
+                            <span class="text-white text-lg font-medium">{{ (selectedOrder()!.subtotal ||
+                                selectedOrder()!.totalAmount - (selectedOrder()!.deliveryCharge || 0)) |
                                 currency:'BDT':'৳' }}</span>
                         </div>
-                        @if (selectedOrder.deliveryCharge) {
+                        @if (selectedOrder()!.deliveryCharge) {
                         <div class="flex justify-content-between align-items-center mb-3">
                             <span class="text-gray-300 text-lg">Delivery</span>
-                            <span class="text-white text-lg font-medium">+{{ selectedOrder.deliveryCharge |
+                            <span class="text-white text-lg font-medium">+{{ selectedOrder()!.deliveryCharge |
                                 currency:'BDT':'৳' }}</span>
                         </div>
                         }
-                        @if (selectedOrder.discountAmount) {
+                        @if (selectedOrder()!.discountAmount) {
                         <div class="flex justify-content-between align-items-center mb-3 text-green-400">
                             <span class="text-lg">Discount</span>
-                            <span class="text-lg font-medium">-{{ selectedOrder.discountAmount |
+                            <span class="text-lg font-medium">-{{ selectedOrder()!.discountAmount |
                                 currency:'BDT':'৳' }}</span>
                         </div>
                         }
@@ -394,7 +395,7 @@
                         <div
                             class="flex justify-content-between align-items-center mt-4 pt-4 border-top-1 border-white-alpha-10">
                             <span class="text-xl font-bold text-white">Total Amount</span>
-                            <span class="text-3xl md:text-4xl font-bold text-blue-400">{{ selectedOrder.totalAmount |
+                            <span class="text-3xl md:text-4xl font-bold text-blue-400">{{ selectedOrder()!.totalAmount |
                                 currency:'BDT':'৳' }}</span>
                         </div>
                     </div>
@@ -403,29 +404,29 @@
         </div>
 
         <!-- Admin Actions Footer -->
-        @if (!isPaymentConfirmed(selectedOrder.paymentStatus) || (selectedOrder.status === 'Pending')) {
+        @if (!isPaymentConfirmed(selectedOrder()!.paymentStatus) || (selectedOrder()!.status === 'Pending')) {
         <div class="admin-actions mt-5 pt-4 border-top-1 border-white-alpha-10 flex justify-content-end gap-3">
             <button pButton label="Close" icon="pi pi-times"
                 class="premium-btn-secondary p-button-outlined p-button-secondary border-gray-700 text-gray-300 hover:text-white"
-                (click)="displayOrderDialog = false"></button>
+                (click)="displayOrderDialog.set(false)"></button>
 
-            @if (selectedOrder.paymentMethod?.toLowerCase() === 'bkash' &&
-            !isPaymentConfirmed(selectedOrder.paymentStatus)) {
+            @if (selectedOrder()!.paymentMethod?.toLowerCase() === 'bkash' &&
+            !isPaymentConfirmed(selectedOrder()!.paymentStatus)) {
             <button pButton label="Verify Payment" icon="pi pi-check-circle"
                 class="premium-btn-primary bg-blue-500 border-none hover:bg-blue-600"
-                (click)="adminConfirmPayment(selectedOrder)"></button>
+                (click)="adminConfirmPayment(selectedOrder()!)"></button>
             }
 
-            @if (selectedOrder.status === 'Pending' && selectedOrder.paymentMethod?.toLowerCase() !== 'bkash') {
+            @if (selectedOrder()!.status === 'Pending' && selectedOrder()!.paymentMethod?.toLowerCase() !== 'bkash') {
             <button pButton label="Confirm Order" icon="pi pi-check"
                 class="premium-btn-primary bg-blue-500 border-none hover:bg-blue-600"
-                (click)="updateStatus(selectedOrder, 'Confirmed')"></button>
+                (click)="updateStatus(selectedOrder()!, 'Confirmed')"></button>
             }
 
-            @if (selectedOrder.status === 'Confirmed') {
+            @if (selectedOrder()!.status === 'Confirmed') {
             <button pButton label="Complete Order" icon="pi pi-check-circle"
                 class="premium-btn-primary bg-green-600 border-none hover:bg-green-700"
-                (click)="updateStatus(selectedOrder, 'Completed')"></button>
+                (click)="updateStatus(selectedOrder()!, 'Completed')"></button>
             }
         </div>
         }
@@ -438,8 +439,9 @@
 <!-- Note: We avoid visibility:hidden as it can cause blank captures in html2canvas -->
 <!-- We use a fixed width and remove height/overflow constraints to optimize rendering speed -->
 <div style="position: fixed; left: -9999px; top: 0; width: 800px; pointer-events: none; opacity: 0;">
-    <app-invoice #adminInvoice [orderedItems]="invoiceOrderData.items" [orderFormSnapshot]="invoiceOrderData.snapshot"
-        [orderPaymentMethod]="invoiceOrderData.method" [orderDeliveryCharge]="invoiceOrderData.deliveryCharge"
-        [orderTotal]="invoiceOrderData.total" [orderDiscount]="invoiceOrderData.discount" 
-        [placedOrderId]="invoiceOrderData.id" [placedOrderNumber]="invoiceOrderData.orderNumber"></app-invoice>
+    <app-invoice #adminInvoice [orderedItems]="invoiceOrderData().items"
+        [orderFormSnapshot]="invoiceOrderData().snapshot" [orderPaymentMethod]="invoiceOrderData().method"
+        [orderDeliveryCharge]="invoiceOrderData().deliveryCharge" [orderTotal]="invoiceOrderData().total"
+        [orderDiscount]="invoiceOrderData().discount" [placedOrderId]="invoiceOrderData().id"
+        [placedOrderNumber]="invoiceOrderData().orderNumber"></app-invoice>
 </div>

@@ -665,13 +665,22 @@
                 <!-- bKash Details Area -->
                 @if (selectedPaymentMethod === 'bKash') {
                 <div class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
-                    <div class="text-center mb-4">
-                        <div
-                            class="inline-flex align-items-center justify-content-center surface-100 px-3 py-1 border-round-pill mb-3">
-                            <span class="text-pink-400 font-bold text-sm">Scan to Pay</span>
+                    <div class="mb-4">
+                        <div class="text-center mb-3">
+                            <span class="text-pink-400 font-bold text-sm">(Payment must be made now in Advance for
+                                Bkash Payment)</span>
                         </div>
-                        <img src="assets/bkash-qr.png" alt="bKash QR" width="160" height="160"
-                            class="border-round shadow-2 block mx-auto bg-white p-2" loading="lazy">
+                        <div class="text-color font-semibold mb-2">To pay for your order, PLEASE READ CAREFULLY:</div>
+                        <ol class="text-color line-height-3 m-0 pl-4" style="list-style: decimal;">
+                            <li>Open the Bkash App</li>
+                            <li>Choose Send Money option</li>
+                            <li>Enter our official phone number <strong>01834484328</strong> (this is not our Customer
+                                Service number)</li>
+                            <li>Enter the amount you will have to pay for your order.</li>
+                            <li>Enter PIN and Send Money</li>
+                            <li>After successful payment, just copy your Transaction Id and paste it in our website's
+                                Transaction Id box also enter the Bkash Phone number.</li>
+                        </ol>
                     </div>
 
                     <div class="field mb-4">

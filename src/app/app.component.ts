@@ -61,9 +61,9 @@ export class AppComponent implements OnInit {
       defer(() => {
         this.versionService.checkForUpdates();
         this.trackingService.trackVisit();
-        this.initGoogleAnalytics();
         // Keep storefront maintenance state in sync with the backend
         this.maintenanceService.startPolling();
+        this.initGoogleAnalyticsOnIdle();
       });
     }
 
@@ -78,6 +78,30 @@ export class AppComponent implements OnInit {
     });
 
     // Notification logic consolidated in NotificationService
+  }
+
+  private gaInitialized = false;
+
+  private initGoogleAnalyticsOnIdle() {
+    if (!isPlatformBrowser(this.platformId) || this.gaInitialized) return;
+    if (window.location.pathname.startsWith('/admin')) return;
+
+    // Fire on the first user interaction, or after the window fully loads
+    // (whichever comes first), so gtag never competes with the critical render.
+    const fire = () => {
+      if (this.gaInitialized) return;
+      this.gaInitialized = true;
+      window.removeEventListener('pointerdown', fire);
+      window.removeEventListener('touchstart', fire);
+      window.removeEventListener('keydown', fire);
+      window.removeEventListener('load', fire);
+      this.initGoogleAnalytics();
+    };
+
+    window.addEventListener('pointerdown', fire, { passive: true, once: true });
+    window.addEventListener('touchstart', fire, { passive: true, once: true });
+    window.addEventListener('keydown', fire, { once: true });
+    window.addEventListener('load', fire, { once: true });
   }
 
   private initGoogleAnalytics() {

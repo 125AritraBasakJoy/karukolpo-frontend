@@ -7,14 +7,14 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TimelineModule } from 'primeng/timeline';
-import { OrderService } from '../../core/services';;;
+import { OrderService } from '../../core/services/order/order.service';
 import { Order } from '../../models/order.model';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ProductService } from '../../core/services';;;
+import { ProductService } from '../../core/services/product/product.service';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 import { DialogModule } from 'primeng/dialog';
 

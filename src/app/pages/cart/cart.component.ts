@@ -11,9 +11,9 @@ import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
 import { lastValueFrom } from 'rxjs';
-import { CartService } from '../../core/services';;;
-import { OrderService } from '../../core/services';;;
-import { ProductService } from '../../core/services';;;
+import { CartService } from '../../core/services/cart/cart.service';
+import { OrderService } from '../../core/services/order/order.service';
+import { ProductService } from '../../core/services/product/product.service';
 import { CartItem } from '../../models/cart.model';
 import { districts, District } from '../../data/bangladesh-data';
 

@@ -2,71 +2,49 @@ import {
     ChangeDetectionStrategy,
     Component,
     ElementRef,
-    HostListener,
     Inject,
     OnDestroy,
     OnInit,
     PLATFORM_ID,
-    QueryList,
     signal,
-    ViewChild,
-    ViewChildren
+    ViewChild
 } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
+import { CommonModule, CurrencyPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { forkJoin, lastValueFrom, of } from 'rxjs';
-import { DialogModule } from 'primeng/dialog';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { FormsModule, NgModel } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { ProductService } from '../../core/services';;;
-import { OrderService } from '../../core/services';;;
+import { ProductService } from '../../core/services/product/product.service';
 import { Product } from '../../models/product.model';
-import { CartItem } from '../../models/cart.model';
-import { ContactService } from '../../core/services';;;
-import { DropdownModule } from 'primeng/dropdown';
-import { District, districts } from '../../data/bangladesh-data';
-import { ThemeService } from '../../core/services';;;
-import { PaymentService } from '../../core/services';;;
-import { DeliveryService } from '../../core/services';;;
-import { SiteConfigService } from '../../core/services';;;
-import { CategoryService } from '../../core/services';;;
+import { ContactService } from '../../core/services/contact/contact.service';
+import { ThemeService } from '../../core/services/theme/theme.service';
+import { DeliveryService } from '../../core/services/delivery/delivery.service';
+import { SiteConfigService } from '../../core/services/site-config/site-config.service';
+import { CategoryService } from '../../core/services/category/category.service';
 import { Category } from '../../models/category.model';
-import { SkeletonModule } from 'primeng/skeleton';
-import { BadgeModule } from 'primeng/badge';
-import { TagModule } from 'primeng/tag';
-import { Order } from '../../models/order.model';
-import { CartService } from '../../core/services';;;
-import { GtagService } from '../../core/services';;;
-import { TooltipModule } from 'primeng/tooltip';
+import { CartService } from '../../core/services/cart/cart.service';
 import { DividerModule } from 'primeng/divider';
+import { HomeCheckoutModalsComponent } from './home-checkout-modals.component';
 
 @Component({
     selector: 'app-home',
     imports: [
         CommonModule,
         ButtonModule,
-        DialogModule,
-        InputNumberModule,
         FormsModule,
         InputTextModule,
         TextareaModule,
         ToastModule,
-        DropdownModule,
-        SkeletonModule,
-        BadgeModule,
-        TagModule,
-        TooltipModule,
         DividerModule,
         CurrencyPipe,
-        DatePipe,
         NgOptimizedImage,
-        RouterModule
+        RouterModule,
+        HomeCheckoutModalsComponent
     ],
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.scss'],
@@ -75,38 +53,12 @@ import { DividerModule } from 'primeng/divider';
 export class HomeComponent implements OnInit, OnDestroy {
     // cart = signal<CartItem[]>([]); // Removed, using CartService
     loading = signal<boolean>(false);
+    checkoutRequested = signal<boolean>(false);
     displayProductModal = false;
-    displayCheckoutModal = false;
-    displayOrderSuccessModal = false;
-    displayPaymentMethodModal = false;
-    displayPaymentSuccessModal = false;
-    displayTrackOrderModal = false;
     selectedProduct: Product | null = null;
     activeIndex: number = 0;
-    @ViewChildren(NgModel) formControls!: QueryList<NgModel>;
     @ViewChild('bestSellingList') bestSellingListEl!: ElementRef<HTMLElement>;
     @ViewChild('hotDealsList') hotDealsListEl!: ElementRef<HTMLElement>;
-    checkoutForm = {
-        fullName: '',
-        email: '',
-        phoneNumber: '',
-        district: '',
-        subDistrict: '',
-        postalCode: '',
-        fullAddress: '',
-        additionalInfo: ''
-    };
-    // Payment Flow State
-    displayPaymentModal = false;
-    selectedPaymentMethod: 'COD' | 'bKash' | null = null;
-    bkashTrxId = '';
-    bkashPhone = '';
-    displayFinalSuccessModal = false;
-    // Track Order
-    trackPhone = '';
-    trackedOrders: Order[] = [];
-    trackingLoading = false;
-    hasSearched = false;
     // Contact Form
     contactForm = {
         name: '',
@@ -114,15 +66,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         message: ''
     };
     isContactSubmitting = false;
-    // Delivery Logic
-    deliveryLocation: 'Inside Dhaka' | 'Outside Dhaka' = 'Inside Dhaka';
-    currentDeliveryCharge = 0;
-    districts: District[] = districts;
-    subDistricts: string[] = [];
-    placedOrderId = '';
-    placedOrderNumber = '';
-    currentPaymentId: number | null = null;
-    transactionId = '';
     landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
     categoryImages: { [key: string]: string } = {
         'Prodip': 'assets/categories/prodip.webp',
@@ -169,11 +112,6 @@ export class HomeComponent implements OnInit, OnDestroy {
             numScroll: 1
         }
     ];
-    isPaymentSelected = false;
-    // Regex Patterns for Template Binding
-    emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    phoneRegex = /^(?:\+88|88)?(01[3-9]\d{8})$/; // Bangladeshi Phone Number
-    postalCodeRegex = /^\d{4}$/; // Exact 4 digits
     private storageListener: (() => void) | null = null;
     private autoScrollTimer: any = null;
     private resumeAutoScrollTimer: any = null;
@@ -181,18 +119,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     constructor(
         private productService: ProductService,
-        private orderService: OrderService,
         private messageService: MessageService,
         private titleService: Title,
         private metaService: Meta,
         public contactService: ContactService,
         public themeService: ThemeService,
         public siteConfigService: SiteConfigService,
-        private paymentService: PaymentService,
         private deliveryService: DeliveryService,
         private categoryService: CategoryService,
         public cartService: CartService,
-        private gtagService: GtagService,
         private route: ActivatedRoute,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -200,31 +135,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     // Replaces confirmPayment and integration into placeOrder
-    get isFormAndPaymentValid(): boolean {
-        // Basic form valid AND payment selected
-        let valid = this.isCheckoutFormValid && this.isPaymentSelected;
-        return valid;
-    }
-
-    get isCheckoutFormValid(): boolean {
-        const { fullName, email, phoneNumber, district, postalCode, fullAddress, subDistrict } = this.checkoutForm;
-
-        // Basic existence check (Removed postalCode form strict requirements)
-        const basicValidation = fullName && email && phoneNumber && district && fullAddress;
-
-        // Sub-district check
-        const subDistrictValidation = this.subDistricts.length > 0 ? !!subDistrict : true; // Optional if no sub-districts
-
-        const isEmailValid = this.emailRegex.test(email);
-        const isPhoneValid = this.phoneRegex.test(phoneNumber);
-        // Postal code is optional, but if present must be valid
-        const isPostalCodeValid = !postalCode || this.postalCodeRegex.test(postalCode);
-
-        const isValid = !!(basicValidation && subDistrictValidation && isEmailValid && isPhoneValid && isPostalCodeValid);
-
-        return isValid;
-    }
-
     getCategoryImage(categoryName: string): string {
         if (!categoryName) return 'assets/logo.webp';
 
@@ -244,15 +154,6 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     openPaymentModal(orderId: string) {
         // Deprecated
-    }
-
-    async selectPaymentMethod(method: 'COD' | 'bKash') {
-        this.selectedPaymentMethod = method;
-        this.isPaymentSelected = true;
-
-        if (method === 'COD') {
-            await this.confirmCOD();
-        }
     }
 
     submitContactForm() {
@@ -289,14 +190,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.loadSpecialSections();
         this.loadLandingPageConfig();
-        this.loadDeliveryCharges();
 
         // Check for checkout query param
         this.route.queryParams.subscribe(params => {
             if (params['checkout'] === 'true') {
                 // Wait a bit for products/cart to load if needed, but cart is local storage so it's fast
                 setTimeout(() => {
-                    this.openCheckout();
+                    this.checkoutRequested.set(true);
                     // Clear query param so refresh doesn't reopen
                     this.router.navigate([], {
                         queryParams: {
@@ -343,27 +243,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.metaService.updateTag({ name: 'twitter:title', content: title });
         this.metaService.updateTag({ name: 'twitter:description', content: description });
         this.metaService.updateTag({ name: 'twitter:image', content: imageUrl });
-    }
-
-    loadDeliveryCharges() {
-        // Initial default set to 0 as requested
-        this.currentDeliveryCharge = 0;
-    }
-
-    onDistrictChange(event: any) {
-        const districtName = event.value;
-        const selectedDistrict = this.districts.find(d => d.name === districtName);
-        this.subDistricts = selectedDistrict ? selectedDistrict.subDistricts : [];
-        this.checkoutForm.subDistrict = '';
-
-        // Automated Delivery Charge Calculation
-        if (districtName === 'Tangail') {
-            this.currentDeliveryCharge = 70;
-            this.deliveryLocation = 'Inside Dhaka'; // Mapping Tangail to 'Inside Dhaka' logic or just updating charge
-        } else {
-            this.currentDeliveryCharge = 130;
-            this.deliveryLocation = 'Outside Dhaka';
-        }
     }
 
     loadProducts() {
@@ -432,19 +311,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (isPlatformBrowser(this.platformId)) {
             document.removeEventListener('touchstart', this.autoScrollInteractionHandler);
         }
-        this.armAbandonClockIfActive();
-    }
-
-    @HostListener('window:beforeunload', ['$event'])
-    onBeforeUnload() {
-        this.armAbandonClockIfActive();
-    }
-
-    private armAbandonClockIfActive() {
-        if (!this.displayOrderSuccessModal || this.cartService.cart().length === 0) {
-            return;
-        }
-        this.cartService.markCheckoutLeft();
     }
 
     scrollLeft(element: HTMLElement) {
@@ -520,18 +386,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.cartService.addToCart(product);
     }
 
-    updateQuantity(item: CartItem, change: number) {
-        this.cartService.updateQuantity(item, change);
-    }
-
-    getSubTotal(): number {
-        return this.cartService.subTotal();
-    }
-
-    getTotalPrice(): number {
-        return this.getSubTotal() + this.currentDeliveryCharge;
-    }
-
     getTotalCartItems(): number {
         return this.cartService.totalItems();
     }
@@ -560,337 +414,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.router.navigate(['/all-products']);
     }
 
-    openCheckout() {
-        if (this.cartService.cart().length === 0) {
-            this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
-            return;
-        }
-        // Refresh cart products before showing checkout to ensure latest price/stock
-        this.cartService.refreshCartProducts();
-
-        // Reset payment method to default to ensure modal logic works
-        this.selectedPaymentMethod = null;
-        this.displayCheckoutModal = true;
-    }
-
-    placeOrder() {
-        // This method now only validates the form and opens the payment modal.
-        // Order creation is handled by submitBkashPayment() or confirmCOD().
-        if (!this.isCheckoutFormValid) {
-            this.messageService.add({
-                life: 2000,
-                severity: 'error',
-                summary: 'Validation Error',
-                detail: 'Please fill all required fields correctly.'
-            });
-
-            // Mark all fields as touched to trigger UI validation messages
-            if (this.formControls) {
-                this.formControls.forEach(control => {
-                    control.control.markAsTouched();
-                });
-            }
-            return;
-        }
-
-        // Close the checkout modal and open the payment selection modal
-        this.displayCheckoutModal = false;
-        this.displayOrderSuccessModal = true;
-        this.selectedPaymentMethod = null; // Reset payment method
-        this.bkashPhone = this.checkoutForm.phoneNumber;
-        // Reset placedOrderId to ensure a new order is created
-        this.placedOrderId = '';
-    }
-
-    trackOrder() {
-        if (!this.trackPhone) {
-            this.showError('Please enter a phone number or order number');
-            return;
-        }
-
-        const input = this.trackPhone.trim().toUpperCase();
-        this.trackingLoading = true;
-        this.hasSearched = true;
-
-        if (input.startsWith('ORD-')) {
-            // Track by order number
-            this.orderService.trackOrderByNumber(input).subscribe({
-                next: (order) => {
-                    this.trackedOrders = order ? [order] : [];
-                    this.trackingLoading = false;
-                },
-                error: (err) => {
-                    console.error('Tracking by number failed', err);
-                    this.trackedOrders = [];
-                    this.trackingLoading = false;
-                    this.showError('Order number not found.');
-                }
-            });
-        } else {
-            // Track by phone
-            this.orderService.trackOrdersByPhone(this.trackPhone).subscribe({
-                next: (orders) => {
-                    // Sort by date descending
-                    this.trackedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-                    this.trackingLoading = false;
-                },
-                error: (err) => {
-                    console.error('Tracking failed', err);
-                    this.trackedOrders = [];
-                    this.trackingLoading = false;
-                }
-            });
-        }
-    }
-
-    openPaymentForOrder(orderId: string | undefined) {
-        if (!orderId) {
-            this.showError('Invalid Order ID');
-            return;
-        }
-        this.placedOrderId = orderId;
-        this.displayTrackOrderModal = false;
-        this.displayPaymentMethodModal = true;
-        this.selectedPaymentMethod = null;
-        this.transactionId = '';
-        this.currentPaymentId = null;
-    }
-
-    processPayment() {
-        if (!this.selectedPaymentMethod) {
-            this.showError('Please select a payment method');
-            return;
-        }
-
-        if (this.selectedPaymentMethod === 'bKash') {
-            if (!this.transactionId) {
-                this.showError('Transaction ID is required');
-                return;
-            }
-        }
-
-        const oid = this.placedOrderId;
-
-        // Helper to handle confirmation
-        const handleConfirmation = (paymentId: number) => {
-            if (this.selectedPaymentMethod === 'bKash') {
-                const trxId = this.transactionId.trim();
-
-                if (!trxId) {
-                    this.showError('Transaction ID is required');
-                    return;
-                }
-
-                this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
-                    next: () => {
-                        this.messageService.add({
-                            life: 2000,
-                            severity: 'success',
-                            summary: 'Payment Submitted',
-                            detail: 'Waiting for admin verification.'
-                        });
-                        this.displayPaymentMethodModal = false;
-                        this.displayPaymentSuccessModal = true;
-                    },
-                    error: (err: any) => {
-                        console.error('Payment confirmation failed', err);
-
-                        // Extract error message from backend response if available
-                        let errorMsg = 'Failed to confirm payment. Please check Transaction ID.';
-                        if (err.error && err.error.detail) {
-                            if (typeof err.error.detail === 'string') {
-                                errorMsg = err.error.detail;
-                            } else if (Array.isArray(err.error.detail)) {
-                                // Handle Pydantic validation errors
-                                errorMsg = err.error.detail.map((e: any) => e.msg).join(', ');
-                            }
-                        }
-
-                        this.showError(errorMsg);
-                    }
-                });
-            } else {
-                // COD - Just finish
-                this.messageService.add({
-                    life: 2000,
-                    severity: 'success',
-                    summary: 'COD Selected',
-                    detail: 'Waiting for admin verification.'
-                });
-                this.displayPaymentMethodModal = false;
-                this.displayPaymentSuccessModal = true;
-            }
-        };
-
-        // If we already have a payment ID for this session, skip creation
-        if (this.currentPaymentId) {
-
-            handleConfirmation(this.currentPaymentId);
-            return;
-        }
-
-        // 1. Create Payment
-        // Try lowercase payment method if backend expects it
-        const methodToSend = this.selectedPaymentMethod === 'bKash' ? 'bkash' : 'cod';
-
-        this.paymentService.createPayment(oid, methodToSend).subscribe({
-            next: (payment: any) => {
-
-
-                if (payment && payment.id) {
-                    this.currentPaymentId = payment.id;
-                    handleConfirmation(payment.id);
-                } else {
-                    console.error('Payment created but no ID returned', payment);
-                    this.showError('Payment initialization failed. Please try again.');
-                }
-            },
-            error: (err: any) => {
-                console.error('Payment creation failed', err);
-
-                this.showError('Failed to initiate payment. Please try again.');
-            }
-        });
-    }
-
-    showError(msg: any, status?: number) {
-        let detail = msg;
-        if (typeof msg === 'object' && msg !== null) {
-            try {
-                detail = JSON.stringify(msg);
-            } catch (e) {
-                detail = String(msg);
-            }
-        }
-        const summary = status ? `Error (${status})` : 'Validation Error';
-        this.messageService.add({ severity: 'error', summary: summary, detail: detail });
-    }
-
-    resetCheckoutForm() {
-        this.checkoutForm = {
-            fullName: '',
-            email: '',
-            phoneNumber: '',
-            district: '',
-            subDistrict: '',
-            postalCode: '',
-            fullAddress: '',
-            additionalInfo: ''
-        };
-        this.subDistricts = [];
-        this.isPaymentSelected = false;
-        this.selectedPaymentMethod = null;
-        this.bkashTrxId = '';
-        this.bkashPhone = '';
-    }
-
-
-
-    async confirmCOD() {
-        this.loading.set(true);
-        const orderData = this.prepareOrderData('COD');
-
-        try {
-            const order = await lastValueFrom(this.orderService.createOrder(orderData));
-            this.placedOrderId = order.id || '';
-            this.placedOrderNumber = order.orderNumber || this.placedOrderId;
-
-            // Since it's COD, we can directly show success
-            this.messageService.add({
-                life: 2000,
-                severity: 'success',
-                summary: 'Order Confirmed',
-                detail: 'Your COD order has been placed successfully.'
-            });
-            this.displayOrderSuccessModal = false;
-            this.displayFinalSuccessModal = true;
-
-            // Clear cart and reset
-            const cartItemsToReduce = [...this.cartService.cart()];
-            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
-            this.cartService.clearAbandonClock();
-            this.cartService.clearCart(); // Use CartService
-            this.productService.reduceStock(cartItemsToReduce);
-            this.resetCheckoutForm();
-        } catch (err) {
-            console.error('COD Order creation failed', err);
-            this.showError('Failed to place order. Please try again.');
-        } finally {
-            this.loading.set(false);
-        }
-    }
-
-    async submitBkashPayment() {
-        if (!this.bkashTrxId || !this.bkashPhone) {
-            this.showError('Transaction ID and Phone Number are required');
-            return;
-        }
-
-        this.loading.set(true);
-
-        // Step 1: Create the order if it doesn't exist yet
-        if (!this.placedOrderId) {
-            const orderData = this.prepareOrderData('bKash');
-            try {
-                const order = await lastValueFrom(this.orderService.createOrder(orderData));
-                this.placedOrderId = order.id || '';
-                this.placedOrderNumber = order.orderNumber || this.placedOrderId;
-            } catch (err) {
-                console.error('bKash Order creation failed', err);
-                this.showError('Failed to create order before payment. Please try again.');
-                this.loading.set(false);
-                return;
-            }
-        }
-
-        const oid = this.placedOrderId;
-
-        // Sanitize phone number
-        let cleanPhone = this.bkashPhone.replace(/\D/g, '');
-        if (cleanPhone.length > 11) {
-            cleanPhone = cleanPhone.slice(-11);
-        }
-
-        const payload = {
-            transaction_id: this.bkashTrxId.trim(),
-            sender_phone: cleanPhone
-        };
-
-        // Step 2: Submit the transaction details
-        try {
-
-            await lastValueFrom(this.orderService.submitTrx(oid, payload, this.checkoutForm.phoneNumber));
-
-            // Success Logic
-            this.messageService.add({
-                life: 2000,
-                severity: 'success',
-                summary: 'Payment Submitted',
-                detail: 'Your payment has been submitted for verification.'
-            });
-            this.displayOrderSuccessModal = false;
-            this.displayFinalSuccessModal = true;
-
-            // Clear cart and reset
-            const cartItemsToReduce = [...this.cartService.cart()];
-            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
-            this.cartService.clearAbandonClock();
-            this.cartService.clearCart(); // Use CartService
-            this.productService.reduceStock(cartItemsToReduce);
-            this.resetCheckoutForm();
-        } catch (err: any) {
-            console.error('Payment submission failed:', err);
-            let detailedError = 'Failed to submit payment. Please check your Transaction ID and try again.';
-            if (err.error?.detail) {
-                detailedError = typeof err.error.detail === 'string' ? err.error.detail : JSON.stringify(err.error.detail);
-            }
-            this.showError(detailedError, err.status);
-            // Note: We leave placedOrderId so the user can retry submitting the transaction
-        } finally {
-            this.loading.set(false);
-        }
-    }
-
     isOutOfStock(product: Product): boolean {
         return !product.isInStock;
     }
@@ -902,19 +425,5 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.selectedCategory = null;
             this.loadProducts();
         }
-    }
-
-    private prepareOrderData(paymentMethod: 'COD' | 'bKash'): any {
-        return {
-            ...this.checkoutForm,
-            items: this.cartService.cart(), // Use CartService
-            totalAmount: this.getTotalPrice(),
-            status: 'Pending' as 'Pending',
-            paymentMethod: paymentMethod,
-            paymentStatus: paymentMethod === 'COD' ? 'Confirmed' : 'Pending',
-            deliveryLocation: this.deliveryLocation,
-            deliveryCharge: this.currentDeliveryCharge,
-            orderDate: new Date()
-        };
     }
 }

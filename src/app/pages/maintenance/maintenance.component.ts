@@ -4,7 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { MaintenanceService } from '../../core/services';;;
+import { MaintenanceService } from '../../core/services/maintenance/maintenance.service';
 
 @Component({
     selector: 'app-maintenance',

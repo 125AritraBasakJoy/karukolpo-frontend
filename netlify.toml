@@ -1,7 +1,7 @@
 [build]
   # This matches the local build output confirmed via local build
   publish = "dist/karukolpo-frontend/browser"
-  command = "npm run build"
+  command = "npm run build && node scripts/inject-preloads.mjs"
 
 [[redirects]]
   from = "/*"

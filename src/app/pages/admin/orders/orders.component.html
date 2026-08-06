@@ -190,7 +190,12 @@
         </div>
     </ng-template>
 
-    @if (selectedOrder) {
+    @if (loadingDetails && !selectedOrder) {
+    <div class="flex flex-column align-items-center justify-content-center p-6" style="min-height: 300px;">
+        <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="4"></p-progressSpinner>
+        <span class="text-gray-400 mt-4">Loading order details...</span>
+    </div>
+    } @else if (selectedOrder) {
     <div class="dialog-content fade-in animation-duration-300">
         <!-- Status Banner -->
         <div class="status-banner mb-5 p-4 border-round-2xl flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between shadow-2 gap-3"
@@ -334,8 +339,7 @@
                                 <div class="product-img-container mr-3 border-round overflow-hidden"
                                     style="width: 56px; height: 56px;">
                                     @if (item.product.imageUrl) {
-                                    <img [src]="item.product.imageUrl" class="w-full h-full object-cover"
-                                        loading="lazy" />
+                                    <img [src]="item.product.imageUrl" class="w-full h-full object-cover" />
                                     } @else {
                                     <div
                                         class="w-full h-full flex align-items-center justify-content-center bg-white-alpha-10">

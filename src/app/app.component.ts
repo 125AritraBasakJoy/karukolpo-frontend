@@ -2,7 +2,12 @@ import { Component, OnInit, Inject, PLATFORM_ID, isDevMode } from '@angular/core
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { OrderService, NotificationService, VersionService, TrackingService, MaintenanceService, PwaInstallService } from './core/services';;
+import { OrderService } from './core/services/order/order.service';
+import { NotificationService } from './core/services/notification/notification.service';
+import { VersionService } from './core/services/version/version.service';
+import { TrackingService } from './core/services/tracking/tracking.service';
+import { MaintenanceService } from './core/services/maintenance/maintenance.service';
+import { PwaInstallService } from './core/services/pwa/pwa-install.service';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { CommonModule, isPlatformBrowser } from '@angular/common';

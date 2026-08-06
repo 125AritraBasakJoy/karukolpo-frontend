@@ -267,22 +267,11 @@ export class OrderService {
   /**
    * Submit Transaction ID (bKash flow)
    * POST /orders/{order_id}/payment/submit
+   * Submit bKash transaction details
    */
-  submitTrx(orderId: number | string, data: any): Observable<any> {
-    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(orderId), data).pipe(
-      tap(() => this.clearCache())
-    );
-  }
-
-  /**
-   * Submit COD Selection (Auto-confirm flow)
-   * POST /orders/{order_id}/payment/submit
-   */
-  submitCOD(orderId: number | string): Observable<any> {
-    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(orderId), {
-      transaction_id: 'COD_AUTO_CONFIRMED',
-      sender_phone: 'COD'
-    }).pipe(
+  submitTrx(orderId: number | string, data: any, phone: string): Observable<any> {
+    const url = `${API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(orderId)}?phone=${encodeURIComponent(phone)}`;
+    return this.apiService.post<any>(url, data).pipe(
       tap(() => this.clearCache())
     );
   }

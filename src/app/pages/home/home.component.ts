@@ -2,6 +2,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     ElementRef,
+    HostListener,
     Inject,
     OnDestroy,
     OnInit,
@@ -245,9 +246,13 @@ export class HomeComponent implements OnInit, OnDestroy {
         // Deprecated
     }
 
-    selectPaymentMethod(method: 'COD' | 'bKash') {
+    async selectPaymentMethod(method: 'COD' | 'bKash') {
         this.selectedPaymentMethod = method;
         this.isPaymentSelected = true;
+
+        if (method === 'COD') {
+            await this.confirmCOD();
+        }
     }
 
     submitContactForm() {
@@ -427,6 +432,19 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (isPlatformBrowser(this.platformId)) {
             document.removeEventListener('touchstart', this.autoScrollInteractionHandler);
         }
+        this.armAbandonClockIfActive();
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    onBeforeUnload() {
+        this.armAbandonClockIfActive();
+    }
+
+    private armAbandonClockIfActive() {
+        if (!this.displayOrderSuccessModal || this.cartService.cart().length === 0) {
+            return;
+        }
+        this.cartService.markCheckoutLeft();
     }
 
     scrollLeft(element: HTMLElement) {
@@ -766,6 +784,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.bkashPhone = '';
     }
 
+
+
     async confirmCOD() {
         this.loading.set(true);
         const orderData = this.prepareOrderData('COD');
@@ -788,6 +808,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];
             this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
+            this.cartService.clearAbandonClock();
             this.cartService.clearCart(); // Use CartService
             this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();
@@ -838,7 +859,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         // Step 2: Submit the transaction details
         try {
 
-            await lastValueFrom(this.orderService.submitTrx(oid, payload));
+            await lastValueFrom(this.orderService.submitTrx(oid, payload, this.checkoutForm.phoneNumber));
 
             // Success Logic
             this.messageService.add({
@@ -853,6 +874,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];
             this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
+            this.cartService.clearAbandonClock();
             this.cartService.clearCart(); // Use CartService
             this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();

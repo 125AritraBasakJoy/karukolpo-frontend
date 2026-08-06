@@ -6,6 +6,7 @@ import { Product, ProductImage } from '../../../models/product.model';
 import { ApiService } from '../api/api.service';
 import { PRODUCTS_API } from './product.api';
 import { buildListQuery } from '../api/helpers';
+import { environment } from '../../../../environments/environment';
 
 const API_ENDPOINTS = {
   PRODUCTS: PRODUCTS_API
@@ -500,6 +501,23 @@ export class ProductService {
     );
   }
 
+  public getImageUrl(url: string | null | undefined): string {
+    if (!url) {
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%231e293b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364748b" font-family="system-ui, sans-serif" font-size="14" font-weight="500">No Image</text></svg>';
+    }
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+      return url;
+    }
+    let cleanPath = url;
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+    if (!cleanPath.startsWith('uploads/') && !cleanPath.startsWith('assets/')) {
+      cleanPath = 'uploads/' + cleanPath;
+    }
+    return `${environment.baseUrl}/${cleanPath}`;
+  }
+
   /**
    * Map backend product format to frontend format
    * FIX: Added URL deduplication to prevent duplicate images in gallery
@@ -520,7 +538,7 @@ export class ProductService {
     const manualStatus = rawStatus as 'IN_STOCK' | 'OUT_OF_STOCK' | 'AUTO';
 
     // Map Images
-    let mainImageUrl = data.primary_image_url || data.imageUrl || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%231e293b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364748b" font-family="system-ui, sans-serif" font-size="14" font-weight="500">No Image</text></svg>';
+    let mainImageUrl = this.getImageUrl(data.primary_image_url || data.imageUrl);
     let galleryImages: string[] = [];
 
     if (data.images && Array.isArray(data.images) && data.images.length > 0) {
@@ -529,7 +547,7 @@ export class ProductService {
 
       if (primaryImage) {
         // Enforce image_medium for home/list cards for optimal loading/quality balance
-        mainImageUrl = primaryImage.image_medium || primaryImage.image_large || primaryImage.image_thumb || primaryImage.image_path || mainImageUrl;
+        mainImageUrl = this.getImageUrl(primaryImage.image_medium || primaryImage.image_large || primaryImage.image_thumb || primaryImage.image_path);
       }
 
       // 2. Map all image records to their high-quality 'large' variant for the product details carousel,
@@ -538,15 +556,16 @@ export class ProductService {
       galleryImages = data.images
         .map(galleryUrl)
         .filter(Boolean)
+        .map((url: string) => this.getImageUrl(url))
         .sort((a: string, b: string) => {
-          const aPrimary = data.images.find((img: any) => galleryUrl(img) === a)?.is_primary;
-          const bPrimary = data.images.find((img: any) => galleryUrl(img) === b)?.is_primary;
+          const aPrimary = data.images.find((img: any) => this.getImageUrl(galleryUrl(img)) === a)?.is_primary;
+          const bPrimary = data.images.find((img: any) => this.getImageUrl(galleryUrl(img)) === b)?.is_primary;
           return Number(bPrimary) - Number(aPrimary);
         });
 
     } else if (data.image) {
-      mainImageUrl = data.image;
-      galleryImages = [data.image];
+      mainImageUrl = this.getImageUrl(data.image);
+      galleryImages = [this.getImageUrl(data.image)];
     }
 
     // Determine final in-stock status

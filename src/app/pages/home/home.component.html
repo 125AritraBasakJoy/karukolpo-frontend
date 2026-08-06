@@ -87,9 +87,13 @@
                     <div class="swipe-card-wrapper px-2">
                         <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                                <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
-                                    sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                    loading="lazy" style="object-fit: cover;" class="product-image">
+                                @if (product.imageUrl.startsWith('data:')) {
+                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;">
+                                } @else {
+                                    <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
+                                        sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
+                                        loading="lazy" style="object-fit: cover;" class="product-image">
+                                }
 
                                 <div class="quick-actions-overlay">
                                     <button pButton icon="pi pi-search-plus" label="Details"
@@ -200,9 +204,13 @@
                     <div class="swipe-card-wrapper px-2">
                         <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                                <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
-                                    sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                    loading="lazy" style="object-fit: cover;" class="product-image">
+                                @if (product.imageUrl.startsWith('data:')) {
+                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;">
+                                } @else {
+                                    <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
+                                        sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
+                                        loading="lazy" style="object-fit: cover;" class="product-image">
+                                }
 
                                 <div class="quick-actions-overlay">
                                     <button pButton icon="pi pi-search-plus" label="Details"
@@ -468,7 +476,7 @@
                 <div class="p-fluid">
                     <div class="field">
                         <label for="field_fullname">Full Name <span class="text-red-500">*</span></label>
-                        <input pInputText id="field_fullname" [(ngModel)]="checkoutForm.fullName"
+                        <input pInputText id="field_fullname" name="field_fullname" autocomplete="off" [(ngModel)]="checkoutForm.fullName"
                             placeholder="Enter your name" required class="w-full" #fullName="ngModel">
                         @if (fullName.invalid && (fullName.dirty || fullName.touched)) {
                         <small class="p-error">Full Name is
@@ -477,7 +485,7 @@
                     </div>
                     <div class="field">
                         <label for="field_phone">Phone Number <span class="text-red-500">*</span></label>
-                        <input pInputText id="field_phone" [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..."
+                        <input pInputText id="field_phone" name="field_phone" autocomplete="off" [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..."
                             maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$"
                             class="w-full">
                         @if (phone.invalid && (phone.dirty || phone.touched)) {
@@ -488,7 +496,7 @@
                     </div>
                     <div class="field">
                         <label for="field_email">Email <span class="text-red-500">*</span></label>
-                        <input pInputText id="field_email" [(ngModel)]="checkoutForm.email"
+                        <input pInputText id="field_email" name="field_email" autocomplete="off" [(ngModel)]="checkoutForm.email"
                             placeholder="example@email.com" required email class="w-full" #email="ngModel">
                         @if (email.invalid && (email.dirty || email.touched)) {
                         <small class="p-error">Valid Email is
@@ -522,7 +530,7 @@
                     </div>
                     <div class="field">
                         <label for="field_postal">Postal Code</label>
-                        <input pInputText id="field_postal" [(ngModel)]="checkoutForm.postalCode" placeholder="1234"
+                        <input pInputText id="field_postal" name="field_postal" autocomplete="off" [(ngModel)]="checkoutForm.postalCode" placeholder="1234"
                             maxlength="4" pattern="\d{4}" #postal="ngModel" class="w-full">
                         @if (postal.invalid && (postal.dirty || postal.touched)) {
                         <small class="p-error">Valid Postal
@@ -532,7 +540,7 @@
                     </div>
                     <div class="field">
                         <label for="field_address">Full Address <span class="text-red-500">*</span></label>
-                        <textarea pInputTextarea id="field_address" [(ngModel)]="checkoutForm.fullAddress" rows="2"
+                        <textarea pInputTextarea id="field_address" name="field_address" autocomplete="off" [(ngModel)]="checkoutForm.fullAddress" rows="2"
                             placeholder="House, Road, Area..." required #address="ngModel" class="w-full"></textarea>
                         @if (address.invalid && (address.dirty || address.touched)) {
                         <small class="p-error">Full
@@ -543,7 +551,7 @@
 
                     <div class="field">
                         <label for="field_info">Additional Info (Optional)</label>
-                        <textarea pInputTextarea id="field_info" [(ngModel)]="checkoutForm.additionalInfo" rows="2"
+                        <textarea pInputTextarea id="field_info" name="field_info" autocomplete="off" [(ngModel)]="checkoutForm.additionalInfo" rows="2"
                             placeholder="Landmarks, special instructions..." class="w-full"></textarea>
                     </div>
 
@@ -635,7 +643,7 @@
                 <div class="grid">
                     <div class="col-6">
                         <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
-                            [class.active]="selectedPaymentMethod === 'COD'" (click)="selectedPaymentMethod = 'COD'">
+                            [class.active]="selectedPaymentMethod === 'COD'" (click)="selectPaymentMethod('COD')">
                             <div class="bg-primary-reverse-100 p-3 border-circle">
                                 <i class="pi pi-money-bill text-3xl text-primary"></i>
                             </div>
@@ -645,7 +653,7 @@
                     <div class="col-6">
                         <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
                             [class.active]="selectedPaymentMethod === 'bKash'"
-                            (click)="selectedPaymentMethod = 'bKash'">
+                            (click)="selectPaymentMethod('bKash')">
                             <div class="bg-pink-900/20 p-3 border-circle">
                                 <img src="assets/bkash-logo.png" alt="bKash" width="97" height="30" loading="lazy">
                             </div>
@@ -678,20 +686,6 @@
                     <button pButton label="Complete Payment" icon="pi pi-shield"
                         class="p-button-danger p-button-lg w-full mt-2" (click)="submitBkashPayment()"
                         [disabled]="!bkashPhone || !bkashTrxId"></button>
-                </div>
-                }
-
-                <!-- COD Action Area -->
-                @if (selectedPaymentMethod === 'COD') {
-                <div class="mt-4 bkash-details-area">
-                    <div class="surface-section p-3 border-round-lg mb-4 text-center border-1 surface-border">
-                        <p class="text-color-secondary m-0">You will pay the total amount to the delivery person when
-                            your
-                            package
-                            arrives.</p>
-                    </div>
-                    <button pButton label="Confirm COD Order" icon="pi pi-check" class="p-button-lg w-full"
-                        (click)="confirmCOD()"></button>
                 </div>
                 }
             </div>

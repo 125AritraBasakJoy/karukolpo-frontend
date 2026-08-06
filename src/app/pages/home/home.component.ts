@@ -390,8 +390,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
         forkJoin(requests).subscribe({
             next: (result: any) => {
-                this.hotDeals.set(result.hotDeals || []);
-                this.bestSelling.set(result.bestSellers || []);
+                const hotDeals = result.hotDeals || [];
+                const bestSelling = result.bestSellers || [];
+                this.bestSelling.set(bestSelling);
+                this.hotDeals.set(this.dedupeAgainst(hotDeals, bestSelling));
                 this.loading.set(false);
             },
             error: (err) => {
@@ -462,6 +464,11 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
         this.stopAutoScroll();
         this.resumeAutoScrollTimer = setTimeout(() => this.startAutoScroll(), 6000);
+    }
+
+    private dedupeAgainst(products: Product[], keep: Product[]): Product[] {
+        const keepIds = new Set(keep.map(p => p.id));
+        return products.filter(p => !keepIds.has(p.id));
     }
 
     private autoScrollStep() {

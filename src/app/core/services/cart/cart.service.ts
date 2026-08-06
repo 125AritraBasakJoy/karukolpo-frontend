@@ -10,7 +10,7 @@ import { ProductService } from '../product/product.service';
 })
 export class CartService {
   private readonly ABANDON_KEY = 'cart_abandon_at';
-  private readonly ABANDON_MS = 30000;
+  private readonly ABANDON_MS = 600000;
   private abandonTimer: any = null;
 
   cart = signal<CartItem[]>([]);

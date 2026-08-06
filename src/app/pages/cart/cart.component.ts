@@ -75,6 +75,10 @@ export class CartComponent implements OnInit, OnDestroy {
     orderDiscount = 0;
     private createdOrderObj: any = null;
 
+    // Checkout draft retention in localStorage (10 minutes)
+    private readonly CHECKOUT_DRAFT_TTL = 600000;
+    private draftClearTimer: any = null;
+
     // Validation patterns
     emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     phoneRegex = /^(?:\+88|88)?(01[3-9]\d{8})$/;
@@ -104,16 +108,12 @@ export class CartComponent implements OnInit, OnDestroy {
                 try {
                     const parsed = JSON.parse(saved);
                     const elapsed = Date.now() - parsed.timestamp;
-                    if (elapsed < 40000) {
+                    if (elapsed < this.CHECKOUT_DRAFT_TTL) {
                         this.checkoutForm = parsed.data;
                         if (this.checkoutForm.district) {
                             this.loadSubDistricts(this.checkoutForm.district);
                         }
-                        
-                        const remaining = 40000 - elapsed;
-                        setTimeout(() => {
-                            this.clearCheckoutDraft();
-                        }, remaining);
+                        this.scheduleDraftClear(this.CHECKOUT_DRAFT_TTL - elapsed);
                     } else {
                         this.clearCheckoutDraft();
                     }
@@ -124,6 +124,16 @@ export class CartComponent implements OnInit, OnDestroy {
         }
     }
 
+    private scheduleDraftClear(delay: number) {
+        if (this.draftClearTimer) {
+            clearTimeout(this.draftClearTimer);
+        }
+        this.draftClearTimer = setTimeout(() => {
+            this.draftClearTimer = null;
+            this.clearCheckoutDraft();
+        }, delay);
+    }
+
     saveFormState() {
         if (isPlatformBrowser(this.platformId)) {
             const payload = {
@@ -131,6 +141,7 @@ export class CartComponent implements OnInit, OnDestroy {
                 timestamp: Date.now()
             };
             localStorage.setItem('karukolpo_checkout_draft', JSON.stringify(payload));
+            this.scheduleDraftClear(this.CHECKOUT_DRAFT_TTL);
         }
     }
 
@@ -164,6 +175,10 @@ export class CartComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        if (this.draftClearTimer) {
+            clearTimeout(this.draftClearTimer);
+            this.draftClearTimer = null;
+        }
         this.armAbandonClockIfActive();
     }
 

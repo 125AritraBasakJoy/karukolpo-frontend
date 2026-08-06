@@ -5,9 +5,12 @@
   border-top: 1px solid var(--surface-border);
   min-height: 400px; /* Reserve space for footer on desktop */
   contain: layout style; /* Helps with rendering stability */
+  content-visibility: auto; /* Skips off-screen footer rendering until needed */
+  contain-intrinsic-size: auto 400px;
 
   @media (max-width: 768px) {
     min-height: 600px; /* More space on mobile for stacked content */
+    contain-intrinsic-size: auto 600px;
   }
 
   .container {

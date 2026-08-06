@@ -44,7 +44,6 @@ const PAYMENT_METHODS = [
     CalendarModule,
     CurrencyPipe
   ],
-  providers: [MessageService],
   templateUrl: './out-sales.component.html',
   styleUrls: ['./out-sales.component.scss']
 })
@@ -163,6 +162,23 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     return this.items.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0);
   }
 
+  private extractErrorDetail(err: any): string {
+    const detail = err?.error?.detail;
+    if (typeof detail === 'string') {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      return detail.map((d: any) => d?.msg || d?.message).filter(Boolean).join(', ');
+    }
+    if (typeof err?.error?.message === 'string') {
+      return err.error.message;
+    }
+    if (typeof err?.message === 'string') {
+      return err.message;
+    }
+    return 'Failed to record sale. Please try again.';
+  }
+
   saveSale() {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -200,7 +216,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to record sale', err);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to record sale. Please try again.' });
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: this.extractErrorDetail(err) });
       },
       complete: () => this.saving.set(false)
     });

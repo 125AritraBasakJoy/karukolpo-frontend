@@ -1,0 +1,296 @@
+<!-- Checkout Modal (Step 1: Shipping) -->
+@if (displayCheckoutModal) {
+<p-dialog [(visible)]="displayCheckoutModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
+    header="Checkout" [dismissableMask]="false">
+    <ng-template pTemplate="content">
+        <div class="grid">
+            <!-- Cart Summary -->
+            <div class="col-12 mb-4">
+                <div class="surface-card p-3 border-round shadow-1">
+                    @for (item of cartService.cart(); track item.product.id) {
+                    <div
+                        class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                        <div class="flex align-items-center gap-3">
+                            <img [src]="item.product.imageUrl" class="w-3rem h-3rem border-round object-cover"
+                                loading="lazy">
+                            <div>
+                                <div class="font-bold">{{ item.product.name }}</div>
+                                <div class="text-sm text-600">{{ item.product.price | currency:'BDT':'৳' }}
+                                    x {{
+                                    item.quantity }}</div>
+                            </div>
+                        </div>
+                        <div class="flex align-items-center gap-2">
+                            <button pButton icon="pi pi-minus" aria-label="Decrease product quantity"
+                                class="p-button-rounded p-button-text p-button-sm"
+                                (click)="updateQuantity(item, -1)"></button>
+                            <span class="font-bold w-2rem text-center">{{ item.quantity }}</span>
+                            <button pButton icon="pi pi-plus" aria-label="Increase product quantity"
+                                class="p-button-rounded p-button-text p-button-sm"
+                                (click)="updateQuantity(item, 1)"></button>
+                        </div>
+                    </div>
+                    }
+                    <div class="flex justify-content-between mt-3">
+                        <span>Subtotal</span>
+                        <span class="font-bold">{{ getSubTotal() | currency:'BDT':'৳' }}</span>
+                    </div>
+                    <div class="flex justify-content-between mt-2">
+                        <span>Delivery Charge</span>
+                        <span class="font-bold">{{ currentDeliveryCharge | currency:'BDT':'৳' }}</span>
+                    </div>
+                    <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl font-bold">
+                        <span>Total</span>
+                        <span class="text-primary">{{ getTotalPrice() | currency:'BDT':'৳' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Form -->
+            <div class="col-12">
+                <div class="p-fluid">
+                    <div class="field">
+                        <label for="field_fullname">Full Name <span class="text-red-500">*</span></label>
+                        <input pInputText id="field_fullname" name="field_fullname" autocomplete="off" [(ngModel)]="checkoutForm.fullName"
+                            placeholder="Enter your name" required class="w-full" #fullName="ngModel">
+                        @if (fullName.invalid && (fullName.dirty || fullName.touched)) {
+                        <small class="p-error">Full Name is
+                            required.</small>
+                        }
+                    </div>
+                    <div class="field">
+                        <label for="field_phone">Phone Number <span class="text-red-500">*</span></label>
+                        <input pInputText id="field_phone" name="field_phone" autocomplete="off" [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..."
+                            maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$"
+                            class="w-full">
+                        @if (phone.invalid && (phone.dirty || phone.touched)) {
+                        <small class="p-error">Valid Phone
+                            Number is
+                            required.</small>
+                        }
+                    </div>
+                    <div class="field">
+                        <label for="field_email">Email <span class="text-red-500">*</span></label>
+                        <input pInputText id="field_email" name="field_email" autocomplete="off" [(ngModel)]="checkoutForm.email"
+                            placeholder="example@email.com" required email class="w-full" #email="ngModel">
+                        @if (email.invalid && (email.dirty || email.touched)) {
+                        <small class="p-error">Valid Email is
+                            required.</small>
+                        }
+                    </div>
+
+
+
+                    <div class="formgrid grid">
+                        <div class="field col-6">
+                            <label for="field_district">District <span class="text-red-500">*</span></label>
+                            <p-dropdown inputId="field_district" [options]="districts" optionLabel="name"
+                                optionValue="name" [(ngModel)]="checkoutForm.district"
+                                (onChange)="onDistrictChange($event)" placeholder="Select District" appendTo="body"
+                                required #district="ngModel" styleClass="w-full" [style]="{'width':'100%'}"
+                                [filter]="true" filterBy="name"></p-dropdown>
+                            @if (district.invalid && (district.dirty || district.touched)) {
+                            <small class="p-error">District
+                                is required.</small>
+                            }
+                        </div>
+                        <div class="field col-6">
+                            <label>Sub-District @if (subDistricts.length > 0) { <span class="text-red-500">*</span>
+                                }</label>
+                            <p-dropdown [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
+                                placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
+                                [required]="subDistricts.length > 0" styleClass="w-full" [style]="{'width':'100%'}"
+                                [filter]="true"></p-dropdown>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="field_postal">Postal Code</label>
+                        <input pInputText id="field_postal" name="field_postal" autocomplete="off" [(ngModel)]="checkoutForm.postalCode" placeholder="1234"
+                            maxlength="4" pattern="\d{4}" #postal="ngModel" class="w-full">
+                        @if (postal.invalid && (postal.dirty || postal.touched)) {
+                        <small class="p-error">Valid Postal
+                            Code
+                            is required.</small>
+                        }
+                    </div>
+                    <div class="field">
+                        <label for="field_address">Full Address <span class="text-red-500">*</span></label>
+                        <textarea pInputTextarea id="field_address" name="field_address" autocomplete="off" [(ngModel)]="checkoutForm.fullAddress" rows="2"
+                            placeholder="House, Road, Area..." required #address="ngModel" class="w-full"></textarea>
+                        @if (address.invalid && (address.dirty || address.touched)) {
+                        <small class="p-error">Full
+                            Address is
+                            required.</small>
+                        }
+                    </div>
+
+                    <div class="field">
+                        <label for="field_info">Additional Info (Optional)</label>
+                        <textarea pInputTextarea id="field_info" name="field_info" autocomplete="off" [(ngModel)]="checkoutForm.additionalInfo" rows="2"
+                            placeholder="Landmarks, special instructions..." class="w-full"></textarea>
+                    </div>
+
+                    <button pButton label="Place Order" class="w-full p-button-lg mt-4" (click)="placeOrder()"></button>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+</p-dialog>
+}
+
+<!-- Track Order Modal -->
+@if (displayTrackOrderModal) {
+<p-dialog [(visible)]="displayTrackOrderModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
+    header="Track Order">
+    <div class="p-fluid">
+        <div class="field">
+            <label>Enter Phone Number</label>
+            <div class="flex gap-3 w-full">
+                <input pInputText [(ngModel)]="trackPhone" placeholder="Order # or Phone" (keyup.enter)="trackOrder()"
+                    class="flex-1">
+                <button pButton icon="pi pi-search" aria-label="Search for order status" (click)="trackOrder()"
+                    [loading]="trackingLoading"></button>
+            </div>
+        </div>
+
+        @if (trackedOrders.length > 0) {
+        <div class="mt-4">
+            @for (order of trackedOrders; track order.id) {
+            <div class="surface-card p-3 border-round shadow-1 mb-3">
+                <div class="flex justify-content-between align-items-center mb-2">
+                    <span class="font-bold">Order {{ order.orderNumber || order.id }}</span>
+                    <p-tag [value]="order.status"
+                        [severity]="order.status === 'Confirmed' ? 'success' : 'warning'"></p-tag>
+                </div>
+                <div class="text-sm text-600 mb-2">
+                    {{ order.orderDate | date:'medium' }}
+                </div>
+                <div class="flex justify-content-between align-items-center">
+                    <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'৳' }}</span>
+
+                    <!-- Payment Button -->
+                    @if (order.status === 'Confirmed' && order.paymentStatus !== 'Paid') {
+                    <button pButton label="Make Payment" icon="pi pi-wallet" class="p-button-sm"
+                        (click)="openPaymentForOrder(order.id)"></button>
+                    }
+
+                    @if (order.paymentStatus === 'Paid') {
+                    <p-tag value="Paid" severity="success"></p-tag>
+                    }
+                    @if (order.status !== 'Confirmed' && order.paymentStatus !== 'Paid') {
+                    <p-tag value="Waiting Approval" severity="info"></p-tag>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+        }
+
+        @if (trackPhone && trackedOrders.length === 0 && !trackingLoading && hasSearched) {
+        <div class="text-center mt-4 text-600">
+            No orders found for this phone number.
+        </div>
+        }
+    </div>
+</p-dialog>
+}
+
+<!-- Order Success & Payment Selection Modal -->
+@if (displayOrderSuccessModal) {
+<p-dialog [(visible)]="displayOrderSuccessModal" [modal]="true" [style]="{width: '90vw', maxWidth: '500px'}"
+    header="Order Created!" [closable]="false" styleClass="premium-dialog" (onShow)="selectedPaymentMethod = null">
+    <ng-template pTemplate="content">
+        <div class="p-fluid">
+            <div class="text-center mb-4">
+                <div class="flex justify-content-center mb-3">
+                    <div class="bg-green-100 border-circle flex align-items-center justify-content-center"
+                        style="width: 80px; height: 80px;">
+                        <i class="pi pi-check text-4xl text-green-600"></i>
+                    </div>
+                </div>
+                <h2 class="m-0 text-900 font-bold">Excellent choice!</h2>
+                <p class="text-600 mt-2">One more step to complete your purchase. Please select your preferred payment
+                    method.</p>
+            </div>
+
+            <div class="surface-ground p-4 border-round-xl">
+                <h3 class="mt-0 mb-4 text-center font-bold text-900">Choose Payment Method</h3>
+                <div class="grid">
+                    <div class="col-6">
+                        <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                            [class.active]="selectedPaymentMethod === 'COD'" (click)="selectPaymentMethod('COD')">
+                            <div class="bg-primary-reverse-100 p-3 border-circle">
+                                <i class="pi pi-money-bill text-3xl text-primary"></i>
+                            </div>
+                            <div class="font-bold text-color">Cash on Delivery</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3"
+                            [class.active]="selectedPaymentMethod === 'bKash'"
+                            (click)="selectPaymentMethod('bKash')">
+                            <div class="bg-pink-900/20 p-3 border-circle">
+                                <img src="assets/bkash-logo.png" alt="bKash" width="97" height="30" loading="lazy">
+                            </div>
+                            <div class="font-bold text-color">bKash Payment</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- bKash Details Area -->
+                @if (selectedPaymentMethod === 'bKash') {
+                <div class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
+                    <div class="mb-4">
+                        <div class="text-center mb-3">
+                            <span class="text-pink-400 font-bold text-sm">(Payment must be made now in Advance for
+                                Bkash Payment)</span>
+                        </div>
+                        <div class="text-color font-semibold mb-2">To pay for your order, PLEASE READ CAREFULLY:</div>
+                        <ol class="text-color line-height-3 m-0 pl-4" style="list-style: decimal;">
+                            <li>Open the Bkash App</li>
+                            <li>Choose Send Money option</li>
+                            <li>Enter our official phone number <strong>01834484328</strong> (this is not our Customer
+                                Service number)</li>
+                            <li>Enter the amount you will have to pay for your order.</li>
+                            <li>Enter PIN and Send Money</li>
+                            <li>After successful payment, just copy your Transaction Id and paste it in our website's
+                                Transaction Id box also enter the Bkash Phone number.</li>
+                        </ol>
+                    </div>
+
+                    <div class="field mb-4">
+                        <label class="font-bold text-color block mb-2">Your bKash Number</label>
+                        <input pInputText [(ngModel)]="bkashPhone" placeholder="017XXXXXXXX" maxlength="11"
+                            class="w-full py-3">
+                    </div>
+                    <div class="field mb-4">
+                        <label class="font-bold text-color block mb-2">Transaction ID</label>
+                        <input pInputText [(ngModel)]="bkashTrxId" placeholder="Enter 10-digit ID" class="w-full py-3">
+                    </div>
+                    <button pButton label="Complete Payment" icon="pi pi-shield"
+                        class="p-button-danger p-button-lg w-full mt-2" (click)="submitBkashPayment()"
+                        [disabled]="!bkashPhone || !bkashTrxId"></button>
+                </div>
+                }
+            </div>
+        </div>
+    </ng-template>
+</p-dialog>
+}
+
+<!-- Final Global Success Modal -->
+@if (displayFinalSuccessModal) {
+<p-dialog [(visible)]="displayFinalSuccessModal" [modal]="true" [style]="{width: '400px'}" header="Order Confirmed"
+    [closable]="true">
+    <div class="flex flex-column align-items-center text-center p-4">
+        <i class="pi pi-thumbs-up text-6xl text-primary mb-3"></i>
+        <h2 class="m-0 mb-2">Thank You!</h2>
+        <p class="text-600 mb-4">Your order <span class="font-bold text-primary">{{ placedOrderNumber || placedOrderId
+                }}</span> and payment
+            information have been received. Our team will verify and process
+            your order soon.</p>
+        <button pButton label="Continue Shopping" styleClass="p-button-outlined"
+            (click)="displayFinalSuccessModal = false"></button>
+    </div>
+</p-dialog>
+}

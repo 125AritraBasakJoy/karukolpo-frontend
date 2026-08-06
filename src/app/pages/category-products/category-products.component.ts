@@ -3,9 +3,9 @@ import { CommonModule, CurrencyPipe, NgOptimizedImage, isPlatformBrowser } from 
 import { DomSanitizer, Title, Meta } from '@angular/platform-browser';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CategoryService } from '../../core/services';;;
-import { ProductService } from '../../core/services';;;
-import { CartService } from '../../core/services';;;
+import { CategoryService } from '../../core/services/category/category.service';
+import { ProductService } from '../../core/services/product/product.service';
+import { CartService } from '../../core/services/cart/cart.service';
 import { Product } from '../../models/product.model';
 import { Category } from '../../models/category.model';
 import { ButtonModule } from 'primeng/button';

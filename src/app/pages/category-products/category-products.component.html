@@ -43,9 +43,13 @@
                 }
 
                 <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                    <img [ngSrc]="product.imageUrl" [alt]="product.name" fill class="product-image"
-                        sizes="(max-width: 767px) 45vw, (max-width: 991px) 30vw, 22vw"
-                        [priority]="index < 4">
+                    @if (product.imageUrl.startsWith('data:')) {
+                        <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;">
+                    } @else {
+                        <img [ngSrc]="product.imageUrl" [alt]="product.name" fill class="product-image"
+                            sizes="(max-width: 767px) 45vw, (max-width: 991px) 30vw, 22vw"
+                            [priority]="index < 4">
+                    }
 
                         <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center gap-3">
                             <button pButton icon="pi pi-eye" label="View"

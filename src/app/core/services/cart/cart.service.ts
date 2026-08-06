@@ -9,6 +9,10 @@ import { ProductService } from '../product/product.service';
   providedIn: 'root'
 })
 export class CartService {
+  private readonly ABANDON_KEY = 'cart_abandon_at';
+  private readonly ABANDON_MS = 30000;
+  private abandonTimer: any = null;
+
   cart = signal<CartItem[]>([]);
 
   totalItems = computed(() => this.cart().reduce((total, item) => total + item.quantity, 0));
@@ -47,6 +51,7 @@ export class CartService {
         }
       }
     }
+    this.handleAbandonedCart();
   }
 
   refreshCartProducts() {
@@ -151,6 +156,58 @@ export class CartService {
       ));
     }
     this.saveCart();
+  }
+
+  markCheckoutLeft() {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(this.ABANDON_KEY, String(Date.now()));
+    }
+  }
+
+  clearAbandonClock() {
+    if (this.abandonTimer) {
+      clearTimeout(this.abandonTimer);
+      this.abandonTimer = null;
+    }
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem(this.ABANDON_KEY);
+    }
+  }
+
+  handleAbandonedCart() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const raw = localStorage.getItem(this.ABANDON_KEY);
+    if (!raw) return;
+
+    const startedAt = parseInt(raw, 10);
+    if (isNaN(startedAt)) {
+      localStorage.removeItem(this.ABANDON_KEY);
+      return;
+    }
+
+    const elapsed = Date.now() - startedAt;
+    if (elapsed >= this.ABANDON_MS) {
+      this.clearAbandonClock();
+      if (this.cart().length > 0) {
+        this.clearCart();
+      }
+      return;
+    }
+
+    // Timer still running: clear the abandoned cart when it expires.
+    if (this.abandonTimer) {
+      clearTimeout(this.abandonTimer);
+    }
+    this.abandonTimer = setTimeout(() => {
+      this.abandonTimer = null;
+      if (isPlatformBrowser(this.platformId) && localStorage.getItem(this.ABANDON_KEY)) {
+        this.clearAbandonClock();
+        if (this.cart().length > 0) {
+          this.clearCart();
+        }
+      }
+    }, this.ABANDON_MS - elapsed);
   }
 
   clearCart() {

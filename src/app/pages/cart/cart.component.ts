@@ -1,4 +1,4 @@
-import { Component, signal, ViewChildren, QueryList, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, signal, ViewChildren, QueryList, OnInit, OnDestroy, Inject, HostListener, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
 import { InvoiceComponent } from '../../components/invoice/invoice.component';
@@ -35,7 +35,7 @@ import { districts, District } from '../../data/bangladesh-data';
     styleUrls: ['./cart.component.scss'],
 
 })
-export class CartComponent implements OnInit {
+export class CartComponent implements OnInit, OnDestroy {
     loading = signal<boolean>(false);
     today = new Date();
 
@@ -93,6 +93,90 @@ export class CartComponent implements OnInit {
         if (isPlatformBrowser(this.platformId)) {
             window.scrollTo(0, 0);
         }
+        this.cartService.handleAbandonedCart();
+        this.loadCheckoutDraft();
+    }
+
+    loadCheckoutDraft() {
+        if (isPlatformBrowser(this.platformId)) {
+            const saved = localStorage.getItem('karukolpo_checkout_draft');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    const elapsed = Date.now() - parsed.timestamp;
+                    if (elapsed < 40000) {
+                        this.checkoutForm = parsed.data;
+                        if (this.checkoutForm.district) {
+                            this.loadSubDistricts(this.checkoutForm.district);
+                        }
+                        
+                        const remaining = 40000 - elapsed;
+                        setTimeout(() => {
+                            this.clearCheckoutDraft();
+                        }, remaining);
+                    } else {
+                        this.clearCheckoutDraft();
+                    }
+                } catch (e) {
+                    this.clearCheckoutDraft();
+                }
+            }
+        }
+    }
+
+    saveFormState() {
+        if (isPlatformBrowser(this.platformId)) {
+            const payload = {
+                data: this.checkoutForm,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('karukolpo_checkout_draft', JSON.stringify(payload));
+        }
+    }
+
+    clearCheckoutDraft() {
+        if (isPlatformBrowser(this.platformId)) {
+            localStorage.removeItem('karukolpo_checkout_draft');
+        }
+        this.checkoutForm = {
+            fullName: '',
+            email: '',
+            phoneNumber: '',
+            district: '',
+            subDistrict: '',
+            postalCode: '',
+            fullAddress: '',
+            additionalInfo: ''
+        };
+        this.subDistricts = [];
+    }
+
+    loadSubDistricts(districtName: string) {
+        const selectedDistrict = this.districts.find(d => d.name === districtName);
+        this.subDistricts = selectedDistrict ? selectedDistrict.subDistricts : [];
+        if (districtName === 'Tangail') {
+            this.currentDeliveryCharge = 70;
+            this.deliveryLocation = 'Inside Dhaka';
+        } else {
+            this.currentDeliveryCharge = 130;
+            this.deliveryLocation = 'Outside Dhaka';
+        }
+    }
+
+    ngOnDestroy() {
+        this.armAbandonClockIfActive();
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    onBeforeUnload() {
+        this.armAbandonClockIfActive();
+    }
+
+    private armAbandonClockIfActive() {
+        if (!this.showPaymentSection || this.orderConfirmed || this.cartService.cart().length === 0) {
+            return;
+        }
+        this.cartService.markCheckoutLeft();
     }
 
     updateQuantity(item: CartItem, change: number) {
@@ -113,17 +197,9 @@ export class CartComponent implements OnInit {
 
     onDistrictChange(event: any) {
         const districtName = event.value;
-        const selectedDistrict = this.districts.find(d => d.name === districtName);
-        this.subDistricts = selectedDistrict ? selectedDistrict.subDistricts : [];
+        this.loadSubDistricts(districtName);
         this.checkoutForm.subDistrict = '';
-
-        if (districtName === 'Tangail') {
-            this.currentDeliveryCharge = 70;
-            this.deliveryLocation = 'Inside Dhaka';
-        } else {
-            this.currentDeliveryCharge = 130;
-            this.deliveryLocation = 'Outside Dhaka';
-        }
+        this.saveFormState();
     }
 
     get isCheckoutFormValid(): boolean {
@@ -154,6 +230,7 @@ export class CartComponent implements OnInit {
         this.selectedPaymentMethod = null;
         this.bkashPhone = this.checkoutForm.phoneNumber;
         this.placedOrderId = '';
+        this.saveFormState();
 
         // Scroll to payment section
         if (isPlatformBrowser(this.platformId)) {
@@ -186,6 +263,14 @@ export class CartComponent implements OnInit {
         this.orderDiscount = this.createdOrderObj?.discountAmount ?? 0;
     }
 
+    async selectPaymentMethod(method: 'COD' | 'bKash') {
+        this.selectedPaymentMethod = method;
+        
+        if (method === 'COD') {
+            await this.confirmCOD();
+        }
+    }
+
     async confirmCOD() {
         this.loading.set(true);
         const orderData = this.prepareOrderData('COD');
@@ -204,8 +289,10 @@ export class CartComponent implements OnInit {
             }
 
             const cartItemsToReduce = [...this.orderedItems];
+            this.cartService.clearAbandonClock();
             this.cartService.clearCart();
             this.productService.reduceStock(cartItemsToReduce);
+            this.clearCheckoutDraft();
         } catch (err) {
             console.error('COD Order creation failed', err);
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to place order. Please try again.' });
@@ -249,7 +336,7 @@ export class CartComponent implements OnInit {
         };
 
         try {
-            await lastValueFrom(this.orderService.submitTrx(oid, payload));
+            await lastValueFrom(this.orderService.submitTrx(oid, payload, this.checkoutForm.phoneNumber));
             this.messageService.add({ severity: 'success', summary: 'Payment Submitted', detail: 'Your payment has been submitted for verification.' });
 
             this.saveCashMemoData('bKash');
@@ -259,8 +346,10 @@ export class CartComponent implements OnInit {
             }
 
             const cartItemsToReduce = [...this.orderedItems];
+            this.cartService.clearAbandonClock();
             this.cartService.clearCart();
             this.productService.reduceStock(cartItemsToReduce);
+            this.clearCheckoutDraft();
         } catch (err: any) {
             console.error('Payment submission failed:', err);
             let detailedError = 'Failed to submit payment. Please try again.';

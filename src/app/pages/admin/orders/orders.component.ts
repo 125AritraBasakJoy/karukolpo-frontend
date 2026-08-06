@@ -61,6 +61,7 @@ export class OrdersComponent implements OnInit {
   selectedOrder: Order | null = null;
   displayOrderDialog = false;
   loadingDetails = false;
+  lastOpenedOrderId: string | null = null;
   lastLazyLoadEvent: TableLazyLoadEvent | null = null;
 
   // Invoice Mapping State
@@ -116,34 +117,9 @@ export class OrdersComponent implements OnInit {
       if (notif.type === 'order' && notif.data && notif.data.orderId) {
         const orderId = notif.data.orderId.toString();
 
-        // Try to find in current list
-        const existingOrder = this.orders().find(o => o.id === orderId);
-
-        if (existingOrder) {
-          this.viewOrder(existingOrder);
-        } else {
-          // Fetch from backend
-          this.loadingDetails = true;
-          this.displayOrderDialog = true; // Open dialog first to show loading state
-
-          this.orderService.getOrderById(orderId).subscribe({
-            next: (order) => {
-              if (order) {
-                this.viewOrder(order);
-              } else {
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Order not found' });
-                this.displayOrderDialog = false;
-              }
-              this.loadingDetails = false;
-            },
-            error: (err) => {
-              console.error('Failed to load order from notification', err);
-              this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load order details' });
-              this.displayOrderDialog = false;
-              this.loadingDetails = false;
-            }
-          });
-        }
+        // Delegate to openOrderById so the same guard prevents double-open
+        // when both the click-subject and the highlight query param fire.
+        this.openOrderById(orderId);
       }
     });
   }
@@ -350,6 +326,12 @@ export class OrdersComponent implements OnInit {
   }
 
   openOrderById(orderId: string) {
+    // Avoid double-open when both the click-subject and the highlight query param fire
+    if (this.lastOpenedOrderId === orderId && this.displayOrderDialog) {
+      return;
+    }
+    this.lastOpenedOrderId = orderId;
+
     const existingOrder = this.orders().find(o => o.id === orderId || o.orderNumber === orderId);
     if (existingOrder) {
       this.viewOrder(existingOrder);

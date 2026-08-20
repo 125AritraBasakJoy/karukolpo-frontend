@@ -58,6 +58,10 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   items: SaleItemRow[] = [];
   paymentMethod = 'cash';
   soldAt: Date = new Date();
+
+  get currentDate(): Date {
+    return new Date();
+  }
   deliveryCharge = 0;
   note = '';
   source = '';

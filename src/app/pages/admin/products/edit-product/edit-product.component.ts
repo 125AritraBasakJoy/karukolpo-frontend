@@ -58,6 +58,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
     discountPreview = signal<any>(null);
 
     productForm: Partial<Product> = {};
+
+    get currentDate(): Date {
+        return new Date();
+    }
     selectedCategoryIds: any[] = [];
     inventoryForm = {
         stock: 0

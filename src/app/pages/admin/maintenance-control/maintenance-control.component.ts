@@ -44,6 +44,10 @@ export class MaintenanceControlComponent implements OnInit, OnDestroy {
   updatedAt: string | null = null;
   updatedBy: string | null = null;
 
+  get currentDate(): Date {
+    return new Date();
+  }
+
   ngOnInit() {
     this.loadState();
   }

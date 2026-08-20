@@ -58,6 +58,10 @@ export class AddProductComponent implements OnInit, OnDestroy {
         discount_ends_at: null as Date | string | null
     };
 
+    get currentDate(): Date {
+        return new Date();
+    }
+
     categories = signal<any[]>([]);
     selectedCategories: any[] = [];
     isPriceFocused = false;

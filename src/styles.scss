@@ -450,6 +450,30 @@ textarea,
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+/* Global Table Border Radius Fix */
+.p-datatable {
+    border-radius: 24px !important;
+
+    .p-datatable-header {
+        border-top-left-radius: 24px !important;
+        border-top-right-radius: 24px !important;
+    }
+
+    /* Only round top corners of th if table has no header caption */
+    &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:first-child {
+        border-top-left-radius: 24px !important;
+    }
+
+    &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:last-child {
+        border-top-right-radius: 24px !important;
+    }
+
+    .p-datatable-thead > tr > th {
+        border-radius: 0;
+    }
 }
 
 /* Premium Buttons */
@@ -1739,4 +1763,349 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
     color: #cbd5e1 !important;
     border: 1px solid rgba(148, 163, 184, 0.2) !important;
     box-shadow: 0 4px 12px rgba(148, 163, 184, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ── Premium Date & Time Picker System (Matches Reference Input & Panel Design) ── */
+.premium-calendar.p-calendar,
+.premium-calendar.p-datepicker,
+.premium-calendar .p-calendar,
+.premium-calendar .p-datepicker {
+    width: 100% !important;
+    font-family: inherit !important;
+    display: inline-flex !important;
+    align-items: stretch !important;
+    position: relative !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.22) !important;
+        background: rgba(15, 23, 42, 0.75) !important;
+    }
+
+    &:focus-within, &.p-focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        background: rgba(15, 23, 42, 0.85) !important;
+    }
+
+    .p-inputtext,
+    .p-datepicker-input,
+    input {
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        color: #f8fafc !important;
+        border-radius: 12px 0 0 12px !important;
+        padding: 12px 16px !important;
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        font-family: inherit !important;
+        font-size: 0.95rem !important;
+        height: auto !important;
+        box-shadow: none !important;
+
+        &::placeholder {
+            color: #64748b !important;
+            opacity: 1 !important;
+        }
+    }
+
+    .p-datepicker-trigger,
+    .p-datepicker-dropdown,
+    .p-calendar-button,
+    button {
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        color: #94a3b8 !important;
+        border-radius: 0 12px 12px 0 !important;
+        width: 3rem !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+        box-shadow: none !important;
+        cursor: pointer !important;
+
+        &:hover {
+            color: #60a5fa !important;
+            background: transparent !important;
+        }
+
+        .p-button-icon {
+            font-size: 1.1rem !important;
+        }
+    }
+}
+
+// ── Datepicker Overlay Panel Design ───────────────────────────────────────
+.p-datepicker-panel,
+div.p-datepicker:not(.p-inputwrapper) {
+    background: #172030 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    padding: 1.25rem 1rem 1rem 1rem !important;
+    font-family: inherit !important;
+    width: 320px !important;
+    max-width: calc(100vw - 2rem) !important;
+    box-sizing: border-box !important;
+
+    .p-datepicker-header {
+        background: transparent !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        color: #f8fafc !important;
+        padding: 0 0 0.75rem 0 !important;
+        margin-bottom: 0.75rem !important;
+        font-family: inherit !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+
+        .p-datepicker-title {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.5rem !important;
+
+            .p-datepicker-month,
+            .p-datepicker-year {
+                color: #f8fafc !important;
+                font-weight: 700 !important;
+                font-size: 1rem !important;
+                font-family: inherit !important;
+                padding: 0.25rem 0.5rem !important;
+                border-radius: 6px !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+                line-height: 1.2 !important;
+                transition: background 0.15s ease, color 0.15s ease !important;
+                cursor: pointer !important;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.15) !important;
+                    color: #60a5fa !important;
+                }
+            }
+        }
+
+        .p-datepicker-prev,
+        .p-datepicker-next {
+            color: #60a5fa !important;
+            background: transparent !important;
+            border: none !important;
+            width: 2rem !important;
+            height: 2rem !important;
+            border-radius: 8px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.15s ease !important;
+            cursor: pointer !important;
+
+            &:hover {
+                background: rgba(59, 130, 246, 0.15) !important;
+                color: #93c5fd !important;
+            }
+
+            span {
+                font-size: 0.9rem !important;
+            }
+        }
+    }
+
+    table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+        margin-bottom: 0.5rem !important;
+
+        th {
+            color: #94a3b8 !important;
+            font-weight: 700 !important;
+            font-size: 0.75rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            padding: 0.5rem 0 !important;
+            font-family: inherit !important;
+            text-align: center !important;
+        }
+
+        td {
+            padding: 3px 0 !important;
+            text-align: center !important;
+
+            > span,
+            > a,
+            > button {
+                width: 2.25rem !important;
+                height: 2.25rem !important;
+                line-height: 2.25rem !important;
+                border-radius: 8px !important;
+                color: #f8fafc !important;
+                font-size: 0.9rem !important;
+                font-weight: 400 !important;
+                font-family: inherit !important;
+                transition: all 0.15s ease !important;
+                margin: 0 auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-sizing: border-box !important;
+                background: transparent !important;
+                border: 1px solid transparent !important;
+                cursor: pointer !important;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.15) !important;
+                    color: #60a5fa !important;
+                }
+            }
+
+            &.p-datepicker-today > span,
+            &.p-datepicker-today > a,
+            &.p-datepicker-today > button {
+                background: rgba(255, 255, 255, 0.04) !important;
+                color: #f8fafc !important;
+                border: 1px dashed rgba(59, 130, 246, 0.5) !important;
+            }
+
+            &.p-highlight > span,
+            &.p-highlight > a,
+            &.p-highlight > button,
+            span.p-highlight {
+                background: rgba(59, 130, 246, 0.2) !important;
+                border: 1px solid #3b82f6 !important;
+                color: #ffffff !important;
+                font-weight: 600 !important;
+                border-radius: 8px !important;
+                box-shadow: 0 0 10px rgba(59, 130, 246, 0.25) !important;
+            }
+
+            &.p-datepicker-other-month > span,
+            &.p-datepicker-other-month > a,
+            &.p-datepicker-other-month > button {
+                color: #3b4758 !important;
+            }
+        }
+    }
+
+    .p-monthpicker,
+    .p-yearpicker {
+        margin: 0.5rem 0 !important;
+
+        .p-monthpicker-month,
+        .p-yearpicker-year {
+            color: #e2e8f0 !important;
+            border-radius: 8px !important;
+            padding: 0.5rem !important;
+            font-family: inherit !important;
+            transition: all 0.15s ease !important;
+
+            &:hover {
+                background: rgba(59, 130, 246, 0.15) !important;
+                color: #60a5fa !important;
+            }
+
+            &.p-highlight {
+                background: rgba(59, 130, 246, 0.25) !important;
+                border: 1px solid #3b82f6 !important;
+                color: #ffffff !important;
+            }
+        }
+    }
+
+    .p-timepicker {
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 0.75rem 0 0.25rem 0 !important;
+        margin-top: 0.5rem !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+
+        button {
+            color: #93c5fd !important;
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            width: 2.75rem !important;
+            height: 2.25rem !important;
+            border-radius: 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+            cursor: pointer !important;
+
+            &:hover {
+                background: rgba(59, 130, 246, 0.2) !important;
+                color: #60a5fa !important;
+                border-color: rgba(59, 130, 246, 0.4) !important;
+            }
+
+            span {
+                font-size: 0.95rem !important;
+            }
+        }
+
+        .p-separator {
+            color: #818cf8 !important;
+            font-size: 1.1rem !important;
+            font-weight: 600 !important;
+            margin: 0 0.25rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            span {
+                color: #818cf8 !important;
+            }
+        }
+
+        .p-ampm-picker {
+            background: transparent !important;
+            border: none !important;
+            color: #f8fafc !important;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+
+            &:hover {
+                background: rgba(59, 130, 246, 0.15) !important;
+                color: #60a5fa !important;
+            }
+        }
+
+        > div {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 0.25rem !important;
+
+            input,
+            span {
+                color: #f8fafc !important;
+                font-size: 1.1rem !important;
+                font-weight: 600 !important;
+                font-family: inherit !important;
+                background: transparent !important;
+                border: none !important;
+                text-align: center !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                width: 2.25rem !important;
+            }
+        }
+    }
+
+    .p-datepicker-buttonbar {
+        display: none !important;
+    }
 }

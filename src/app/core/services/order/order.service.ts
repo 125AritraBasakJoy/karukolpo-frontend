@@ -337,6 +337,7 @@ export class OrderService {
    * Map frontend order format to backend format
    */
   private mapFrontendToBackend(order: Omit<Order, 'id'>): any {
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const payload = {
       address: {
         full_name: order.fullName,
@@ -344,7 +345,8 @@ export class OrderService {
         district: order.district,
         subdistrict: order.subDistrict || '',
         address_line: order.fullAddress,
-        additional_info: order.additionalInfo || '' // Schema requires string, null causes 422
+        additional_info: order.additionalInfo || '', // Schema requires string, null causes 422
+        email: order.email ? order.email : null // Send null when email is blank
       },
       items: order.items.map(item => ({
         product_id: item.product.id,
@@ -352,7 +354,11 @@ export class OrderService {
       })),
       // strictly use lowercase 'bkash'
       payment_method: order.paymentMethod ? (order.paymentMethod.toLowerCase() === 'bkash' ? 'bkash' : order.paymentMethod) : null,
-      payment_status: order.paymentStatus ? order.paymentStatus : 'Pending'
+      payment_status: order.paymentStatus ? order.paymentStatus : 'Pending',
+      utm_source: urlParams ? urlParams.get('utm_source') : null,
+      utm_medium: urlParams ? urlParams.get('utm_medium') : null,
+      utm_campaign: urlParams ? urlParams.get('utm_campaign') : null,
+      referrer: typeof window !== 'undefined' ? (document.referrer || null) : null
     };
 
 

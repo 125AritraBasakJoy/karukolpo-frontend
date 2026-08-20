@@ -60,40 +60,62 @@
 
 /* Premium Table V2 (Modern Glassmorphism) */
 .premium-table-v2 {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+    background: transparent !important;
+
     .p-datatable-header {
-        background: transparent !important;
+        background: rgba(15, 23, 42, 0.6) !important;
         border: none !important;
-        padding: 1.5rem !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        padding: 1.25rem 1.5rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-top-left-radius: 24px !important;
+        border-top-right-radius: 24px !important;
     }
 
-    .p-datatable-thead>tr>th {
-        background: rgba(255, 255, 255, 0.02) !important;
+    .p-datatable-thead > tr > th {
+        background: rgba(255, 255, 255, 0.03) !important;
         color: #94a3b8 !important;
         font-weight: 600 !important;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-size: 0.75rem;
-        padding: 1.25rem 1.5rem !important;
+        padding: 1rem 1.5rem !important;
         border: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
         user-select: none !important;
+        border-radius: 0 !important;
     }
 
-    .p-datatable-tbody>tr {
+    /* Only round top corners of th if table has no header caption */
+    &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:first-child {
+        border-top-left-radius: 24px !important;
+    }
+
+    &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:last-child {
+        border-top-right-radius: 24px !important;
+    }
+
+    .p-datatable-tbody > tr {
         background: transparent !important;
         color: #e2e8f0 !important;
+        transition: background 0.15s ease !important;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.02) !important;
+        }
     }
 
-    .p-datatable-tbody>tr>td {
-        padding: 1.25rem 1.5rem !important;
+    .p-datatable-tbody > tr > td {
+        padding: 1rem 1.5rem !important;
         border: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
     }
 
     .p-paginator {
         background: rgba(2, 6, 23, 0.4) !important;
         border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
-        border-radius: 0 0 24px 24px;
+        border-radius: 0 0 24px 24px !important;
         color: #64748b !important;
 
         .p-paginator-pages .p-paginator-page {

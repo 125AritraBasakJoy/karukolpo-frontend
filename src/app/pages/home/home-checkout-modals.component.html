@@ -70,9 +70,9 @@
                         }
                     </div>
                     <div class="field">
-                        <label for="field_email">Email <span class="text-red-500">*</span></label>
+                        <label for="field_email">Email</label>
                         <input pInputText id="field_email" name="field_email" autocomplete="off" [(ngModel)]="checkoutForm.email"
-                            placeholder="example@email.com" required email class="w-full" #email="ngModel">
+                            placeholder="example@email.com" email class="w-full" #email="ngModel">
                         @if (email.invalid && (email.dirty || email.touched)) {
                         <small class="p-error">Valid Email is
                             required.</small>

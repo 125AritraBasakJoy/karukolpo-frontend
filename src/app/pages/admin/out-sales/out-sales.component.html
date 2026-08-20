@@ -69,7 +69,7 @@
                         <i class="pi pi-calendar"></i> Sale Date & Time
                     </label>
                     <p-calendar [(ngModel)]="soldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy"
-                        placeholder="Select date & time..." hourFormat="12"
+                        placeholder="Select date & time..." hourFormat="12" [defaultDate]="currentDate"
                         styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
                 </div>
                 <div class="field col-12 sm:col-6 lg:col-3">

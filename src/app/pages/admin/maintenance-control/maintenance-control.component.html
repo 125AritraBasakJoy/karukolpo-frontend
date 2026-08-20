@@ -43,8 +43,8 @@
         <div class="field flex flex-column gap-2">
           <label class="text-sm font-semibold text-slate-300" for="maintenanceEndsAt">Auto End Time (Optional)</label>
           <p-calendar id="maintenanceEndsAt" [(ngModel)]="endsAt" [showTime]="true" [showIcon]="true"
-            [showButtonBar]="true" [readonlyInput]="false" dateFormat="dd/mm/yy" placeholder="Schedule when maintenance ends"
-            styleClass="w-full" inputStyleClass="maintenance-input"></p-calendar>
+            hourFormat="12" [defaultDate]="currentDate" [readonlyInput]="false" dateFormat="dd/mm/yy" placeholder="Schedule when maintenance ends"
+            styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
           <small class="text-slate-400">Customers will see an estimated return time. Leave empty to keep it open-ended.</small>
         </div>
 

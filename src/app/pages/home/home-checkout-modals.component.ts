@@ -135,7 +135,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         // Sub-district check
         const subDistrictValidation = this.subDistricts.length > 0 ? !!subDistrict : true;
 
-        const isEmailValid = this.emailRegex.test(email);
+        const isEmailValid = !email || this.emailRegex.test(email);
         const isPhoneValid = this.phoneRegex.test(phoneNumber);
         // Postal code is optional, but if present must be valid
         const isPostalCodeValid = !postalCode || this.postalCodeRegex.test(postalCode);

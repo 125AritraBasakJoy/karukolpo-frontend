@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -7,40 +7,64 @@ import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle
 
 @Component({
     selector: 'app-about',
-    imports: [CommonModule, RouterModule, CardModule, ButtonModule, ThemeToggleComponent],
+    standalone: true,
+    imports: [CommonModule, NgOptimizedImage, RouterModule, CardModule, ButtonModule, ThemeToggleComponent],
     templateUrl: './about.component.html',
     styleUrls: ['./about.component.scss']
 })
 export class AboutComponent {
+    stats = [
+        { label: 'Artisan Partners', value: '100+', icon: 'pi pi-users' },
+        { label: 'Handcrafted Products', value: '500+', icon: 'pi pi-box' },
+        { label: 'Happy Customers', value: '10,000+', icon: 'pi pi-heart' },
+        { label: 'Craft Categories', value: '25+', icon: 'pi pi-tags' }
+    ];
+
     features = [
         {
             icon: 'pi pi-check-circle',
-            title: 'Authentic Products',
-            description: 'All our products are handcrafted by skilled artisans from Bangladesh, ensuring authenticity and quality.'
+            title: '100% Authentic Handcrafts',
+            description: 'Every piece is crafted by verified traditional artisans from Bangladesh, ensuring genuine heritage quality.'
         },
         {
-            icon: 'pi pi-users',
-            title: 'Support Local Artisans',
-            description: 'Every purchase directly supports local craftspeople and helps preserve traditional Bangladeshi art forms.'
+            icon: 'pi pi-heart',
+            title: 'Empowering Communities',
+            description: 'Your purchases directly sustain the livelihoods of local craft families and preserve ancient art traditions.'
         },
         {
             icon: 'pi pi-shield',
-            title: 'Quality Guarantee',
-            description: 'We carefully inspect each item to ensure it meets our high standards before shipping to you.'
+            title: 'Quality Guaranteed',
+            description: 'Rigorous multi-point quality inspections ensure that every item meets our high standards of excellence.'
         },
         {
             icon: 'pi pi-truck',
-            title: 'Fast Delivery',
-            description: 'Quick and reliable delivery across Bangladesh with tracking available for all orders.'
+            title: 'Reliable Nationwide Shipping',
+            description: 'Fast, secure packaging and real-time order tracking to your doorstep across Bangladesh.'
         }
     ];
 
-    team = [
+    values = [
         {
-            name: 'Aritra Basak',
-            role: 'Founder & CEO',
-            image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%231e293b"/><circle cx="150" cy="120" r="50" fill="%23475569"/><path d="M70,240 C70,180 230,180 230,240" fill="%23475569"/></svg>',
-            description: 'Passionate about preserving Bangladeshi heritage through handcrafts.'
+            icon: 'pi pi-sparkles',
+            title: 'Cultural Heritage',
+            description: 'Preserving centurie-old Bangladeshi crafting techniques and keeping traditional art alive for future generations.'
+        },
+        {
+            icon: 'pi pi-star',
+            title: 'Uncompromised Quality',
+            description: 'Hand-selecting raw materials and honoring meticulous attention to detail in every finished craft.'
+        },
+        {
+            icon: 'pi pi-globe',
+            title: 'Sustainable Impact',
+            description: 'Promoting eco-friendly, natural materials and ethical fair-trade practices with local artisan communities.'
         }
     ];
+
+    scrollToStory() {
+        const el = document.getElementById('story');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
 }

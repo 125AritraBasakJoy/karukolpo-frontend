@@ -81,7 +81,7 @@
 </div>
 
 <!-- Products Dialog -->
-<p-dialog [(visible)]="productsDialog" [style]="{width: '900px'}"
+<p-dialog [(visible)]="productsDialog" [style]="{width: 'min(90vw, 900px)'}"
     [header]="'Products in ' + (viewingCategory?.name || 'Category')"
     [modal]="true" appendTo="body" styleClass="premium-dialog">
 
@@ -157,7 +157,7 @@
 </p-dialog>
 
 <!-- Move Product Dialog -->
-<p-dialog [(visible)]="moveDialog" [style]="{width: '450px'}"
+<p-dialog [(visible)]="moveDialog" [style]="{width: 'min(90vw, 450px)'}"
     [header]="viewingCategory?.id === 'uncategorized' ? 'Assign Category' : 'Move Product'"
     [modal]="true" appendTo="body" styleClass="premium-dialog small-dialog">
     <div class="field pt-4 px-3">
@@ -186,7 +186,7 @@
 </p-dialog>
 
 <!-- Create/Edit Category Dialog -->
-<p-dialog [(visible)]="categoryDialog" [style]="{width: '450px'}"
+<p-dialog [(visible)]="categoryDialog" [style]="{width: 'min(90vw, 450px)'}"
     [header]="currentCategoryId ? 'Edit Category' : 'Create New Category'"
     [modal]="true" styleClass="premium-dialog" appendTo="body">
     <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="pt-4 px-3">
@@ -213,4 +213,4 @@
     </ng-template>
 </p-dialog>
 
-<p-confirmDialog [style]="{width: '400px'}" appendTo="body" styleClass="premium-confirm-dialog"></p-confirmDialog>
+<p-confirmDialog [style]="{width: 'min(90vw, 400px)'}" appendTo="body" styleClass="premium-confirm-dialog"></p-confirmDialog>

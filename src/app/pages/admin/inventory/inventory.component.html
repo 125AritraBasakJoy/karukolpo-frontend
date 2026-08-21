@@ -107,7 +107,7 @@
 
 
 <p-dialog [(visible)]="inventoryDialogVisible" [modal]="true" [header]="'Manage Inventory: ' + selectedProduct?.name"
-    [style]="{ width: '450px' }" styleClass="premium-dialog" appendTo="body" (onHide)="closeInventoryDialog()">
+    [style]="{ width: 'min(90vw, 450px)' }" styleClass="premium-dialog" appendTo="body" (onHide)="closeInventoryDialog()">
     <div class="p-4">
         <div class="field mb-4">
             <label for="stock" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
@@ -126,4 +126,4 @@
     </div>
 </p-dialog>
 
-<p-confirmDialog [style]=" { width: '450px' } " styleClass="premium-confirm-dialog" appendTo="body"></p-confirmDialog>
+<p-confirmDialog [style]=" { width: 'min(90vw, 450px)' } " styleClass="premium-confirm-dialog" appendTo="body"></p-confirmDialog>

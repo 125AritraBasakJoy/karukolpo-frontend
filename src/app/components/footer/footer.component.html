@@ -1,15 +1,18 @@
 <footer class="footer">
+    <div class="footer-glow-backdrop"></div>
     <div class="footer-top">
         <div class="container">
             <div class="grid">
-                <!-- About Section -->
-                <div class="col-12 md:col-4 mb-4 md:mb-0">
-                    <h3 class="footer-title">Karukolpo</h3>
-                    <p class="footer-description">
-                        Authentic Bangladeshi handcrafts and traditional products.
-                        Supporting local artisans and preserving our cultural heritage.
+                <!-- Brand & Mission Column -->
+                <div class="col-12 md:col-4 mb-5 md:mb-0">
+                    <div class="footer-brand flex align-items-center gap-3 mb-3">
+                        <img ngSrc="assets/logo.webp" width="48" height="48" alt="Karukolpo Logo" class="footer-logo">
+                        <h3 class="brand-name m-0">Karukolpo</h3>
+                    </div>
+                    <p class="footer-description mb-4">
+                        Authentic Bangladeshi handcrafts and traditional products. Direct from rural heritage artisans to your home, preserving ancient craft culture.
                     </p>
-                    <div class="social-links">
+                    <div class="social-links flex gap-2">
                         <a *ngFor="let social of socialLinks" [href]="social.url" target="_blank"
                             rel="noopener noreferrer" [attr.aria-label]="social.label" class="social-link">
                             <i [class]="social.icon"></i>
@@ -17,34 +20,40 @@
                     </div>
                 </div>
 
-                <!-- Quick Links -->
-                <div class="col-12 md:col-4 mb-4 md:mb-0">
-                    <h3 class="footer-title">Quick Links</h3>
+                <!-- Quick Links Column -->
+                <div class="col-12 sm:col-6 md:col-4 mb-5 md:mb-0">
+                    <h4 class="footer-title">Navigation</h4>
                     <ul class="footer-links">
                         <li *ngFor="let link of quickLinks">
                             <a [routerLink]="link.route" class="footer-link" (click)="navigateAndScroll(link.route)">
-                                <i class="pi pi-chevron-right"></i>
-                                {{ link.label }}
+                                <i class="pi pi-chevron-right link-arrow"></i>
+                                <span>{{ link.label }}</span>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Contact Info -->
-                <div class="col-12 md:col-4">
-                    <h3 class="footer-title">Contact Us</h3>
+                <!-- Contact Info Column -->
+                <div class="col-12 sm:col-6 md:col-4">
+                    <h4 class="footer-title">Contact Us</h4>
                     <ul class="contact-info">
                         <li>
-                            <i class="pi pi-envelope"></i>
-                            <a [href]="'mailto:' + contactInfo.email">{{ contactInfo.email }}</a>
+                            <div class="contact-icon">
+                                <i class="pi pi-envelope"></i>
+                            </div>
+                            <a [href]="'mailto:' + contactInfo.email" class="contact-text">{{ contactInfo.email }}</a>
                         </li>
                         <li>
-                            <i class="pi pi-phone"></i>
-                            <a [href]="'tel:' + contactInfo.phone">{{ contactInfo.phone }}</a>
+                            <div class="contact-icon">
+                                <i class="pi pi-phone"></i>
+                            </div>
+                            <a [href]="'tel:' + contactInfo.phone" class="contact-text">{{ contactInfo.phone }}</a>
                         </li>
                         <li>
-                            <i class="pi pi-map-marker"></i>
-                            <span>{{ contactInfo.address }}</span>
+                            <div class="contact-icon">
+                                <i class="pi pi-map-marker"></i>
+                            </div>
+                            <span class="contact-text">{{ contactInfo.address }}</span>
                         </li>
                     </ul>
                 </div>
@@ -52,22 +61,19 @@
         </div>
     </div>
 
+    <!-- Bottom Bar -->
     <div class="footer-bottom">
         <div class="container">
-            <div class="flex flex-column md:flex-row justify-content-between align-items-center">
-                <div class="footer-bottom-info">
-                    <p class="copyright">
-                        &copy; {{ currentYear }} Karukolpo. All rights reserved.
-                    </p>
-                    <p class="developer-credits">
-                        Developed by
-                        <a href="https://aritrabasak.netlify.app/" target="_blank" class="dev-link">Aritra</a>
-                        <span class="separator">|</span>
-                        <a href="https://www.linkedin.com/in/anindyabasakete21/" target="_blank"
-                            class="dev-link">Anindya</a>
-                    </p>
-                </div>
-
+            <div class="footer-bottom-wrapper flex flex-column sm:flex-row justify-content-between align-items-center gap-3">
+                <p class="copyright m-0">
+                    &copy; {{ currentYear }} <span class="highlight">Karukolpo</span>. All rights reserved.
+                </p>
+                <p class="developer-credits m-0">
+                    Crafted with care by
+                    <a href="https://aritrabasak.netlify.app/" target="_blank" rel="noopener noreferrer" class="dev-link">Aritra</a>
+                    <span class="separator">|</span>
+                    <a href="https://www.linkedin.com/in/anindyabasakete21/" target="_blank" rel="noopener noreferrer" class="dev-link">Anindya</a>
+                </p>
             </div>
         </div>
     </div>

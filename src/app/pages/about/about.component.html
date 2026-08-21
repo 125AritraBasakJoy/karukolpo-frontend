@@ -4,45 +4,92 @@
 <div class="about-page">
     <!-- Hero Section -->
     <section class="hero-section">
+        <div class="hero-backdrop">
+            <img ngSrc="assets/about-hero.webp" fill priority fetchpriority="high" sizes="100vw"
+                style="object-fit: cover; object-position: center;" alt="Karukolpo Heritage Hero Banner">
+        </div>
         <div class="hero-overlay"></div>
-        <div class="hero-content">
+        <div class="container hero-container">
+            <div class="hero-badge">
+                <i class="pi pi-sparkles"></i>
+                <span>Traditional Heritage & Artistry</span>
+            </div>
             <h1 class="hero-title">About Karukolpo</h1>
-            <p class="hero-subtitle">Preserving Bangladesh's Rich Cultural Heritage Through Handcrafts</p>
+            <p class="hero-subtitle">
+                Preserving Bangladesh's rich cultural heritage by connecting master artisans directly with craft lovers worldwide.
+            </p>
+            <div class="hero-actions">
+                <a routerLink="/all-products" pButton label="Explore Collection" icon="pi pi-shopping-bag"
+                    class="p-button-lg premium-btn-primary"></a>
+                <a (click)="scrollToStory()" pButton label="Our Journey" icon="pi pi-compass"
+                    class="p-button-lg glass-button cursor-pointer"></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Counter Bar -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card" *ngFor="let item of stats">
+                    <div class="stat-icon">
+                        <i [class]="item.icon"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ item.value }}</span>
+                        <span class="stat-label">{{ item.label }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Story Section -->
-    <section class="story-section">
+    <section id="story" class="story-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Our Story</h2>
+                <span class="section-tag">Who We Are</span>
+                <h2 class="section-title">Our Story & Mission</h2>
                 <div class="title-underline"></div>
             </div>
 
-            <div class="grid align-items-center">
-                <div class="col-12 md:col-6">
-                    <div class="story-image">
-                        <img src="assets/about-image.jpg" alt="Karukolpo Story" />
+            <div class="grid align-items-center gap-4 lg:gap-0">
+                <div class="col-12 lg:col-6">
+                    <div class="story-image-wrapper">
+                        <div class="glass-image-frame">
+                            <img ngSrc="assets/about-image.webp" width="600" height="600" priority
+                                alt="Karukolpo Artisan Weaving Story" class="story-img" />
+                            <div class="image-badge">
+                                <i class="pi pi-verified"></i>
+                                <span>Authentic Crafts</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-12 md:col-6">
+                <div class="col-12 lg:col-6">
                     <div class="story-content">
+                        <h3 class="story-heading">Crafting Hope, Honoring Tradition</h3>
                         <p class="story-text">
-                            Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage and the
-                            incredible
-                            craftsmanship of our local artisans. We believe that every handcrafted item tells a story –
-                            a story
-                            of tradition, skill, and dedication passed down through generations.
+                            Karukolpo was born from a deep passion for Bangladesh’s centuries-old artisan traditions and the extraordinary skill of local craftspeople. Every handmade item carries a living legacy — a story of patience, artistic mastery, and cultural pride passed down across generations.
                         </p>
                         <p class="story-text">
-                            Our mission is to connect these talented artisans with customers who appreciate authentic,
-                            handmade products while preserving traditional Bangladeshi art forms for future generations.
+                            Our core mission is to empower local weavers, potters, sculptors, and folk artisans by building a sustainable digital bridge directly to customers who cherish genuine craftsmanship.
                         </p>
-                        <p class="story-text">
-                            Every product you purchase from Karukolpo directly supports local craftspeople and their
-                            families,
-                            helping to sustain their livelihoods and keep ancient traditions alive.
-                        </p>
+                        
+                        <div class="story-highlights">
+                            <div class="highlight-item">
+                                <i class="pi pi-check-circle"></i>
+                                <span>Direct artisan partnership & fair compensation</span>
+                            </div>
+                            <div class="highlight-item">
+                                <i class="pi pi-check-circle"></i>
+                                <span>Eco-friendly, natural materials & traditional tools</span>
+                            </div>
+                            <div class="highlight-item">
+                                <i class="pi pi-check-circle"></i>
+                                <span>Preserving endangered Bangladeshi folk art techniques</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -53,12 +100,13 @@
     <section class="features-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Why Choose Karukolpo</h2>
+                <span class="section-tag">Why Choose Us</span>
+                <h2 class="section-title">The Karukolpo Standard</h2>
                 <div class="title-underline"></div>
             </div>
 
             <div class="grid">
-                <div class="col-12 md:col-6 lg:col-3" *ngFor="let feature of features">
+                <div class="col-12 sm:col-6 lg:col-3 mb-4" *ngFor="let feature of features">
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i [class]="feature.icon"></i>
@@ -75,30 +123,19 @@
     <section class="values-section">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Our Values</h2>
+                <span class="section-tag">Core Principles</span>
+                <h2 class="section-title">Our Guided Values</h2>
                 <div class="title-underline"></div>
             </div>
 
             <div class="grid">
-                <div class="col-12 md:col-4">
+                <div class="col-12 md:col-4 mb-4" *ngFor="let val of values">
                     <div class="value-card">
-                        <i class="pi pi-heart value-icon"></i>
-                        <h3>Authenticity</h3>
-                        <p>We only source genuine handcrafted products made using traditional methods.</p>
-                    </div>
-                </div>
-                <div class="col-12 md:col-4">
-                    <div class="value-card">
-                        <i class="pi pi-star value-icon"></i>
-                        <h3>Quality</h3>
-                        <p>Each product is carefully inspected to meet our high standards of excellence.</p>
-                    </div>
-                </div>
-                <div class="col-12 md:col-4">
-                    <div class="value-card">
-                        <i class="pi pi-globe value-icon"></i>
-                        <h3>Sustainability</h3>
-                        <p>Supporting eco-friendly practices and empowering local communities.</p>
+                        <div class="value-icon">
+                            <i [class]="val.icon"></i>
+                        </div>
+                        <h3 class="value-title">{{ val.title }}</h3>
+                        <p class="value-text">{{ val.description }}</p>
                     </div>
                 </div>
             </div>
@@ -107,11 +144,17 @@
 
     <!-- CTA Section -->
     <section class="cta-section">
-        <div class="container text-center">
-            <h2 class="cta-title">Start Shopping Today</h2>
-            <p class="cta-text">Discover unique handcrafted products and support local artisans</p>
-            <button pButton label="Browse Products" icon="pi pi-shopping-bag" class="p-button-lg p-button-warning"
-                routerLink="/"></button>
+        <div class="container">
+            <div class="cta-card">
+                <div class="cta-content">
+                    <h2 class="cta-title">Support Local Artisans Today</h2>
+                    <p class="cta-text">Discover handcrafted masterpieces delivered straight from Bangladesh's heritage workshops to your home.</p>
+                    <div class="cta-actions">
+                        <a routerLink="/all-products" pButton label="Browse All Handcrafts" icon="pi pi-shopping-bag"
+                            class="p-button-lg premium-btn-primary"></a>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 </div>

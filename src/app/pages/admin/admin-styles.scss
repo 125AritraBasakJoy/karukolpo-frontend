@@ -13,7 +13,9 @@
     a, a *, button, button *, .p-button, .p-button *, .p-link, .p-link *, 
     [role="button"], [role="button"] *, .clickable, .clickable *, 
     .p-breadcrumb, .p-breadcrumb-home, .p-breadcrumb-item-link,
-    .p-paginator-page, .p-paginator-next, .p-paginator-last, .p-paginator-first, .p-paginator-prev {
+    .p-paginator-page, .p-paginator-next, .p-paginator-last, .p-paginator-first, .p-paginator-prev,
+    .p-checkbox, .p-checkbox *, .p-radiobutton, .p-radiobutton *,
+    .p-sortable-column, th[pSortableColumn] {
         cursor: pointer !important;
     }
 
@@ -58,14 +60,17 @@
     }
 }
 
-/* Premium Table V2 (Modern Glassmorphism) */
+/* ─────────────────────────────────────────────────────────────────
+   PREMIUM TABLE V2 — MODERN GLASSMORPHISM DATA TABLE
+   ───────────────────────────────────────────────────────────────── */
 .premium-table-v2 {
     border-radius: 24px !important;
     overflow: hidden !important;
     background: transparent !important;
 
+    /* ── Caption / Header Bar ─────────────────────── */
     .p-datatable-header {
-        background: rgba(15, 23, 42, 0.6) !important;
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
         border: none !important;
         padding: 1.25rem 1.5rem !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
@@ -73,18 +78,35 @@
         border-top-right-radius: 24px !important;
     }
 
+    /* ── Column Headers ───────────────────────────── */
     .p-datatable-thead > tr > th {
-        background: rgba(255, 255, 255, 0.03) !important;
+        background: rgba(15, 23, 42, 0.85) !important;
         color: #94a3b8 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-size: 0.75rem;
-        padding: 1rem 1.5rem !important;
+        letter-spacing: 0.06em;
+        font-size: 0.72rem;
+        padding: 0.85rem 1.5rem !important;
         border: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-bottom: 1px solid rgba(59, 130, 246, 0.12) !important;
         user-select: none !important;
         border-radius: 0 !important;
+        transition: background 0.2s ease, color 0.2s ease !important;
+        white-space: nowrap;
+    }
+
+    /* Sortable column hover */
+    .p-datatable-thead > tr > th.p-sortable-column:hover,
+    .p-datatable-thead > tr > th[pSortableColumn]:hover {
+        background: rgba(30, 41, 59, 0.95) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Sorted column active state */
+    .p-datatable-thead > tr > th.p-highlight,
+    .p-datatable-thead > tr > th.p-sortable-column-sorted {
+        background: rgba(59, 130, 246, 0.08) !important;
+        color: #60a5fa !important;
     }
 
     /* Only round top corners of th if table has no header caption */
@@ -96,70 +118,344 @@
         border-top-right-radius: 24px !important;
     }
 
+    /* ── Sort Icon Styling ────────────────────────── */
+    .p-sortable-column .p-sortable-column-icon,
+    p-sortIcon .p-icon,
+    .p-sort-icon {
+        color: #475569 !important;
+        font-size: 0.7rem !important;
+        width: 14px !important;
+        height: 14px !important;
+        margin-left: 0.35rem !important;
+        opacity: 0.5;
+        transition: all 0.2s ease !important;
+    }
+
+    .p-sortable-column:hover .p-sortable-column-icon,
+    .p-sortable-column:hover p-sortIcon .p-icon {
+        color: #94a3b8 !important;
+        opacity: 1;
+    }
+
+    .p-sortable-column-sorted .p-sortable-column-icon,
+    .p-highlight .p-sortable-column-icon,
+    .p-sortable-column-sorted p-sortIcon .p-icon,
+    .p-highlight p-sortIcon .p-icon {
+        color: #60a5fa !important;
+        opacity: 1;
+    }
+
+    /* ── Table Body Rows ──────────────────────────── */
     .p-datatable-tbody > tr {
         background: transparent !important;
         color: #e2e8f0 !important;
-        transition: background 0.15s ease !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
         &:hover {
-            background: rgba(255, 255, 255, 0.02) !important;
+            background: rgba(59, 130, 246, 0.04) !important;
+        }
+
+        &.p-highlight,
+        &.p-row-selected {
+            background: rgba(59, 130, 246, 0.08) !important;
+            color: #f1f5f9 !important;
         }
     }
 
     .p-datatable-tbody > tr > td {
-        padding: 1rem 1.5rem !important;
+        padding: 0.85rem 1.5rem !important;
         border: none !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+        font-size: 0.92rem;
+        vertical-align: middle;
     }
 
+    /* Last row - no bottom border */
+    .p-datatable-tbody > tr:last-child > td {
+        border-bottom-color: transparent !important;
+    }
+
+    /* ── Paginator ────────────────────────────────── */
     .p-paginator {
-        background: rgba(2, 6, 23, 0.4) !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+        background: rgba(2, 6, 23, 0.5) !important;
+        border: none !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
         border-radius: 0 0 24px 24px !important;
         color: #64748b !important;
+        padding: 0.75rem 1rem !important;
 
         .p-paginator-pages .p-paginator-page {
             border-radius: 10px;
-            min-width: 2.5rem;
-            height: 2.5rem;
-            margin: 0 0.2rem;
+            min-width: 2.25rem;
+            height: 2.25rem;
+            margin: 0 0.15rem;
             color: #94a3b8 !important;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+
+            &:hover:not(.p-highlight) {
+                background: rgba(255, 255, 255, 0.05) !important;
+                color: #e2e8f0 !important;
+            }
 
             &.p-highlight {
                 background: rgba(59, 130, 246, 0.15) !important;
-                color: #3b82f6 !important;
-                border: 1px solid rgba(59, 130, 246, 0.2);
+                color: #60a5fa !important;
+                border-color: rgba(59, 130, 246, 0.25);
+                box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
             }
+        }
+
+        .p-paginator-first,
+        .p-paginator-prev,
+        .p-paginator-next,
+        .p-paginator-last {
+            color: #64748b !important;
+            border-radius: 10px;
+            min-width: 2.25rem;
+            height: 2.25rem;
+            transition: all 0.2s ease;
+
+            &:hover:not(.p-disabled) {
+                background: rgba(255, 255, 255, 0.05) !important;
+                color: #e2e8f0 !important;
+            }
+
+            &.p-disabled {
+                opacity: 0.3 !important;
+            }
+        }
+
+        /* Current page report text */
+        .p-paginator-current {
+            color: #64748b !important;
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+
+        /* Rows per page dropdown */
+        .p-paginator-rpp-options,
+        .p-dropdown {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 10px !important;
+            color: #94a3b8 !important;
+        }
+    }
+
+    /* ── Summary footer ───────────────────────────── */
+    .p-datatable-footer {
+        background: rgba(2, 6, 23, 0.3) !important;
+        border: none !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+        color: #64748b !important;
+        font-size: 0.85rem;
+    }
+
+    /* ── Loading overlay ──────────────────────────── */
+    .p-datatable-loading-overlay {
+        background: rgba(2, 6, 23, 0.7) !important;
+        backdrop-filter: blur(4px);
+    }
+
+    /* ── Responsive mobile adjustments ────────────── */
+    @media (max-width: 768px) {
+        border-radius: 16px !important;
+
+        .p-datatable-header {
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+            padding: 1rem !important;
+        }
+
+        &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:first-child {
+            border-top-left-radius: 16px !important;
+        }
+
+        &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:last-child {
+            border-top-right-radius: 16px !important;
+        }
+
+        .p-datatable-thead > tr > th {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.68rem;
+        }
+
+        .p-datatable-tbody > tr > td {
+            padding: 0.65rem 0.75rem !important;
+            font-size: 0.85rem;
+        }
+
+        .p-paginator {
+            border-radius: 0 0 16px 16px !important;
+            padding: 0.5rem !important;
+            flex-wrap: wrap;
+            gap: 0.25rem;
         }
     }
 }
 
-/* Admin Utility Tags */
+/* ─────────────────────────────────────────────────────────────────
+   PREMIUM CHECKBOX — GLOBAL ADMIN OVERRIDE (PrimeNG 19+)
+   ───────────────────────────────────────────────────────────────── */
+.admin-layout {
+    /* Base checkbox box */
+    .p-checkbox .p-checkbox-box,
+    .p-checkbox-box {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        border-radius: 6px !important;
+        border: 2px solid rgba(148, 163, 184, 0.4) !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Checkbox hover */
+    .p-checkbox:not(.p-disabled):hover .p-checkbox-box,
+    .p-checkbox-box:hover {
+        border-color: rgba(59, 130, 246, 0.6) !important;
+        background: rgba(59, 130, 246, 0.06) !important;
+    }
+
+    /* Checked state */
+    .p-checkbox.p-checkbox-checked .p-checkbox-box,
+    .p-checkbox-checked .p-checkbox-box {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35) !important;
+    }
+
+    /* Check icon tick mark */
+    .p-checkbox .p-checkbox-box .p-checkbox-icon,
+    .p-checkbox-icon,
+    .p-checkbox .p-icon {
+        color: #ffffff !important;
+        font-size: 0.7rem !important;
+        font-weight: 900 !important;
+    }
+
+    /* Checkbox icon SVG (PrimeNG 19 uses SVG icons) */
+    .p-checkbox .p-checkbox-box svg,
+    .p-checkbox-box svg {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+        color: #ffffff !important;
+        stroke: #ffffff !important;
+        stroke-width: 3 !important;
+    }
+
+    /* Focus ring on checkbox */
+    .p-checkbox:not(.p-disabled).p-focus .p-checkbox-box,
+    .p-checkbox-box.p-focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        border-color: #3b82f6 !important;
+    }
+
+    /* Table header checkbox (Select All) */
+    p-tableHeaderCheckbox {
+        .p-checkbox .p-checkbox-box {
+            width: 1.15rem !important;
+            height: 1.15rem !important;
+        }
+    }
+
+    /* Radio button styling (used in inventory modal) */
+    .p-radiobutton .p-radiobutton-box {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        border: 2px solid rgba(148, 163, 184, 0.4) !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .p-radiobutton:not(.p-disabled):hover .p-radiobutton-box {
+        border-color: rgba(59, 130, 246, 0.6) !important;
+    }
+
+    .p-radiobutton.p-radiobutton-checked .p-radiobutton-box,
+    .p-radiobutton-checked .p-radiobutton-box {
+        border-color: #3b82f6 !important;
+        background: transparent !important;
+    }
+
+    .p-radiobutton .p-radiobutton-box .p-radiobutton-icon,
+    .p-radiobutton-icon {
+        background: #3b82f6 !important;
+        width: 0.55rem !important;
+        height: 0.55rem !important;
+        box-shadow: 0 1px 4px rgba(59, 130, 246, 0.4) !important;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   ADMIN UTILITY COMPONENTS
+   ───────────────────────────────────────────────────────────────── */
+
+/* ID & Code Tags */
 .id-tag {
     background: rgba(255, 255, 255, 0.05);
     color: #94a3b8;
-    padding: 0.25rem 0.6rem;
+    padding: 0.3rem 0.65rem;
     border-radius: 8px;
-    font-size: 0.85rem;
-    font-family: monospace;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    letter-spacing: 0.02em;
 }
 
+/* Product Image Thumbnail */
 .product-img-container {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     background: rgba(2, 6, 23, 0.5);
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: border-color 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+        border-color: rgba(59, 130, 246, 0.2);
+    }
 
     .product-img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TABLE RESPONSIVE SCROLL WRAPPER
+   ───────────────────────────────────────────────────────────────── */
+.admin-layout {
+    .glass-card {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+
+        /* Premium scrollbar for horizontal scroll */
+        &::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.15);
+            }
+        }
     }
 }

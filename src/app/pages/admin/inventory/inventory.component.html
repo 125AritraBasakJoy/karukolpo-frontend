@@ -1,10 +1,25 @@
 <div class="inventory-container p-4 min-h-screen">
-    <div class="header-section mb-5">
-        <div class="flex flex-column sm:flex-row sm:align-items-center justify-content-between gap-3">
+    <div class="header-section mb-4">
+        <div class="flex flex-column lg:flex-row lg:align-items-center justify-content-between gap-3">
             <div>
                 <h1 class="page-title m-0 mb-1">Inventory Management</h1>
                 <p class="text-slate-400 m-0 text-sm">Track stock levels and monitor product performance.</p>
             </div>
+
+            <!-- Search Bar supporting Bangla & English -->
+            <div class="search-container">
+                <div class="search-wrapper">
+                    <i class="pi pi-search search-icon"></i>
+                    <input type="text" pInputText placeholder="Search by name, ID, code or stock (বাংলা / English)..."
+                        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onSearch()"
+                        (keyup.enter)="onSearch(true)" class="search-input" />
+                    @if (searchQuery()) {
+                    <i class="pi pi-times clear-icon" (click)="clearSearch()" title="Clear Search"></i>
+                    }
+                </div>
+                <button pButton label="Search" (click)="onSearch(true)" class="premium-btn-primary search-btn"></button>
+            </div>
+
             <div class="flex gap-2 flex-shrink-0">
                 <p-button icon="pi pi-refresh" (onClick)="refreshProducts()" styleClass="premium-btn-primary"
                     pTooltip="Refresh Inventory" tooltipPosition="bottom"></p-button>

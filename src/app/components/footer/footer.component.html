@@ -6,7 +6,7 @@
                 <!-- Brand & Mission Column -->
                 <div class="col-12 md:col-4 mb-5 md:mb-0">
                     <div class="footer-brand flex align-items-center gap-3 mb-3">
-                        <img ngSrc="assets/logo.webp" width="48" height="48" alt="Karukolpo Logo" class="footer-logo">
+                        <img ngSrc="assets/logo.webp" width="60" height="41" alt="Karukolpo Logo" class="footer-logo">
                         <h3 class="brand-name m-0">Karukolpo</h3>
                     </div>
                     <p class="footer-description mb-4">
@@ -22,7 +22,7 @@
 
                 <!-- Quick Links Column -->
                 <div class="col-12 sm:col-6 md:col-4 mb-5 md:mb-0">
-                    <h4 class="footer-title">Navigation</h4>
+                    <h3 class="footer-title">Navigation</h3>
                     <ul class="footer-links">
                         <li *ngFor="let link of quickLinks">
                             <a [routerLink]="link.route" class="footer-link" (click)="navigateAndScroll(link.route)">
@@ -35,7 +35,7 @@
 
                 <!-- Contact Info Column -->
                 <div class="col-12 sm:col-6 md:col-4">
-                    <h4 class="footer-title">Contact Us</h4>
+                    <h3 class="footer-title">Contact Us</h3>
                     <ul class="contact-info">
                         <li>
                             <div class="contact-icon">

@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
-import { ProductService } from '../../../core/services';;;
+import { ProductService } from '../../../core/services';
 import { Product, ProductImage } from '../../../models/product.model';
 import { Category } from '../../../models/category.model';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
@@ -18,7 +17,58 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
 import { Router } from '@angular/router';
+
+/**
+ * Normalizes text for bilingual search (English + Bangla)
+ * - Converts Bengali numerals ০-৯ to 0-9
+ * - Handles NFC unicode normalization for Bangla characters & diacritics
+ * - Case-insensitive & trimmed
+ */
+function normalizeBilingualText(text: string | number | null | undefined): string {
+  if (text === null || text === undefined) return '';
+  let str = text.toString().normalize('NFC');
+  
+  // Convert Bangla digits ০-৯ to 0-9
+  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  for (let i = 0; i < 10; i++) {
+    str = str.split(banglaDigits[i]).join(i.toString());
+  }
+  return str.toLowerCase().trim();
+}
+
+function matchesBilingualProduct(product: Product, query: string): boolean {
+  if (!query) return true;
+  const q = normalizeBilingualText(query);
+  if (!q) return true;
+
+  const name = normalizeBilingualText(product.name);
+  const code = normalizeBilingualText(product.code);
+  const id = normalizeBilingualText(product.id);
+  const desc = normalizeBilingualText(product.description);
+  const price = normalizeBilingualText(product.price);
+  const stock = normalizeBilingualText(product.stock);
+
+  // Status keywords in both Bangla and English
+  const isStock = product.manualStockStatus === 'IN_STOCK' || (product.manualStockStatus !== 'OUT_OF_STOCK' && (product.isInStock || (product.stock !== undefined && product.stock > 0)));
+  const statusBanglaEnglish = isStock
+    ? 'in stock instock ইন স্টক ইনস্টক এভেইলেবল মজুদ আছে'
+    : 'out of stock outofstock স্টক আউট অব স্টক শেষ মজুদ নেই';
+
+  // Support multi-term/token search
+  const tokens = q.split(/\s+/).filter(t => t.length > 0);
+  return tokens.every(token =>
+    name.includes(token) ||
+    code.includes(token) ||
+    id.includes(token) ||
+    desc.includes(token) ||
+    price.includes(token) ||
+    stock.includes(token) ||
+    statusBanglaEnglish.includes(token)
+  );
+}
 
 @Component({
   selector: 'app-inventory',
@@ -36,6 +86,8 @@ import { Router } from '@angular/router';
     FileUploadModule,
     DialogModule,
     InputNumberModule,
+    InputTextModule,
+    TooltipModule,
     FormsModule
   ],
   providers: [ConfirmationService],
@@ -46,6 +98,13 @@ export class InventoryComponent implements OnInit {
   products = signal<Product[]>([]);
   loading = signal<boolean>(false);
   savingInventory = signal<boolean>(false);
+
+  // Search state (Bangla + English)
+  searchQuery = signal<string>('');
+  isSearching = signal<boolean>(false);
+  allProductsCache: Product[] = [];
+  filteredProducts: Product[] = [];
+  private searchDebounceTimer: any = null;
 
   // Dialog state
   inventoryDialogVisible = false;
@@ -74,6 +133,65 @@ export class InventoryComponent implements OnInit {
 
 
 
+  onSearch(immediate: boolean = false) {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    const q = this.searchQuery().trim();
+    if (!q) {
+      this.clearSearch();
+      return;
+    }
+
+    if (immediate) {
+      this.performSearch(q);
+    } else {
+      this.searchDebounceTimer = setTimeout(() => {
+        this.performSearch(q);
+      }, 250);
+    }
+  }
+
+  clearSearch() {
+    this.searchQuery.set('');
+    this.isSearching.set(false);
+    this.filteredProducts = [];
+    if (this.lastLazyLoadEvent) {
+      this.loadProducts(this.lastLazyLoadEvent);
+    } else {
+      this.loadProducts({ first: 0, rows: 10 });
+    }
+  }
+
+  private performSearch(query: string) {
+    this.isSearching.set(true);
+    this.loading.set(true);
+
+    if (this.allProductsCache.length > 0) {
+      this.applySearchFilter(query);
+    } else {
+      this.productService.getProducts(0, 1000, undefined, true).subscribe({
+        next: (all) => {
+          this.allProductsCache = all;
+          this.applySearchFilter(query);
+        },
+        error: () => {
+          this.allProductsCache = this.productsBuffer.filter(p => !!p);
+          this.applySearchFilter(query);
+        }
+      });
+    }
+  }
+
+  private applySearchFilter(query: string) {
+    this.filteredProducts = this.allProductsCache.filter(p => matchesBilingualProduct(p, query));
+    this.totalRecords.set(this.filteredProducts.length);
+
+    const rows = this.lastLazyLoadEvent?.rows || 10;
+    this.products.set(this.filteredProducts.slice(0, rows));
+    this.loading.set(false);
+  }
+
   loadProducts(event?: TableLazyLoadEvent) {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -86,6 +204,13 @@ export class InventoryComponent implements OnInit {
 
     const first = lazyEvent.first || 0;
     const rows = lazyEvent.rows || 10;
+
+    // If searching, serve from filtered results
+    if (this.isSearching()) {
+      this.products.set(this.filteredProducts.slice(first, first + rows));
+      this.loading.set(false);
+      return;
+    }
 
     let dataMissing = false;
     for (let i = first; i < first + rows; i++) {
@@ -122,8 +247,6 @@ export class InventoryComponent implements OnInit {
         const pageData = this.productsBuffer.slice(first, end);
         this.products.set(pageData);
         this.loading.set(false);
-
-
       },
       error: () => {
         this.loading.set(false);
@@ -134,10 +257,15 @@ export class InventoryComponent implements OnInit {
   refreshProducts() {
     this.productService.clearCache(); // Clear service-level cache to fetch fresh data from API
     this.productsBuffer = [];
+    this.allProductsCache = [];
     this.totalRecords.set(0);
 
-    const event: TableLazyLoadEvent = this.lastLazyLoadEvent ? { ...this.lastLazyLoadEvent } : { first: 0, rows: 10 };
-    this.loadProducts(event);
+    if (this.isSearching() && this.searchQuery().trim()) {
+      this.performSearch(this.searchQuery().trim());
+    } else {
+      const event: TableLazyLoadEvent = this.lastLazyLoadEvent ? { ...this.lastLazyLoadEvent } : { first: 0, rows: 10 };
+      this.loadProducts(event);
+    }
     this.messageService.add({ severity: 'success', summary: 'Refreshed', detail: 'Inventory updated' });
   }
 

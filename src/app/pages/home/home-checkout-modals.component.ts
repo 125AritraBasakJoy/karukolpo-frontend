@@ -56,6 +56,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     displayPaymentSuccessModal = false;
     displayTrackOrderModal = false;
     displayFinalSuccessModal = false;
+    displayCodConfirmModal = false;
     selectedPaymentMethod: 'COD' | 'bKash' | null = null;
     isPaymentSelected = false;
     bkashTrxId = '';
@@ -383,17 +384,29 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         this.subDistricts = [];
         this.isPaymentSelected = false;
         this.selectedPaymentMethod = null;
+        this.displayCodConfirmModal = false;
         this.bkashTrxId = '';
         this.bkashPhone = '';
     }
 
-    async selectPaymentMethod(method: 'COD' | 'bKash') {
+    selectPaymentMethod(method: 'COD' | 'bKash') {
         this.selectedPaymentMethod = method;
         this.isPaymentSelected = true;
 
         if (method === 'COD') {
-            await this.confirmCOD();
+            this.displayCodConfirmModal = true;
         }
+    }
+
+    cancelCOD() {
+        this.displayCodConfirmModal = false;
+        this.selectedPaymentMethod = null;
+        this.isPaymentSelected = false;
+    }
+
+    async proceedWithCOD() {
+        this.displayCodConfirmModal = false;
+        await this.confirmCOD();
     }
 
     async confirmCOD() {
@@ -497,6 +510,18 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
             // Note: We leave placedOrderId so the user can retry submitting the transaction
         } finally {
             this.loading.set(false);
+        }
+    }
+
+    copyBkashNumber(num: string) {
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(num).then(() => {
+                this.messageService.add({
+                    severity: 'info',
+                    summary: 'Copied',
+                    detail: 'bKash number copied to clipboard!'
+                });
+            }).catch(() => {});
         }
     }
 

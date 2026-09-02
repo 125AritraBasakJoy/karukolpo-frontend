@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { DropdownModule } from 'primeng/dropdown';
+import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
@@ -27,13 +28,13 @@ import { districts, District } from '../../data/bangladesh-data';
         InputTextModule,
         TextareaModule,
         DropdownModule,
+        DialogModule,
         ToastModule,
         TagModule,
         InvoiceComponent,
     ],
     templateUrl: './cart.component.html',
     styleUrls: ['./cart.component.scss'],
-
 })
 export class CartComponent implements OnInit, OnDestroy {
     loading = signal<boolean>(false);
@@ -60,6 +61,7 @@ export class CartComponent implements OnInit, OnDestroy {
     // Payment flow — inline on the page, no modals
     showPaymentSection = false;
     selectedPaymentMethod: 'COD' | 'bKash' | null = null;
+    displayCodConfirmModal = false;
     bkashTrxId = '';
     bkashPhone = '';
     placedOrderId = '';
@@ -115,10 +117,10 @@ export class CartComponent implements OnInit, OnDestroy {
                         }
                         this.scheduleDraftClear(this.CHECKOUT_DRAFT_TTL - elapsed);
                     } else {
-                        this.clearCheckoutDraft();
+                        this.clearCheckoutDraft(true);
                     }
                 } catch (e) {
-                    this.clearCheckoutDraft();
+                    this.clearCheckoutDraft(true);
                 }
             }
         }
@@ -130,7 +132,7 @@ export class CartComponent implements OnInit, OnDestroy {
         }
         this.draftClearTimer = setTimeout(() => {
             this.draftClearTimer = null;
-            this.clearCheckoutDraft();
+            this.clearCheckoutDraft(true);
         }, delay);
     }
 
@@ -145,7 +147,7 @@ export class CartComponent implements OnInit, OnDestroy {
         }
     }
 
-    clearCheckoutDraft() {
+    clearCheckoutDraft(clearCart: boolean = false) {
         if (isPlatformBrowser(this.platformId)) {
             localStorage.removeItem('karukolpo_checkout_draft');
         }
@@ -160,6 +162,13 @@ export class CartComponent implements OnInit, OnDestroy {
             additionalInfo: ''
         };
         this.subDistricts = [];
+        this.showPaymentSection = false;
+        this.selectedPaymentMethod = null;
+
+        if (clearCart && this.cartService.cart().length > 0) {
+            this.cartService.clearAbandonClock();
+            this.cartService.clearCart();
+        }
     }
 
     loadSubDistricts(districtName: string) {
@@ -278,12 +287,22 @@ export class CartComponent implements OnInit, OnDestroy {
         this.orderDiscount = this.createdOrderObj?.discountAmount ?? 0;
     }
 
-    async selectPaymentMethod(method: 'COD' | 'bKash') {
+    selectPaymentMethod(method: 'COD' | 'bKash') {
         this.selectedPaymentMethod = method;
         
         if (method === 'COD') {
-            await this.confirmCOD();
+            this.displayCodConfirmModal = true;
         }
+    }
+
+    cancelCOD() {
+        this.displayCodConfirmModal = false;
+        this.selectedPaymentMethod = null;
+    }
+
+    async proceedWithCOD() {
+        this.displayCodConfirmModal = false;
+        await this.confirmCOD();
     }
 
     async confirmCOD() {
@@ -393,6 +412,18 @@ export class CartComponent implements OnInit, OnDestroy {
         this.bkashTrxId = '';
         this.bkashPhone = '';
         this.showPaymentSection = false;
+    }
+
+    copyBkashNumber(num: string) {
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(num).then(() => {
+                this.messageService.add({
+                    severity: 'info',
+                    summary: 'Copied',
+                    detail: 'bKash number copied to clipboard!'
+                });
+            }).catch(() => {});
+        }
     }
 
     goBack() {

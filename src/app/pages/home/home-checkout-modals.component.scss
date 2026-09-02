@@ -44,6 +44,265 @@
   animation: slideDown 0.3s ease-out;
 }
 
+/* bKash Payment Detailed Card Styling - Aligned with Site Theme */
+.bkash-payment-card {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.04) 0%, rgba(15, 23, 42, 0.7) 100%), var(--surface-card);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), 0 0 20px rgba(59, 130, 246, 0.08);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa, #2563eb);
+  }
+}
+
+/* Modern Responsive COD Confirmation Modal */
+::ng-deep .p-dialog.cod-confirm-modal {
+  border-radius: 24px !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  background: #0f172a !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(59, 130, 246, 0.12) !important;
+  overflow: hidden !important;
+
+  .p-dialog-content {
+    padding: 0 !important;
+    border-radius: 24px !important;
+    background: transparent !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+}
+
+.cod-modal-card {
+  position: relative;
+  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0.98) 75%);
+  padding: 2.25rem 1.75rem 1.75rem;
+  text-align: center;
+
+  .cod-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transform: scale(1.05);
+    }
+  }
+
+  .cod-icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.22) 0%, rgba(37, 99, 235, 0.1) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+
+    i {
+      font-size: 1.85rem;
+      color: #60a5fa;
+    }
+  }
+
+  .cod-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .cod-modal-text {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: #94a3b8;
+    margin: 0 0 1.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .cod-modal-actions {
+    display: flex;
+    gap: 0.75rem;
+
+    .cod-cancel-btn {
+      flex: 1;
+      padding: 0.75rem 1rem !important;
+      border-radius: 12px !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      color: #cbd5e1 !important;
+      font-weight: 600 !important;
+      font-size: 0.9rem !important;
+      transition: all 0.2s ease !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        color: #fff !important;
+      }
+    }
+
+    .cod-confirm-btn {
+      flex: 1.2;
+      padding: 0.75rem 1rem !important;
+      border-radius: 12px !important;
+      font-size: 0.9rem !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .cod-modal-card {
+    padding: 1.75rem 1.25rem 1.25rem;
+
+    .cod-icon-circle {
+      width: 54px;
+      height: 54px;
+      margin-bottom: 1rem;
+
+      i {
+        font-size: 1.5rem;
+      }
+    }
+
+    .cod-modal-title {
+      font-size: 1.15rem;
+    }
+
+    .cod-modal-text {
+      font-size: 0.825rem;
+      margin-bottom: 1.25rem;
+      padding: 0;
+    }
+  }
+}
+
+.bkash-notice-card {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.04) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  position: relative;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.08);
+
+  .bkash-notice-icon-box {
+    width: 38px;
+    height: 38px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+  }
+}
+
+.bkash-steps-list {
+  .bkash-step-row {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.05);
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .bkash-step-number {
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #60a5fa;
+      font-size: 0.825rem;
+    }
+
+    .bkash-step-desc {
+      text-align: justify;
+      text-justify: inter-word;
+      word-break: break-word;
+    }
+  }
+}
+
+.bkash-number-badge {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  vertical-align: middle;
+
+  .bkash-copy-btn {
+    background: transparent;
+    border: none;
+    color: #60a5fa;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.3);
+      color: #fff;
+      transform: scale(1.1);
+    }
+  }
+}
+
+.bkash-input {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+
+  &:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+}
+
+.uppercase-input {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bkash-submit-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.35) !important;
+
+  &:not(:disabled):hover {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px -3px rgba(37, 99, 235, 0.45) !important;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

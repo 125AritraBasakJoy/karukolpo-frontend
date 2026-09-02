@@ -14,10 +14,11 @@
 }
 
 .header-logo {
-  height: 80px;
-  width: 80px;
+  max-height: 60px;
+  width: auto;
+  max-width: 90px;
   object-fit: contain;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
   &:hover {
     transform: scale(1.02);
   }

@@ -16,9 +16,9 @@
             </div>
         </div>
         <!-- Scroll Down Indicator -->
-        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()" aria-label="Scroll to Categories"
-            role="button">
-            <i class="pi pi-chevron-down"></i>
+        <div class="scroll-down-indicator z-2" (click)="scrollToCategories()" (keydown.enter)="scrollToCategories()"
+            aria-label="Scroll to Categories" role="button" tabindex="0">
+            <i class="pi pi-chevron-down" aria-hidden="true"></i>
         </div>
     </div>
 
@@ -77,7 +77,7 @@
 
             <div class="swipe-section-wrapper">
                 @if (bestSelling().length > 6) {
-                <button pButton icon="pi pi-chevron-left" 
+                <button pButton icon="pi pi-chevron-left" aria-label="Previous best selling products"
                     class="swipe-nav-btn prev-btn p-button-rounded p-button-outlined" 
                     (click)="scrollLeft(bestSellingList)"></button>
                 }
@@ -88,15 +88,15 @@
                         <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                                 @if (product.imageUrl.startsWith('data:')) {
-                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;">
+                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;" decoding="async">
                                 } @else {
                                     <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
                                         sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                        loading="lazy" style="object-fit: cover;" class="product-image">
+                                        loading="lazy" decoding="async" style="object-fit: cover;" class="product-image">
                                 }
 
                                 <div class="quick-actions-overlay">
-                                    <button pButton icon="pi pi-search-plus" label="Details"
+                                    <button pButton icon="pi pi-search-plus" label="Details" aria-label="View product details"
                                         class="p-button-rounded glass-button"></button>
                                 </div>
 
@@ -120,7 +120,7 @@
                                     <h3 class="product-title">{{ product.name }}</h3>
                                     <div class="price-container flex flex-column align-items-end">
                                         @if (product.effective_price && product.effective_price < product.price) {
-                                            <span class="old-price text-xs text-slate-500 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
+                                            <span class="old-price text-xs text-slate-400 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
                                             <span class="price-pill discounted">{{ product.effective_price | currency:'BDT':'৳' }}</span>
                                         } @else {
                                             <span class="price-pill">{{ product.price | currency:'BDT':'৳' }}</span>
@@ -130,6 +130,7 @@
 
                                 <div class="mt-auto">
                                     <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'"
+                                        [attr.aria-label]="(isOutOfStock(product) ? 'View details for ' : 'View product ') + product.name"
                                         icon="pi pi-eye" class="p-button-sm w-full dark-cart-button"
                                         (click)="showProductDetails(product)"></button>
                                 </div>
@@ -140,10 +141,11 @@
                     <!-- View All Card at the end of Best Selling -->
                     <div class="swipe-card-wrapper px-2">
                         <div class="product-card premium-product-card view-all-product-card flex flex-column align-items-center justify-content-center h-full cursor-pointer text-center"
-                            [routerLink]="['/all-products']" [queryParams]="{ filter: 'best-selling' }">
+                            [routerLink]="['/all-products']" [queryParams]="{ filter: 'best-selling' }"
+                            role="link" aria-label="View all best selling products">
                             <div class="view-more-card-content flex flex-column align-items-center justify-content-center py-6 h-full w-full">
                                 <div class="view-more-icon-circle mb-3 flex align-items-center justify-content-center">
-                                    <i class="pi pi-arrow-right text-xl"></i>
+                                    <i class="pi pi-arrow-right text-xl" aria-hidden="true"></i>
                                 </div>
                                 <span class="view-more-card-text">View All</span>
                             </div>
@@ -152,7 +154,7 @@
                 </div>
 
                 @if (bestSelling().length > 6) {
-                <button pButton icon="pi pi-chevron-right" 
+                <button pButton icon="pi pi-chevron-right" aria-label="Next best selling products"
                     class="swipe-nav-btn next-btn p-button-rounded p-button-outlined" 
                     (click)="scrollRight(bestSellingList)"></button>
                 }
@@ -194,7 +196,7 @@
 
             <div class="swipe-section-wrapper">
                 @if (hotDeals().length > 6) {
-                <button pButton icon="pi pi-chevron-left" 
+                <button pButton icon="pi pi-chevron-left" aria-label="Previous hot deals"
                     class="swipe-nav-btn prev-btn p-button-rounded p-button-outlined" 
                     (click)="scrollLeft(hotDealsList)"></button>
                 }
@@ -205,15 +207,15 @@
                         <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                             <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
                                 @if (product.imageUrl.startsWith('data:')) {
-                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;">
+                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;" decoding="async">
                                 } @else {
                                     <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
                                         sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                        loading="lazy" style="object-fit: cover;" class="product-image">
+                                        loading="lazy" decoding="async" style="object-fit: cover;" class="product-image">
                                 }
 
                                 <div class="quick-actions-overlay">
-                                    <button pButton icon="pi pi-search-plus" label="Details"
+                                    <button pButton icon="pi pi-search-plus" label="Details" aria-label="View product details"
                                         class="p-button-rounded glass-button"></button>
                                 </div>
 
@@ -237,7 +239,7 @@
                                     <h3 class="product-title">{{ product.name }}</h3>
                                     <div class="price-container flex flex-column align-items-end">
                                         @if (product.effective_price && product.effective_price < product.price) {
-                                            <span class="old-price text-xs text-slate-500 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
+                                            <span class="old-price text-xs text-slate-400 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
                                             <span class="price-pill discounted">{{ product.effective_price | currency:'BDT':'৳' }}</span>
                                         } @else {
                                             <span class="price-pill">{{ product.price | currency:'BDT':'৳' }}</span>
@@ -247,6 +249,7 @@
 
                                 <div class="mt-auto">
                                     <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'"
+                                        [attr.aria-label]="(isOutOfStock(product) ? 'View details for ' : 'View product ') + product.name"
                                         icon="pi pi-eye" class="p-button-sm w-full dark-cart-button"
                                         (click)="showProductDetails(product)"></button>
                                 </div>
@@ -257,10 +260,11 @@
                     <!-- View All Card at the end of Hot Deals -->
                     <div class="swipe-card-wrapper px-2">
                         <div class="product-card premium-product-card view-all-product-card flex flex-column align-items-center justify-content-center h-full cursor-pointer text-center"
-                            [routerLink]="['/all-products']" [queryParams]="{ filter: 'hot-deals' }">
+                            [routerLink]="['/all-products']" [queryParams]="{ filter: 'hot-deals' }"
+                            role="link" aria-label="View all hot deals products">
                             <div class="view-more-card-content flex flex-column align-items-center justify-content-center py-6 h-full w-full">
                                 <div class="view-more-icon-circle mb-3 flex align-items-center justify-content-center">
-                                    <i class="pi pi-arrow-right text-xl"></i>
+                                    <i class="pi pi-arrow-right text-xl" aria-hidden="true"></i>
                                 </div>
                                 <span class="view-more-card-text">View All</span>
                             </div>
@@ -269,7 +273,7 @@
                 </div>
 
                 @if (hotDeals().length > 6) {
-                <button pButton icon="pi pi-chevron-right" 
+                <button pButton icon="pi pi-chevron-right" aria-label="Next hot deals"
                     class="swipe-nav-btn next-btn p-button-rounded p-button-outlined" 
                     (click)="scrollRight(hotDealsList)"></button>
                 }
@@ -306,20 +310,20 @@
                 <div class="col-12 md:col-4 mb-4 md:mb-0">
                     <div class="crafted-image-wrapper" style="aspect-ratio: 4/3; position: relative;">
                         <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Artisan weaving traditional fabrics"
-                            sizes="(max-width: 768px) 90vw, 33vw" loading="lazy"
+                            sizes="(max-width: 768px) 90vw, 33vw" loading="lazy" decoding="async"
                             class="border-round-xl shadow-4 crafted-image">
                     </div>
                 </div>
                 <div class="col-12 md:col-8 md:pl-6">
                     <div class="crafted-content">
-                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
-                        </h2>
-                        <p class="text-lg text-600 mb-4 line-height-3">
+                        <h3 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
+                        </h3>
+                        <p class="text-lg text-slate-300 mb-4 line-height-3">
                             Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage. We believe
                             that every handcrafted item tells a story – a story of tradition, skill, and dedication
                             passed down through generations.
                         </p>
-                        <p class="text-lg text-600 mb-5 line-height-3">
+                        <p class="text-lg text-slate-300 mb-5 line-height-3">
                             Every product you purchase directly supports local craftspeople and their families, helping
                             to sustain their livelihoods and keep ancient traditions alive.
                         </p>

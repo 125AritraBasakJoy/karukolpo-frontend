@@ -239,37 +239,105 @@
 
                 <!-- bKash Details Area -->
                 @if (selectedPaymentMethod === 'bKash') {
-                <div class="bkash-details-area mt-4 p-4 border-round-xl surface-card shadow-1 border-1 surface-border">
-                    <div class="mb-4">
-                        <div class="text-center mb-3">
-                            <span class="text-pink-400 font-bold text-sm">(Payment must be made now in Advance for
-                                Bkash Payment)</span>
+                <div class="bkash-details-area bkash-payment-card mt-4 p-4 border-round-2xl">
+                    <!-- Highlighted Notice Header -->
+                    <div class="bkash-notice-card mb-4 p-3 border-round-xl">
+                        <div class="flex align-items-center gap-3">
+                            <div class="bkash-notice-icon-box flex align-items-center justify-content-center border-circle flex-shrink-0">
+                                <i class="pi pi-bolt text-lg text-blue-400"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="bkash-notice-title font-bold text-blue-400 text-sm md:text-base line-height-2">
+                                    Advance bKash Payment Required
+                                </div>
+                                <div class="bkash-notice-sub text-xs text-slate-300 line-height-2 mt-1">
+                                    Payment must be made now in advance to confirm and process your order.
+                                </div>
+                            </div>
                         </div>
-                        <div class="text-color font-semibold mb-2">To pay for your order, PLEASE READ CAREFULLY:</div>
-                        <ol class="text-color line-height-3 m-0 pl-4" style="list-style: decimal;">
-                            <li>Open the Bkash App</li>
-                            <li>Choose Send Money option</li>
-                            <li>Enter our official phone number <strong>01834484328</strong> (this is not our Customer
-                                Service number)</li>
-                            <li>Enter the amount you will have to pay for your order.</li>
-                            <li>Enter PIN and Send Money</li>
-                            <li>After successful payment, just copy your Transaction Id and paste it in our website's
-                                Transaction Id box also enter the Bkash Phone number.</li>
-                        </ol>
                     </div>
 
-                    <div class="field mb-4">
-                        <label class="font-bold text-color block mb-2">Your bKash Number</label>
-                        <input pInputText [(ngModel)]="bkashPhone" placeholder="017XXXXXXXX" maxlength="11"
-                            class="w-full py-3">
+                    <!-- Instructions Title & Justified Steps -->
+                    <div class="mb-4">
+                        <div class="text-color font-semibold mb-3 flex align-items-center gap-2 text-sm md:text-base">
+                            <i class="pi pi-list-check text-blue-400"></i>
+                            <span>To pay for your order, <strong class="text-blue-400">PLEASE READ CAREFULLY</strong>:</span>
+                        </div>
+                        
+                        <div class="bkash-steps-list flex flex-column gap-2">
+                            <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
+                                <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold">1</span>
+                                <div class="bkash-step-desc text-justify line-height-3 text-color text-sm flex-1">
+                                    Open the <strong>bKash App</strong> on your mobile phone (or dial *247#).
+                                </div>
+                            </div>
+
+                            <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
+                                <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold">2</span>
+                                <div class="bkash-step-desc text-justify line-height-3 text-color text-sm flex-1">
+                                    Choose the <strong>Send Money</strong> option from the home screen.
+                                </div>
+                            </div>
+
+                            <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
+                                <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold">3</span>
+                                <div class="bkash-step-desc text-justify line-height-3 text-color text-sm flex-1">
+                                    Enter our official Personal phone number 
+                                    <span class="bkash-number-badge inline-flex align-items-center gap-2 px-2 py-1 border-round-md mx-1">
+                                        <strong class="font-mono text-blue-300 select-all">01834484328</strong>
+                                        <button type="button" class="bkash-copy-btn" (click)="copyBkashNumber('01834484328')" title="Copy Number">
+                                            <i class="pi pi-copy"></i>
+                                        </button>
+                                    </span>
+                                    <span class="text-xs text-slate-400 font-normal block sm:inline">(this is not our Customer Service number)</span>.
+                                </div>
+                            </div>
+
+                            <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
+                                <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold">4</span>
+                                <div class="bkash-step-desc text-justify line-height-3 text-color text-sm flex-1">
+                                    Enter the exact total amount you will have to pay for your order.
+                                </div>
+                            </div>
+
+                            <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
+                                <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold">5</span>
+                                <div class="bkash-step-desc text-justify line-height-3 text-color text-sm flex-1">
+                                    Enter your bKash PIN and tap &amp; hold to confirm <strong>Send Money</strong>.
+                                </div>
+                            </div>
+
+                            <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
+                                <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold">6</span>
+                                <div class="bkash-step-desc text-justify line-height-3 text-color text-sm flex-1">
+                                    After successful payment, copy your <strong>Transaction ID (TrxID)</strong> and paste it into the box below, then enter the bKash Phone number used to send the payment.
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="field mb-4">
-                        <label class="font-bold text-color block mb-2">Transaction ID</label>
-                        <input pInputText [(ngModel)]="bkashTrxId" placeholder="Enter 10-digit ID" class="w-full py-3">
+
+                    <!-- Form inputs & submit -->
+                    <div class="bkash-form-section p-fluid mt-4">
+                        <div class="field mb-3">
+                            <label class="font-semibold text-color block mb-2 text-sm flex align-items-center gap-2">
+                                <i class="pi pi-phone text-blue-400"></i>
+                                <span>Your bKash Phone Number</span>
+                            </label>
+                            <input pInputText [(ngModel)]="bkashPhone" placeholder="e.g. 017XXXXXXXX" maxlength="11"
+                                class="w-full py-3 bkash-input">
+                        </div>
+                        <div class="field mb-4">
+                            <label class="font-semibold text-color block mb-2 text-sm flex align-items-center gap-2">
+                                <i class="pi pi-hashtag text-blue-400"></i>
+                                <span>Transaction ID (TrxID)</span>
+                            </label>
+                            <input pInputText [(ngModel)]="bkashTrxId" placeholder="e.g. BCD123XYZ9"
+                                class="w-full py-3 uppercase-input bkash-input">
+                        </div>
+                        <button pButton label="Complete Payment" icon="pi pi-shield"
+                            class="premium-btn-primary bkash-submit-btn w-full py-3 text-base font-bold shadow-3" (click)="submitBkashPayment()"
+                            [disabled]="!bkashPhone || !bkashTrxId" [loading]="loading()"></button>
                     </div>
-                    <button pButton label="Complete Payment" icon="pi pi-shield"
-                        class="p-button-danger p-button-lg w-full mt-2" (click)="submitBkashPayment()"
-                        [disabled]="!bkashPhone || !bkashTrxId"></button>
                 </div>
                 }
             </div>
@@ -291,6 +359,35 @@
             your order soon.</p>
         <button pButton label="Continue Shopping" styleClass="p-button-outlined"
             (click)="displayFinalSuccessModal = false"></button>
+    </div>
+</p-dialog>
+}
+
+<!-- COD Confirmation Dialog -->
+@if (displayCodConfirmModal) {
+<p-dialog [(visible)]="displayCodConfirmModal" [modal]="true" [style]="{width: 'min(92vw, 410px)'}"
+    [closable]="false" [showHeader]="false" [draggable]="false" [resizable]="false"
+    styleClass="cod-confirm-modal" (onHide)="cancelCOD()">
+    <div class="cod-modal-card">
+        <button type="button" class="cod-close-btn" (click)="cancelCOD()" aria-label="Close">
+            <i class="pi pi-times text-xs"></i>
+        </button>
+
+        <div class="cod-icon-circle">
+            <i class="pi pi-truck"></i>
+        </div>
+
+        <h3 class="cod-modal-title">Confirm Cash on Delivery?</h3>
+
+        <p class="cod-modal-text">
+            Are you sure you want to place your order with <strong>Cash on Delivery</strong>? You will pay when the package arrives at your doorstep.
+        </p>
+
+        <div class="cod-modal-actions">
+            <button pButton label="Cancel" class="cod-cancel-btn" (click)="cancelCOD()"></button>
+            <button pButton label="Yes, Place Order" icon="pi pi-check" class="premium-btn-primary cod-confirm-btn"
+                [loading]="loading()" (click)="proceedWithCOD()"></button>
+        </div>
     </div>
 </p-dialog>
 }

@@ -213,5 +213,8 @@ export class CartService {
   clearCart() {
     this.cart.set([]);
     this.saveCart();
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('karukolpo_checkout_draft');
+    }
   }
 }

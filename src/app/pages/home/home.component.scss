@@ -532,13 +532,9 @@
     font-size: 3rem;
     font-weight: 800;
     margin: 0;
-    color: var(--text-color);
+    color: #ffffff;
     font-family: 'Playfair Display', serif;
     letter-spacing: -0.02em;
-    background: linear-gradient(to bottom, #fff, #94a3b8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
 
   @media (max-width: 768px) {

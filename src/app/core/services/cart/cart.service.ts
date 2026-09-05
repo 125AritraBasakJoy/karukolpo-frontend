@@ -15,8 +15,18 @@ export class CartService {
 
   cart = signal<CartItem[]>([]);
 
+  getItemPrice(product: Product): number {
+    return product.effective_price !== undefined && product.effective_price !== null
+      ? product.effective_price
+      : product.price;
+  }
+
+  getItemSubtotal(item: CartItem): number {
+    return this.getItemPrice(item.product) * item.quantity;
+  }
+
   totalItems = computed(() => this.cart().reduce((total, item) => total + item.quantity, 0));
-  subTotal = computed(() => this.cart().reduce((total, item) => total + (item.product.price * item.quantity), 0));
+  subTotal = computed(() => this.cart().reduce((total, item) => total + this.getItemSubtotal(item), 0));
 
   constructor(
     private messageService: MessageService,

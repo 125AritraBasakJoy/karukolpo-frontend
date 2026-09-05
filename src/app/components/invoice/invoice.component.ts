@@ -62,7 +62,7 @@ export class InvoiceComponent {
     get subtotal(): number {
         if (!this.orderedItems || this.orderedItems.length === 0) return 0;
         return this.orderedItems.reduce((sum: number, item: any) => {
-            const price = item.price_at_purchase ?? item.price ?? item.product?.price ?? 0;
+            const price = item.price_at_purchase ?? item.price ?? item.product?.effective_price ?? item.product?.price ?? 0;
             const qty = item.quantity || 0;
             return sum + (price * qty);
         }, 0);
@@ -317,7 +317,7 @@ export class InvoiceComponent {
             const nameImageData = this.hasBengali(name) ? this.renderTextAsImage(name, { fontSize: 11, color: '#1e293b', bold: true }) : null;
 
             const qty = item.quantity || 0;
-            const price = item.price_at_purchase ?? item.price ?? item.product?.price ?? 0;
+            const price = item.price_at_purchase ?? item.price ?? item.product?.effective_price ?? item.product?.price ?? 0;
             const lineTotal = price * qty;
 
             return [

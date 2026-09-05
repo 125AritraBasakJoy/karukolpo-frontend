@@ -1,0 +1,169 @@
+<!-- Floating AI Assistant Launcher Button -->
+<div class="chatbot-launcher-wrapper" [class.hidden-launcher]="isOpen()">
+  <button type="button" class="chatbot-fab-btn" (click)="toggleChat()" aria-label="Open Karukolpo Admin AI Assistant" pTooltip="Karukolpo AI Assistant" tooltipPosition="left">
+    <div class="fab-glow-ring"></div>
+    <div class="fab-icon-container">
+      <i class="pi pi-sparkles fab-icon"></i>
+    </div>
+    <span *ngIf="unreadCount() > 0" class="fab-badge" aria-live="polite">AI</span>
+  </button>
+</div>
+
+<!-- AI Chatbot Main Drawer / Modal Widget -->
+<div class="chatbot-overlay-container" [class.open]="isOpen()">
+  <div class="chatbot-backdrop" (click)="toggleChat()"></div>
+
+  <div class="chatbot-window">
+    <!-- Chatbot Header -->
+    <header class="chatbot-header">
+      <div class="header-branding flex align-items-center gap-3">
+        <div class="bot-avatar-container">
+          <div class="avatar-ring" [class.speaking]="isSpeaking()">
+            <i class="pi pi-sparkles"></i>
+          </div>
+          <span class="status-indicator"></span>
+        </div>
+        <div class="bot-info">
+          <div class="flex align-items-center gap-2">
+            <h2 class="bot-title m-0">Karukolpo AI</h2>
+            <span class="bot-tag">Admin Assistant</span>
+          </div>
+          <p class="bot-status-text m-0">
+            {{ isSpeaking() ? '🎙️ Speaking...' : (isThinking() ? '🧠 Analyzing store data...' : '🟢 Online & Ready') }}
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions flex align-items-center gap-2">
+        <!-- Voice Audio Mute/Unmute Button -->
+        <button pButton type="button" 
+          [icon]="isVoiceMuted() ? 'pi pi-volume-off' : 'pi pi-volume-up'" 
+          [class.voice-active]="!isVoiceMuted()"
+          class="p-button-rounded p-button-text header-action-btn"
+          [pTooltip]="isVoiceMuted() ? 'Unmute Voice (Web Speech)' : 'Mute Voice'"
+          tooltipPosition="bottom"
+          (click)="toggleVoiceMute()">
+        </button>
+
+        <!-- Close Chat Button -->
+        <button pButton type="button" icon="pi pi-times" 
+          class="p-button-rounded p-button-text header-action-btn close-btn"
+          pTooltip="Close" tooltipPosition="bottom"
+          (click)="toggleChat()">
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat Messages Scroll Area -->
+    <div class="chatbot-messages" #chatScrollContainer>
+      <!-- Message List -->
+      <div *ngFor="let msg of messages" class="message-row" [ngClass]="msg.sender">
+        <!-- Bot Avatar for Bot Messages -->
+        <div *ngIf="msg.sender === 'bot'" class="message-avatar">
+          <i class="pi pi-bolt"></i>
+        </div>
+
+        <div class="message-bubble-container">
+          <!-- Text Bubble -->
+          <div class="message-bubble">
+            <div class="message-text" [innerHTML]="msg.text | slice:0"></div>
+
+            <!-- Order Card if Present -->
+            <div *ngIf="msg.orderCard" class="chat-order-card" (click)="navigateToOrder(msg.orderCard.id)">
+              <div class="order-card-header flex justify-content-between align-items-center">
+                <span class="order-id">#{{ msg.orderCard.id.substring(0, 8) }}...</span>
+                <span class="order-status-badge" [attr.data-status]="msg.orderCard.status">{{ msg.orderCard.status | uppercase }}</span>
+              </div>
+              <div class="order-card-body">
+                <div class="customer-row flex align-items-center gap-2">
+                  <i class="pi pi-user text-primary"></i>
+                  <span class="customer-name font-semibold">{{ msg.orderCard.customerName }}</span>
+                </div>
+                <div class="total-row flex justify-content-between align-items-center mt-2">
+                  <span class="text-xs text-slate-400">{{ msg.orderCard.itemCount }} item(s)</span>
+                  <span class="order-price font-bold text-lg">৳{{ msg.orderCard.totalAmount | number:'1.0-0' }}</span>
+                </div>
+                <div *ngIf="msg.orderCard.createdAt" class="date-row text-xs text-slate-400 mt-1">
+                  {{ msg.orderCard.createdAt }}
+                </div>
+              </div>
+              <div class="order-card-footer flex align-items-center justify-content-between">
+                <span class="view-hint">Click to open full order</span>
+                <i class="pi pi-arrow-right text-xs"></i>
+              </div>
+            </div>
+
+            <!-- Metrics Card if Present -->
+            <div *ngIf="msg.metricsCard" class="chat-metrics-grid">
+              <div *ngFor="let metric of msg.metricsCard" class="metric-card-pill" [class.highlight]="metric.highlight">
+                <span class="metric-label">{{ metric.title }}</span>
+                <span class="metric-val">{{ metric.value }}</span>
+                <span *ngIf="metric.subtitle" class="metric-sub">{{ metric.subtitle }}</span>
+              </div>
+            </div>
+
+            <!-- Footer: Timestamp & Speak Replay -->
+            <div class="message-footer flex align-items-center justify-content-between mt-1">
+              <span class="message-time">{{ msg.timestamp | date:'shortTime' }}</span>
+              <button *ngIf="msg.sender === 'bot'" type="button" class="speech-replay-btn" 
+                (click)="speakText(msg.text)" pTooltip="Listen aloud" tooltipPosition="left">
+                <i class="pi pi-volume-up"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Chips -->
+          <div *ngIf="msg.actionChips && msg.actionChips.length > 0" class="action-chips-container">
+            <button *ngFor="let chip of msg.actionChips" type="button" class="chat-action-chip"
+              (click)="handleChipClick(chip)">
+              <span>{{ chip.label }}</span>
+              <i *ngIf="chip.route" class="pi pi-arrow-up-right chip-icon"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thinking Indicator -->
+      <div *ngIf="isThinking()" class="message-row bot thinking-row">
+        <div class="message-avatar">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        <div class="thinking-bubble">
+          <div class="dot-pulse"></div>
+          <span class="thinking-text">Processing data...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Prompts Toolbar (Horizontal Scroll) -->
+    <div class="quick-prompts-bar">
+      <div class="prompts-scroll-track">
+        <button *ngFor="let item of quickSuggestions" type="button" class="quick-prompt-btn"
+          (click)="handleQuickQuery(item.query)">
+          {{ item.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Message Input Bar -->
+    <footer class="chatbot-input-bar">
+      <form class="input-form flex align-items-center gap-2" (ngSubmit)="handleSend()">
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="userInput" 
+          name="adminPrompt"
+          placeholder="Ask about orders, revenue, stock, features..."
+          class="chat-input-field flex-grow-1"
+          autocomplete="off"
+        />
+
+        <button pButton type="submit" icon="pi pi-send" 
+          class="p-button-rounded send-btn"
+          [disabled]="!userInput.trim() || isThinking()"
+          aria-label="Send message">
+        </button>
+      </form>
+    </footer>
+  </div>
+</div>

@@ -59,8 +59,8 @@
                 <tr *ngFor="let item of orderedItems">
                     <td class="od-col-name">{{ item.product?.name || 'Product' }}</td>
                     <td class="od-col-qty">{{ item.quantity }}</td>
-                    <td class="od-col-price">৳ {{ (item.price_at_purchase ?? item.price ?? item.product?.price ?? 0) | number:'1.2-2' }}</td>
-                    <td class="od-col-total">৳ {{ ((item.price_at_purchase ?? item.price ?? item.product?.price ?? 0) * (item.quantity || 0)) | number:'1.2-2' }}
+                    <td class="od-col-price">৳ {{ (item.price_at_purchase ?? item.price ?? item.product?.effective_price ?? item.product?.price ?? 0) | number:'1.2-2' }}</td>
+                    <td class="od-col-total">৳ {{ ((item.price_at_purchase ?? item.price ?? item.product?.effective_price ?? item.product?.price ?? 0) * (item.quantity || 0)) | number:'1.2-2' }}
                     </td>
                 </tr>
             </tbody>

@@ -12,6 +12,7 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { DialogModule } from 'primeng/dialog';
 import { NotificationService } from '../../../core/services';;;
 import { NotificationButtonComponent } from '../../../components/notification-button/notification-button.component';
+import { AdminChatbotComponent } from '../chatbot/admin-chatbot.component';
 import { filter } from 'rxjs/operators';
 
 interface SidebarMenuItem {
@@ -23,7 +24,7 @@ interface SidebarMenuItem {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule, DialogModule, NotificationButtonComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, ButtonModule, ToastModule, TooltipModule, BreadcrumbModule, DialogModule, NotificationButtonComponent, AdminChatbotComponent],
 
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss', '../admin-styles.scss']

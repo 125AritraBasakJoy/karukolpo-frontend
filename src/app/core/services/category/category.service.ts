@@ -19,12 +19,21 @@ import { isPlatformBrowser } from '@angular/common';
 /**
  * CategoryService - Backend API Integration
  */
+const DEFAULT_CATEGORIES: Category[] = [
+    { id: '1', name: 'Prodip', slug: 'prodip' },
+    { id: '2', name: 'Protima', slug: 'protima' },
+    { id: '3', name: 'Shora', slug: 'shora' },
+    { id: '4', name: 'Home Decor', slug: 'home-decor' },
+    { id: '5', name: 'Mirror', slug: 'mirror' },
+    { id: '6', name: 'Sharee', slug: 'sharee' }
+];
+
 @Injectable({
     providedIn: 'root'
 })
 export class CategoryService {
     private readonly CACHE_KEY = 'karukolpo_categories_cache';
-    public categories = signal<Category[]>([]);
+    public categories = signal<Category[]>(DEFAULT_CATEGORIES);
     private pendingCategoriesRequest: Observable<Category[]> | null = null;
 
     constructor(
@@ -34,7 +43,9 @@ export class CategoryService {
     ) {
         if (isPlatformBrowser(this.platformId)) {
             const cached = this.loadFromCache();
-            this.categories.set(cached);
+            if (cached && cached.length > 0) {
+                this.categories.set(cached);
+            }
 
             // Always trigger background refresh to ensure we have the latest categories from the production database
             this.refreshCache();
@@ -49,18 +60,18 @@ export class CategoryService {
         if (isPlatformBrowser(this.platformId)) {
             localStorage.removeItem(this.CACHE_KEY);
         }
-        this.categories.set([]);
+        this.categories.set(DEFAULT_CATEGORIES);
         this.refreshCache();
     }
 
     private loadFromCache(): Category[] {
-        if (!isPlatformBrowser(this.platformId)) return [];
+        if (!isPlatformBrowser(this.platformId)) return DEFAULT_CATEGORIES;
         try {
             const cached = localStorage.getItem(this.CACHE_KEY);
-            return cached ? JSON.parse(cached) : [];
+            return cached ? JSON.parse(cached) : DEFAULT_CATEGORIES;
         } catch (e) {
             console.warn('CategoryService: Failed to load categories from cache', e);
-            return [];
+            return DEFAULT_CATEGORIES;
         }
     }
 

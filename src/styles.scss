@@ -5,18 +5,14 @@
 @font-face {
     font-family: 'primeicons';
     font-display: swap;
-    src: url('primeicons/fonts/primeicons.eot'),
-        url('primeicons/fonts/primeicons.eot?#iefix') format('embedded-opentype'),
-        url('primeicons/fonts/primeicons.woff2') format('woff2'),
-        url('primeicons/fonts/primeicons.woff') format('woff'),
-        url('primeicons/fonts/primeicons.ttf') format('truetype'),
-        url('primeicons/fonts/primeicons.svg#primeicons') format('svg');
+    src: url('primeicons/fonts/primeicons.woff2') format('woff2'),
+        url('primeicons/fonts/primeicons.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 }
 
 @import "primeicons/primeicons.css"; // Still import for the classes, but redeclaring font-face helps display=swap
-@import "primeflex/primeflex.css";
+@import "primeflex/primeflex.min.css";
 
 /* AG-Grid Styles moved to Admin Dashboard scope to save 71KB on initial load */
 

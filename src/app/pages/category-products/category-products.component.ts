@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, Title, Meta } from '@angular/platform-browser';
-import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CategoryService } from '../../core/services/category/category.service';
 import { ProductService } from '../../core/services/product/product.service';
@@ -18,7 +17,7 @@ import { TooltipModule } from 'primeng/tooltip';
 @Component({
     selector: 'app-category-products',
     standalone: true,
-    imports: [CommonModule, ButtonModule, TooltipModule, TagModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink, SafeHtmlPipe, NgOptimizedImage],
+    imports: [CommonModule, ButtonModule, TooltipModule, TagModule, SkeletonModule, ToastModule, CurrencyPipe, RouterLink, NgOptimizedImage],
 
     templateUrl: './category-products.component.html',
     styleUrls: ['./category-products.component.scss'],

@@ -399,6 +399,7 @@ export class ProductService {
    */
   setHotDeals(productIds: string[]): Observable<Product[]> {
     return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS, productIds).pipe(
+      tap(() => this.clearCache()),
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
   }
@@ -409,6 +410,7 @@ export class ProductService {
    */
   replaceHotDeals(productIds: string[]): Observable<Product[]> {
     return this.apiService.put<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS, productIds).pipe(
+      tap(() => this.clearCache()),
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
   }
@@ -418,7 +420,9 @@ export class ProductService {
    * DELETE /products/hot-deals
    */
   clearHotDeals(): Observable<void> {
-    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.HOT_DEALS);
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.HOT_DEALS).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**
@@ -426,7 +430,9 @@ export class ProductService {
    * DELETE /products/hot-deals/{productId}
    */
   removeFromHotDeals(productId: string): Observable<void> {
-    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.HOT_DEALS_DELETE(productId));
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.HOT_DEALS_DELETE(productId)).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**
@@ -462,6 +468,7 @@ export class ProductService {
    */
   setBestSellers(productIds: string[]): Observable<Product[]> {
     return this.apiService.post<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS, productIds).pipe(
+      tap(() => this.clearCache()),
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
   }
@@ -472,6 +479,7 @@ export class ProductService {
    */
   replaceBestSellers(productIds: string[]): Observable<Product[]> {
     return this.apiService.put<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS, productIds).pipe(
+      tap(() => this.clearCache()),
       map(products => products.map(p => this.mapBackendToFrontend(p)))
     );
   }
@@ -481,7 +489,9 @@ export class ProductService {
    * DELETE /products/best-sellers
    */
   clearBestSellers(): Observable<void> {
-    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS);
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**
@@ -489,7 +499,9 @@ export class ProductService {
    * DELETE /products/best-sellers/{productId}
    */
   removeFromBestSellers(productId: string): Observable<void> {
-    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS_DELETE(productId));
+    return this.apiService.delete<void>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS_DELETE(productId)).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   /**

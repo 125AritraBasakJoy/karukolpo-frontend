@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { Title, Meta } from '@angular/platform-browser';
-import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../core/services/product/product.service';
@@ -33,7 +32,6 @@ import { DividerModule } from 'primeng/divider';
         DividerModule,
         FormsModule,
         CurrencyPipe, 
-        SafeHtmlPipe, 
         NgOptimizedImage
     ],
     templateUrl: './all-products.component.html',

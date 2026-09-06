@@ -76,7 +76,7 @@
 
 
             <div class="swipe-section-wrapper">
-                @if (bestSelling().length > 6) {
+                @if (bestSelling().length > 4) {
                 <button pButton icon="pi pi-chevron-left" aria-label="Previous best selling products"
                     class="swipe-nav-btn prev-btn p-button-rounded p-button-outlined" 
                     (click)="scrollLeft(bestSellingList)"></button>
@@ -153,7 +153,7 @@
                     </div>
                 </div>
 
-                @if (bestSelling().length > 6) {
+                @if (bestSelling().length > 4) {
                 <button pButton icon="pi pi-chevron-right" aria-label="Next best selling products"
                     class="swipe-nav-btn next-btn p-button-rounded p-button-outlined" 
                     (click)="scrollRight(bestSellingList)"></button>
@@ -195,7 +195,7 @@
 
 
             <div class="swipe-section-wrapper">
-                @if (hotDeals().length > 6) {
+                @if (hotDeals().length > 4) {
                 <button pButton icon="pi pi-chevron-left" aria-label="Previous hot deals"
                     class="swipe-nav-btn prev-btn p-button-rounded p-button-outlined" 
                     (click)="scrollLeft(hotDealsList)"></button>
@@ -272,7 +272,7 @@
                     </div>
                 </div>
 
-                @if (hotDeals().length > 6) {
+                @if (hotDeals().length > 4) {
                 <button pButton icon="pi pi-chevron-right" aria-label="Next hot deals"
                     class="swipe-nav-btn next-btn p-button-rounded p-button-outlined" 
                     (click)="scrollRight(hotDealsList)"></button>

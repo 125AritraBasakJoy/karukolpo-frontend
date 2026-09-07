@@ -18,6 +18,7 @@ export interface OfflineSaleCustomer {
     phone?: string | null;
     district?: string | null;
     subdistrict?: string | null;
+    address_line?: string | null;
 }
 
 export interface OfflineSaleCreate {

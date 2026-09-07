@@ -95,10 +95,40 @@
 
             <!-- Metrics Card if Present -->
             <div *ngIf="msg.metricsCard" class="chat-metrics-grid">
-              <div *ngFor="let metric of msg.metricsCard" class="metric-card-pill" [class.highlight]="metric.highlight">
+              <div *ngFor="let metric of msg.metricsCard" class="metric-card-pill" 
+                [class.highlight]="metric.highlight"
+                [attr.data-color]="metric.color || (metric.highlight ? 'emerald' : null)">
                 <span class="metric-label">{{ metric.title }}</span>
                 <span class="metric-val">{{ metric.value }}</span>
                 <span *ngIf="metric.subtitle" class="metric-sub">{{ metric.subtitle }}</span>
+              </div>
+            </div>
+
+            <!-- Breakdown / Ranking Card if Present -->
+            <div *ngIf="msg.breakdownCard" class="chat-breakdown-card">
+              <div class="breakdown-header flex align-items-center justify-content-between">
+                <span class="breakdown-title">{{ msg.breakdownCard.title }}</span>
+                <span *ngIf="msg.breakdownCard.subtitle" class="breakdown-sub">{{ msg.breakdownCard.subtitle }}</span>
+              </div>
+              <div class="breakdown-list">
+                <div *ngFor="let item of msg.breakdownCard.items" class="breakdown-item" [attr.data-color]="item.color || 'blue'">
+                  <div class="item-main-row flex align-items-center justify-content-between">
+                    <div class="item-identity flex align-items-center gap-2">
+                      <span *ngIf="item.rank" class="rank-badge" [attr.data-rank]="item.rank">
+                        {{ item.rank === 1 ? '🥇' : (item.rank === 2 ? '🥈' : (item.rank === 3 ? '🥉' : '#' + item.rank)) }}
+                      </span>
+                      <span class="item-name font-semibold">{{ item.name }}</span>
+                    </div>
+                    <div class="item-values text-right">
+                      <span class="item-primary-val font-bold">{{ item.value }}</span>
+                      <span *ngIf="item.secondaryValue" class="item-secondary-val">{{ item.secondaryValue }}</span>
+                    </div>
+                  </div>
+                  <!-- Progress Bar -->
+                  <div *ngIf="item.percentage !== undefined" class="item-progress-track">
+                    <div class="item-progress-fill" [style.width.%]="item.percentage" [attr.data-color]="item.color || 'blue'"></div>
+                  </div>
+                </div>
               </div>
             </div>
 

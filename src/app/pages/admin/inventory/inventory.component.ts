@@ -20,6 +20,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { Router } from '@angular/router';
+import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
 
 /**
  * Normalizes text for bilingual search (English + Bangla)
@@ -113,6 +114,10 @@ export class InventoryComponent implements OnInit {
     stock: 0
   };
 
+  // Pagination State
+  rows: number = 10;
+  first: number = 0;
+
   // Data Buffering
   productsBuffer: Product[] = [];
   totalRecords = signal<number>(0);
@@ -128,10 +133,9 @@ export class InventoryComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    // loadProducts will be called by lazy load
+    this.rows = getSavedPageSize('karukolpo_inventory_rows', 10);
+    this.first = getSavedPageOffset('karukolpo_inventory_first', 0);
   }
-
-
 
   onSearch(immediate: boolean = false) {
     if (this.searchDebounceTimer) {
@@ -159,7 +163,7 @@ export class InventoryComponent implements OnInit {
     if (this.lastLazyLoadEvent) {
       this.loadProducts(this.lastLazyLoadEvent);
     } else {
-      this.loadProducts({ first: 0, rows: 10 });
+      this.loadProducts({ first: this.first, rows: this.rows });
     }
   }
 
@@ -187,7 +191,7 @@ export class InventoryComponent implements OnInit {
     this.filteredProducts = this.allProductsCache.filter(p => matchesBilingualProduct(p, query));
     this.totalRecords.set(this.filteredProducts.length);
 
-    const rows = this.lastLazyLoadEvent?.rows || 10;
+    const rows = this.lastLazyLoadEvent?.rows || this.rows;
     this.products.set(this.filteredProducts.slice(0, rows));
     this.loading.set(false);
   }
@@ -199,11 +203,16 @@ export class InventoryComponent implements OnInit {
 
     this.loading.set(true);
 
-    const lazyEvent = event || this.lastLazyLoadEvent || { first: 0, rows: 10 };
+    const lazyEvent = event || this.lastLazyLoadEvent || { first: this.first, rows: this.rows };
     this.lastLazyLoadEvent = lazyEvent;
 
-    const first = lazyEvent.first || 0;
-    const rows = lazyEvent.rows || 10;
+    const first = lazyEvent.first !== undefined ? lazyEvent.first : this.first;
+    const rows = lazyEvent.rows || this.rows;
+
+    this.rows = rows;
+    this.first = first;
+    savePageSize('karukolpo_inventory_rows', rows);
+    savePageOffset('karukolpo_inventory_first', first);
 
     // If searching, serve from filtered results
     if (this.isSearching()) {
@@ -229,15 +238,17 @@ export class InventoryComponent implements OnInit {
     }
 
     const chunkStart = Math.floor(first / this.BUFFER_SIZE) * this.BUFFER_SIZE;
+    const neededCount = (first - chunkStart) + rows;
+    const fetchLimit = Math.max(this.BUFFER_SIZE, neededCount);
 
-    this.productService.getProducts(chunkStart, this.BUFFER_SIZE).subscribe({
+    this.productService.getProducts(chunkStart, fetchLimit, undefined, true).subscribe({
       next: (products) => {
         products.forEach((item, index) => {
           this.productsBuffer[chunkStart + index] = item;
         });
 
         const currentTotal = chunkStart + products.length;
-        if (products.length === this.BUFFER_SIZE) {
+        if (products.length === fetchLimit) {
           this.totalRecords.set(currentTotal + 1);
         } else {
           this.totalRecords.set(currentTotal);

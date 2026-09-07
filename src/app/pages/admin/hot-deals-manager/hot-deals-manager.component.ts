@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs/operators';
 import { SiteConfigService } from '../../../core/services';;;
+import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
 
 @Component({
     selector: 'app-hot-deals-manager',
@@ -26,8 +27,26 @@ export class HotDealsManagerComponent implements OnInit {
     selectedProducts = signal<Product[]>([]);
     loading = signal<boolean>(false);
 
+    rows: number = 10;
+    first: number = 0;
+
     ngOnInit() {
+        this.rows = getSavedPageSize('karukolpo_hot_deals_rows', 10);
+        this.first = getSavedPageOffset('karukolpo_hot_deals_first', 0);
         this.loadProducts();
+    }
+
+    onPage(event: any) {
+        if (event) {
+            if (event.rows !== undefined) {
+                this.rows = event.rows;
+                savePageSize('karukolpo_hot_deals_rows', event.rows);
+            }
+            if (event.first !== undefined) {
+                this.first = event.first;
+                savePageOffset('karukolpo_hot_deals_first', event.first);
+            }
+        }
     }
 
     loadProducts() {

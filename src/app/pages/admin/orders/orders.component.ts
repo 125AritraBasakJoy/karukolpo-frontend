@@ -22,6 +22,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 import { NotificationService } from '../../../core/services';;;
 import { InvoiceComponent } from '../../../components/invoice/invoice.component';
+import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
 
 @Component({
   selector: 'app-orders',
@@ -80,6 +81,10 @@ export class OrdersComponent implements OnInit {
   isSearching = signal<boolean>(false);
   private searchTimeout: any;
 
+  // Pagination State
+  rows: number = 10;
+  first: number = 0;
+
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
@@ -90,6 +95,8 @@ export class OrdersComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.rows = getSavedPageSize('karukolpo_orders_rows', 10);
+    this.first = getSavedPageOffset('karukolpo_orders_first', 0);
     this.loadOrders();
 
     this.activatedRoute.queryParams.subscribe(params => {
@@ -134,15 +141,18 @@ export class OrdersComponent implements OnInit {
     }
     this.loading.set(true);
 
-    // Check if event is provided, otherwise use default or last event
-    const lazyEvent = event || this.lastLazyLoadEvent || { first: 0, rows: 10 };
+    const lazyEvent = event || this.lastLazyLoadEvent || { first: this.first, rows: this.rows };
     this.lastLazyLoadEvent = lazyEvent;
 
-    const first = lazyEvent.first || 0;
-    const rows = lazyEvent.rows || 10;
+    const first = lazyEvent.first !== undefined ? lazyEvent.first : this.first;
+    const rows = lazyEvent.rows || this.rows;
+
+    this.rows = rows;
+    this.first = first;
+    savePageSize('karukolpo_orders_rows', rows);
+    savePageOffset('karukolpo_orders_first', first);
 
     // Check if we have data in buffer
-    // We need to check if the range [first, first + rows] is fully covered in buffer
     let dataMissing = false;
     for (let i = first; i < first + rows; i++) {
       if (!this.ordersBuffer[i]) {
@@ -152,13 +162,8 @@ export class OrdersComponent implements OnInit {
     }
 
     if (!dataMissing) {
-      // Data exists in buffer, serve it immediately
-      // Check bounds to avoid slicing beyond buffer length if total is known/capped
       const end = Math.min(first + rows, this.ordersBuffer.length);
-      // If we happen to request past the buffer length (e.g. end of list), we gracefully return what we have
       const pageData = this.ordersBuffer.slice(first, end);
-
-      // Sort if needed (since buffer might be populated in chunks, local sort of the page is good practice)
       pageData.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
 
       this.orders.set(pageData);
@@ -166,32 +171,24 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
-    // Data missing, fetch a chunk
-    // Align fetch to BUFFER_SIZE boundaries
-    // e.g. if request is 25, we fetch 0-100. If request is 110, we fetch 100-200.
     const chunkStart = Math.floor(first / this.BUFFER_SIZE) * this.BUFFER_SIZE;
+    const neededCount = (first - chunkStart) + rows;
+    const fetchLimit = Math.max(this.BUFFER_SIZE, neededCount);
 
-    this.orderService.getOrders(chunkStart, this.BUFFER_SIZE).subscribe({
+    this.orderService.getOrders(chunkStart, fetchLimit).subscribe({
       next: (orders) => {
         // Populate buffer
         orders.forEach((order, index) => {
           this.ordersBuffer[chunkStart + index] = order;
         });
 
-        // Update Total Records (Pseudo-Infinite)
-        // If we received a full chunk, valid total is at least chunkStart + chunkLength + 1
-        // If partial chunk, we found the end.
         const currentTotal = chunkStart + orders.length;
-        if (orders.length === this.BUFFER_SIZE) {
-          // We allow scrolling further
+        if (orders.length === fetchLimit) {
           this.totalRecords.set(currentTotal + 1);
-          // Ideally +1 or maybe +BUFFER_SIZE to hint more? +1 is safer for "Next" button.
         } else {
-          // End of data reached
           this.totalRecords.set(currentTotal);
         }
 
-        // Slice and serve the requested page from the now-populated buffer
         const end = Math.min(first + rows, this.ordersBuffer.length);
         const pageData = this.ordersBuffer.slice(first, end);
 

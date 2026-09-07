@@ -76,7 +76,7 @@
 
         @else {
         <div class="border-round-2xl overflow-hidden overflow-x-auto custom-scrollbar">
-            <p-table [value]="orders()" [tableStyle]="{'min-width': '60rem'}" [paginator]="true" [rows]="10"
+            <p-table [value]="orders()" [tableStyle]="{'min-width': '60rem'}" [paginator]="true" [(rows)]="rows" [(first)]="first"
                 [rowsPerPageOptions]="[10, 25, 50, 100]" [lazy]="true" (onLazyLoad)="loadOrders($event)"
                 [totalRecords]="totalRecords()" [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'body'"

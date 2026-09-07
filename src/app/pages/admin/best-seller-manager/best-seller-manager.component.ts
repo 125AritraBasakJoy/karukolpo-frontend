@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { finalize } from 'rxjs/operators';
 import { SiteConfigService } from '../../../core/services';;;
+import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
 
 @Component({
     selector: 'app-best-seller-manager',
@@ -26,8 +27,25 @@ export class BestSellerManagerComponent implements OnInit {
     selectedProducts = signal<Product[]>([]);
     loading = signal<boolean>(false);
 
+    // Pagination State
+    rows: number = 10;
+    first: number = 0;
+
     ngOnInit() {
+        this.rows = getSavedPageSize('karukolpo_bestsellers_rows', 10);
+        this.first = getSavedPageOffset('karukolpo_bestsellers_first', 0);
         this.loadProducts();
+    }
+
+    onPage(event: any) {
+        if (event.rows) {
+            this.rows = event.rows;
+            savePageSize('karukolpo_bestsellers_rows', event.rows);
+        }
+        if (event.first !== undefined) {
+            this.first = event.first;
+            savePageOffset('karukolpo_bestsellers_first', event.first);
+        }
     }
 
     loadProducts() {

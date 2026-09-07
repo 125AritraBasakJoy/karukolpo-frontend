@@ -12,6 +12,8 @@ import { CalendarModule, Calendar } from 'primeng/calendar';
 import { MessageService } from 'primeng/api';
 import { OutSalesService, ProductService } from '../../../core/services';
 import { Product } from '../../../models/product.model';
+import { District, districts } from '../../../data/bangladesh-data';
+import { finalize } from 'rxjs/operators';
 
 interface SaleItemRow {
   product_id: string | null;
@@ -65,7 +67,9 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   deliveryCharge = 0;
   note = '';
   source = '';
-  customer = { name: '', phone: '', district: '', subdistrict: '' };
+  customer = { name: '', phone: '', district: null as string | null, subdistrict: null as string | null, address_line: '' };
+  districts: District[] = districts;
+  subDistricts: string[] = [];
 
   readonly paymentMethods = PAYMENT_METHODS;
 
@@ -119,6 +123,20 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     });
   }
 
+  onDistrictChange(event: any) {
+    const selectedDistrictName = typeof event === 'object' && event !== null && 'value' in event ? event.value : event;
+    const districtObj = this.districts.find(d => d.name === selectedDistrictName);
+    if (districtObj) {
+      this.subDistricts = districtObj.subDistricts;
+      if (!this.subDistricts.includes(this.customer.subdistrict || '')) {
+        this.customer.subdistrict = null;
+      }
+    } else {
+      this.subDistricts = [];
+      this.customer.subdistrict = null;
+    }
+  }
+
   resetForm() {
     this.items = [this.newRow()];
     this.paymentMethod = 'cash';
@@ -126,7 +144,8 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     this.deliveryCharge = 0;
     this.note = '';
     this.source = '';
-    this.customer = { name: '', phone: '', district: '', subdistrict: '' };
+    this.customer = { name: '', phone: '', district: null, subdistrict: null, address_line: '' };
+    this.subDistricts = [];
   }
 
   private newRow(): SaleItemRow {
@@ -167,20 +186,30 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   private extractErrorDetail(err: any): string {
-    const detail = err?.error?.detail;
+    if (!err) return 'Failed to record sale. Please try again.';
+    const errorObj = err.error || err;
+    const detail = errorObj?.detail || errorObj?.message || errorObj?.error;
+
     if (typeof detail === 'string') {
       return detail;
     }
     if (Array.isArray(detail)) {
-      return detail.map((d: any) => d?.msg || d?.message).filter(Boolean).join(', ');
+      return detail.map((d: any) => {
+        if (typeof d === 'string') return d;
+        if (d?.msg) {
+          const field = Array.isArray(d?.loc) ? d.loc.filter((l: any) => l !== 'body').join(' -> ') : '';
+          return field ? `${field}: ${d.msg}` : d.msg;
+        }
+        return d?.message || JSON.stringify(d);
+      }).filter(Boolean).join(', ');
     }
-    if (typeof err?.error?.message === 'string') {
-      return err.error.message;
+    if (typeof errorObj === 'string') {
+      return errorObj;
     }
     if (typeof err?.message === 'string') {
       return err.message;
     }
-    return 'Failed to record sale. Please try again.';
+    return 'Failed to record sale. Please check your inputs and try again.';
   }
 
   saveSale() {
@@ -193,6 +222,8 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     }
     this.saving.set(true);
 
+    const hasCustomerInfo = this.customer.name || this.customer.phone || this.customer.district || this.customer.subdistrict || this.customer.address_line;
+
     const payload = {
       items: this.items.map(item => ({
         product_id: item.product_id!,
@@ -203,26 +234,28 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       payment_method: this.paymentMethod,
       sold_at: this.soldAt ? new Date(this.soldAt).toISOString() : null,
       delivery_charge: this.deliveryCharge || 0,
-      customer: (this.customer.name || this.customer.phone) ? {
+      customer: hasCustomerInfo ? {
         name: this.customer.name || null,
         phone: this.customer.phone || null,
         district: this.customer.district || null,
-        subdistrict: this.customer.subdistrict || null
+        subdistrict: this.customer.subdistrict || null,
+        address_line: this.customer.address_line?.trim() || null
       } : null,
       note: this.note.trim() ? this.note.trim() : null,
       source: this.source.trim() ? this.source.trim() : null
     };
 
-    this.outSalesService.createSale(payload).subscribe({
+    this.outSalesService.createSale(payload).pipe(
+      finalize(() => this.saving.set(false))
+    ).subscribe({
       next: () => {
-        this.messageService.add({ life: 2500, severity: 'success', summary: 'Sale Recorded', detail: 'Offline sale has been recorded.' });
+        this.messageService.add({ life: 3000, severity: 'success', summary: 'Sale Recorded', detail: 'Offline sale has been recorded.' });
         this.resetForm();
       },
       error: (err) => {
         console.error('Failed to record sale', err);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: this.extractErrorDetail(err) });
-      },
-      complete: () => this.saving.set(false)
+        this.messageService.add({ life: 5000, severity: 'error', summary: 'Sale Failed', detail: this.extractErrorDetail(err) });
+      }
     });
   }
 }

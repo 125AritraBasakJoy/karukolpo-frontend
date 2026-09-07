@@ -101,12 +101,21 @@
                             class="w-full premium-input">
                     </div>
                     <div class="field col-12 sm:col-6 lg:col-3">
-                        <input pInputText [(ngModel)]="customer.district" name="custDistrict" placeholder="District"
-                            class="w-full premium-input">
+                        <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
+                            [(ngModel)]="customer.district" [ngModelOptions]="{ standalone: true }"
+                            (onChange)="onDistrictChange($event)" placeholder="District" appendTo="body"
+                            styleClass="w-full" [filter]="true" filterBy="name" [showClear]="true"></p-dropdown>
                     </div>
                     <div class="field col-12 sm:col-6 lg:col-3">
-                        <input pInputText [(ngModel)]="customer.subdistrict" name="custSubdistrict"
-                            placeholder="Sub-district" class="w-full premium-input">
+                        <p-dropdown [options]="subDistricts" [(ngModel)]="customer.subdistrict"
+                            [ngModelOptions]="{ standalone: true }" placeholder="Sub-district"
+                            [disabled]="!subDistricts.length" appendTo="body" styleClass="w-full"
+                            [filter]="true" [showClear]="true"></p-dropdown>
+                    </div>
+                    <div class="field col-12">
+                        <textarea pInputTextarea [(ngModel)]="customer.address_line" name="custAddressLine" rows="2"
+                            placeholder="Address Line (House, Road, Area, etc.)" maxlength="300"
+                            class="w-full premium-input"></textarea>
                     </div>
                 </div>
             </div>

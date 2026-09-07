@@ -91,16 +91,17 @@
   transition: visibility 0.3s;
 
   &.open {
-    pointer-events: auto;
     visibility: visible;
 
     .chatbot-backdrop {
       opacity: 1;
+      pointer-events: auto;
     }
 
     .chatbot-window {
       transform: translateY(0) scale(1);
       opacity: 1;
+      pointer-events: auto;
     }
   }
 
@@ -110,10 +111,11 @@
     background: rgba(2, 6, 23, 0.4);
     backdrop-filter: blur(4px);
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.3s ease;
 
     @media (min-width: 769px) {
-      display: none; // No full backdrop needed on desktop
+      display: none; // No full backdrop on desktop so user can freely interact with dashboard!
     }
   }
 }
@@ -137,6 +139,7 @@
   overflow: hidden;
   transform: translateY(30px) scale(0.95);
   opacity: 0;
+  pointer-events: auto;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 
   @media (max-width: 768px) {
@@ -423,30 +426,185 @@
   gap: 0.5rem;
 
   .metric-card-pill {
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 0.6rem;
-    border-radius: 12px;
+    padding: 0.65rem 0.75rem;
+    border-radius: 14px;
     display: flex;
     flex-direction: column;
+    transition: transform 0.2s ease, border-color 0.2s ease;
 
-    &.highlight {
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    &.highlight, &[data-color='emerald'] {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.1);
+      .metric-val { color: #34d399; }
+    }
+
+    &[data-color='blue'] {
       border-color: rgba(59, 130, 246, 0.4);
       background: rgba(59, 130, 246, 0.1);
+      .metric-val { color: #60a5fa; }
+    }
+
+    &[data-color='amber'] {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.1);
+      .metric-val { color: #fbbf24; }
+    }
+
+    &[data-color='rose'] {
+      border-color: rgba(244, 63, 94, 0.4);
+      background: rgba(244, 63, 94, 0.1);
+      .metric-val { color: #fb7185; }
+    }
+
+    &[data-color='purple'] {
+      border-color: rgba(168, 85, 247, 0.4);
+      background: rgba(168, 85, 247, 0.1);
+      .metric-val { color: #c084fc; }
     }
 
     .metric-label {
       font-size: 0.68rem;
       color: #94a3b8;
       text-transform: uppercase;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.04em;
     }
 
     .metric-val {
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
       color: #ffffff;
       margin-top: 0.2rem;
+      line-height: 1.2;
+    }
+
+    .metric-sub {
+      font-size: 0.7rem;
+      color: #10b981;
+      font-weight: 600;
+      margin-top: 0.2rem;
+    }
+  }
+}
+
+// ── Breakdown & Ranking Cards ───────────────────────────────────
+.chat-breakdown-card {
+  margin-top: 0.85rem;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 0.85rem;
+  backdrop-filter: blur(8px);
+
+  .breakdown-header {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 0.6rem;
+
+    .breakdown-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .breakdown-sub {
+      font-size: 0.7rem;
+      color: #94a3b8;
+    }
+  }
+
+  .breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .breakdown-item {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 0.55rem 0.7rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(96, 165, 250, 0.2);
+    }
+
+    .item-identity {
+      max-width: 60%;
+
+      .rank-badge {
+        font-size: 0.85rem;
+        flex-shrink: 0;
+
+        &[data-rank="1"], &[data-rank="2"], &[data-rank="3"] {
+          font-size: 1rem;
+        }
+      }
+
+      .item-name {
+        font-size: 0.82rem;
+        color: #f1f5f9;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .item-values {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+
+      .item-primary-val {
+        font-size: 0.88rem;
+        color: #60a5fa;
+      }
+
+      .item-secondary-val {
+        font-size: 0.68rem;
+        color: #94a3b8;
+      }
+    }
+
+    .item-progress-track {
+      margin-top: 0.4rem;
+      height: 4px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+
+      .item-progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.4s ease;
+
+        &[data-color='emerald'] {
+          background: linear-gradient(90deg, #10b981, #34d399);
+        }
+        &[data-color='blue'] {
+          background: linear-gradient(90deg, #2563eb, #60a5fa);
+        }
+        &[data-color='purple'] {
+          background: linear-gradient(90deg, #7c3aed, #c084fc);
+        }
+        &[data-color='amber'] {
+          background: linear-gradient(90deg, #d97706, #fbbf24);
+        }
+        &[data-color='rose'] {
+          background: linear-gradient(90deg, #e11d48, #fb7185);
+        }
+      }
     }
   }
 }

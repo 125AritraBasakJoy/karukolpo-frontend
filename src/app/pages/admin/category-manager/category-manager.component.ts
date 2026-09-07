@@ -21,6 +21,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
 
 @Component({
     selector: 'app-category-manager',
@@ -58,6 +59,10 @@ export class CategoryManagerComponent implements OnInit {
     viewingCategory: Category | null = null;
     loadingProducts: boolean = false;
 
+    // Pagination State
+    rows: number = 10;
+    first: number = 0;
+
     // Data Buffering
     categoriesBuffer: Category[] = [];
     totalRecords = signal<number>(0);
@@ -87,18 +92,23 @@ export class CategoryManagerComponent implements OnInit {
 
     ngOnInit() {
         window.scrollTo({ top: 0, behavior: 'instant' });
-        // Initial load will be triggered by onLazyLoad
-        // If not, we can call this.loadCategories() manually with default event
+        this.rows = getSavedPageSize('karukolpo_categories_rows', 10);
+        this.first = getSavedPageOffset('karukolpo_categories_first', 0);
     }
 
     loadCategories(event?: TableLazyLoadEvent) {
         this.loading.set(true);
 
-        const lazyEvent = event || this.lastLazyLoadEvent || { first: 0, rows: 10 };
+        const lazyEvent = event || this.lastLazyLoadEvent || { first: this.first, rows: this.rows };
         this.lastLazyLoadEvent = lazyEvent;
 
-        const first = lazyEvent.first || 0;
-        const rows = lazyEvent.rows || 10;
+        const first = lazyEvent.first !== undefined ? lazyEvent.first : this.first;
+        const rows = lazyEvent.rows || this.rows;
+
+        this.rows = rows;
+        this.first = first;
+        savePageSize('karukolpo_categories_rows', rows);
+        savePageOffset('karukolpo_categories_first', first);
 
         let dataMissing = false;
         for (let i = first; i < first + rows; i++) {
@@ -117,15 +127,17 @@ export class CategoryManagerComponent implements OnInit {
         }
 
         const chunkStart = Math.floor(first / this.BUFFER_SIZE) * this.BUFFER_SIZE;
+        const neededCount = (first - chunkStart) + rows;
+        const fetchLimit = Math.max(this.BUFFER_SIZE, neededCount);
 
-        this.categoryService.getCategories(chunkStart, this.BUFFER_SIZE).subscribe({
+        this.categoryService.getCategories(chunkStart, fetchLimit).subscribe({
             next: (data) => {
                 data.forEach((item, index) => {
                     this.categoriesBuffer[chunkStart + index] = item;
                 });
 
                 const currentTotal = chunkStart + data.length;
-                if (data.length === this.BUFFER_SIZE) {
+                if (data.length === fetchLimit) {
                     this.totalRecords.set(currentTotal + 1);
                 } else {
                     this.totalRecords.set(currentTotal);
@@ -135,14 +147,6 @@ export class CategoryManagerComponent implements OnInit {
                 const pageData = this.categoriesBuffer.slice(first, end);
                 this.categories.set(pageData);
                 this.loading.set(false);
-
-                // Update otherCategories for dropdowns if needed (might need a separate "load all for dropdown" strategy or just use what we have/fetch more)
-                // For now, let's keep otherCategories based on what we have or fetch all for dropdowns?
-                // The original code filtered `this.categories` which was everything.
-                // For move dialog, we probably want *all* categories or search capability. 
-                // Let's assume we use the buffer for now or fetch all specifically for the dropdown if needed.
-                // Since this.categories is now just the page data, using it for "otherCategories" in Move Dialog is insufficient.
-                // We will handle "otherCategories" separately when opening the move dialog.
             },
             error: (err) => {
                 console.error('Failed to load categories', err);

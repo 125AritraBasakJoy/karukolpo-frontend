@@ -13,6 +13,15 @@ import { MaintenanceService } from '../../../core/services/maintenance/maintenan
 import { Order } from '../../../models/order.model';
 import { Product } from '../../../models/product.model';
 
+export interface BreakdownItem {
+  rank?: number;
+  name: string;
+  value: string | number;
+  secondaryValue?: string;
+  percentage?: number;
+  color?: 'emerald' | 'blue' | 'amber' | 'rose' | 'purple';
+}
+
 export interface ChatMessage {
   id: string;
   sender: 'bot' | 'user';
@@ -34,7 +43,13 @@ export interface ChatMessage {
     value: string | number;
     subtitle?: string;
     highlight?: boolean;
+    color?: 'emerald' | 'blue' | 'amber' | 'rose' | 'purple';
   }[];
+  breakdownCard?: {
+    title: string;
+    subtitle?: string;
+    items: BreakdownItem[];
+  };
 }
 
 @Component({
@@ -62,7 +77,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
 
   // Component State Signals
   isOpen = signal<boolean>(false);
-  isVoiceMuted = signal<boolean>(false);
+  isVoiceMuted = signal<boolean>(true);
   isSpeaking = signal<boolean>(false);
   isThinking = signal<boolean>(false);
   hasGreeted = signal<boolean>(false);
@@ -80,12 +95,14 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
 
   // Quick Suggestions
   quickSuggestions = [
+    { label: '💰 Last Week Profit', query: 'What is the profit of last week?' },
     { label: '📦 Last Order', query: 'What is the last order placed?' },
-    { label: '💎 Big Value Orders', query: 'Show me the highest value orders' },
-    { label: '📊 Store Revenue & Stats', query: 'What are the store statistics?' },
+    { label: '🏆 Top Products', query: 'Show top selling products' },
+    { label: '📊 Store Overview', query: 'What are the store statistics?' },
     { label: '⚠️ Stock Alerts', query: 'Check low stock and out of stock items' },
-    { label: '🧭 Feature Guide', query: 'What features are available in this admin panel?' },
-    { label: '🔧 Maintenance Status', query: 'Is maintenance mode currently enabled?' }
+    { label: '🗺️ Customer Geography', query: 'Where are our customers from?' },
+    { label: '🏢 Out-Sales', query: 'Show recent offline and out-sales' },
+    { label: '🧭 Feature Guide', query: 'What features are available in this admin panel?' }
   ];
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
@@ -118,9 +135,8 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
   }
 
   private refreshAllData(callback?: () => void): void {
-    this.orderService.getOrders(0, 100, true).subscribe({
+    this.orderService.getOrders(0, 150, true).subscribe({
       next: (orders) => {
-        // Sort orders descending by date
         this.recentOrders = [...(orders || [])].sort((a, b) => {
           const timeA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
           const timeB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
@@ -168,7 +184,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
     let welcomeText = `Hello Admin! 👋 I am your **Karukolpo AI Assistant**.\n\n` +
       `• **Orders in Record:** ${totalOrders}\n` +
       (lastOrder ? `• **Latest Order:** #${(lastOrder.id || lastOrder.orderNumber || '').substring(0, 8)} by ${lastCustomer} (৳${(lastOrder.totalAmount || 0).toLocaleString()})\n\n` : `\n`) +
-      `Ask me anything about **live orders**, **highest value sales**, **stock alerts**, or **admin features**!`;
+      `Ask me anything about **profits & margins**, **live orders**, **top products**, **stock health**, or **customer geography**!`;
 
     const welcomeMessage: ChatMessage = {
       id: 'msg_welcome',
@@ -176,21 +192,15 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       text: welcomeText,
       timestamp: new Date(),
       actionChips: [
+        { label: '💰 Last Week Profit', query: 'What is the profit of last week?' },
         { label: '📦 Last Order', query: 'What is the last order placed?' },
-        { label: '💎 Big Value Orders', query: 'Show me the highest value orders' },
+        { label: '🏆 Top Products', query: 'Show top selling products' },
         { label: '📊 Store Overview', query: 'Give me store overview metrics' },
         { label: '⚠️ Stock Alerts', query: 'Show out of stock alerts' }
       ]
     };
 
     this.messages.push(welcomeMessage);
-
-    // Speak welcome out loud automatically
-    const voiceGreeting = lastOrder
-      ? `Welcome back Admin! I am your Karukolpo AI Assistant. You have ${totalOrders} orders tracked. The latest order is from ${lastCustomer} for ${lastOrder.totalAmount} Taka. How can I help you?`
-      : `Welcome back Admin! I am your Karukolpo AI Assistant. Ready to provide live store stats, high value orders, and stock updates.`;
-
-    this.speakText(voiceGreeting);
   }
 
   toggleVoiceMute(): void {
@@ -199,7 +209,15 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
     if (muted) {
       this.stopSpeaking();
     } else {
-      this.speakText('Voice output enabled.');
+      const totalOrders = this.recentOrders.length;
+      const lastOrder = this.recentOrders.length > 0 ? this.recentOrders[0] : null;
+      const lastCustomer = lastOrder ? (lastOrder.fullName || lastOrder.address?.full_name || 'Customer') : null;
+
+      const voiceGreeting = lastOrder
+        ? `Welcome back Admin! I am your Karukolpo AI Assistant. You have ${totalOrders} orders tracked. The latest order is from ${lastCustomer} for ${lastOrder.totalAmount} Taka. How can I help you?`
+        : `Welcome back Admin! I am your Karukolpo AI Assistant. Ready to provide live profits, store stats, and inventory updates. How can I help you today?`;
+
+      this.speakText(voiceGreeting);
     }
   }
 
@@ -215,6 +233,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
         .replace(/[*_#`~৳•]/g, ' ')
         .replace(/BDT/g, 'Taka')
         .replace(/≤/g, 'less than or equal to')
+        .replace(/%/g, ' percent')
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -224,7 +243,6 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
 
-      // Select natural English voice if available
       if (this.availableVoices.length === 0) {
         this.availableVoices = this.speechSynth.getVoices();
       }
@@ -239,12 +257,10 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
 
       utterance.onstart = () => this.isSpeaking.set(true);
       utterance.onend = () => this.isSpeaking.set(false);
-      utterance.onerror = (e) => {
-        console.warn('TTS playback error:', e);
+      utterance.onerror = () => {
         this.isSpeaking.set(false);
       };
 
-      // Unpause/resume speech engine in Chrome
       if (this.speechSynth.paused) {
         this.speechSynth.resume();
       }
@@ -292,61 +308,145 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
   private processQuery(query: string): void {
     this.isThinking.set(true);
 
-    // Refresh context data first to ensure 100% accurate live numbers
     this.refreshAllData(() => {
       setTimeout(() => {
         this.executeParsedResponse(query);
-      }, 300);
+      }, 250);
     });
+  }
+
+  /**
+   * Helper to detect date period from natural language query
+   */
+  private parsePeriod(query: string): { label: string; periodKey: '7d' | '30d' | '90d' | '1y' | 'all'; startDate: Date; isSingleDay?: boolean } {
+    const q = query.toLowerCase();
+    const now = new Date();
+
+    if (q.includes('today') || q.includes('আজ')) {
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return { label: 'Today', periodKey: '7d', startDate: today, isSingleDay: true };
+    }
+
+    if (q.includes('yesterday') || q.includes('গতকাল')) {
+      const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      return { label: 'Yesterday', periodKey: '7d', startDate: yesterday, isSingleDay: true };
+    }
+
+    if (q.includes('last week') || q.includes('past week') || q.includes('7 days') || q.includes('৭ দিন') || q.includes('গত সপ্তাহ') || q.includes('সপ্তাহের')) {
+      const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return { label: 'Last 7 Days (Last Week)', periodKey: '7d', startDate: start };
+    }
+
+    if (q.includes('last month') || q.includes('this month') || q.includes('30 days') || q.includes('৩০ দিন') || q.includes('গত মাস') || q.includes('মাসের')) {
+      const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return { label: 'Last 30 Days (Last Month)', periodKey: '30d', startDate: start };
+    }
+
+    if (q.includes('90 days') || q.includes('3 months') || q.includes('quarter') || q.includes('৩ মাস')) {
+      const start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      return { label: 'Last 90 Days', periodKey: '90d', startDate: start };
+    }
+
+    if (q.includes('year') || q.includes('1 year') || q.includes('বছর') || q.includes('365')) {
+      const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      return { label: 'Past 1 Year', periodKey: '1y', startDate: start };
+    }
+
+    // Default period: Last 7 Days if specified or Last 30 Days
+    const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return { label: 'Last 7 Days', periodKey: '7d', startDate: start };
   }
 
   private executeParsedResponse(query: string): void {
     const q = query.toLowerCase();
     this.isThinking.set(false);
 
-    // 1. LAST ORDER
+    // 1. PROFIT / MARGIN / EARNINGS ANALYSIS (e.g. "profit of last week", "how much profit")
+    if (q.includes('profit') || q.includes('margin') || q.includes('লাভ') || q.includes('মার্জিন') || q.includes('net profit') || q.includes('gross profit')) {
+      this.respondWithProfit(query);
+      return;
+    }
+
+    // 2. TOP PRODUCTS / BEST SELLERS
+    if (q.includes('top product') || q.includes('best seller') || q.includes('bestseller') || q.includes('top sell') || q.includes('most popular') || q.includes('জনপ্রিয়') || q.includes('বেশি বিক্রি')) {
+      this.respondWithTopProducts(query);
+      return;
+    }
+
+    // 3. CATEGORY PERFORMANCE
+    if (q.includes('category') || q.includes('categories') || q.includes('ক্যাটাগরি')) {
+      this.respondWithCategoryPerformance(query);
+      return;
+    }
+
+    // 4. GEOGRAPHY / DISTRICTS / CUSTOMER LOCATIONS
+    if (q.includes('geography') || q.includes('district') || q.includes('customer') || q.includes('location') || q.includes('city') || q.includes('area') || q.includes('জেলা') || q.includes('কাস্টমার')) {
+      this.respondWithGeographyAndCustomers(query);
+      return;
+    }
+
+    // 5. OUT-SALES / OFFLINE SALES / STALLS
+    if (q.includes('out-sale') || q.includes('outsale') || q.includes('offline') || q.includes('stall') || q.includes('fair') || q.includes('মেলা') || q.includes('অফলাইন')) {
+      this.respondWithOutSales();
+      return;
+    }
+
+    // 6. ORDER STATUSES / SPECIFIC STATUS COUNTS (Pending, Delivered, Cancelled, bKash)
+    if (q.includes('pending') || q.includes('delivered') || q.includes('shipped') || q.includes('cancelled') || q.includes('bkash') || q.includes('cod') || q.includes('status count')) {
+      this.respondWithOrderStatus(query);
+      return;
+    }
+
+    // 7. LAST / RECENT ORDER
     if (q.includes('last order') || q.includes('recent order') || q.includes('latest order') || q.includes('শেষ অর্ডার') || q.includes('নতুন অর্ডার') || q.includes('new order')) {
       this.respondWithLastOrder();
       return;
     }
 
-    // 2. BIG VALUE / HIGHEST VALUE ORDER
+    // 8. BIG VALUE / HIGHEST VALUE ORDER
     if (q.includes('big value') || q.includes('big order') || q.includes('highest') || q.includes('top order') || q.includes('expensive') || q.includes('সবচেয়ে বড়') || q.includes('large order')) {
       this.respondWithBigValueOrders();
       return;
     }
 
-    // 3. OVERVIEW / REVENUE / STATS / TODAY
+    // 9. OVERVIEW / REVENUE / STATS
     if (q.includes('revenue') || q.includes('overview') || q.includes('stat') || q.includes('sales') || q.includes('income') || q.includes('today') || q.includes('আয়') || q.includes('বিক্রয়')) {
       this.respondWithOverview();
       return;
     }
 
-    // 4. INVENTORY / STOCK ALERTS
+    // 10. INVENTORY / STOCK ALERTS
     if (q.includes('stock') || q.includes('inventory') || q.includes('out of stock') || q.includes('alert') || q.includes('low stock') || q.includes('মজুদ') || q.includes('স্টক')) {
       this.respondWithInventoryAlerts();
       return;
     }
 
-    // 5. MAINTENANCE MODE
+    // 11. MAINTENANCE MODE
     if (q.includes('maintenance') || q.includes('lockdown') || q.includes('মেইনটেন্যান্স')) {
       this.respondWithMaintenanceStatus();
       return;
     }
 
-    // 6. ADMIN FEATURES & NAVIGATION
+    // 12. ADMIN FEATURES & NAVIGATION
     if (q.includes('feature') || q.includes('navigate') || q.includes('menu') || q.includes('help') || q.includes('কী করতে পারি') || q.includes('dashboard') || q.includes('section')) {
       this.respondWithFeatureGuide();
       return;
     }
 
-    // 7. KARUKOLPO & ARTISAN MISSION
+    // 13. KARUKOLPO & ARTISAN MISSION
     if (q.includes('karukolpo') || q.includes('about') || q.includes('artisan') || q.includes('craft') || q.includes('কারুকল্প') || q.includes('কারুশিল্প') || q.includes('ঐতিহ্য')) {
       this.respondWithKarukolpoStory();
       return;
     }
 
-    // 8. SPECIFIC SEARCH IN ORDERS (Customer Name / Phone / Order Number)
+    // 14. SPECIFIC PRODUCT SEARCH (by product name in catalog)
+    const matchingProduct = this.allProducts.find(p => p.name && q.includes(p.name.toLowerCase()));
+    if (matchingProduct) {
+      this.respondWithSpecificProduct(matchingProduct);
+      return;
+    }
+
+    // 15. SPECIFIC SEARCH IN ORDERS (Customer Name / Phone / Order Number)
     const matchingOrder = this.recentOrders.find(o => {
       const name = (o.fullName || o.address?.full_name || '').toLowerCase();
       const phone = (o.phoneNumber || o.address?.phone || '').toLowerCase();
@@ -361,6 +461,529 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
 
     // DEFAULT LIVE SNAPSHOT RESPONSE
     this.respondWithGeneralHelp();
+  }
+
+  /**
+   * 💰 PROFIT & MARGIN CALCULATOR HANDLER
+   */
+  private respondWithProfit(query: string): void {
+    const period = this.parsePeriod(query);
+    
+    // Filter orders matching the period
+    const matchedOrders = this.recentOrders.filter(o => {
+      if (!o.orderDate) return false;
+      const orderTime = new Date(o.orderDate).getTime();
+      if (period.isSingleDay) {
+        return new Date(o.orderDate).toDateString() === period.startDate.toDateString();
+      }
+      return orderTime >= period.startDate.getTime();
+    });
+
+    // Compute Revenue, Estimated Cost of Goods (COGS), and Gross/Net Profit
+    let totalRevenue = 0;
+    let totalEstimatedCost = 0;
+    let totalUnitsSold = 0;
+
+    // Create a product cost map for quick lookup
+    const productCostMap = new Map<string, number>();
+    for (const prod of this.allProducts) {
+      const cost = Number(prod.cost || 0);
+      if (prod.id) productCostMap.set(prod.id, cost);
+    }
+
+    for (const order of matchedOrders) {
+      // Exclude cancelled/refunded orders from profit
+      const st = (order.status || '').toLowerCase();
+      if (st === 'cancelled' || st === 'refunded') continue;
+
+      totalRevenue += Number(order.totalAmount || 0);
+
+      if (order.items && order.items.length > 0) {
+        for (const item of order.items) {
+          const qty = Number(item.quantity || 1);
+          totalUnitsSold += qty;
+          const itemPrice = Number((item as any).unit_price || item.product?.price || 0);
+          const prodId = item.product?.id || (item as any).product_id;
+
+          // Get cost: from item.unit_cost -> catalog cost -> fallback 50% COGS
+          let costPerUnit = Number((item as any).unit_cost || 0);
+          if (!costPerUnit && prodId && productCostMap.has(prodId)) {
+            costPerUnit = productCostMap.get(prodId)!;
+          }
+          if (!costPerUnit && item.product?.cost) {
+            costPerUnit = Number(item.product.cost);
+          }
+          if (!costPerUnit && itemPrice > 0) {
+            // Standard artisan craft COGS assumption (50%)
+            costPerUnit = itemPrice * 0.5;
+          }
+
+          totalEstimatedCost += costPerUnit * qty;
+        }
+      } else {
+        // Order without item breakdown: estimate 50% COGS
+        const orderRev = Number(order.totalAmount || 0);
+        totalEstimatedCost += orderRev * 0.5;
+        totalUnitsSold += 1;
+      }
+    }
+
+    const netProfit = Math.max(0, Math.round(totalRevenue - totalEstimatedCost));
+    const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : '0.0';
+    const cogsDisplay = Math.round(totalEstimatedCost);
+
+    const text = `💰 **Profit & Margin Analysis (${period.label}):**\n\n` +
+      `• **Total Revenue:** **৳${totalRevenue.toLocaleString()}**\n` +
+      `• **Estimated Cost of Goods (COGS):** **৳${cogsDisplay.toLocaleString()}**\n` +
+      `• **Net Estimated Profit:** **৳${netProfit.toLocaleString()}**\n` +
+      `• **Net Profit Margin:** **${profitMargin}%**\n` +
+      `• **Valid Orders Count:** **${matchedOrders.length}** (${totalUnitsSold} items)\n\n` +
+      `💡 *Note: Costs are calculated from your configured product cost prices, with standard craft margins applied to items missing cost data.*`;
+
+    const spoken = `For ${period.label}, total revenue is ${totalRevenue} Taka with an estimated profit of ${netProfit} Taka, giving a ${profitMargin} percent profit margin.`;
+
+    const message: ChatMessage = {
+      id: 'msg_' + Date.now(),
+      sender: 'bot',
+      text,
+      timestamp: new Date(),
+      metricsCard: [
+        { title: 'Net Profit', value: `৳${netProfit.toLocaleString()}`, highlight: true, color: 'emerald', subtitle: `${profitMargin}% Margin` },
+        { title: 'Revenue', value: `৳${totalRevenue.toLocaleString()}`, color: 'blue' },
+        { title: 'Est. Cost', value: `৳${cogsDisplay.toLocaleString()}`, color: 'amber' },
+        { title: 'Orders', value: matchedOrders.length, color: 'purple' }
+      ],
+      actionChips: [
+        { label: '📈 Analytics Dashboard', route: '/admin/dashboard/analytics' },
+        { label: '📦 View Orders', route: '/admin/dashboard/orders' },
+        { label: '💰 Profit Last 30 Days', query: 'What is the profit of last 30 days?' },
+        { label: '🏆 Best Selling Products', query: 'Show top selling products' }
+      ]
+    };
+
+    this.messages.push(message);
+    this.speakText(spoken);
+    this.scrollToBottom();
+  }
+
+  /**
+   * 🏆 TOP PRODUCTS / BEST SELLERS HANDLER
+   */
+  private respondWithTopProducts(query: string): void {
+    const period = this.parsePeriod(query);
+    
+    this.analyticsService.getTopProducts(period.periodKey, 'revenue', 5).subscribe({
+      next: (topProducts) => {
+        if (!topProducts || topProducts.length === 0) {
+          this.fallbackTopProductsFromOrders(period.label);
+          return;
+        }
+
+        const maxRev = topProducts[0]?.revenue || 1;
+        const breakdownItems: BreakdownItem[] = topProducts.map((p, idx) => ({
+          rank: idx + 1,
+          name: p.name || 'Handcrafted Product',
+          value: `৳${(p.revenue || 0).toLocaleString()}`,
+          secondaryValue: `${p.units_sold || 0} sold`,
+          percentage: Math.min(100, Math.round(((p.revenue || 0) / maxRev) * 100)),
+          color: idx === 0 ? 'emerald' : idx === 1 ? 'blue' : 'purple'
+        }));
+
+        const text = `🏆 **Top Selling Products (${period.label}):**\n\n` +
+          topProducts.map((p, i) => `${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '•'} **${p.name}** — ৳${(p.revenue || 0).toLocaleString()} (${p.units_sold || 0} units)`).join('\n');
+
+        const topName = topProducts[0]?.name || 'handcraft';
+        const spoken = `The best selling product is ${topName}, generating ${topProducts[0]?.revenue || 0} Taka across ${topProducts[0]?.units_sold || 0} sales.`;
+
+        const message: ChatMessage = {
+          id: 'msg_' + Date.now(),
+          sender: 'bot',
+          text,
+          timestamp: new Date(),
+          breakdownCard: {
+            title: `Top Products by Revenue (${period.label})`,
+            items: breakdownItems
+          },
+          actionChips: [
+            { label: '🔥 Manage Hot Deals', route: '/admin/dashboard/hot-deals' },
+            { label: '🏷️ Inventory', route: '/admin/dashboard/inventory' },
+            { label: '📈 Analytics', route: '/admin/dashboard/analytics' }
+          ]
+        };
+
+        this.messages.push(message);
+        this.speakText(spoken);
+        this.scrollToBottom();
+      },
+      error: () => {
+        this.fallbackTopProductsFromOrders(period.label);
+      }
+    });
+  }
+
+  private fallbackTopProductsFromOrders(periodLabel: string): void {
+    // In-memory aggregation of top products from order items
+    const productStats = new Map<string, { name: string; revenue: number; qty: number }>();
+
+    for (const order of this.recentOrders) {
+      if ((order.status || '').toLowerCase() === 'cancelled') continue;
+      for (const item of order.items || []) {
+        const name = item.product?.name || (item as any).name || 'Artisan Craft';
+        const price = Number((item as any).unit_price || item.product?.price || 0);
+        const qty = Number(item.quantity || 1);
+        const rev = price * qty;
+
+        const current = productStats.get(name) || { name, revenue: 0, qty: 0 };
+        current.revenue += rev;
+        current.qty += qty;
+        productStats.set(name, current);
+      }
+    }
+
+    const sorted = Array.from(productStats.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+
+    if (sorted.length === 0) {
+      this.addBotMessage(`No product sales records found in recent orders. Browse the catalog in Inventory.`, [
+        { label: '🏷️ Inventory', route: '/admin/dashboard/inventory' }
+      ]);
+      return;
+    }
+
+    const maxRev = sorted[0].revenue || 1;
+    const breakdownItems: BreakdownItem[] = sorted.map((p, idx) => ({
+      rank: idx + 1,
+      name: p.name,
+      value: `৳${p.revenue.toLocaleString()}`,
+      secondaryValue: `${p.qty} sold`,
+      percentage: Math.min(100, Math.round((p.revenue / maxRev) * 100)),
+      color: idx === 0 ? 'emerald' : idx === 1 ? 'blue' : 'purple'
+    }));
+
+    const text = `🏆 **Top Products (${periodLabel}):**\n\n` +
+      sorted.map((p, i) => `${i === 0 ? '🥇' : i === 1 ? '🥈' : '•'} **${p.name}** — ৳${p.revenue.toLocaleString()} (${p.qty} units)`).join('\n');
+
+    const message: ChatMessage = {
+      id: 'msg_' + Date.now(),
+      sender: 'bot',
+      text,
+      timestamp: new Date(),
+      breakdownCard: {
+        title: `Top Selling Products (${periodLabel})`,
+        items: breakdownItems
+      },
+      actionChips: [
+        { label: '🔥 Manage Hot Deals', route: '/admin/dashboard/hot-deals' },
+        { label: '🏷️ Inventory', route: '/admin/dashboard/inventory' }
+      ]
+    };
+
+    this.messages.push(message);
+    this.speakText(`Top product is ${sorted[0].name} with ${sorted[0].qty} units sold.`);
+    this.scrollToBottom();
+  }
+
+  /**
+   * 📁 CATEGORY PERFORMANCE HANDLER
+   */
+  private respondWithCategoryPerformance(query: string): void {
+    const period = this.parsePeriod(query);
+
+    this.analyticsService.getTopCategories(period.periodKey, 5).subscribe({
+      next: (categories) => {
+        if (!categories || categories.length === 0) {
+          this.addBotMessage(`Category analytics are currently loading. You can manage product categories in Category Manager.`, [
+            { label: '📁 Category Manager', route: '/admin/dashboard/category-manager' }
+          ]);
+          return;
+        }
+
+        const maxRev = categories[0]?.revenue || 1;
+        const breakdownItems: BreakdownItem[] = categories.map((cat, idx) => ({
+          rank: idx + 1,
+          name: cat.name || 'Category',
+          value: `৳${(cat.revenue || 0).toLocaleString()}`,
+          secondaryValue: `${cat.units_sold || 0} units sold`,
+          percentage: Math.min(100, Math.round(((cat.revenue || 0) / maxRev) * 100)),
+          color: idx === 0 ? 'emerald' : 'blue'
+        }));
+
+        const text = `📁 **Top Performing Categories (${period.label}):**\n\n` +
+          categories.map((c, i) => `${i === 0 ? '🥇' : i === 1 ? '🥈' : '•'} **${c.name}**: ৳${(c.revenue || 0).toLocaleString()} (${c.units_sold || 0} units sold)`).join('\n');
+
+        const message: ChatMessage = {
+          id: 'msg_' + Date.now(),
+          sender: 'bot',
+          text,
+          timestamp: new Date(),
+          breakdownCard: {
+            title: `Category Revenue Distribution (${period.label})`,
+            items: breakdownItems
+          },
+          actionChips: [
+            { label: '📁 Category Manager', route: '/admin/dashboard/category-manager' },
+            { label: '📈 Full Analytics', route: '/admin/dashboard/analytics' }
+          ]
+        };
+
+        this.messages.push(message);
+        this.speakText(`The leading category is ${categories[0]?.name || 'Crafts'} with ${categories[0]?.revenue || 0} Taka in sales.`);
+        this.scrollToBottom();
+      },
+      error: () => {
+        this.addBotMessage(`Could not retrieve category timeseries right now. Please explore Category Manager.`, [
+          { label: '📁 Open Categories', route: '/admin/dashboard/category-manager' }
+        ]);
+      }
+    });
+  }
+
+  /**
+   * 🗺️ GEOGRAPHY & CUSTOMER INSIGHTS HANDLER
+   */
+  private respondWithGeographyAndCustomers(query: string): void {
+    const period = this.parsePeriod(query);
+
+    this.analyticsService.getGeography(period.periodKey, 'district').subscribe({
+      next: (geo) => {
+        const locations = geo.data || [];
+        if (locations.length === 0) {
+          this.fallbackGeographyFromOrders();
+          return;
+        }
+
+        const maxRev = locations[0]?.revenue || 1;
+        const totalOrdersInGeo = locations.reduce((sum, l) => sum + (l.orders || 0), 0) || 1;
+
+        const breakdownItems: BreakdownItem[] = locations.slice(0, 5).map((loc, idx) => {
+          const pct = Math.round(((loc.orders || 0) / totalOrdersInGeo) * 100);
+          return {
+            rank: idx + 1,
+            name: loc.location || 'District',
+            value: `৳${(loc.revenue || 0).toLocaleString()}`,
+            secondaryValue: `${loc.orders || 0} orders (${pct}%)`,
+            percentage: Math.min(100, Math.round(((loc.revenue || 0) / maxRev) * 100)),
+            color: 'blue'
+          };
+        });
+
+        const topLocation = locations[0]?.location || 'Dhaka';
+        const topPct = Math.round(((locations[0]?.orders || 0) / totalOrdersInGeo) * 100);
+
+        const text = `🗺️ **Customer Regional Distribution (${period.label}):**\n\n` +
+          `• **Top Order District:** **${topLocation}** (${topPct}% of total volume)\n` +
+          `• **Total Active Districts:** **${locations.length}** across Bangladesh\n\n` +
+          locations.slice(0, 4).map(l => `• **${l.location}**: ৳${(l.revenue || 0).toLocaleString()} (${l.orders} orders)`).join('\n');
+
+        const message: ChatMessage = {
+          id: 'msg_' + Date.now(),
+          sender: 'bot',
+          text,
+          timestamp: new Date(),
+          breakdownCard: {
+            title: `Top Districts by Orders (${period.label})`,
+            items: breakdownItems
+          },
+          actionChips: [
+            { label: '📈 Analytics Map', route: '/admin/dashboard/analytics' },
+            { label: '📦 View Orders', route: '/admin/dashboard/orders' }
+          ]
+        };
+
+        this.messages.push(message);
+        this.speakText(`Most of your orders originate from ${topLocation} accounting for ${topPct} percent of sales.`);
+        this.scrollToBottom();
+      },
+      error: () => {
+        this.fallbackGeographyFromOrders();
+      }
+    });
+  }
+
+  private fallbackGeographyFromOrders(): void {
+    const districtMap = new Map<string, { count: number; revenue: number }>();
+
+    for (const order of this.recentOrders) {
+      const dist = order.district || order.address?.district || 'Dhaka';
+      const cur = districtMap.get(dist) || { count: 0, revenue: 0 };
+      cur.count += 1;
+      cur.revenue += Number(order.totalAmount || 0);
+      districtMap.set(dist, cur);
+    }
+
+    const sorted = Array.from(districtMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.count - a.count);
+
+    if (sorted.length === 0) {
+      this.addBotMessage(`No regional order distribution recorded yet.`);
+      return;
+    }
+
+    const maxCount = sorted[0].count || 1;
+    const breakdownItems: BreakdownItem[] = sorted.slice(0, 5).map((d, idx) => ({
+      rank: idx + 1,
+      name: d.name,
+      value: `${d.count} orders`,
+      secondaryValue: `৳${d.revenue.toLocaleString()}`,
+      percentage: Math.min(100, Math.round((d.count / maxCount) * 100)),
+      color: 'blue'
+    }));
+
+    const text = `🗺️ **Order District Distribution:**\n\n` +
+      sorted.slice(0, 4).map(d => `• **${d.name}**: ${d.count} orders (৳${d.revenue.toLocaleString()})`).join('\n');
+
+    const message: ChatMessage = {
+      id: 'msg_' + Date.now(),
+      sender: 'bot',
+      text,
+      timestamp: new Date(),
+      breakdownCard: {
+        title: `Customer Locations`,
+        items: breakdownItems
+      },
+      actionChips: [
+        { label: '📦 Orders Manager', route: '/admin/dashboard/orders' }
+      ]
+    };
+
+    this.messages.push(message);
+    this.speakText(`Top district is ${sorted[0].name} with ${sorted[0].count} orders.`);
+    this.scrollToBottom();
+  }
+
+  /**
+   * 🏢 OUT-SALES / OFFLINE SALES HANDLER
+   */
+  private respondWithOutSales(): void {
+    const offlineOrders = this.recentOrders.filter(o => (o as any).source === 'offline' || (o as any).is_offline || (o.paymentMethod || '').toLowerCase().includes('offline'));
+    const totalOfflineCount = offlineOrders.length;
+    const totalOfflineRev = offlineOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+    const text = `🏢 **Out-Sales & Offline Stalls:**\n\n` +
+      `• **Offline Transactions Recorded:** **${totalOfflineCount}**\n` +
+      `• **Offline Revenue Volume:** **৳${totalOfflineRev.toLocaleString()}**\n\n` +
+      `You can record physical fair and exhibition sales with instant stock deduction directly in Out-Sales.`;
+
+    const message: ChatMessage = {
+      id: 'msg_' + Date.now(),
+      sender: 'bot',
+      text,
+      timestamp: new Date(),
+      metricsCard: [
+        { title: 'Offline Sales', value: totalOfflineCount, color: 'blue' },
+        { title: 'Offline Revenue', value: `৳${totalOfflineRev.toLocaleString()}`, color: 'emerald', highlight: true }
+      ],
+      actionChips: [
+        { label: '🏢 Record Out-Sale', route: '/admin/dashboard/out-sales' },
+        { label: '📦 All Orders', route: '/admin/dashboard/orders' }
+      ]
+    };
+
+    this.messages.push(message);
+    this.speakText(`You have recorded ${totalOfflineCount} offline transactions totaling ${totalOfflineRev} Taka.`);
+    this.scrollToBottom();
+  }
+
+  /**
+   * 📦 ORDER STATUS BREAKDOWN HANDLER
+   */
+  private respondWithOrderStatus(query: string): void {
+    const counts = {
+      pending: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+      bkash: 0,
+      cod: 0
+    };
+
+    for (const o of this.recentOrders) {
+      const st = (o.status || '').toLowerCase();
+      if (st.includes('pending')) counts.pending++;
+      else if (st.includes('process') || st.includes('confirmed')) counts.processing++;
+      else if (st.includes('ship')) counts.shipped++;
+      else if (st.includes('deliver') || st.includes('complete')) counts.delivered++;
+      else if (st.includes('cancel')) counts.cancelled++;
+
+      const pay = (o.paymentMethod || o.payments?.payment_method || '').toLowerCase();
+      if (pay.includes('bkash')) counts.bkash++;
+      else if (pay.includes('cod') || pay.includes('cash')) counts.cod++;
+    }
+
+    const text = `📦 **Order Status Breakdown:**\n\n` +
+      `• **⏳ Pending Confirmation:** **${counts.pending}**\n` +
+      `• **⚙️ Processing / Packed:** **${counts.processing}**\n` +
+      `• **🚚 Shipped:** **${counts.shipped}**\n` +
+      `• **✅ Delivered / Completed:** **${counts.delivered}**\n` +
+      `• **❌ Cancelled:** **${counts.cancelled}**\n\n` +
+      `**Payment Methods:** bKash (${counts.bkash}), Cash On Delivery (${counts.cod})`;
+
+    const spoken = `You have ${counts.pending} pending orders, ${counts.processing} processing, and ${counts.delivered} delivered orders.`;
+
+    const message: ChatMessage = {
+      id: 'msg_' + Date.now(),
+      sender: 'bot',
+      text,
+      timestamp: new Date(),
+      metricsCard: [
+        { title: 'Pending', value: counts.pending, color: 'amber', highlight: counts.pending > 0 },
+        { title: 'Processing', value: counts.processing, color: 'blue' },
+        { title: 'Delivered', value: counts.delivered, color: 'emerald' },
+        { title: 'Cancelled', value: counts.cancelled, color: 'rose' }
+      ],
+      actionChips: [
+        { label: '📦 Orders Manager', route: '/admin/dashboard/orders' },
+        { label: '⏳ Filter Pending', route: '/admin/dashboard/orders' }
+      ]
+    };
+
+    this.messages.push(message);
+    this.speakText(spoken);
+    this.scrollToBottom();
+  }
+
+  /**
+   * 🏷️ SPECIFIC PRODUCT DETAILS HANDLER
+   */
+  private respondWithSpecificProduct(product: Product): void {
+    const price = Number(product.price || 0);
+    const cost = Number(product.cost || 0);
+    const margin = price > 0 && cost > 0 ? (price - cost) : 0;
+    const marginPct = price > 0 && cost > 0 ? ((margin / price) * 100).toFixed(1) : null;
+    const stock = product.stock !== undefined ? product.stock : (product.isInStock ? 'In Stock' : 'Out of Stock');
+    const isHot = product.isHotDeal ? '🔥 Hot Deal' : '';
+    const isBest = product.isBestSeller ? '⭐ Best Seller' : '';
+    const catName = product.categories && product.categories.length > 0 ? (product.categories[0].name || product.categories[0]) : '';
+
+    const text = `🏷️ **Product Details: ${product.name}**\n\n` +
+      `• **Selling Price:** **৳${price.toLocaleString()}**\n` +
+      (cost > 0 ? `• **Cost Price:** ৳${cost.toLocaleString()} (Margin: **৳${margin.toLocaleString()}** / **${marginPct}%**)\n` : '') +
+      `• **Stock Status:** **${stock} units**\n` +
+      (catName ? `• **Category:** ${catName}\n` : '') +
+      (isHot || isBest ? `• **Tags:** ${[isHot, isBest].filter(Boolean).join(', ')}\n` : '');
+
+    const spoken = `${product.name} is priced at ${price} Taka with ${stock} in stock.`;
+
+    const message: ChatMessage = {
+      id: 'msg_' + Date.now(),
+      sender: 'bot',
+      text,
+      timestamp: new Date(),
+      metricsCard: [
+        { title: 'Price', value: `৳${price.toLocaleString()}`, color: 'blue', highlight: true },
+        { title: 'Stock', value: stock, color: Number(stock) <= 5 ? 'rose' : 'emerald' },
+        ...(cost > 0 ? [{ title: 'Margin', value: `${marginPct}%`, color: 'emerald' as const }] : [])
+      ],
+      actionChips: [
+        { label: '✏️ Edit Product', route: `/admin/dashboard/products/edit/${product.id}` },
+        { label: '🏷️ Inventory', route: '/admin/dashboard/inventory' }
+      ]
+    };
+
+    this.messages.push(message);
+    this.speakText(spoken);
+    this.scrollToBottom();
   }
 
   private respondWithLastOrder(): void {
@@ -413,6 +1036,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       },
       actionChips: [
         { label: '🔎 Open Order in Manager', route: '/admin/dashboard/orders' },
+        { label: '💰 Last Week Profit', query: 'What is the profit of last week?' },
         { label: '💎 Big Value Orders', query: 'Show highest value orders' },
         { label: '📊 Today Stats', query: 'Show store statistics' }
       ]
@@ -429,7 +1053,6 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Sort orders by total amount descending
     const sorted = [...this.recentOrders].sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
 
     const topOrder = sorted[0];
@@ -490,7 +1113,6 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
         const avgOrder = overview.average_order_value || (totalOrders > 0 ? Math.round(revenue / totalOrders) : 0);
         const customers = overview.active_customers || 0;
 
-        // Calculate Today's orders from live buffer
         const todayStr = new Date().toDateString();
         const todayOrders = this.recentOrders.filter(o => o.orderDate && new Date(o.orderDate).toDateString() === todayStr);
         const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
@@ -510,12 +1132,13 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
           text,
           timestamp: new Date(),
           metricsCard: [
-            { title: "Today's Sales", value: `৳${todayRevenue.toLocaleString()}`, highlight: true },
-            { title: '30D Revenue', value: `৳${revenue.toLocaleString()}` },
-            { title: 'Total Orders', value: totalOrders },
-            { title: 'Avg Order', value: `৳${avgOrder.toLocaleString()}` }
+            { title: "Today's Sales", value: `৳${todayRevenue.toLocaleString()}`, highlight: true, color: 'emerald' },
+            { title: '30D Revenue', value: `৳${revenue.toLocaleString()}`, color: 'blue' },
+            { title: 'Total Orders', value: totalOrders, color: 'purple' },
+            { title: 'Avg Order', value: `৳${avgOrder.toLocaleString()}`, color: 'amber' }
           ],
           actionChips: [
+            { label: '💰 Profit Analysis', query: 'What is the profit of last week?' },
             { label: '📈 Deep Analytics', route: '/admin/dashboard/analytics' },
             { label: '📦 Orders List', route: '/admin/dashboard/orders' }
           ]
@@ -526,7 +1149,6 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
         this.scrollToBottom();
       },
       error: () => {
-        // Fallback with live local calculation
         const totalOrders = this.recentOrders.length;
         const totalRev = this.recentOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
         const avg = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
@@ -600,9 +1222,9 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       text,
       timestamp: new Date(),
       metricsCard: [
-        { title: 'Total Catalog', value: this.allProducts.length },
-        { title: 'Out of Stock', value: outOfStock.length, highlight: outOfStock.length > 0 },
-        { title: 'Low Stock (≤5)', value: lowStock.length }
+        { title: 'Total Catalog', value: this.allProducts.length, color: 'blue' },
+        { title: 'Out of Stock', value: outOfStock.length, highlight: outOfStock.length > 0, color: 'rose' },
+        { title: 'Low Stock (≤5)', value: lowStock.length, color: 'amber' }
       ],
       actionChips: [
         { label: '🔍 Manage Inventory', route: '/admin/dashboard/inventory' },
@@ -633,8 +1255,8 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
   private respondWithFeatureGuide(): void {
     const text = `🧭 **Karukolpo Admin Control Center Guide:**\n\n` +
       `• **📦 Orders:** Real-time customer orders, bKash/COD tracking, status updates, invoices.\n` +
-      `• **📊 Analytics:** Revenue graphs, customer geography, top selling items.\n` +
-      `• **🏷️ Inventory:** Real-time stock counts, bilingual search (Bangla & English), unit edits.\n` +
+      `• **📊 Analytics:** Revenue graphs, customer geography, top selling items, profit margins.\n` +
+      `• **🏷️ Inventory:** Real-time stock counts, bilingual search (Bangla & English), unit edits, cost prices.\n` +
       `• **🔥 Hot Deals & Best Sellers:** Curation for the homepage carousel.\n` +
       `• **📁 Categories:** Category creation and custom banners.\n` +
       `• **🏢 Out-Sales:** Physical stall and exhibition sales recording.\n` +
@@ -740,8 +1362,8 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       `• **Store Status:** ${isMaintenanceOn ? '🔴 Maintenance Mode Active' : '🟢 Live & Accepting Orders'}\n\n` +
       `**Admin Features Overview:**\n` +
       `• **Orders:** Manage customer deliveries, verify bKash TrxIDs, and print branded PDF invoices.\n` +
-      `• **Inventory:** Edit stock counts, update pricing, and search in both Bangla & English.\n` +
-      `• **Analytics:** Inspect sales graphs, average basket size, and revenue growth.\n` +
+      `• **Inventory:** Edit stock counts, update pricing & cost price, and search in both Bangla & English.\n` +
+      `• **Analytics:** Inspect sales graphs, profit margins, and revenue growth.\n` +
       `• **Curated Promotions:** Control homepage Hot Deals & Best Seller carousels.\n` +
       `• **Out-Sales:** Log offline pop-up and heritage fair transactions.`;
 
@@ -753,15 +1375,16 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       text,
       timestamp: new Date(),
       metricsCard: [
-        { title: 'Orders Count', value: totalOrders, highlight: true },
-        { title: 'Catalog Items', value: this.allProducts.length },
-        { title: 'Out of Stock', value: outOfStock, highlight: outOfStock > 0 }
+        { title: 'Orders Count', value: totalOrders, highlight: true, color: 'blue' },
+        { title: 'Catalog Items', value: this.allProducts.length, color: 'emerald' },
+        { title: 'Out of Stock', value: outOfStock, highlight: outOfStock > 0, color: 'rose' }
       ],
       actionChips: [
+        { label: '💰 Profit of Last Week', query: 'What is the profit of last week?' },
+        { label: '🏆 Top Products', query: 'Show top selling products' },
         { label: '📦 Orders Manager', route: '/admin/dashboard/orders' },
         { label: '🏷️ Inventory Control', route: '/admin/dashboard/inventory' },
-        { label: '📊 Store Analytics', route: '/admin/dashboard/analytics' },
-        { label: '🔥 Manage Hot Deals', route: '/admin/dashboard/hot-deals' }
+        { label: '📊 Store Analytics', route: '/admin/dashboard/analytics' }
       ]
     };
 

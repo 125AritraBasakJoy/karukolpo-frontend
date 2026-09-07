@@ -30,7 +30,7 @@
 
 
     <div class="glass-card fadein animation-duration-500">
-        <p-table #dt [value]="products()" [rows]="10" [paginator]="true" [globalFilterFields]="['name', 'id', 'code']"
+        <p-table #dt [value]="products()" [(rows)]="rows" [(first)]="first" [paginator]="true" [globalFilterFields]="['name', 'id', 'code']"
             [rowsPerPageOptions]="[10, 25, 50, 100]" [tableStyle]="{'min-width': '60rem'}" styleClass="premium-table-v2"
             [rowHover]="true" [loading]="loading()" [showCurrentPageReport]="true"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'body'" [lazy]="true"

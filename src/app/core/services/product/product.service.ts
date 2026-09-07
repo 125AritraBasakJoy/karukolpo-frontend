@@ -592,12 +592,23 @@ export class ProductService {
       isInStock = stock > 0;
     }
 
+    // Extract cost price if provided
+    const rawCost = data.cost ?? data.cost_price ?? data.costPrice;
+    let cost: number | undefined = undefined;
+    if (rawCost !== undefined && rawCost !== null && rawCost !== '') {
+      const parsed = typeof rawCost === 'string' ? parseFloat(rawCost) : Number(rawCost);
+      if (!isNaN(parsed)) {
+        cost = parsed;
+      }
+    }
+
     return {
       id: data.id?.toString() || '',
       code: data.code || `PROD-${data.id}`,
       name: data.name || '',
       description: data.description ? this.decodeHtml(data.description) : '',
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
+      cost: cost,
       imageUrl: mainImageUrl,
       images: galleryImages,
       imageObjects: data.images || [],
@@ -657,8 +668,13 @@ export class ProductService {
       description: product.description || null
     };
 
-    if (product.cost != null) {
-      payload.cost = product.cost;
+    if (product.cost !== undefined && product.cost !== null) {
+      const parsedCost = typeof product.cost === 'string' ? parseFloat(product.cost) : Number(product.cost);
+      if (!isNaN(parsedCost)) {
+        payload.cost = parsedCost;
+      } else {
+        payload.cost = null;
+      }
     }
 
     payload.discount_type = product.discount_type || null;

@@ -19,7 +19,7 @@
             [rowsPerPageOptions]="[10, 25, 50, 100]"
             [tableStyle]="{'min-width': '50rem'}" selectionMode="single" dataKey="id"
             styleClass="premium-table-v2" [rowHover]="true" [showCurrentPageReport]="true"
-            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'body'"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'self'"
             [lazy]="true" (onLazyLoad)="loadCategories($event)" [totalRecords]="totalRecords()" [loading]="loading()">
 
             <ng-template pTemplate="caption">
@@ -91,7 +91,7 @@
     </div>
 
     <div *ngIf="!loadingProducts" class="dialog-content-wrapper p-2">
-        <p-table [value]="categoryProducts" [rows]="6" [paginator]="true"
+        <p-table [value]="categoryProducts" [rows]="6" [paginator]="true" [paginatorDropdownAppendTo]="'self'"
             [tableStyle]="{'min-width': '100%'}" responsiveLayout="scroll"
             styleClass="p-datatable-sm premium-inner-table" [rowHover]="true" [rowTrackBy]="trackByProductId">
 

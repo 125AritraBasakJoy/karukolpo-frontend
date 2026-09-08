@@ -79,7 +79,7 @@
             <p-table [value]="orders()" [tableStyle]="{'min-width': '60rem'}" [paginator]="true" [(rows)]="rows" [(first)]="first"
                 [rowsPerPageOptions]="[10, 25, 50, 100]" [lazy]="true" (onLazyLoad)="loadOrders($event)"
                 [totalRecords]="totalRecords()" [showCurrentPageReport]="true"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'body'"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'self'"
                 styleClass="premium-table-v2">
 
                 <ng-template pTemplate="header">

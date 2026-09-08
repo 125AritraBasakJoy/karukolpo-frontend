@@ -29,7 +29,7 @@
             <span class="bot-tag">Admin Assistant</span>
           </div>
           <p class="bot-status-text m-0">
-            {{ isSpeaking() ? '🎙️ Speaking...' : (isThinking() ? '🧠 Analyzing store data...' : '🟢 Online & Ready') }}
+            {{ isListening() ? '🎙️ Listening to you...' : (isSpeaking() ? '🔊 Speaking...' : (isThinking() ? '🧠 Analyzing store data...' : '🟢 Online & Ready')) }}
           </p>
         </div>
       </div>
@@ -40,7 +40,7 @@
           [icon]="isVoiceMuted() ? 'pi pi-volume-off' : 'pi pi-volume-up'" 
           [class.voice-active]="!isVoiceMuted()"
           class="p-button-rounded p-button-text header-action-btn"
-          [pTooltip]="isVoiceMuted() ? 'Unmute Voice (Web Speech)' : 'Mute Voice'"
+          [pTooltip]="isVoiceMuted() ? 'Unmute Voice Output' : 'Mute Voice Output'"
           tooltipPosition="bottom"
           (click)="toggleVoiceMute()">
         </button>
@@ -160,9 +160,22 @@
         </div>
         <div class="thinking-bubble">
           <div class="dot-pulse"></div>
-          <span class="thinking-text">Processing data...</span>
+          <span class="thinking-text">Analyzing store data...</span>
         </div>
       </div>
+    </div>
+
+    <!-- Active Voice Listening Banner -->
+    <div *ngIf="isListening()" class="voice-listening-banner flex align-items-center justify-content-between">
+      <div class="listening-status flex align-items-center gap-2">
+        <div class="sound-wave-bars">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <span class="listening-label font-medium">Listening to your voice... Speak now</span>
+      </div>
+      <button type="button" class="stop-listening-btn" (click)="toggleVoiceInput()" pTooltip="Stop & Send" tooltipPosition="top">
+        <i class="pi pi-check"></i>
+      </button>
     </div>
 
     <!-- Quick Prompts Toolbar (Horizontal Scroll) -->
@@ -183,11 +196,26 @@
           pInputText 
           [(ngModel)]="userInput" 
           name="adminPrompt"
-          placeholder="Ask about orders, revenue, stock, features..."
+          [placeholder]="isListening() ? 'Listening to voice...' : 'Ask or speak about orders, sales, profit...'"
           class="chat-input-field flex-grow-1"
           autocomplete="off"
         />
 
+        <!-- Voice Input Microphone Button -->
+        <button 
+          *ngIf="speechRecognitionSupported()"
+          pButton 
+          type="button" 
+          icon="pi pi-microphone"
+          class="p-button-rounded mic-btn"
+          [class.listening-active]="isListening()"
+          [pTooltip]="isListening() ? 'Listening (Click to finish)' : 'Talk with Voice'"
+          tooltipPosition="top"
+          (click)="toggleVoiceInput()"
+          aria-label="Voice input">
+        </button>
+
+        <!-- Send Text Button -->
         <button pButton type="submit" icon="pi pi-send" 
           class="p-button-rounded send-btn"
           [disabled]="!userInput.trim() || isThinking()"

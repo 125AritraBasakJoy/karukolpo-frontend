@@ -15,7 +15,7 @@
             <div class="search-container">
                 <div class="search-wrapper">
                     <i class="pi pi-search search-icon"></i>
-                    <input type="text" pInputText placeholder="Search Order ID or Phone..." [(ngModel)]="searchQuery"
+                    <input type="text" pInputText placeholder="Search by Order Number, Phone, or ID..." [(ngModel)]="searchQuery"
                         (ngModelChange)="onSearch()" (keyup.enter)="onSearch(true)" class="search-input" />
                     @if (searchQuery()) {
                     <i class="pi pi-times clear-icon" (click)="clearSearch()"></i>

@@ -15,11 +15,18 @@ import { NotificationButtonComponent } from '../../../components/notification-bu
 import { AdminChatbotComponent } from '../chatbot/admin-chatbot.component';
 import { filter } from 'rxjs/operators';
 
+interface SidebarMenuItemChild {
+  label: string;
+  icon?: string;
+  route: string;
+}
+
 interface SidebarMenuItem {
   label: string;
   icon: string;
   route: string;
   section?: string;
+  children?: SidebarMenuItemChild[];
 }
 
 @Component({
@@ -35,6 +42,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isMobile = signal<boolean>(false);
   currentRoute = signal<string>('');
   expandedSections = signal<Set<string>>(new Set(['Main']));
+  expandedSubmenus = signal<Set<string>>(new Set(['Out Sales']));
 
   breadcrumbItems: MenuItem[] = [];
   homeItem: MenuItem = { icon: 'pi pi-home', routerLink: '/admin/inventory' };
@@ -51,7 +59,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { label: 'Orders', icon: 'pi pi-shopping-cart', route: 'orders', section: 'Main' },
     { label: 'Categories', icon: 'pi pi-tags', route: 'category-manager', section: 'Main' },
     { label: 'Maintenance Control', icon: 'pi pi-cog', route: 'maintenance-control', section: 'Main' },
-    { label: 'Out Sales', icon: 'pi pi-receipt', route: 'out-sales', section: 'Main' },
+    {
+      label: 'Out Sales',
+      icon: 'pi pi-receipt',
+      route: 'out-sales',
+      section: 'Main',
+      children: [
+        { label: 'Create Out Sales', icon: 'pi pi-plus-circle', route: 'out-sales/create' },
+        { label: 'Edit Out Sales', icon: 'pi pi-pencil', route: 'out-sales/edit' }
+      ]
+    },
     { label: 'Add Product', icon: 'pi pi-plus-circle', route: 'products/add', section: 'Products' },
     { label: 'Control Hot Deals', icon: 'pi pi-bolt', route: 'hot-deals', section: 'Main' },
     { label: 'Best Selling', icon: 'pi pi-star', route: 'best-selling', section: 'Main' },
@@ -127,7 +144,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Skip 'admin' itself as a clickable breadcrumb if it's the first segment
       if (segment === 'admin' && index === 0) return;
 
-      const menuItem = this.menuItems.find(item => item.route === segment || item.route.includes(segment));
+      let menuItem = this.menuItems.find(item => item.route === segment || item.route.includes(segment));
+
+      // Also check child menu items
+      if (!menuItem) {
+        for (const parent of this.menuItems) {
+          if (parent.children) {
+            const child = parent.children.find(c => c.route === segment || c.route.includes(segment) || c.route.endsWith('/' + segment));
+            if (child) {
+              menuItem = { label: child.label, icon: child.icon || parent.icon, route: child.route };
+              break;
+            }
+          }
+        }
+      }
 
       this.breadcrumbItems.push({
         label: menuItem ? menuItem.label : this.formatRouteName(segment),
@@ -137,8 +167,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Auto-expand the section containing the active route
     const activeItem = this.menuItems.find(item => url.includes(item.route));
-    if (activeItem && activeItem.section) {
-      this.expandSection(activeItem.section);
+    if (activeItem) {
+      if (activeItem.section) {
+        this.expandSection(activeItem.section);
+      }
+      if (activeItem.children) {
+        this.expandedSubmenus.update(set => new Set(set).add(activeItem.label));
+      }
     }
   }
 
@@ -176,6 +211,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.router.url.includes(route);
   }
 
+  isChildActiveRoute(childRoute: string): boolean {
+    return this.router.url.endsWith('/' + childRoute) || this.router.url.includes('/' + childRoute);
+  }
+
+  isSubmenuExpanded(label: string): boolean {
+    return this.expandedSubmenus().has(label);
+  }
+
+  toggleSubmenu(item: SidebarMenuItem, event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (this.sidebarCollapsed() && !this.isMobile()) {
+      if (item.children && item.children.length > 0) {
+        this.router.navigate([`/admin/dashboard/${item.children[0].route}`]);
+      }
+      return;
+    }
+
+    this.expandedSubmenus.update(set => {
+      const newSet = new Set(set);
+      if (newSet.has(item.label)) {
+        newSet.delete(item.label);
+      } else {
+        newSet.add(item.label);
+      }
+      return newSet;
+    });
+  }
+
   getMenuSections(): string[] {
     return [...new Set(this.menuItems.map(item => item.section || 'Other'))];
   }
@@ -205,13 +272,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const segments = url.split('/').filter(s => s);
     const lastSegment = segments[segments.length - 1] || 'dashboard';
 
-    // Find matching menu item
-    const item = this.menuItems.find(m => {
-      const route = m.route.toLowerCase();
-      return lastSegment.toLowerCase().includes(route) || route.includes(lastSegment.toLowerCase());
-    });
+    // Find matching menu item (including child submenus)
+    for (const item of this.menuItems) {
+      if (item.children) {
+        const childMatch = item.children.find(c =>
+          c.route.toLowerCase().includes(lastSegment.toLowerCase()) ||
+          lastSegment.toLowerCase().includes(c.route.toLowerCase())
+        );
+        if (childMatch) return childMatch.label;
+      }
+      const route = item.route.toLowerCase();
+      if (lastSegment.toLowerCase().includes(route) || route.includes(lastSegment.toLowerCase())) {
+        return item.label;
+      }
+    }
 
-    return item ? item.label : this.formatRouteName(lastSegment);
+    return this.formatRouteName(lastSegment);
   }
 
   private formatRouteName(route: string): string {

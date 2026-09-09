@@ -201,16 +201,24 @@ export class CategoryManagerComponent implements OnInit {
     viewProducts(category: Category) {
         this.viewingCategory = category;
         this.productsDialog = true;
-        this.loadingProducts = true;
-        this.categoryProducts = [];
         this.imageLoadError = {}; // Reset image errors
+
+        // Instant display if products are already attached to the category object
+        if (category.products && category.products.length > 0) {
+            this.categoryProducts = [...category.products];
+            this.loadingProducts = false;
+        } else {
+            this.categoryProducts = [];
+            this.loadingProducts = true;
+        }
         this.cdr.detectChanges();
 
         this.categoryService.getCategoryProducts(category.id).subscribe({
             next: (products) => {
                 if (products) {
                     this.categoryProducts = [...products];
-                } else {
+                    category.products = [...products];
+                } else if (!this.categoryProducts.length) {
                     this.categoryProducts = [];
                 }
                 this.loadingProducts = false;
@@ -249,9 +257,12 @@ export class CategoryManagerComponent implements OnInit {
     }
 
     fetchProductsFallback(categoryId: string) {
-        this.productService.getProducts(0, 1000).subscribe({
+        this.productService.getProducts(0, 1000, categoryId).subscribe({
             next: (allProducts) => {
-                this.categoryProducts = allProducts.filter(p => p.categoryId === categoryId);
+                this.categoryProducts = allProducts || [];
+                if (this.viewingCategory) {
+                    this.viewingCategory.products = [...this.categoryProducts];
+                }
                 this.loadingProducts = false;
                 this.cdr.detectChanges();
             },

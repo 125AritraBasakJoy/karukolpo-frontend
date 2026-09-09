@@ -66,6 +66,26 @@
         .menu-section-header i {
             display: none;
         }
+
+        .menu-subitem {
+            justify-content: center;
+            padding: 0.65rem 0;
+            margin: 0.1rem 0.5rem;
+
+            &:hover {
+                padding-left: 0;
+            }
+        }
+
+        .menu-submenu-content {
+            margin-left: 0;
+            padding-left: 0;
+            border-left: none;
+        }
+
+        .submenu-chevron {
+            display: none;
+        }
     }
 
     // Mobile overlay mode
@@ -189,6 +209,74 @@
     white-space: nowrap;
     overflow: hidden;
     transition: all 0.3s ease;
+}
+
+.submenu-chevron {
+    font-size: 0.75rem !important;
+    color: #64748b;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.menu-group {
+    margin-bottom: 0.15rem;
+
+    .menu-item:hover .submenu-chevron {
+        color: #94a3b8;
+    }
+}
+
+.menu-submenu-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 1.25rem;
+    padding-left: 0.75rem;
+    border-left: 1px dashed rgba(255, 255, 255, 0.1);
+
+    &.expanded {
+        max-height: 200px;
+        opacity: 1;
+        margin-top: 0.2rem;
+        margin-bottom: 0.35rem;
+    }
+}
+
+.menu-subitem {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0.85rem;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    margin: 0.1rem 0.5rem 0.1rem 0;
+    border-radius: 8px;
+    font-size: 0.825rem;
+
+    .subitem-icon {
+        font-size: 0.8rem;
+        min-width: 16px;
+        color: inherit;
+        transition: all 0.2s ease;
+    }
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.04);
+        color: #f8fafc;
+        transform: translateX(3px);
+    }
+
+    &.active {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        font-weight: 600;
+
+        .subitem-icon {
+            color: #60a5fa;
+        }
+    }
 }
 
 .sidebar-order-badge {

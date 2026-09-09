@@ -17,10 +17,12 @@
 
                 <div class="flex flex-column gap-2">
                     @for (item of items; track $index) {
-                    <div class="sale-item-row p-2 sm:p-3 border-round-xl border-1 border-slate-700">
-                        <div class="grid align-items-end">
+                    <div class="sale-item-row p-3 border-round-xl border-1 border-slate-700">
+                        <div class="grid align-items-start">
                             <div class="col-12 md:col-5">
-                                <label class="text-xs text-slate-500 mb-1 block">Product</label>
+                                <div class="field-label-wrapper">
+                                    <label class="field-label">Product</label>
+                                </div>
                                 <p-dropdown [options]="products()" optionLabel="name" optionValue="id"
                                     [(ngModel)]="item.product_id" [ngModelOptions]="{ standalone: true }"
                                     (onChange)="onProductSelect(item, $event.value)" placeholder="Select product"
@@ -28,20 +30,48 @@
                                     inputStyleClass="premium-input" appendTo="body"></p-dropdown>
                             </div>
                             <div class="col-3 md:col-2">
-                                <label class="text-xs text-slate-500 mb-1 block">Qty</label>
+                                <div class="field-label-wrapper">
+                                    <label class="field-label">Qty</label>
+                                </div>
                                 <p-inputNumber [(ngModel)]="item.quantity" [min]="1" mode="decimal"
                                     styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
                             </div>
-                            <div class="col-6 md:col-4">
-                                <label class="text-xs text-slate-500 mb-1 block">Unit Price</label>
+                            <div class="col-7 md:col-4">
+                                <div class="field-label-wrapper flex align-items-center justify-content-between">
+                                    <label class="field-label">Unit Price</label>
+                                    <span *ngIf="getItemDiscount(item) > 0" class="discount-label-pill">
+                                        <i class="pi pi-tag text-xs"></i> ON SALE
+                                    </span>
+                                </div>
                                 <p-inputNumber [(ngModel)]="item.unit_price" [min]="0" mode="decimal"
                                     styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
                             </div>
-                            <div class="col-3 md:col-1 flex flex-column justify-content-end align-items-end">
-                                <span class="text-xs mb-1 block opacity-0 select-none">Remove</span>
-                                <button type="button" pButton pRipple icon="pi pi-times"
-                                    class="p-button-rounded p-button-text action-btn danger-btn"
-                                    (click)="removeItem($index)" pTooltip="Remove item" tooltipPosition="top"></button>
+                            <div class="col-2 md:col-1 flex flex-column align-items-end">
+                                <div class="field-label-wrapper select-none opacity-0" aria-hidden="true">
+                                    <span class="field-label">&nbsp;</span>
+                                </div>
+                                <div class="delete-btn-wrapper flex align-items-center justify-content-center">
+                                    <button type="button" pButton pRipple icon="pi pi-times"
+                                        class="p-button-rounded p-button-text action-btn danger-btn"
+                                        (click)="removeItem($index)" pTooltip="Remove item" tooltipPosition="top"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Full-width Discount Callout Banner -->
+                        <div *ngIf="getItemDiscount(item) > 0" class="discount-callout-bar mt-2 px-3 py-2 border-round-lg flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="flex align-items-center gap-2 text-xs">
+                                <span class="discount-icon-circle"><i class="pi pi-bolt"></i></span>
+                                <span class="text-slate-300 font-medium">Regular:</span>
+                                <del class="text-slate-400 font-mono">{{ item.regular_price | currency:'BDT':'৳' }}</del>
+                                <i class="pi pi-arrow-right text-xs text-slate-500"></i>
+                                <span class="text-slate-300 font-medium">Sale:</span>
+                                <span class="font-bold text-emerald-400 font-mono">{{ item.unit_price | currency:'BDT':'৳' }}</span>
+                            </div>
+                            <div class="text-xs font-semibold text-emerald-300 bg-emerald-950/80 border-1 border-emerald-800/80 px-2 py-1 border-round-md flex align-items-center gap-1">
+                                <i class="pi pi-sparkles text-xs"></i>
+                                <span>Save {{ getItemDiscount(item) | currency:'BDT':'৳' }} / unit</span>
+                                <span *ngIf="(item.quantity || 1) > 1" class="text-emerald-200 font-normal"> (Save {{ (getItemDiscount(item) * (item.quantity || 1)) | currency:'BDT':'৳' }} total)</span>
                             </div>
                         </div>
                     </div>
@@ -128,25 +158,86 @@
                     maxlength="500" class="w-full premium-input"></textarea>
             </div>
 
-            <!-- Totals + submit -->
-            <div class="border-top-1 border-slate-700 pt-3 flex flex-column-reverse sm:flex-row align-items-end sm:align-items-center justify-content-between gap-3">
-                <div class="flex flex-column align-items-start sm:align-items-end gap-1 w-full sm:w-auto">
-                    <div class="flex justify-content-between gap-6 w-full sm:w-auto">
-                        <span class="text-slate-400">Subtotal</span>
-                        <span class="font-medium text-white">{{ subtotal | currency:'BDT':'৳' }}</span>
+            <!-- Redesigned Summary Section -->
+            <div class="summary-section-container border-top-1 border-slate-800 pt-4 mt-2">
+                <div class="grid justify-content-between align-items-start">
+                    <!-- Left column: Helpful Info Card -->
+                    <div class="col-12 md:col-6 lg:col-5">
+                        <div class="summary-info-card p-3 border-round-xl">
+                            <div class="flex align-items-center gap-2 text-primary font-semibold text-xs uppercase tracking-wider mb-2">
+                                <i class="pi pi-shield"></i>
+                                <span>Offline Sale Notice</span>
+                            </div>
+                            <p class="text-xs text-slate-400 m-0 line-height-3">
+                                Review product quantities, discounts, and customer shipping details. Once recorded, stock is instantly deducted from your inventory and a receipt record is created.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex gap-6 w-full sm:w-auto">
-                        <span class="text-slate-400">Delivery</span>
-                        <span class="font-medium text-white">{{ deliveryCharge | currency:'BDT':'৳' }}</span>
+
+                    <!-- Right column: Premium Summary Receipt Card -->
+                    <div class="col-12 md:col-6 lg:col-6">
+                        <div class="billing-summary-card p-4 border-round-2xl">
+                            <div class="flex align-items-center justify-content-between pb-3 mb-3 border-bottom-1 border-slate-800">
+                                <div class="flex align-items-center gap-2 text-slate-200 font-semibold text-sm">
+                                    <i class="pi pi-receipt text-primary"></i>
+                                    <span>Sale Summary</span>
+                                </div>
+                                <span class="text-xs text-slate-400 font-medium">{{ items.length }} item(s)</span>
+                            </div>
+
+                            <div class="flex flex-column gap-2 mb-3">
+                                <div class="flex align-items-center justify-content-between text-sm py-1">
+                                    <span class="text-slate-400 flex align-items-center gap-2">
+                                        <i class="pi pi-shopping-bag text-xs text-slate-500"></i>
+                                        Regular Subtotal
+                                    </span>
+                                    <span class="font-medium text-slate-200 font-mono">{{ regularSubtotal | currency:'BDT':'৳' }}</span>
+                                </div>
+
+                                <div class="flex align-items-center justify-content-between text-sm py-1"
+                                     [ngClass]="totalDiscount > 0 ? 'discount-active-row' : ''">
+                                    <span class="flex align-items-center gap-2" [class.text-emerald-400]="totalDiscount > 0" [class.text-slate-400]="totalDiscount === 0">
+                                        <i class="pi pi-tag text-xs" [class.text-emerald-400]="totalDiscount > 0" [class.text-slate-500]="totalDiscount === 0"></i>
+                                        Discount
+                                    </span>
+                                    <span class="font-semibold font-mono text-sm"
+                                          [class.text-emerald-400]="totalDiscount > 0"
+                                          [class.discount-badge-glow]="totalDiscount > 0"
+                                          [class.text-slate-400]="totalDiscount === 0">
+                                        {{ totalDiscount > 0 ? ('-' + (totalDiscount | currency:'BDT':'৳')) : (0 | currency:'BDT':'৳') }}
+                                    </span>
+                                </div>
+
+                                <div class="flex align-items-center justify-content-between text-sm py-1">
+                                    <span class="text-slate-400 flex align-items-center gap-2">
+                                        <i class="pi pi-truck text-xs text-slate-500"></i>
+                                        Delivery Charge
+                                    </span>
+                                    <span class="font-medium text-slate-200 font-mono">{{ deliveryCharge | currency:'BDT':'৳' }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Divider -->
+                            <div class="my-3 border-top-1 border-dashed border-slate-800"></div>
+
+                            <!-- Grand Total Box -->
+                            <div class="grand-total-banner p-3 border-round-xl flex align-items-center justify-content-between mb-4">
+                                <div class="flex flex-column">
+                                    <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Total Payable</span>
+                                    <span class="text-2xl font-black text-white tracking-tight">{{ grandTotal | currency:'BDT':'৳' }}</span>
+                                </div>
+                                <div *ngIf="totalDiscount > 0" class="text-right">
+                                    <span class="savings-tag">
+                                        <i class="pi pi-sparkles text-xs mr-1"></i>Saved {{ totalDiscount | currency:'BDT':'৳' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Record Sale Button -->
+                            <button type="button" pButton label="Record Sale" icon="pi pi-check" [loading]="saving()"
+                                (click)="saveSale()" class="w-full premium-btn-primary p-3 text-base font-semibold border-round-xl shadow-3"></button>
+                        </div>
                     </div>
-                    <div class="flex gap-6 w-full sm:w-auto text-lg">
-                        <span class="font-bold text-white">Total</span>
-                        <span class="font-bold text-primary">{{ grandTotal | currency:'BDT':'৳' }}</span>
-                    </div>
-                </div>
-                <div class="w-full sm:w-auto flex justify-content-end">
-                    <button type="button" pButton label="Record Sale" icon="pi pi-check" [loading]="saving()"
-                        (click)="saveSale()" class="w-full sm:w-auto"></button>
                 </div>
             </div>
         </div>

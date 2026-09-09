@@ -158,53 +158,36 @@ export class CategoryService {
     }
 
     /**
-     * Get products in a category (admin use). Checks the junction table per-product
-     * so that admin Remove/Move actions are always reflected accurately.
+     * Get products in a category (admin use).
      *
-     * For 'uncategorized': fetches all products and checks which have no category entries.
-     * For a real category ID: fetches all products and checks each one's categories via
-     * GET /products/{id}/categories so junction-table changes are immediately visible.
+     * For a real category ID: fetches the category directly via GET /categories/{id}
+     * which already includes the populated `products: []` array in a single fast call.
+     * Fallback: GET /products?category_id={id}
+     *
+     * For 'uncategorized': fetches products once and filters those with no category.
      */
     getCategoryProducts(categoryId: string): Observable<Product[]> {
-        const isUncategorized = categoryId === 'uncategorized';
+        if (categoryId !== 'uncategorized') {
+            return this.apiService.get<any>(API_ENDPOINTS.CATEGORIES.GET_BY_ID(categoryId)).pipe(
+                map(cat => {
+                    const mappedCat = this.mapBackendToFrontend(cat);
+                    return mappedCat.products || [];
+                }),
+                catchError(err => {
+                    console.warn(`GET /categories/${categoryId} failed, falling back to products query:`, err);
+                    return this.productService.getProducts(0, 1000, categoryId, true);
+                })
+            );
+        }
 
+        // For uncategorized products:
         return this.productService.getProducts(0, 1000, undefined, true).pipe(
-            switchMap(products => {
-                if (products.length === 0) return of([]);
-
-                return from(products).pipe(
-                    mergeMap(product => {
-                        const pId = product.id;
-                        return this.productService.listProductCategories(pId, true).pipe(
-                            map(categories => {
-                                // Populate the categories array on the product object
-                                product.categories = categories || [];
-
-                                // Determine if product belongs to the requested category
-                                if (isUncategorized) {
-                                    return (product.categories.length === 0) ? product : null;
-                                }
-
-                                const belongsToCategory = product.categories.some((c: any) =>
-                                    (typeof c === 'object' ? (c.id || c.categoryId) : c).toString() === categoryId
-                                );
-                                return belongsToCategory ? product : null;
-                            }),
-                            catchError(() => {
-                                // If categories fetch fails, fallback to existing product state
-                                if (isUncategorized) {
-                                    const hasKnownCategories = product.categories && product.categories.length > 0;
-                                    const isLikelyUncategorized = !hasKnownCategories && (!product.categoryId || product.categoryId === '0');
-                                    return of(isLikelyUncategorized ? product : null);
-                                }
-                                return of(null);
-                            })
-                        );
-                    }, 10),
-                    toArray(),
-                    map(results => results.filter(p => p !== null) as Product[])
-                );
-            }),
+            map(products => products.filter(p =>
+                !p.categoryId ||
+                p.categoryId === 'uncategorized' ||
+                p.categoryId === '0' ||
+                (Array.isArray(p.categories) && p.categories.length === 0)
+            ))
         );
     }
 

@@ -160,12 +160,111 @@ export class OrderService {
   }
 
   /**
+   * Normalize phone number to 11 digits (01XXXXXXXXX)
+   */
+  private normalizePhone(phone: string): string {
+    const cleaned = phone.replace(/[\s\-\(\)\+]/g, '');
+    let norm = cleaned;
+    if (norm.startsWith('88')) {
+      norm = norm.substring(2);
+    }
+    if (!norm.startsWith('0') && norm.length === 10) {
+      norm = '0' + norm;
+    }
+    return norm;
+  }
+
+  /**
    * Track orders by phone number
    * GET /orders/track?phone={phone}
    */
   trackOrdersByPhone(phone: string): Observable<Order[]> {
-    return this.apiService.get<any[]>(API_ENDPOINTS.ORDERS.TRACK_BY_PHONE(phone)).pipe(
-      map(orders => orders.map(order => this.mapBackendOrder(order)))
+    const norm = this.normalizePhone(phone);
+    return this.apiService.get<any[]>(API_ENDPOINTS.ORDERS.TRACK_BY_PHONE(norm)).pipe(
+      map(orders => (orders || []).map(order => this.mapBackendOrder(order)))
+    );
+  }
+
+  /**
+   * Track orders by human-readable order number
+   * GET /orders/track?order_number={order_number}
+   */
+  trackOrdersByOrderNumber(orderNumber: string): Observable<Order[]> {
+    return this.apiService.get<any[]>(API_ENDPOINTS.ORDERS.TRACK_BY_ORDER_NUMBER(orderNumber.trim())).pipe(
+      map(orders => (orders || []).map(order => this.mapBackendOrder(order)))
+    );
+  }
+
+  /**
+   * Smart order search for Admin:
+   * Handles Phone Number, Order Number, or Order UUID, then enriches with full OrderRead details.
+   */
+  searchAdminOrders(query: string): Observable<Order[]> {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      return of([]);
+    }
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(trimmed)) {
+      return this.getOrderById(trimmed).pipe(
+        map(order => order ? [order] : []),
+        catchError(() => of([]))
+      );
+    }
+
+    const cleanDigits = trimmed.replace(/[\s\-\(\)\+]/g, '');
+    const isLikelyPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanDigits) || (/^\d+$/.test(cleanDigits) && cleanDigits.length >= 10);
+
+    const searchReq = isLikelyPhone
+      ? this.trackOrdersByPhone(trimmed)
+      : this.trackOrdersByOrderNumber(trimmed);
+
+    return searchReq.pipe(
+      switchMap(trackedOrders => {
+        if (!trackedOrders || trackedOrders.length === 0) {
+          // Check local cache fallback
+          if (this.ordersCache && this.ordersCache.length > 0) {
+            const qLower = trimmed.toLowerCase();
+            const matched = this.ordersCache.filter(o =>
+              (o.orderNumber && o.orderNumber.toLowerCase().includes(qLower)) ||
+              (o.phoneNumber && o.phoneNumber.includes(cleanDigits)) ||
+              (o.fullName && o.fullName.toLowerCase().includes(qLower)) ||
+              (o.id && o.id.toLowerCase() === qLower)
+            );
+            if (matched.length > 0) {
+              return of(matched);
+            }
+          }
+          return of([]);
+        }
+
+        // For orders returned from /orders/track, enrich with full order details via /orders/{order_id}
+        const enrichObservables = trackedOrders.map(trackedOrder => {
+          if (trackedOrder.id && uuidRegex.test(trackedOrder.id)) {
+            return this.getOrderById(trackedOrder.id).pipe(
+              map(fullOrder => fullOrder || trackedOrder),
+              catchError(() => of(trackedOrder))
+            );
+          }
+          return of(trackedOrder);
+        });
+
+        return forkJoin(enrichObservables);
+      }),
+      catchError(err => {
+        console.error('searchAdminOrders failed, trying local cache fallback', err);
+        if (this.ordersCache && this.ordersCache.length > 0) {
+          const qLower = trimmed.toLowerCase();
+          const matched = this.ordersCache.filter(o =>
+            (o.orderNumber && o.orderNumber.toLowerCase().includes(qLower)) ||
+            (o.phoneNumber && o.phoneNumber.includes(cleanDigits)) ||
+            (o.fullName && o.fullName.toLowerCase().includes(qLower))
+          );
+          return of(matched);
+        }
+        return of([]);
+      })
     );
   }
 

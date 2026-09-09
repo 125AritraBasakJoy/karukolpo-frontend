@@ -15,6 +15,7 @@ export const ORDERS_API = {
     CONFIRM: (orderId: number | string) => `${BASE}/${orderId}/confirm`,
     COMPLETE: (orderId: number | string) => `${BASE}/${orderId}/complete`,
     TRACK_BY_PHONE: (phone: string) => `${BASE}/track?phone=${encodeURIComponent(phone)}`,
+    TRACK_BY_ORDER_NUMBER: (orderNumber: string) => `${BASE}/track?order_number=${encodeURIComponent(orderNumber)}`,
     TRACK_BY_NUMBER: (orderNumber: string) => `${BASE}/order-number/${encodeURIComponent(orderNumber)}`,
 
     // Admin Order Actions

@@ -1,0 +1,370 @@
+<div class="out-sales-list-container p-3 sm:p-4 min-h-screen">
+    <!-- Header Section -->
+    <div class="header-section flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
+        <div>
+            <h1 class="page-title m-0 mb-1 flex align-items-center gap-2">
+                <i class="pi pi-receipt text-primary"></i>
+                Edit Out Sales
+            </h1>
+            <p class="text-slate-400 m-0 text-sm">View, edit, or void offline sales recorded outside the website.</p>
+        </div>
+
+        <div class="flex align-items-center gap-2 w-full md:w-auto">
+            <!-- Search Bar -->
+            <div class="search-wrapper flex-grow-1 md:flex-grow-0">
+                <i class="pi pi-search search-icon"></i>
+                <input type="text" pInputText placeholder="Search Sale #, Customer, Phone..."
+                    [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" class="search-input w-full" />
+                @if (searchQuery()) {
+                <i class="pi pi-times clear-icon" (click)="clearSearch()"></i>
+                }
+            </div>
+
+            <!-- Refresh Button -->
+            <p-button icon="pi pi-refresh" (onClick)="loadSales()"
+                styleClass="premium-btn-primary" pTooltip="Refresh List" tooltipPosition="bottom"></p-button>
+        </div>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="glass-card p-3 sm:p-4 border-round-2xl">
+        @if (loading()) {
+        <div class="overflow-hidden overflow-x-auto">
+            <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '60rem' }">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Sale ID / #</th>
+                        <th>Customer</th>
+                        <th>Date & Time</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body">
+                    <tr>
+                        <td><p-skeleton width="8rem"></p-skeleton></td>
+                        <td><p-skeleton width="10rem"></p-skeleton></td>
+                        <td><p-skeleton width="9rem"></p-skeleton></td>
+                        <td><p-skeleton width="5rem"></p-skeleton></td>
+                        <td><p-skeleton width="6rem"></p-skeleton></td>
+                        <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
+                        <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
+                        <td class="text-center"><p-skeleton shape="circle" size="2rem" styleClass="mx-auto"></p-skeleton></td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+        }
+
+        @else {
+        <div class="overflow-hidden overflow-x-auto custom-scrollbar">
+            <p-table [value]="filteredSales()" [paginator]="true" [rows]="10"
+                [rowsPerPageOptions]="[10, 25, 50]" [showCurrentPageReport]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} offline sales"
+                [tableStyle]="{'min-width': '65rem'}" styleClass="premium-table-v2">
+
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Sale ID / #</th>
+                        <th>Customer</th>
+                        <th>Date & Time</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-sale>
+                    <tr>
+                        <td>
+                            <span class="id-tag">{{ sale.orderNumber || sale.id }}</span>
+                        </td>
+                        <td>
+                            <div class="font-medium text-white">{{ sale.fullName || 'Walk-in Customer' }}</div>
+                            <div class="text-xs text-slate-400 mt-1" *ngIf="sale.phoneNumber">{{ sale.phoneNumber }}</div>
+                            <div class="text-xs text-slate-500 mt-1" *ngIf="sale.district">{{ sale.district }}</div>
+                        </td>
+                        <td>
+                            <div class="text-slate-200 text-sm">{{ sale.orderDate | date:'mediumDate':'+0600' }}</div>
+                            <div class="text-xs text-slate-500 mt-1">{{ sale.orderDate | date:'shortTime':'+0600' }}</div>
+                        </td>
+                        <td>
+                            <div class="text-slate-300 text-sm">
+                                <span class="font-semibold text-white">{{ sale.items?.length || 0 }}</span> item(s)
+                            </div>
+                        </td>
+                        <td>
+                            <div class="price-value font-bold text-primary">{{ sale.totalAmount | currency:'BDT':'৳' }}</div>
+                            <div class="text-xs text-slate-500" *ngIf="sale.deliveryCharge">Del: {{ sale.deliveryCharge | currency:'BDT':'৳' }}</div>
+                        </td>
+                        <td>
+                            <p-tag [value]="sale.paymentMethod || 'Cash'" severity="info" [rounded]="true"
+                                styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
+                        </td>
+                        <td>
+                            <p-tag [value]="sale.status || 'Confirmed'" [severity]="getSeverity(sale.status)" [rounded]="true"
+                                styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
+                        </td>
+                        <td class="text-center">
+                            <div class="flex justify-content-center gap-2">
+                                <button pButton icon="pi pi-pencil"
+                                    class="action-btn p-button-rounded p-button-text info-btn"
+                                    (click)="openEditModal(sale)" pTooltip="Edit Sale" tooltipPosition="top"></button>
+
+                                <button pButton icon="pi pi-trash"
+                                    [loading]="voidingSaleId() === sale.id"
+                                    class="action-btn p-button-rounded p-button-text danger-btn"
+                                    (click)="confirmVoidSale(sale)" pTooltip="Void Sale" tooltipPosition="top"></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8" class="text-center p-5 text-slate-400">
+                            <i class="pi pi-inbox text-3xl mb-2 block"></i>
+                            No offline sales found.
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+        }
+    </div>
+</div>
+
+<!-- Edit Offline Sale Dialog -->
+<p-dialog [(visible)]="editDialogVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(95vw, 950px)', maxHeight: '90vh' }"
+    styleClass="premium-dialog edit-sale-dialog" [draggable]="false" [resizable]="false">
+
+    <ng-template pTemplate="header">
+        <div class="flex flex-column">
+            <h2 class="text-xl font-bold m-0 text-white flex align-items-center gap-2">
+                <i class="pi pi-pencil text-primary"></i>
+                Edit Out Sale
+            </h2>
+            <p class="text-slate-400 m-0 text-xs mt-1">
+                Correct recorded offline sale details. Item differences will automatically update inventory.
+            </p>
+        </div>
+    </ng-template>
+
+    <div class="edit-modal-content pt-2">
+        <!-- Line items -->
+        <div class="field mb-4">
+            <div class="flex align-items-center justify-content-between mb-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Items</label>
+                <button type="button" pButton label="Add Item" icon="pi pi-plus"
+                    styleClass="premium-btn-primary p-button-sm" (click)="addItem()"></button>
+            </div>
+
+            <div class="flex flex-column gap-2">
+                @for (item of editItems; track $index) {
+                <div class="sale-item-row p-2 sm:p-3 border-round-xl border-1 border-slate-700 mb-2">
+                    <div class="grid align-items-start">
+                        <div class="col-12 md:col-5">
+                            <div class="field-label-wrapper">
+                                <label class="field-label">Product</label>
+                            </div>
+                            <p-dropdown [options]="products()" optionLabel="name" optionValue="id"
+                                [(ngModel)]="item.product_id" [ngModelOptions]="{ standalone: true }"
+                                (onChange)="onProductSelect(item, $event.value)" placeholder="Select product"
+                                [filter]="true" filterBy="name" [showClear]="true" styleClass="w-full"
+                                inputStyleClass="premium-input" appendTo="body"></p-dropdown>
+                        </div>
+                        <div class="col-3 md:col-2">
+                            <div class="field-label-wrapper">
+                                <label class="field-label">Qty</label>
+                            </div>
+                            <p-inputNumber [(ngModel)]="item.quantity" [min]="1" mode="decimal"
+                                styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                        </div>
+                        <div class="col-7 md:col-4">
+                            <div class="field-label-wrapper flex align-items-center justify-content-between">
+                                <label class="field-label">Unit Price</label>
+                                <span *ngIf="getItemDiscount(item) > 0" class="discount-label-pill">
+                                    <i class="pi pi-tag text-xs"></i> ON SALE
+                                </span>
+                            </div>
+                            <p-inputNumber [(ngModel)]="item.unit_price" [min]="0" mode="decimal"
+                                styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                        </div>
+                        <div class="col-2 md:col-1 flex flex-column align-items-end">
+                            <div class="field-label-wrapper select-none opacity-0" aria-hidden="true">
+                                <span class="field-label">&nbsp;</span>
+                            </div>
+                            <div class="delete-btn-wrapper flex align-items-center justify-content-center">
+                                <button type="button" pButton pRipple icon="pi pi-times"
+                                    class="p-button-rounded p-button-text action-btn danger-btn"
+                                    (click)="removeItem($index)" pTooltip="Remove item" tooltipPosition="top"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full-width Discount Callout Banner -->
+                    <div *ngIf="getItemDiscount(item) > 0" class="discount-callout-bar mt-2 px-3 py-2 border-round-lg flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="flex align-items-center gap-2 text-xs">
+                            <span class="discount-icon-circle"><i class="pi pi-bolt"></i></span>
+                            <span class="text-slate-300 font-medium">Regular:</span>
+                            <del class="text-slate-400 font-mono">{{ item.regular_price | currency:'BDT':'৳' }}</del>
+                            <i class="pi pi-arrow-right text-xs text-slate-500"></i>
+                            <span class="text-slate-300 font-medium">Sale:</span>
+                            <span class="font-bold text-emerald-400 font-mono">{{ item.unit_price | currency:'BDT':'৳' }}</span>
+                        </div>
+                        <div class="text-xs font-semibold text-emerald-300 bg-emerald-950/80 border-1 border-emerald-800/80 px-2 py-1 border-round-md flex align-items-center gap-1">
+                            <i class="pi pi-sparkles text-xs"></i>
+                            <span>Save {{ getItemDiscount(item) | currency:'BDT':'৳' }} / unit</span>
+                            <span *ngIf="(item.quantity || 1) > 1" class="text-emerald-200 font-normal"> (Save {{ (getItemDiscount(item) * (item.quantity || 1)) | currency:'BDT':'৳' }} total)</span>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Payment / date / delivery / source -->
+        <div class="grid mb-4">
+            <div class="field col-12 sm:col-6 lg:col-3">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Payment Method</label>
+                <p-dropdown [options]="paymentMethods" optionLabel="label" optionValue="value"
+                    [(ngModel)]="editPaymentMethod" [ngModelOptions]="{ standalone: true }" styleClass="w-full"
+                    inputStyleClass="premium-input" appendTo="body"></p-dropdown>
+            </div>
+            <div class="field col-12 sm:col-6 lg:col-3">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
+                    <i class="pi pi-calendar"></i> Sale Date & Time
+                </label>
+                <p-calendar [(ngModel)]="editSoldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy"
+                    placeholder="Select date & time..." hourFormat="12"
+                    styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
+            </div>
+            <div class="field col-12 sm:col-6 lg:col-3">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Delivery Charge</label>
+                <p-inputNumber [(ngModel)]="editDeliveryCharge" [min]="0" mode="decimal" styleClass="w-full"
+                    inputStyleClass="w-full premium-input"></p-inputNumber>
+            </div>
+            <div class="field col-12 sm:col-6 lg:col-3">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
+                    <i class="pi pi-store"></i> Source of Sell
+                </label>
+                <input pInputText [(ngModel)]="editSource" name="editSaleSource" placeholder="e.g. Facebook, WhatsApp, Stall…"
+                    maxlength="100" class="w-full premium-input">
+            </div>
+        </div>
+
+        <!-- Customer -->
+        <div class="field mb-4">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Customer (Optional)</label>
+            <div class="grid">
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <input pInputText [(ngModel)]="editCustomer.name" name="editCustName" placeholder="Full name"
+                        class="w-full premium-input">
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <input pInputText [(ngModel)]="editCustomer.phone" name="editCustPhone" placeholder="Phone"
+                        class="w-full premium-input">
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
+                        [(ngModel)]="editCustomer.district" [ngModelOptions]="{ standalone: true }"
+                        (onChange)="onDistrictChange($event)" placeholder="District" appendTo="body"
+                        styleClass="w-full" [filter]="true" filterBy="name" [showClear]="true"></p-dropdown>
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <p-dropdown [options]="subDistricts" [(ngModel)]="editCustomer.subdistrict"
+                        [ngModelOptions]="{ standalone: true }" placeholder="Sub-district"
+                        [disabled]="!subDistricts.length" appendTo="body" styleClass="w-full"
+                        [filter]="true" [showClear]="true"></p-dropdown>
+                </div>
+                <div class="field col-12">
+                    <textarea pInputTextarea [(ngModel)]="editCustomer.address_line" name="editCustAddress" rows="2"
+                        placeholder="Address Line (House, Road, Area, etc.)" maxlength="300"
+                        class="w-full premium-input"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Note -->
+        <div class="field mb-4">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Note (Optional)</label>
+            <textarea pInputTextarea [(ngModel)]="editNote" name="editNote" rows="2" placeholder="Any additional details"
+                maxlength="500" class="w-full premium-input"></textarea>
+        </div>
+
+        <!-- Totals breakdown -->
+        <div class="billing-summary-card p-4 border-round-2xl mt-4">
+            <div class="flex align-items-center justify-content-between pb-3 mb-3 border-bottom-1 border-slate-800">
+                <div class="flex align-items-center gap-2 text-slate-200 font-semibold text-sm">
+                    <i class="pi pi-receipt text-primary"></i>
+                    <span>Sale Summary</span>
+                </div>
+                <span class="text-xs text-slate-400 font-medium">{{ editItems.length }} item(s)</span>
+            </div>
+
+            <div class="flex flex-column gap-2 mb-3">
+                <div class="flex align-items-center justify-content-between text-sm py-1">
+                    <span class="text-slate-400 flex align-items-center gap-2">
+                        <i class="pi pi-shopping-bag text-xs text-slate-500"></i>
+                        Regular Subtotal
+                    </span>
+                    <span class="font-medium text-slate-200 font-mono">{{ regularSubtotal | currency:'BDT':'৳' }}</span>
+                </div>
+
+                <div class="flex align-items-center justify-content-between text-sm py-1"
+                     [ngClass]="totalDiscount > 0 ? 'discount-active-row' : ''">
+                    <span class="flex align-items-center gap-2" [class.text-emerald-400]="totalDiscount > 0" [class.text-slate-400]="totalDiscount === 0">
+                        <i class="pi pi-tag text-xs" [class.text-emerald-400]="totalDiscount > 0" [class.text-slate-500]="totalDiscount === 0"></i>
+                        Discount
+                    </span>
+                    <span class="font-semibold font-mono text-sm"
+                          [class.text-emerald-400]="totalDiscount > 0"
+                          [class.discount-badge-glow]="totalDiscount > 0"
+                          [class.text-slate-400]="totalDiscount === 0">
+                        {{ totalDiscount > 0 ? ('-' + (totalDiscount | currency:'BDT':'৳')) : (0 | currency:'BDT':'৳') }}
+                    </span>
+                </div>
+
+                <div class="flex align-items-center justify-content-between text-sm py-1">
+                    <span class="text-slate-400 flex align-items-center gap-2">
+                        <i class="pi pi-truck text-xs text-slate-500"></i>
+                        Delivery Charge
+                    </span>
+                    <span class="font-medium text-slate-200 font-mono">{{ editDeliveryCharge | currency:'BDT':'৳' }}</span>
+                </div>
+            </div>
+
+            <div class="my-3 border-top-1 border-dashed border-slate-800"></div>
+
+            <div class="grand-total-banner p-3 border-round-xl flex align-items-center justify-content-between">
+                <div class="flex flex-column">
+                    <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Total Payable</span>
+                    <span class="text-2xl font-black text-white tracking-tight">{{ grandTotal | currency:'BDT':'৳' }}</span>
+                </div>
+                <div *ngIf="totalDiscount > 0" class="text-right">
+                    <span class="savings-tag">
+                        <i class="pi pi-sparkles text-xs mr-1"></i>Saved {{ totalDiscount | currency:'BDT':'৳' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2 w-full pt-3 border-top-1 border-slate-800">
+            <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary"
+                (click)="editDialogVisible.set(false)"></button>
+            <button pButton label="Update Sale" icon="pi pi-check" [loading]="saving()"
+                (click)="saveEditedSale()" class="premium-btn-primary"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Confirmation Dialog for Void -->
+<p-confirmDialog></p-confirmDialog>

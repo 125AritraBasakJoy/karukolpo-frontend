@@ -21,21 +21,50 @@
 
                 <div class="menu-section-content"
                     [class.expanded]="isSectionExpanded(section) || (sidebarCollapsed() && !isMobile())">
-                    <a *ngFor="let item of getItemsBySection(section)" [routerLink]="item.route" class="menu-item flex align-items-center justify-content-between"
-                        [class.active]="isActiveRoute(item.route)" (click)="closeMobileMenu()">
-                        <div class="flex align-items-center gap-2 min-w-0">
-                            <div class="relative flex align-items-center justify-content-center">
-                                <i [class]="item.icon + ' menu-icon'"></i>
-                                <span *ngIf="item.route === 'orders' && unreadOrderCount > 0 && (sidebarCollapsed() && !isMobile())" 
-                                      class="sidebar-collapsed-dot"></span>
+                    <ng-container *ngFor="let item of getItemsBySection(section)">
+                        <!-- Simple Menu Item -->
+                        <a *ngIf="!item.children" [routerLink]="item.route" class="menu-item flex align-items-center justify-content-between"
+                            [class.active]="isActiveRoute(item.route)" (click)="closeMobileMenu()">
+                            <div class="flex align-items-center gap-2 min-w-0">
+                                <div class="relative flex align-items-center justify-content-center">
+                                    <i [class]="item.icon + ' menu-icon'"></i>
+                                    <span *ngIf="item.route === 'orders' && unreadOrderCount > 0 && (sidebarCollapsed() && !isMobile())" 
+                                          class="sidebar-collapsed-dot"></span>
+                                </div>
+                                <span class="menu-label">{{ item.label }}</span>
                             </div>
-                            <span class="menu-label">{{ item.label }}</span>
+                            <span *ngIf="item.route === 'orders' && unreadOrderCount > 0 && (!sidebarCollapsed() || isMobile())" 
+                                  class="sidebar-order-badge">
+                                {{ unreadOrderCount > 99 ? '99+' : unreadOrderCount }}
+                            </span>
+                        </a>
+
+                        <!-- Parent Menu Item with Child Submenus (e.g. Out Sales) -->
+                        <div *ngIf="item.children" class="menu-group">
+                            <div class="menu-item flex align-items-center justify-content-between"
+                                [class.active]="isActiveRoute(item.route)"
+                                (click)="toggleSubmenu(item, $event)">
+                                <div class="flex align-items-center gap-2 min-w-0">
+                                    <i [class]="item.icon + ' menu-icon'"></i>
+                                    <span class="menu-label">{{ item.label }}</span>
+                                </div>
+                                <i *ngIf="!sidebarCollapsed() || isMobile()" class="pi submenu-chevron text-xs"
+                                    [ngClass]="isSubmenuExpanded(item.label) ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+                            </div>
+
+                            <!-- Submenu List -->
+                            <div class="menu-submenu-content"
+                                [class.expanded]="isSubmenuExpanded(item.label) && (!sidebarCollapsed() || isMobile())">
+                                <a *ngFor="let child of item.children" [routerLink]="child.route"
+                                    class="menu-subitem flex align-items-center gap-2"
+                                    [class.active]="isChildActiveRoute(child.route)"
+                                    (click)="closeMobileMenu()">
+                                    <i [class]="(child.icon || 'pi pi-circle-fill') + ' subitem-icon'"></i>
+                                    <span class="menu-label">{{ child.label }}</span>
+                                </a>
+                            </div>
                         </div>
-                        <span *ngIf="item.route === 'orders' && unreadOrderCount > 0 && (!sidebarCollapsed() || isMobile())" 
-                              class="sidebar-order-badge">
-                            {{ unreadOrderCount > 99 ? '99+' : unreadOrderCount }}
-                        </span>
-                    </a>
+                    </ng-container>
                 </div>
             </div>
         </nav>

@@ -235,45 +235,31 @@ export class OrdersComponent implements OnInit {
     this.loading.set(true);
     this.isSearching.set(true);
 
-    // Try to determine if it's an ID or Phone
-    const isNumber = /^\d+$/.test(query);
-
-    if (isNumber && query.length < 10) {
-      // Likely an ID
-      this.orderService.getOrderById(query).subscribe({
-        next: (order) => {
-          if (order) {
-            this.orders.set([order]);
-            this.totalRecords.set(1);
-          } else {
-            // If not found by ID, try phone just in case
-            this.searchByPhone(query);
-          }
-          this.loading.set(false);
-        },
-        error: () => {
-          this.searchByPhone(query);
-        }
-      });
-    } else {
-      // Likely a phone number
-      this.searchByPhone(query);
-    }
-  }
-
-  private searchByPhone(phone: string) {
-    this.orderService.trackOrdersByPhone(phone).subscribe({
+    this.orderService.searchAdminOrders(query).subscribe({
       next: (orders) => {
         this.orders.set(orders || []);
         this.totalRecords.set(orders ? orders.length : 0);
         this.loading.set(false);
+        if (!orders || orders.length === 0) {
+          this.messageService.add({
+            life: 3000,
+            severity: 'info',
+            summary: 'No Orders Found',
+            detail: 'No orders matched the provided phone, order number, or ID.'
+          });
+        }
       },
       error: (err) => {
-        console.error('Search by phone failed', err);
+        console.error('Admin search failed:', err);
         this.orders.set([]);
         this.totalRecords.set(0);
         this.loading.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to search orders' });
+        this.messageService.add({
+          life: 3000,
+          severity: 'error',
+          summary: 'Search Error',
+          detail: 'Failed to search orders. Please try again.'
+        });
       }
     });
   }

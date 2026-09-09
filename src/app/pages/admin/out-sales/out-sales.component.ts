@@ -19,6 +19,7 @@ interface SaleItemRow {
   product_id: string | null;
   quantity: number;
   unit_price: number | null;
+  regular_price: number | null;
   unit_cost: number | null;
 }
 
@@ -113,7 +114,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
 
   private loadProducts() {
     this.productsLoading.set(true);
-    this.productService.getProducts(0, 200, undefined, true).subscribe({
+    this.productService.getProducts(0, 500, undefined, true).subscribe({
       next: (products) => this.products.set(products),
       error: (err) => {
         console.error('Failed to load products', err);
@@ -121,6 +122,22 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       },
       complete: () => this.productsLoading.set(false)
     });
+  }
+
+  findProduct(productId?: string | number | null, productName?: string | null): Product | undefined {
+    if (!this.products().length) return undefined;
+    const prods = this.products();
+    if (productId != null) {
+      const pidStr = productId.toString().trim();
+      const byId = prods.find(p => p.id === pidStr || p.id?.toString() === pidStr);
+      if (byId) return byId;
+    }
+    if (productName) {
+      const cleanName = productName.toLowerCase().trim();
+      const byName = prods.find(p => p.name && p.name.toLowerCase().trim() === cleanName);
+      if (byName) return byName;
+    }
+    return undefined;
   }
 
   onDistrictChange(event: any) {
@@ -149,7 +166,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   private newRow(): SaleItemRow {
-    return { product_id: null, quantity: 1, unit_price: null, unit_cost: null };
+    return { product_id: null, quantity: 1, unit_price: null, regular_price: null, unit_cost: null };
   }
 
   addItem() {
@@ -165,11 +182,40 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   onProductSelect(row: SaleItemRow, productId: string) {
-    const product = this.products().find(p => p.id === productId);
+    const product = this.findProduct(productId);
     if (product) {
-      row.unit_price = product.effective_price || product.price;
+      row.product_id = product.id;
+      row.regular_price = product.price;
+      if (product.effective_price != null && product.effective_price < product.price) {
+        row.unit_price = product.effective_price;
+      } else {
+        row.unit_price = product.price;
+      }
       row.unit_cost = product.cost ?? null;
+    } else {
+      row.regular_price = null;
+      row.unit_price = null;
+      row.unit_cost = null;
     }
+  }
+
+  getItemDiscount(item: SaleItemRow): number {
+    if (item.regular_price == null || item.unit_price == null) return 0;
+    return item.regular_price > item.unit_price ? (item.regular_price - item.unit_price) : 0;
+  }
+
+  get regularSubtotal(): number {
+    return this.items.reduce((sum, item) => {
+      const price = item.regular_price != null ? item.regular_price : (item.unit_price || 0);
+      return sum + (price * (item.quantity || 0));
+    }, 0);
+  }
+
+  get totalDiscount(): number {
+    return this.items.reduce((sum, item) => {
+      const discount = this.getItemDiscount(item);
+      return sum + (discount * (item.quantity || 0));
+    }, 0);
   }
 
   get subtotal(): number {

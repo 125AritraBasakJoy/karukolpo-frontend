@@ -31,6 +31,16 @@ export interface OfflineSaleCreate {
     source?: string | null;
 }
 
+export interface OfflineSaleUpdate {
+    items?: OfflineSaleItem[];
+    payment_method?: string;
+    sold_at?: string | null;
+    delivery_charge?: number | null;
+    customer?: OfflineSaleCustomer | null;
+    note?: string | null;
+    source?: string | null;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -56,6 +66,16 @@ export class OutSalesService {
      */
     createSale(payload: OfflineSaleCreate): Observable<Order> {
         return this.apiService.post<any>(OUT_SALES_API.CREATE, payload).pipe(
+            map(sale => this.orderService.mapBackendOrder(sale))
+        );
+    }
+
+    /**
+     * Correct a recorded offline sale in place.
+     * PATCH /admin/sales/{sale_id}
+     */
+    updateSale(saleId: string, payload: OfflineSaleUpdate): Observable<Order> {
+        return this.apiService.patch<any>(OUT_SALES_API.UPDATE(saleId), payload).pipe(
             map(sale => this.orderService.mapBackendOrder(sale))
         );
     }

@@ -54,7 +54,17 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'out-sales',
-        loadComponent: () => import('./out-sales/out-sales.component').then(m => m.OutSalesComponent)
+        children: [
+          { path: '', redirectTo: 'create', pathMatch: 'full' },
+          {
+            path: 'create',
+            loadComponent: () => import('./out-sales/out-sales.component').then(m => m.OutSalesComponent)
+          },
+          {
+            path: 'edit',
+            loadComponent: () => import('./out-sales/out-sales-list.component').then(m => m.OutSalesListComponent)
+          }
+        ]
       },
       {
         path: 'products/add',

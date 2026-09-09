@@ -10,6 +10,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule, Calendar } from 'primeng/calendar';
 import { MessageService } from 'primeng/api';
+import { RippleModule } from 'primeng/ripple';
 import { OutSalesService, ProductService } from '../../../core/services';
 import { Product } from '../../../models/product.model';
 import { District, districts } from '../../../data/bangladesh-data';
@@ -19,8 +20,9 @@ interface SaleItemRow {
   product_id: string | null;
   quantity: number;
   unit_price: number | null;
-  regular_price: number | null;
+  discount: number;
   unit_cost: number | null;
+  regular_price?: number | null;
 }
 
 const PAYMENT_METHODS = [
@@ -45,10 +47,11 @@ const PAYMENT_METHODS = [
     TextareaModule,
     DropdownModule,
     CalendarModule,
-    CurrencyPipe
+    CurrencyPipe,
+    RippleModule
   ],
   templateUrl: './out-sales.component.html',
-  styleUrls: ['./out-sales.component.scss']
+  styleUrls: ['./out-sales.component.scss', '../admin-styles.scss']
 })
 export class OutSalesComponent implements OnInit, OnDestroy {
   @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
@@ -88,7 +91,6 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       this.scrollListener = (event: Event) => {
         const target = event.target;
-        // Only close on scroll from the main content area, not from datepicker internals
         const isContentScroll = (target instanceof HTMLElement && target.classList.contains('content-body')) ||
           target === document ||
           target === document.documentElement;
@@ -166,7 +168,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   private newRow(): SaleItemRow {
-    return { product_id: null, quantity: 1, unit_price: null, regular_price: null, unit_cost: null };
+    return { product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null };
   }
 
   addItem() {
@@ -181,49 +183,91 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     }
   }
 
+  getProductCatalogDiscount(prod: Product | undefined | null): number {
+    if (!prod) return 0;
+    const catalogPrice = Number(prod.price) || 0;
+    if (prod.effective_price != null && prod.effective_price < catalogPrice) {
+      return Math.max(0, Math.round((catalogPrice - Number(prod.effective_price)) * 100) / 100);
+    }
+    if (prod.discount_value != null && Number(prod.discount_value) > 0) {
+      const dType = (prod.discount_type || '').toUpperCase();
+      if (dType === 'PERCENT' || dType === 'PERCENTAGE') {
+        return Math.max(0, Math.round((catalogPrice * (Number(prod.discount_value) / 100)) * 100) / 100);
+      }
+      return Math.max(0, Math.min(catalogPrice, Math.round(Number(prod.discount_value) * 100) / 100));
+    }
+    return 0;
+  }
+
+  getProductEffectivePrice(prod: Product | undefined | null): number {
+    if (!prod) return 0;
+    const catalogPrice = Number(prod.price) || 0;
+    const discount = this.getProductCatalogDiscount(prod);
+    return discount > 0 ? Math.max(0, catalogPrice - discount) : catalogPrice;
+  }
+
   onProductSelect(row: SaleItemRow, productId: string) {
     const product = this.findProduct(productId);
     if (product) {
       row.product_id = product.id;
-      row.regular_price = product.price;
-      if (product.effective_price != null && product.effective_price < product.price) {
-        row.unit_price = product.effective_price;
-      } else {
-        row.unit_price = product.price;
-      }
+      const catalogPrice = Number(product.price) || 0;
+      const catalogDiscount = this.getProductCatalogDiscount(product);
+      row.regular_price = catalogPrice;
+      row.discount = catalogDiscount;
+      // Unit Price in the input box is the discounted price if on discount, or catalog price
+      row.unit_price = catalogDiscount > 0 ? Math.max(0, catalogPrice - catalogDiscount) : catalogPrice;
       row.unit_cost = product.cost ?? null;
     } else {
-      row.regular_price = null;
       row.unit_price = null;
+      row.discount = 0;
+      row.regular_price = null;
       row.unit_cost = null;
     }
   }
 
+  getItemRegularPrice(item: SaleItemRow): number {
+    if (item.regular_price != null && item.regular_price > 0) {
+      return item.regular_price;
+    }
+    if (item.product_id) {
+      const prod = this.findProduct(item.product_id);
+      if (prod && Number(prod.price) > 0) {
+        return Number(prod.price);
+      }
+    }
+    const unitPrice = item.unit_price || 0;
+    const discount = item.discount || 0;
+    return unitPrice + discount;
+  }
+
   getItemDiscount(item: SaleItemRow): number {
-    if (item.regular_price == null || item.unit_price == null) return 0;
-    return item.regular_price > item.unit_price ? (item.regular_price - item.unit_price) : 0;
+    const regular = this.getItemRegularPrice(item);
+    const unitPrice = item.unit_price || 0;
+    if (regular > unitPrice) {
+      return Math.round((regular - unitPrice) * 100) / 100;
+    }
+    return 0;
   }
 
-  get regularSubtotal(): number {
-    return this.items.reduce((sum, item) => {
-      const price = item.regular_price != null ? item.regular_price : (item.unit_price || 0);
-      return sum + (price * (item.quantity || 0));
-    }, 0);
+  getItemEffectivePrice(item: SaleItemRow): number {
+    return item.unit_price || 0;
   }
 
-  get totalDiscount(): number {
-    return this.items.reduce((sum, item) => {
-      const discount = this.getItemDiscount(item);
-      return sum + (discount * (item.quantity || 0));
-    }, 0);
+  get regularTotal(): number {
+    return this.items.reduce((sum, item) => sum + (this.getItemRegularPrice(item) * (item.quantity || 0)), 0);
   }
 
   get subtotal(): number {
     return this.items.reduce((sum, item) => sum + ((item.unit_price || 0) * (item.quantity || 0)), 0);
   }
 
+  get totalDiscount(): number {
+    return this.items.reduce((sum, item) => sum + (this.getItemDiscount(item) * (item.quantity || 0)), 0);
+  }
+
   get grandTotal(): number {
-    return this.subtotal + (this.deliveryCharge || 0);
+    const total = this.subtotal + (this.deliveryCharge || 0);
+    return Math.max(0, total);
   }
 
   isFormValid(): boolean {
@@ -274,9 +318,13 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       items: this.items.map(item => ({
         product_id: item.product_id!,
         quantity: item.quantity,
-        unit_price: item.unit_price!,
+        unit_price: item.unit_price || 0,
+        price: item.unit_price || 0,
+        price_at_purchase: item.unit_price || 0,
         unit_cost: item.unit_cost ?? null
       })),
+      total: this.grandTotal,
+      total_amount: this.grandTotal,
       payment_method: this.paymentMethod,
       sold_at: this.soldAt ? new Date(this.soldAt).toISOString() : null,
       delivery_charge: this.deliveryCharge || 0,

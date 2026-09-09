@@ -181,13 +181,60 @@ export class CategoryService {
         }
 
         // For uncategorized products:
-        return this.productService.getProducts(0, 1000, undefined, true).pipe(
-            map(products => products.filter(p =>
-                !p.categoryId ||
-                p.categoryId === 'uncategorized' ||
-                p.categoryId === '0' ||
-                (Array.isArray(p.categories) && p.categories.length === 0)
-            ))
+        // Query categories and all products simultaneously.
+        // A product is categorized if it appears in any category's products list.
+        return forkJoin({
+            categories: this.getCategories(0, 100),
+            allProducts: this.productService.getProducts(0, 1000, undefined, true)
+        }).pipe(
+            switchMap(({ categories, allProducts }) => {
+                // Ensure every category's products list is populated
+                const incompleteCategories = categories.filter(c => !c.products || !Array.isArray(c.products));
+                if (incompleteCategories.length > 0) {
+                    return forkJoin(
+                        incompleteCategories.map(c =>
+                            this.apiService.get<any>(API_ENDPOINTS.CATEGORIES.GET_BY_ID(c.id)).pipe(
+                                map(cat => this.mapBackendToFrontend(cat)),
+                                catchError(() => of(c))
+                            )
+                        )
+                    ).pipe(
+                        map(detailedCats => {
+                            for (const detailed of detailedCats) {
+                                const target = categories.find(c => c.id === detailed.id);
+                                if (target && detailed.products) {
+                                    target.products = detailed.products;
+                                }
+                            }
+                            return { categories, allProducts };
+                        })
+                    );
+                }
+                return of({ categories, allProducts });
+            }),
+            map(({ categories, allProducts }) => {
+                const assignedProductIds = new Set<string>();
+                for (const cat of categories) {
+                    if (cat.products && Array.isArray(cat.products)) {
+                        for (const p of cat.products) {
+                            if (p && p.id != null) {
+                                assignedProductIds.add(p.id.toString().trim());
+                            }
+                        }
+                    }
+                }
+
+                return allProducts.filter(p => {
+                    const pid = p.id ? p.id.toString().trim() : '';
+                    return !pid || !assignedProductIds.has(pid);
+                });
+            }),
+            catchError(err => {
+                console.error('Failed to load uncategorized products via category mapping:', err);
+                return this.productService.getProducts(0, 1000, undefined, true).pipe(
+                    map(products => products.filter(p => !p.categoryId || p.categoryId === 'uncategorized' || p.categoryId === '0'))
+                );
+            })
         );
     }
 

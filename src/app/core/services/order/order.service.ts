@@ -548,17 +548,30 @@ export class OrderService {
       postalCode: backendOrder.address?.postal_code || backendOrder.address?.additional_info || backendOrder.postalCode || '',
       fullAddress: backendOrder.address?.address_line || backendOrder.fullAddress || backendOrder.address || '',
       additionalInfo: backendOrder.address?.additional_info || backendOrder.additionalInfo || '',
-      items: (backendOrder.items || []).map((item: any) => ({
-        product: {
-          id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (item.product?.id?.toString() || ''),
-          name: item.product?.name || item.name || '',
-          price: (item.price_at_purchase !== undefined && item.price_at_purchase !== null) ? item.price_at_purchase : (item.price || 0),
-          code: item.product?.code || item.code || '',
-          description: item.product?.description || '',
-          imageUrl: item.product?.imageUrl || item.product?.image_url || item.imageUrl || ''
-        },
-        quantity: item.quantity || 0
-      })),
+      items: (backendOrder.items || []).map((item: any) => {
+        const itemPrice = (item.unit_price !== undefined && item.unit_price !== null)
+          ? parseFloat(item.unit_price)
+          : ((item.price_at_purchase !== undefined && item.price_at_purchase !== null)
+            ? parseFloat(item.price_at_purchase)
+            : (item.price ? parseFloat(item.price) : 0));
+
+        return {
+          ...item,
+          product: {
+            ...(item.product || {}),
+            id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (item.product?.id?.toString() || ''),
+            name: item.product?.name || item.name || '',
+            price: itemPrice,
+            code: item.product?.code || item.code || '',
+            description: item.product?.description || '',
+            imageUrl: item.product?.imageUrl || item.product?.image_url || item.imageUrl || ''
+          },
+          quantity: item.quantity || 0,
+          unit_price: itemPrice,
+          unit_cost: (item.unit_cost !== undefined && item.unit_cost !== null) ? parseFloat(item.unit_cost) : undefined,
+          product_id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (item.product?.id?.toString() || '')
+        };
+      }),
       totalAmount: backendOrder.total != null ? parseFloat(backendOrder.total) :
         (backendOrder.total_amount != null ? parseFloat(backendOrder.total_amount) :
           (backendOrder.totalAmount != null ? parseFloat(backendOrder.totalAmount) :
@@ -593,7 +606,11 @@ export class OrderService {
   private calculateTotal(items: any[]): number {
     if (!items || !Array.isArray(items)) return 0;
     return items.reduce((sum, item) => {
-      const price = (item.price_at_purchase !== undefined && item.price_at_purchase !== null) ? item.price_at_purchase : (item.price || 0);
+      const price = (item.unit_price !== undefined && item.unit_price !== null)
+        ? parseFloat(item.unit_price)
+        : ((item.price_at_purchase !== undefined && item.price_at_purchase !== null)
+          ? parseFloat(item.price_at_purchase)
+          : (item.price ? parseFloat(item.price) : 0));
       const quantity = item.quantity || 0;
       return sum + (price * quantity);
     }, 0);

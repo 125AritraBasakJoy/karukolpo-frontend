@@ -65,7 +65,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       route: 'out-sales',
       section: 'Main',
       children: [
-        { label: 'Create Our Sales', icon: 'pi pi-plus-circle', route: 'out-sales/create' },
+        { label: 'Create Out Sales', icon: 'pi pi-plus-circle', route: 'out-sales/create' },
         { label: 'Edit Out Sales', icon: 'pi pi-pencil', route: 'out-sales/edit' }
       ]
     },

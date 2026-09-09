@@ -602,6 +602,35 @@ export class ProductService {
       }
     }
 
+    // Compute price and discount
+    const rawPrice = typeof data.price === 'string' ? parseFloat(data.price) : (Number(data.price) || 0);
+    const discountVal = (data.discount_value !== undefined && data.discount_value !== null) ? parseFloat(String(data.discount_value)) : null;
+    let effectivePrice = (data.effective_price !== undefined && data.effective_price !== null)
+      ? parseFloat(String(data.effective_price))
+      : rawPrice;
+
+    if ((data.effective_price === undefined || data.effective_price === null || effectivePrice === rawPrice) && discountVal && discountVal > 0) {
+      let isDiscountActive = true;
+      const now = new Date().getTime();
+      if (data.discount_starts_at) {
+        const start = new Date(data.discount_starts_at).getTime();
+        if (!isNaN(start) && now < start) isDiscountActive = false;
+      }
+      if (data.discount_ends_at) {
+        const end = new Date(data.discount_ends_at).getTime();
+        if (!isNaN(end) && now > end) isDiscountActive = false;
+      }
+
+      if (isDiscountActive) {
+        const dType = (data.discount_type || '').toUpperCase();
+        if (dType === 'PERCENT' || dType === 'PERCENTAGE') {
+          effectivePrice = Math.max(0, Math.round((rawPrice - (rawPrice * (discountVal / 100))) * 100) / 100);
+        } else {
+          effectivePrice = Math.max(0, Math.round((rawPrice - discountVal) * 100) / 100);
+        }
+      }
+    }
+
     return {
       id: data.id?.toString() || '',
       code: data.code || `PROD-${data.id}`,
@@ -621,10 +650,10 @@ export class ProductService {
       isHotDeal: !!(data.is_hot_deal || data.hot_deal),
       isBestSeller: !!(data.is_best_seller || data.best_seller),
       discount_type: data.discount_type || null,
-      discount_value: data.discount_value !== undefined && data.discount_value !== null ? parseFloat(String(data.discount_value)) : null,
+      discount_value: discountVal,
       discount_starts_at: data.discount_starts_at || null,
       discount_ends_at: data.discount_ends_at || null,
-      effective_price: data.effective_price !== undefined && data.effective_price !== null ? parseFloat(String(data.effective_price)) : (typeof data.price === 'string' ? parseFloat(data.price) : data.price)
+      effective_price: effectivePrice
     };
   }
 

@@ -78,8 +78,57 @@
     letter-spacing: 0.02em;
 }
 
+.total-price-cell {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
 .price-value {
     font-size: 0.9375rem;
+    line-height: 1;
+}
+
+.delivery-charge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    color: #94a3b8;
+    white-space: nowrap;
+    line-height: 1.2;
+    transition: all 0.2s ease;
+    cursor: default;
+
+    .delivery-truck-icon {
+        font-size: 0.7rem;
+        color: #38bdf8;
+    }
+
+    .delivery-label {
+        color: #64748b;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+    }
+
+    .delivery-amount {
+        color: #e2e8f0;
+        font-weight: 600;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    &:hover {
+        background: rgba(56, 189, 248, 0.14);
+        border-color: rgba(56, 189, 248, 0.35);
+    }
 }
 
 .action-btn {
@@ -119,6 +168,24 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+}
+
+.discount-pill-sm {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 9999px;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.discount-subtext {
+    line-height: 1.2;
 }
 
 .discount-callout-bar {

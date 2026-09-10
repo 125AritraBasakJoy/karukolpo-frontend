@@ -555,21 +555,39 @@ export class OrderService {
             ? parseFloat(item.price_at_purchase)
             : (item.price ? parseFloat(item.price) : 0));
 
+        const rawProduct = item.product || {};
+        const catalogPrice = (rawProduct.price !== undefined && rawProduct.price !== null)
+          ? parseFloat(rawProduct.price)
+          : ((item.regular_price !== undefined && item.regular_price !== null)
+            ? parseFloat(item.regular_price)
+            : itemPrice);
+
+        const effectivePrice = (rawProduct.effective_price !== undefined && rawProduct.effective_price !== null)
+          ? parseFloat(rawProduct.effective_price)
+          : ((item.effective_price !== undefined && item.effective_price !== null)
+            ? parseFloat(item.effective_price)
+            : ((item.price_at_purchase !== undefined && item.price_at_purchase !== null && parseFloat(item.price_at_purchase) < catalogPrice)
+              ? parseFloat(item.price_at_purchase)
+              : (itemPrice < catalogPrice ? itemPrice : undefined)));
+
         return {
           ...item,
           product: {
-            ...(item.product || {}),
-            id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (item.product?.id?.toString() || ''),
-            name: item.product?.name || item.name || '',
-            price: itemPrice,
-            code: item.product?.code || item.code || '',
-            description: item.product?.description || '',
-            imageUrl: item.product?.imageUrl || item.product?.image_url || item.imageUrl || ''
+            ...rawProduct,
+            id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (rawProduct.id?.toString() || ''),
+            name: rawProduct.name || item.name || '',
+            price: catalogPrice,
+            effective_price: effectivePrice,
+            discount_type: rawProduct.discount_type || item.discount_type || null,
+            discount_value: rawProduct.discount_value ?? item.discount_value ?? null,
+            code: rawProduct.code || item.code || '',
+            description: rawProduct.description || '',
+            imageUrl: rawProduct.imageUrl || rawProduct.image_url || item.imageUrl || ''
           },
           quantity: item.quantity || 0,
           unit_price: itemPrice,
           unit_cost: (item.unit_cost !== undefined && item.unit_cost !== null) ? parseFloat(item.unit_cost) : undefined,
-          product_id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (item.product?.id?.toString() || '')
+          product_id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (rawProduct.id?.toString() || '')
         };
       }),
       totalAmount: backendOrder.total != null ? parseFloat(backendOrder.total) :

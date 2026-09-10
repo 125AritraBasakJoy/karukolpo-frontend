@@ -458,6 +458,30 @@
     line-height: 1.2;
 }
 
+.order-item-discount-pill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.08rem 0.38rem;
+    border-radius: 9999px !important;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.order-item-original-price {
+    font-size: 0.75rem;
+    color: #64748b !important;
+    text-decoration: line-through;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    line-height: 1.1;
+}
+
 /* Customer Details Redesign */
 .customer-details-card {
     border-radius: 20px;

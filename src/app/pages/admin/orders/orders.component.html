@@ -303,9 +303,26 @@
                                     <span class="order-item-qty-badge">
                                         ×{{ item.quantity }}
                                     </span>
+
+                                    @if (isItemDiscounted(item)) {
+                                    <div class="flex flex-column align-items-end justify-content-center">
+                                        <div class="flex align-items-center gap-1.5 line-height-1 mb-1">
+                                            <span class="order-item-discount-pill font-mono">
+                                                {{ getItemDiscountLabel(item) }}
+                                            </span>
+                                            <span class="order-item-original-price font-mono">
+                                                {{ getItemRegularTotal(item) | currency:'BDT':'৳' }}
+                                            </span>
+                                        </div>
+                                        <span class="order-item-total font-bold text-base md:text-lg">
+                                            {{ getItemFinalTotal(item) | currency:'BDT':'৳' }}
+                                        </span>
+                                    </div>
+                                    } @else {
                                     <span class="order-item-total">
-                                        {{ (item.product.price * item.quantity) | currency:'BDT':'৳' }}
+                                        {{ getItemFinalTotal(item) | currency:'BDT':'৳' }}
                                     </span>
+                                    }
                                 </div>
                             </div>
                             }

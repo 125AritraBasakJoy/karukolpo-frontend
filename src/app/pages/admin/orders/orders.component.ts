@@ -5,6 +5,7 @@ import { OrderService } from '../../../core/services';;;
 import { ProductService } from '../../../core/services';;;
 import { PaymentService } from '../../../core/services';;;
 import { Order } from '../../../models/order.model';
+import { CartItem } from '../../../models/cart.model';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -354,13 +355,13 @@ export class OrdersComponent implements OnInit {
   }
 
   ensureProductDetails(order: Order): Observable<Order> {
-    const itemsToFetch = order.items.filter(item => !item.product.name || item.product.name === '');
+    const validItems = order.items.filter(item => !!item.product?.id);
 
-    if (itemsToFetch.length === 0) {
+    if (validItems.length === 0) {
       return of(order);
     }
 
-    const requests = itemsToFetch.map(item => {
+    const requests = validItems.map(item => {
       const productId = item.product.id;
       return this.productService.getProductById(productId).pipe(
         map(product => ({ item, product })),
@@ -376,13 +377,21 @@ export class OrdersComponent implements OnInit {
         const updatedItems = order.items.map(currentItem => {
           const result = results.find(r => r.item.product.id === currentItem.product.id);
           if (result && result.product) {
+            const fetched = result.product;
             return {
               ...currentItem,
               product: {
                 ...currentItem.product,
-                name: result.product.name,
-                imageUrl: result.product.imageUrl,
-                code: result.product.code
+                name: currentItem.product.name || fetched.name,
+                imageUrl: currentItem.product.imageUrl || fetched.imageUrl,
+                code: currentItem.product.code || fetched.code,
+                // Preserve catalog price & discount metadata
+                price: fetched.price || currentItem.product.price,
+                effective_price: fetched.effective_price ?? currentItem.product.effective_price,
+                discount_type: fetched.discount_type ?? currentItem.product.discount_type,
+                discount_value: fetched.discount_value ?? currentItem.product.discount_value,
+                discount_starts_at: fetched.discount_starts_at ?? currentItem.product.discount_starts_at,
+                discount_ends_at: fetched.discount_ends_at ?? currentItem.product.discount_ends_at
               }
             };
           } else if (result) {
@@ -390,7 +399,7 @@ export class OrdersComponent implements OnInit {
               ...currentItem,
               product: {
                 ...currentItem.product,
-                name: 'Unknown Product (Deleted)'
+                name: currentItem.product.name || 'Unknown Product (Deleted)'
               }
             };
           }
@@ -594,6 +603,75 @@ export class OrdersComponent implements OnInit {
       }
     }
     return trimmed.startsWith('PROD-') ? trimmed : `PROD-${trimmed}`;
+  }
+
+  getItemFinalUnitPrice(item: CartItem): number {
+    const prod = item.product;
+    if (!prod) return Number((item as any).unit_price) || 0;
+
+    // 1. Direct effective_price from product
+    if (prod.effective_price !== undefined && prod.effective_price !== null && Number(prod.effective_price) > 0 && Number(prod.effective_price) < Number(prod.price)) {
+      return Number(prod.effective_price);
+    }
+
+    // 2. Computed from discount_value and discount_type
+    if (prod.discount_value !== undefined && prod.discount_value !== null && Number(prod.discount_value) > 0) {
+      const regular = Number(prod.price) || 0;
+      const dVal = Number(prod.discount_value);
+      const dType = (prod.discount_type || '').toUpperCase();
+      if (dType === 'PERCENT' || dType === 'PERCENTAGE') {
+        return Math.max(0, Math.round((regular - (regular * (dVal / 100))) * 100) / 100);
+      }
+      return Math.max(0, Math.round((regular - dVal) * 100) / 100);
+    }
+
+    // 3. Item-level price_at_purchase / unit_price vs regular catalog price
+    const unitPrice = (item as any).unit_price ?? (item as any).price_at_purchase;
+    if (unitPrice !== undefined && unitPrice !== null && prod.price && Number(unitPrice) < Number(prod.price)) {
+      return Number(unitPrice);
+    }
+
+    return Number(prod.price) || Number(unitPrice) || 0;
+  }
+
+  getItemRegularUnitPrice(item: CartItem): number {
+    const prod = item.product;
+    const unitPrice = (item as any).unit_price ?? (item as any).price_at_purchase;
+    return Number(prod?.price) || Number(unitPrice) || 0;
+  }
+
+  isItemDiscounted(item: CartItem): boolean {
+    const regular = this.getItemRegularUnitPrice(item);
+    const finalPrice = this.getItemFinalUnitPrice(item);
+    return regular > 0 && finalPrice > 0 && finalPrice < regular;
+  }
+
+  getItemFinalTotal(item: CartItem): number {
+    return this.getItemFinalUnitPrice(item) * (item.quantity || 1);
+  }
+
+  getItemRegularTotal(item: CartItem): number {
+    return this.getItemRegularUnitPrice(item) * (item.quantity || 1);
+  }
+
+  getItemDiscountLabel(item: CartItem): string {
+    const prod = item.product;
+    if (prod?.discount_value && prod?.discount_type) {
+      const dType = prod.discount_type.toUpperCase();
+      if (dType === 'PERCENT' || dType === 'PERCENTAGE') {
+        return `-${prod.discount_value}%`;
+      }
+    }
+    const regular = this.getItemRegularUnitPrice(item);
+    const finalPrice = this.getItemFinalUnitPrice(item);
+    if (regular > finalPrice && regular > 0) {
+      const pct = Math.round(((regular - finalPrice) / regular) * 100);
+      if (pct > 0) {
+        return `-${pct}%`;
+      }
+      return `-৳${(regular - finalPrice).toFixed(0)}`;
+    }
+    return '';
   }
 
   getCustomerName(order: Order | null): string {

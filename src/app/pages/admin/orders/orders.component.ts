@@ -81,6 +81,9 @@ export class OrdersComponent implements OnInit {
   isSearching = signal<boolean>(false);
   private searchTimeout: any;
 
+  // Dialog item search & filter state
+  itemSearchQuery = signal<string>('');
+
   // Pagination State
   rows: number = 10;
   first: number = 0;
@@ -282,6 +285,7 @@ export class OrdersComponent implements OnInit {
   }
 
   viewOrder(order: Order) {
+    this.itemSearchQuery.set('');
     this.selectedOrder.set(JSON.parse(JSON.stringify(order)));
     this.displayOrderDialog.set(true);
     this.loadingDetails.set(true);
@@ -552,6 +556,91 @@ export class OrdersComponent implements OnInit {
     const s = status.toLowerCase();
     // Removed 'submitted' from confirmed list so the button appears
     return s.includes('paid') || s.includes('confirmed') || s.includes('complete') || s.includes('verified');
+  }
+
+  filteredOrderItems() {
+    const order = this.selectedOrder();
+    if (!order || !order.items) return [];
+    const q = this.itemSearchQuery().toLowerCase().trim();
+    if (!q) return order.items;
+    return order.items.filter(item =>
+      (item.product?.name && item.product.name.toLowerCase().includes(q)) ||
+      (item.product?.code && item.product.code.toLowerCase().includes(q))
+    );
+  }
+
+  getTotalItemUnits(order: Order | null): number {
+    if (!order || !order.items) return 0;
+    return order.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  }
+
+  getOrderItemsTooltip(order: Order): string {
+    if (!order || !order.items || order.items.length === 0) return 'No items in order';
+    return order.items.map(item => `${item.product?.name || 'Item'} (×${item.quantity || 1})`).join(' • ');
+  }
+
+  formatProductCode(code: string | undefined | null): string {
+    if (!code) return '';
+    const trimmed = code.trim();
+    
+    // Check if it has a long UUID or is formatted as PROD-UUID (e.g. PROD-06a3fac5-94a0-7dbb-8000-75edd0b04229)
+    if (trimmed.length > 14 || (trimmed.includes('-') && trimmed.length > 10)) {
+      const clean = trimmed.replace(/^PROD-/i, '').replace(/-/g, '');
+      if (clean.length >= 4) {
+        // Take the trailing 4 characters and pad with '0' to produce 6-character code e.g. '004229' -> 'PROD-004229'
+        const last4 = clean.slice(-4);
+        const padded = last4.padStart(6, '0');
+        return `PROD-${padded}`;
+      }
+    }
+    return trimmed.startsWith('PROD-') ? trimmed : `PROD-${trimmed}`;
+  }
+
+  getCustomerName(order: Order | null): string {
+    if (!order) return 'Unknown Customer';
+    return order.address?.full_name || order.fullName || 'Unknown Customer';
+  }
+
+  getCustomerPhone(order: Order | null): string {
+    if (!order) return '';
+    return order.address?.phone || order.phoneNumber || '';
+  }
+
+  getCustomerFullAddress(order: Order | null): string {
+    if (!order) return '';
+    if (order.address) {
+      const parts = [
+        order.address.address_line,
+        order.address.subdistrict,
+        order.address.district
+      ].filter(Boolean);
+      return parts.join(', ');
+    }
+    const parts = [
+      order.fullAddress,
+      order.subDistrict,
+      order.district
+    ].filter(Boolean);
+    return parts.join(', ');
+  }
+
+  getCustomerInitial(order: Order | null): string {
+    const name = this.getCustomerName(order);
+    return name ? name.trim().charAt(0).toUpperCase() : 'C';
+  }
+
+  copyToClipboard(text: string, label: string) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Copied',
+        detail: `${label} copied to clipboard`,
+        life: 2000
+      });
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+    });
   }
 
   downloadOrders() {

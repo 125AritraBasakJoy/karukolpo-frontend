@@ -238,4 +238,69 @@
             </div>
         </div>
     </div>
+
+    <!-- Themed Prompt Modal: Would you like to print invoice? -->
+    <p-dialog [(visible)]="askPrintModalVisible" [modal]="true" [style]="{ width: 'min(92vw, 420px)' }"
+        styleClass="premium-dialog prompt-print-dialog" [closable]="false" appendTo="body" [draggable]="false" [resizable]="false">
+        <ng-template pTemplate="header">
+            <div class="flex align-items-center gap-2">
+                <i class="pi pi-print text-primary text-xl"></i>
+                <span class="font-bold text-lg text-white">Print Invoice</span>
+            </div>
+        </ng-template>
+
+        <div class="py-2 text-center">
+            <div class="w-4rem h-4rem border-circle bg-blue-500/10 text-primary flex align-items-center justify-content-center mx-auto mb-3">
+                <i class="pi pi-receipt text-3xl"></i>
+            </div>
+            <h3 class="text-white text-lg font-semibold m-0 mb-2">Sale Recorded Successfully!</h3>
+            <p class="text-slate-300 text-sm m-0 line-height-3">
+                Would you like to print the thermal invoice (58mm) for this sale?
+            </p>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex align-items-center justify-content-end gap-2 w-full pt-2">
+                <button type="button" class="btn-thermal btn-close" (click)="declinePrintPrompt()">
+                    <i class="pi pi-times"></i>
+                    <span>No</span>
+                </button>
+                <button type="button" class="btn-thermal btn-print" (click)="confirmPrintPrompt()">
+                    <i class="pi pi-print"></i>
+                    <span>Yes, Print</span>
+                </button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Themed Thermal Receipt Preview Modal -->
+    <p-dialog [(visible)]="thermalPreviewModalVisible" [modal]="true" [style]="{ width: 'min(95vw, 440px)' }"
+        styleClass="premium-dialog thermal-preview-dialog" appendTo="body" [draggable]="false" [resizable]="false"
+        (onHide)="onCloseThermalPreview()">
+        <ng-template pTemplate="header">
+            <div class="flex align-items-center justify-content-between w-full pr-4">
+                <div class="flex align-items-center gap-2">
+                    <i class="pi pi-receipt text-primary text-lg"></i>
+                    <span class="font-bold text-base text-white">Thermal Receipt Preview (58mm)</span>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="thermal-dialog-body p-2 flex justify-content-center overflow-y-auto custom-scrollbar">
+            <app-thermal-invoice #thermalInvoice [order]="recordedSaleForInvoice()"></app-thermal-invoice>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="thermal-modal-footer">
+                <button type="button" class="btn-thermal btn-close" (click)="onCloseThermalPreview()">
+                    <i class="pi pi-times"></i>
+                    <span>Cancel</span>
+                </button>
+                <button type="button" class="btn-thermal btn-print" (click)="onPrintThermalInvoice()">
+                    <i class="pi pi-print"></i>
+                    <span>Print & Download</span>
+                </button>
+            </div>
+        </ng-template>
+    </p-dialog>
 </div>

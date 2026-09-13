@@ -118,6 +118,10 @@
                         </td>
                         <td class="text-center">
                             <div class="flex justify-content-center gap-2">
+                                <button pButton icon="pi pi-receipt"
+                                    class="action-btn p-button-rounded p-button-text success-btn"
+                                    (click)="openThermalInvoice(sale)" pTooltip="Thermal Receipt (58mm)" tooltipPosition="top"></button>
+
                                 <button pButton icon="pi pi-pencil"
                                     class="action-btn p-button-rounded p-button-text info-btn"
                                     (click)="openEditModal(sale)" pTooltip="Edit Sale" tooltipPosition="top"></button>
@@ -370,3 +374,40 @@
 
 <!-- Confirmation Dialog for Void -->
 <p-confirmDialog></p-confirmDialog>
+
+<!-- Themed Thermal Receipt Preview Modal -->
+<p-dialog [(visible)]="thermalPreviewModalVisible" [modal]="true" [style]="{ width: 'min(95vw, 440px)' }"
+    styleClass="premium-dialog thermal-preview-dialog" appendTo="body" [draggable]="false" [resizable]="false"
+    (onHide)="closeThermalPreview()">
+    <ng-template pTemplate="header">
+        <div class="flex align-items-center justify-content-between w-full pr-4">
+            <div class="flex align-items-center gap-2">
+                <i class="pi pi-receipt text-primary text-lg"></i>
+                <span class="font-bold text-base text-white">Thermal Receipt (58mm)</span>
+            </div>
+        </div>
+    </ng-template>
+
+    <div class="thermal-dialog-body p-2 flex justify-content-center overflow-y-auto custom-scrollbar">
+        <app-thermal-invoice #thermalInvoice [order]="selectedSaleForInvoice()"></app-thermal-invoice>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="thermal-modal-footer">
+            <button type="button" class="btn-thermal btn-close" (click)="closeThermalPreview()">
+                <i class="pi pi-times"></i>
+                <span>Close</span>
+            </button>
+            <div class="thermal-btn-group">
+                <button type="button" class="btn-thermal btn-download" (click)="onDownloadThermalInvoice()">
+                    <i class="pi pi-download"></i>
+                    <span>Download</span>
+                </button>
+                <button type="button" class="btn-thermal btn-print" (click)="onPrintThermalInvoice()">
+                    <i class="pi pi-print"></i>
+                    <span>Print & Download</span>
+                </button>
+            </div>
+        </div>
+    </ng-template>
+</p-dialog>

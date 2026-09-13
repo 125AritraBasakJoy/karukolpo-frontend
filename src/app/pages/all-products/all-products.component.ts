@@ -1,13 +1,14 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { Title, Meta } from '@angular/platform-browser';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ProductService } from '../../core/services/product/product.service';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ProductService, ProductQueryOptions } from '../../core/services/product/product.service';
 import { CartService } from '../../core/services/cart/cart.service';
 import { CategoryService } from '../../core/services/category/category.service';
 import { Product } from '../../models/product.model';
-import { Category } from '../../models/category.model';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
@@ -38,116 +39,47 @@ import { DividerModule } from 'primeng/divider';
     styleUrls: ['./all-products.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AllProductsComponent implements OnInit {
+export class AllProductsComponent implements OnInit, OnDestroy {
     products = signal<Product[]>([]);
     loading = signal<boolean>(true);
+    totalCount = signal<number>(0);
     
-    // Filtering and Sorting State
+    // Server-side Filtering and Sorting State
     searchQuery = signal<string>('');
     selectedCategoryId = signal<string | null>(null);
-    sortOrder = signal<string>('featured');
+    sortOrder = signal<string>('newest');
     filterType = signal<string | null>(null);
+    inStockOnly = signal<boolean>(false);
+    selectedPriceRange = signal<string>('all');
     
     categories = this.categoryService.categories;
 
-    /**
-     * Build a map of productId -> categoryIds[] from the loaded categories.
-     * This is necessary because the primary products API does not return category info.
-     */
-    productCategoryMap = computed(() => {
-        const map = new Map<string, string[]>();
-        this.categories().forEach(cat => {
-            if (cat.products && Array.isArray(cat.products)) {
-                cat.products.forEach(p => {
-                    const productId = p.id?.toString();
-                    if (productId) {
-                        const existing = map.get(productId) || [];
-                        if (!existing.includes(cat.id)) {
-                            existing.push(cat.id);
-                        }
-                        map.set(productId, existing);
-                    }
-                });
-            }
-        });
-        return map;
-    });
+    private searchSubject = new Subject<string>();
+    private searchSubscription?: Subscription;
 
     sortOptions = [
-        { label: 'Featured', value: 'featured' },
-        { label: 'Price: Low to High', value: 'price-low' },
-        { label: 'Price: High to Low', value: 'price-high' },
-        { label: 'Name: A-Z', value: 'name-asc' },
-        { label: 'Name: Z-A', value: 'name-desc' }
+        { label: 'Featured / Newest', value: 'newest' },
+        { label: 'Price: Low to High', value: 'price_asc' },
+        { label: 'Price: High to Low', value: 'price_desc' },
+        { label: 'Name: A-Z', value: 'name' }
     ];
 
-    filteredProducts = computed(() => {
-        let result = [...this.products()];
+    priceRangeOptions = [
+        { label: 'All Prices', value: 'all' },
+        { label: 'Under ৳500', value: 'under-500' },
+        { label: '৳500 - ৳1,000', value: '500-1000' },
+        { label: '৳1,000 - ৳2,500', value: '1000-2500' },
+        { label: '৳2,500+', value: '2500-above' }
+    ];
 
-        // 1. Search Filter (Case-insensitive)
-        if (this.searchQuery()) {
-            const query = this.searchQuery().toLowerCase().trim();
-            result = result.filter(p => 
-                p.name.toLowerCase().includes(query) || 
-                (p.description && p.description.toLowerCase().includes(query)) ||
-                (p.code && p.code.toLowerCase().includes(query))
-            );
-        }
-
-        // 2. Category Filter (Supports multi-category products via client-side mapping)
-        const selectedId = this.selectedCategoryId();
-        if (selectedId) {
-            result = result.filter(p => {
-                // Check primary category ID on product
-                if (p.categoryId === selectedId) return true;
-                
-                // Check if product belongs to this category via the map built from CategoryService
-                const productCats = this.productCategoryMap().get(p.id) || [];
-                if (productCats.includes(selectedId)) return true;
-                
-                // Check categories array on product if populated
-                if (p.categories && p.categories.some((c: any) => (c.id || c).toString() === selectedId)) return true;
-                
-                return false;
-            });
-        }
-
-        // 2.5. Special Filter (Hot Deals / Best Sellers)
-        const filter = this.filterType();
-        if (filter === 'hot-deals') {
-            result = result.filter(p => p.isHotDeal);
-        } else if (filter === 'best-selling') {
-            result = result.filter(p => p.isBestSeller);
-        }
-
-        // 3. Sorting & Prioritization
-        switch (this.sortOrder()) {
-            case 'price-low':
-                result.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-high':
-                result.sort((a, b) => b.price - a.price);
-                break;
-            case 'name-asc':
-                result.sort((a, b) => a.name.localeCompare(b.name));
-                break;
-            case 'name-desc':
-                result.sort((a, b) => b.name.localeCompare(a.name));
-                break;
-            case 'featured':
-            default:
-                // Prioritize Hot Deals and Best Sellers first, then by date/id (default)
-                result.sort((a, b) => {
-                    const scoreA = (a.isHotDeal ? 2 : 0) + (a.isBestSeller ? 1 : 0);
-                    const scoreB = (b.isHotDeal ? 2 : 0) + (b.isBestSeller ? 1 : 0);
-                    if (scoreA !== scoreB) return scoreB - scoreA;
-                    // For stable sort if scores are equal, maintain original array order
-                    return 0;
-                });
-                break;
-        }
-
-        return result;
+    hasActiveFilters = computed(() => {
+        return !!(
+            this.searchQuery() ||
+            this.selectedCategoryId() ||
+            this.sortOrder() !== 'newest' ||
+            this.inStockOnly() ||
+            this.selectedPriceRange() !== 'all'
+        );
     });
 
     constructor(
@@ -165,6 +97,15 @@ export class AllProductsComponent implements OnInit {
         if (isPlatformBrowser(this.platformId)) {
             window.scrollTo({ top: 0, behavior: 'instant' });
         }
+
+        // Debounce search input to avoid querying on every keystroke
+        this.searchSubscription = this.searchSubject.pipe(
+            debounceTime(350),
+            distinctUntilChanged()
+        ).subscribe(() => {
+            this.fetchProducts();
+        });
+
         this.route.queryParams.subscribe(params => {
             if (params['filter']) {
                 this.filterType.set(params['filter']);
@@ -172,20 +113,106 @@ export class AllProductsComponent implements OnInit {
                 this.filterType.set(null);
             }
             this.updateSeo();
+            this.fetchProducts();
         });
+
         this.cartService.refreshCartProducts();
-        this.loadProducts();
     }
 
-    loadProducts() {
+    ngOnDestroy() {
+        this.searchSubscription?.unsubscribe();
+    }
+
+    onSearchInput(text: string) {
+        this.searchQuery.set(text);
+        this.searchSubject.next(text);
+    }
+
+    onCategoryChange(catId: string | null) {
+        this.selectedCategoryId.set(catId);
+        this.fetchProducts();
+    }
+
+    onSortChange(sort: string) {
+        this.sortOrder.set(sort);
+        this.fetchProducts();
+    }
+
+    onPriceRangeChange(range: string) {
+        this.selectedPriceRange.set(range);
+        this.fetchProducts();
+    }
+
+    toggleInStockOnly() {
+        this.inStockOnly.set(!this.inStockOnly());
+        this.fetchProducts();
+    }
+
+    private getPriceBounds(): { min?: number; max?: number } {
+        const range = this.selectedPriceRange();
+        switch (range) {
+            case 'under-500': return { max: 500 };
+            case '500-1000': return { min: 500, max: 1000 };
+            case '1000-2500': return { min: 1000, max: 2500 };
+            case '2500-above': return { min: 2500 };
+            default: return {};
+        }
+    }
+
+    fetchProducts() {
         this.loading.set(true);
-        this.productService.getProducts().subscribe({
-            next: (products) => {
-                this.products.set(products);
+
+        const filter = this.filterType();
+        if (filter === 'hot-deals') {
+            this.productService.getHotDeals().subscribe({
+                next: (items) => {
+                    this.products.set(items);
+                    this.totalCount.set(items.length);
+                    this.loading.set(false);
+                },
+                error: (err) => {
+                    console.error('Error fetching hot deals:', err);
+                    this.loading.set(false);
+                }
+            });
+            return;
+        }
+
+        if (filter === 'best-selling') {
+            this.productService.getBestSellers().subscribe({
+                next: (items) => {
+                    this.products.set(items);
+                    this.totalCount.set(items.length);
+                    this.loading.set(false);
+                },
+                error: (err) => {
+                    console.error('Error fetching best sellers:', err);
+                    this.loading.set(false);
+                }
+            });
+            return;
+        }
+
+        const priceBounds = this.getPriceBounds();
+        const options: ProductQueryOptions = {
+            skip: 0,
+            limit: 100,
+            q: this.searchQuery() || undefined,
+            categoryId: this.selectedCategoryId() || undefined,
+            minPrice: priceBounds.min,
+            maxPrice: priceBounds.max,
+            inStock: this.inStockOnly() ? true : undefined,
+            sort: this.sortOrder()
+        };
+
+        this.productService.getProductsWithCount(options).subscribe({
+            next: (res) => {
+                this.products.set(res.items);
+                this.totalCount.set(res.total);
                 this.loading.set(false);
             },
             error: (err) => {
-                console.error('Error fetching products', err);
+                console.error('Error fetching catalog products:', err);
                 this.loading.set(false);
             }
         });
@@ -216,7 +243,7 @@ export class AllProductsComponent implements OnInit {
     }
 
     showProductDetails(product: Product) {
-        this.router.navigate(['/products', product.id]);
+        this.router.navigate(['/products', product.slug || product.id]);
     }
 
     addToCart(product: Product) {
@@ -234,6 +261,9 @@ export class AllProductsComponent implements OnInit {
     clearFilters() {
         this.searchQuery.set('');
         this.selectedCategoryId.set(null);
-        this.sortOrder.set('featured');
+        this.sortOrder.set('newest');
+        this.inStockOnly.set(false);
+        this.selectedPriceRange.set('all');
+        this.fetchProducts();
     }
 }

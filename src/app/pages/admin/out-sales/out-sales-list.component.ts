@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, Inject, PLATFORM_ID, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, signal, Inject, PLATFORM_ID, ViewChildren, QueryList, ViewChild } from '@angular/core';
 import { CommonModule, isPlatformBrowser, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -21,6 +21,7 @@ import { OutSalesService, ProductService } from '../../../core/services';
 import { Product } from '../../../models/product.model';
 import { Order } from '../../../models/order.model';
 import { District, districts } from '../../../data/bangladesh-data';
+import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/thermal-invoice.component';
 import { finalize } from 'rxjs/operators';
 
 interface SaleItemRow {
@@ -60,7 +61,8 @@ const PAYMENT_METHODS = [
     CalendarModule,
     ProgressSpinnerModule,
     SkeletonModule,
-    CurrencyPipe
+    CurrencyPipe,
+    ThermalInvoiceComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './out-sales-list.component.html',
@@ -68,6 +70,7 @@ const PAYMENT_METHODS = [
 })
 export class OutSalesListComponent implements OnInit {
   @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
+  @ViewChild('thermalInvoice') thermalInvoice?: ThermalInvoiceComponent;
 
   // Sales Table State
   sales = signal<Order[]>([]);
@@ -75,6 +78,11 @@ export class OutSalesListComponent implements OnInit {
   loading = signal<boolean>(false);
   searchQuery = signal<string>('');
   voidingSaleId = signal<string | null>(null);
+
+  // Thermal Receipt Modal State
+  thermalPreviewModalVisible = signal<boolean>(false);
+  selectedSaleForInvoice = signal<Order | null>(null);
+  isDownloadingThermal = signal<boolean>(false);
 
   // Edit Modal State
   editDialogVisible = signal<boolean>(false);
@@ -810,5 +818,63 @@ export class OutSalesListComponent implements OnInit {
     if (s.includes('complete') || s.includes('delivered') || s.includes('confirmed')) return 'success';
     if (s.includes('pending')) return 'warning';
     return 'info';
+  }
+
+  openThermalInvoice(sale: Order) {
+    // Enrich items with catalog product details (real product name, pricing)
+    const enrichedItems = (sale.items || []).map((item: any) => {
+      const pid = item.product_id || item.product?.id;
+      const rawName = item.product?.name || item.name;
+      const matched = this.findProduct(pid, rawName);
+      
+      // Never use raw ID/UUID as product name
+      const isIdLike = (str: string) => !str || /^PROD-[a-f0-9-]+$/i.test(str) || /^[a-f0-9-]{12,}$/i.test(str);
+      let bestName = matched?.name;
+      if (!bestName && rawName && !isIdLike(rawName)) {
+        bestName = rawName;
+      }
+      if (!bestName) {
+        bestName = 'Product';
+      }
+
+      return {
+        ...item,
+        product: {
+          ...item.product,
+          name: bestName,
+          code: '',
+          price: matched?.price ?? item.product?.price ?? item.unit_price,
+          effective_price: item.unit_price
+        },
+        name: bestName
+      };
+    });
+
+    const enrichedSale: Order = {
+      ...sale,
+      items: enrichedItems
+    };
+
+    this.selectedSaleForInvoice.set(enrichedSale);
+    this.thermalPreviewModalVisible.set(true);
+  }
+
+  onPrintThermalInvoice() {
+    this.thermalInvoice?.printReceipt();
+  }
+
+  async onDownloadThermalInvoice() {
+    if (this.isDownloadingThermal()) return;
+    this.isDownloadingThermal.set(true);
+    try {
+      await this.thermalInvoice?.downloadReceipt();
+    } finally {
+      this.isDownloadingThermal.set(false);
+    }
+  }
+
+  closeThermalPreview() {
+    this.thermalPreviewModalVisible.set(false);
+    this.selectedSaleForInvoice.set(null);
   }
 }

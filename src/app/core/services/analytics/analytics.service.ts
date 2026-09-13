@@ -151,4 +151,28 @@ export class AnalyticsService {
       API_ENDPOINTS.ANALYTICS.TRAFFIC_CONVERSION(period)
     );
   }
+
+  getJourneyFunnel(period = '30d'): Observable<Models.JourneyFunnelResponse> {
+    return this.apiService.get<Models.JourneyFunnelResponse>(
+      API_ENDPOINTS.ANALYTICS.JOURNEY_FUNNEL(period)
+    );
+  }
+
+  getJourneyProductInterest(period = '30d', limit = 20): Observable<Models.ProductInterestResponse> {
+    return this.apiService.get<Models.ProductInterestResponse>(
+      API_ENDPOINTS.ANALYTICS.JOURNEY_PRODUCT_INTEREST(period, limit)
+    );
+  }
+
+  getJourneyAbandonedCarts(period = '30d', limit = 50): Observable<Models.AbandonedCartsResponse> {
+    return this.apiService.get<Models.AbandonedCartsResponse>(
+      API_ENDPOINTS.ANALYTICS.JOURNEY_ABANDONED_CARTS(period, limit)
+    );
+  }
+
+  getDeviceJourney(deviceIdHash: string, limit = 200): Observable<Models.JourneyEventRead[]> {
+    return this.apiService.get<Models.JourneyEventRead[]>(
+      API_ENDPOINTS.ANALYTICS.JOURNEY_DEVICE_TIMELINE(deviceIdHash, limit)
+    );
+  }
 }

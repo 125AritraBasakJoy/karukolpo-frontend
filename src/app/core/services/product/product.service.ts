@@ -12,6 +12,22 @@ const API_ENDPOINTS = {
   PRODUCTS: PRODUCTS_API
 } as const;
 
+export interface ProductQueryOptions {
+  skip?: number;
+  limit?: number;
+  q?: string;
+  categoryId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'name' | string;
+}
+
+export interface ProductsResponse {
+  items: Product[];
+  total: number;
+}
+
 /**
  * ProductService - Backend API Integration
  * URL configured in src/environments/environment.ts
@@ -45,11 +61,52 @@ export class ProductService {
     this.productMap.clear();
   }
 
+  private buildProductQueryParams(options: ProductQueryOptions): string {
+    const params = new URLSearchParams();
+    if (options.skip !== undefined && options.skip !== null) params.append('skip', options.skip.toString());
+    if (options.limit !== undefined && options.limit !== null) params.append('limit', options.limit.toString());
+    if (options.q && options.q.trim()) params.append('q', options.q.trim());
+    if (options.categoryId) params.append('category_id', options.categoryId);
+    if (options.minPrice !== undefined && options.minPrice !== null) params.append('min_price', options.minPrice.toString());
+    if (options.maxPrice !== undefined && options.maxPrice !== null) params.append('max_price', options.maxPrice.toString());
+    if (options.inStock !== undefined && options.inStock !== null) params.append('in_stock', options.inStock.toString());
+    if (options.sort) params.append('sort', options.sort);
+    const qs = params.toString();
+    return qs ? `?${qs}` : '';
+  }
+
+  /**
+   * Get products with unpaginated total count from X-Total-Count header.
+   * Leverages backend server-side search, category filter, price filter, stock filter, and sort.
+   */
+  getProductsWithCount(options: ProductQueryOptions = {}): Observable<ProductsResponse> {
+    const qs = this.buildProductQueryParams(options);
+    return this.apiService.getResponse<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${qs}`).pipe(
+      map(res => {
+        const items = (res.body || []).map(p => this.mapBackendToFrontend(p));
+        const totalHeader = res.headers.get('x-total-count') || res.headers.get('X-Total-Count');
+        const total = totalHeader ? parseInt(totalHeader, 10) : items.length;
+        return { items, total };
+      })
+    );
+  }
+
   /**
    * Get all products from backend
    * GET /products
    */
-  getProducts(skip = 0, limit = 100, categoryId?: string | number, forceRefresh = false): Observable<Product[]> {
+  getProducts(
+    optionsOrSkip: ProductQueryOptions | number = 0,
+    limit = 100,
+    categoryId?: string | number,
+    forceRefresh = false
+  ): Observable<Product[]> {
+    if (typeof optionsOrSkip === 'object') {
+      return this.getProductsWithCount(optionsOrSkip).pipe(map(res => res.items));
+    }
+
+    const skip = optionsOrSkip;
+
     if (!forceRefresh && !categoryId && this.productsCache) {
       return of(this.productsCache);
     }
@@ -635,6 +692,7 @@ export class ProductService {
       id: data.id?.toString() || '',
       code: data.code || `PROD-${data.id}`,
       name: data.name || '',
+      slug: data.slug || undefined,
       description: data.description ? this.decodeHtml(data.description) : '',
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
       cost: cost,

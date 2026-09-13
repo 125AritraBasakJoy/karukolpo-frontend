@@ -1,0 +1,282 @@
+/* ===== 58mm THERMAL POS BILLING INVOICE STYLES ===== */
+
+.thermal-receipt-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding: 8px 0;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+/* 58mm Paper Container */
+.thermal-receipt {
+  width: 58mm;
+  max-width: 58mm;
+  min-width: 54mm;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: 'Courier New', Courier, Consolas, monospace, sans-serif;
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 4mm 3mm;
+  box-sizing: border-box;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  border-radius: 2px;
+  border: 1px solid #d1d5db;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  /* Force pure black & white on everything inside */
+  * {
+    color: #000000;
+    border-color: #000000;
+    box-sizing: border-box;
+  }
+}
+
+/* Header & Logo */
+.receipt-header {
+  text-align: center;
+  margin-bottom: 4px;
+
+  .receipt-logo {
+    display: block;
+    max-width: 38mm;
+    max-height: 38mm;
+    margin: 0 auto 4px auto;
+    object-fit: contain;
+    /* High contrast black and white conversion for thermal heads */
+    filter: grayscale(100%) contrast(175%) brightness(95%);
+  }
+
+  .store-name {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin: 2px 0 1px 0;
+  }
+
+  .store-info {
+    font-size: 9.5px;
+    line-height: 1.25;
+  }
+}
+
+.receipt-type-title {
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  margin: 3px 0;
+}
+
+/* Dividers */
+.thermal-divider {
+  border-top: 1px dashed #000000;
+  margin: 4px 0;
+  width: 100%;
+}
+
+.thermal-divider-double {
+  border-top: 2px solid #000000;
+  margin: 5px 0;
+  width: 100%;
+}
+
+/* Metadata Rows */
+.meta-section {
+  font-size: 10px;
+  margin: 2px 0;
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2px;
+
+    .meta-label {
+      font-size: 9.5px;
+    }
+
+    .meta-val {
+      text-align: right;
+    }
+  }
+}
+
+/* Customer Section */
+.customer-section {
+  font-size: 10px;
+  margin: 2px 0;
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2px;
+
+    .address-text {
+      max-width: 32mm;
+      word-break: break-word;
+    }
+  }
+}
+
+/* Items Table */
+.items-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 0;
+
+  .item-hdr-name {
+    flex: 1;
+  }
+  .item-hdr-total {
+    width: 16mm;
+  }
+}
+
+.items-list {
+  .item-row {
+    margin-bottom: 5px;
+
+    .item-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      line-height: 1.2;
+      word-break: break-word;
+
+      .item-code {
+        font-weight: normal;
+        font-size: 9px;
+      }
+    }
+
+    .item-calc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 2px;
+
+      .item-calc-details {
+        font-size: 10px;
+        flex: 1;
+
+        .item-discount-pill {
+          font-size: 8.5px;
+          margin-top: 1px;
+          font-weight: 600;
+        }
+      }
+
+      .item-line-total {
+        font-size: 10.5px;
+        width: 16mm;
+        text-align: right;
+      }
+    }
+  }
+}
+
+/* Totals */
+.totals-section {
+  font-size: 10.5px;
+
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2px;
+  }
+
+  .discount-row {
+    font-weight: bold;
+  }
+
+  .grand-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    font-weight: 900;
+    margin: 3px 0;
+  }
+}
+
+/* Notes */
+.note-section {
+  font-size: 9.5px;
+  margin: 3px 0;
+
+  .note-text {
+    font-style: italic;
+    word-break: break-word;
+  }
+}
+
+/* Footer & Barcode */
+.receipt-footer {
+  margin-top: 6px;
+  text-align: center;
+
+  .barcode-container {
+    display: flex;
+    justify-content: center;
+    margin: 2px 0 4px 0;
+
+    .receipt-barcode {
+      max-width: 100%;
+      height: 32px;
+    }
+  }
+
+  .return-policy {
+    font-size: 9px;
+    margin-top: 2px;
+  }
+
+  .contact-support {
+    font-size: 9px;
+    font-weight: bold;
+    margin-top: 1px;
+  }
+}
+
+/* Helper utilities */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+.font-bold { font-weight: bold; }
+.uppercase { text-transform: uppercase; }
+.mb-1 { margin-bottom: 2px; }
+.mt-1 { margin-top: 2px; }
+
+/* Print Media Query */
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 1mm 1.5mm 3mm 1.5mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .thermal-receipt-wrapper {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .thermal-receipt {
+    width: 55mm !important;
+    max-width: 55mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}

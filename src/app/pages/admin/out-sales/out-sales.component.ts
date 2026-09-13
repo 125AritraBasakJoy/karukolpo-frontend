@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, Inject, PLATFORM_ID, ViewChildren, QueryList, OnDestroy } from '@angular/core';
+import { Component, OnInit, signal, Inject, PLATFORM_ID, ViewChildren, QueryList, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule, isPlatformBrowser, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -11,9 +11,12 @@ import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule, Calendar } from 'primeng/calendar';
 import { MessageService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
+import { DialogModule } from 'primeng/dialog';
 import { OutSalesService, ProductService } from '../../../core/services';
 import { Product } from '../../../models/product.model';
+import { Order } from '../../../models/order.model';
 import { District, districts } from '../../../data/bangladesh-data';
+import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/thermal-invoice.component';
 import { finalize } from 'rxjs/operators';
 
 interface SaleItemRow {
@@ -48,18 +51,27 @@ const PAYMENT_METHODS = [
     DropdownModule,
     CalendarModule,
     CurrencyPipe,
-    RippleModule
+    RippleModule,
+    DialogModule,
+    ThermalInvoiceComponent
   ],
   templateUrl: './out-sales.component.html',
   styleUrls: ['./out-sales.component.scss', '../admin-styles.scss']
 })
 export class OutSalesComponent implements OnInit, OnDestroy {
   @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
+  @ViewChild('thermalInvoice') thermalInvoice?: ThermalInvoiceComponent;
   private scrollListener: any;
 
   products = signal<Product[]>([]);
   productsLoading = signal<boolean>(false);
   saving = signal<boolean>(false);
+
+  // Thermal Receipt Modals State
+  askPrintModalVisible = signal<boolean>(false);
+  thermalPreviewModalVisible = signal<boolean>(false);
+  recordedSaleForInvoice = signal<any>(null);
+  isDownloadingThermal = signal<boolean>(false);
 
   items: SaleItemRow[] = [];
   paymentMethod = 'cash';
@@ -314,6 +326,47 @@ export class OutSalesComponent implements OnInit, OnDestroy {
 
     const hasCustomerInfo = this.customer.name || this.customer.phone || this.customer.district || this.customer.subdistrict || this.customer.address_line;
 
+    // Capture complete snapshot from form with resolved product details & discounts
+    const snapshotItems = this.items.map(item => {
+      const prod = this.findProduct(item.product_id);
+      const regPrice = this.getItemRegularPrice(item);
+      const disc = this.getItemDiscount(item);
+      return {
+        product_id: item.product_id!,
+        product: prod ? {
+          ...prod,
+          name: prod.name,
+          code: prod.code,
+          price: regPrice,
+          effective_price: item.unit_price
+        } : { name: 'Item', code: '' },
+        quantity: item.quantity,
+        unit_price: item.unit_price || 0,
+        regular_price: regPrice,
+        discount: disc,
+        price: item.unit_price || 0,
+        price_at_purchase: item.unit_price || 0,
+        name: prod?.name || 'Item'
+      };
+    });
+
+    const fullSaleSnapshot = {
+      fullName: this.customer.name || '',
+      phoneNumber: this.customer.phone || '',
+      district: this.customer.district || '',
+      subDistrict: this.customer.subdistrict || '',
+      fullAddress: this.customer.address_line || '',
+      paymentMethod: this.paymentMethod,
+      orderDate: this.soldAt ? new Date(this.soldAt) : new Date(),
+      deliveryCharge: this.deliveryCharge || 0,
+      subtotal: this.subtotal,
+      discountAmount: this.totalDiscount,
+      totalAmount: this.grandTotal,
+      note: this.note.trim() || null,
+      source: this.source.trim() || null,
+      items: snapshotItems
+    };
+
     const payload = {
       items: this.items.map(item => ({
         product_id: item.product_id!,
@@ -342,14 +395,57 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     this.outSalesService.createSale(payload).pipe(
       finalize(() => this.saving.set(false))
     ).subscribe({
-      next: () => {
-        this.messageService.add({ life: 3000, severity: 'success', summary: 'Sale Recorded', detail: 'Offline sale has been recorded.' });
-        this.resetForm();
+      next: (createdSale) => {
+        this.messageService.add({ life: 3000, severity: 'success', summary: 'Sale Recorded', detail: 'Offline sale has been recorded successfully.' });
+        
+        // Merge backend response with our rich form snapshot
+        const mergedData = {
+          ...fullSaleSnapshot,
+          ...createdSale,
+          id: createdSale?.id || createdSale?.orderNumber || '0',
+          orderNumber: createdSale?.orderNumber || (createdSale as any)?.order_number || '',
+          items: snapshotItems
+        };
+        this.recordedSaleForInvoice.set(mergedData);
+
+        // Open prompt dialog: "Would you like to print invoice?"
+        this.askPrintModalVisible.set(true);
       },
       error: (err) => {
         console.error('Failed to record sale', err);
         this.messageService.add({ life: 5000, severity: 'error', summary: 'Sale Failed', detail: this.extractErrorDetail(err) });
       }
     });
+  }
+
+  confirmPrintPrompt() {
+    this.askPrintModalVisible.set(false);
+    this.thermalPreviewModalVisible.set(true);
+  }
+
+  declinePrintPrompt() {
+    this.askPrintModalVisible.set(false);
+    this.resetForm();
+  }
+
+  async onDownloadThermalInvoice() {
+    if (this.isDownloadingThermal()) return;
+    this.isDownloadingThermal.set(true);
+    try {
+      await this.thermalInvoice?.downloadReceipt();
+    } finally {
+      this.isDownloadingThermal.set(false);
+    }
+  }
+
+  onPrintThermalInvoice() {
+    this.thermalInvoice?.printReceipt();
+    this.thermalPreviewModalVisible.set(false);
+    this.resetForm();
+  }
+
+  onCloseThermalPreview() {
+    this.thermalPreviewModalVisible.set(false);
+    this.resetForm();
   }
 }

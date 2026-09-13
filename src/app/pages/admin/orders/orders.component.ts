@@ -778,7 +778,7 @@ export class OrdersComponent implements OnInit {
     this.ensureProductDetails(order).subscribe({
       next: (finalOrder: Order) => {
         // Map order data to common invoice format
-        this.invoiceOrderData.set({
+        const invoiceData = {
           items: finalOrder.items || [],
           snapshot: {
             fullName: finalOrder.address?.full_name || finalOrder.fullName,
@@ -795,29 +795,27 @@ export class OrdersComponent implements OnInit {
           discount: finalOrder.discountAmount || 0,
           id: orderIdStr,
           orderNumber: finalOrder.orderNumber || orderIdStr
-        });
+        };
+        this.invoiceOrderData.set(invoiceData);
 
-        // Use a small timeout to let Angular update the inputs on the hidden app-invoice
-        setTimeout(() => {
-          this.adminInvoice.downloadReceipt().then(() => {
-            this.downloadingOrderId.set(null);
-            this.messageService.add({
-              life: 2000,
-              severity: 'success',
-              summary: 'Success',
-              detail: `Invoice for Order ${finalOrder.orderNumber || finalOrder.id} downloaded.`
-            });
-          }).catch(err => {
-            console.error('Admin Invoice download failed:', err);
-            this.downloadingOrderId.set(null);
-            this.messageService.add({
-              life: 2000,
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to generate PDF.'
-            });
+        this.adminInvoice.downloadReceipt(invoiceData).then(() => {
+          this.downloadingOrderId.set(null);
+          this.messageService.add({
+            life: 2000,
+            severity: 'success',
+            summary: 'Success',
+            detail: `Invoice for Order ${finalOrder.orderNumber || finalOrder.id} downloaded.`
           });
-        }, 300); // Slightly longer timeout for full data sync
+        }).catch(err => {
+          console.error('Admin Invoice download failed:', err);
+          this.downloadingOrderId.set(null);
+          this.messageService.add({
+            life: 2000,
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to generate PDF.'
+          });
+        });
       },
       error: (err: any) => {
         console.error('Failed to ensure product details for invoice', err);

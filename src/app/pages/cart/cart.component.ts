@@ -15,6 +15,7 @@ import { lastValueFrom } from 'rxjs';
 import { CartService } from '../../core/services/cart/cart.service';
 import { OrderService } from '../../core/services/order/order.service';
 import { ProductService } from '../../core/services/product/product.service';
+import { JourneyService } from '../../core/services/tracking/journey.service';
 import { CartItem } from '../../models/cart.model';
 import { districts, District } from '../../data/bangladesh-data';
 
@@ -91,6 +92,7 @@ export class CartComponent implements OnInit, OnDestroy {
         private orderService: OrderService,
         private productService: ProductService,
         private messageService: MessageService,
+        private journeyService: JourneyService,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
     ) { }
@@ -251,6 +253,7 @@ export class CartComponent implements OnInit, OnDestroy {
         }
 
         this.showPaymentSection = true;
+        this.journeyService.track('begin_checkout');
         this.selectedPaymentMethod = null;
         this.bkashPhone = this.checkoutForm.phoneNumber;
         this.placedOrderId = '';

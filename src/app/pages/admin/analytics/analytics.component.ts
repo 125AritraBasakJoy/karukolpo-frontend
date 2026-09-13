@@ -12,11 +12,15 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TimelineModule } from 'primeng/timeline';
+import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
+import { InputTextModule } from 'primeng/inputtext';
 
 import { AnalyticsService, ProductService, TrackingService } from '../../../core/services';
 import * as Models from '../../../models/analytics.model';
 
-type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic';
+type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic' | 'journey';
 
 @Component({
   selector: 'app-analytics',
@@ -31,7 +35,11 @@ type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic'
     SkeletonModule,
     DropdownModule,
     ButtonModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    TimelineModule,
+    DialogModule,
+    TooltipModule,
+    InputTextModule
   ],
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.scss', '../admin-styles.scss']
@@ -58,7 +66,8 @@ export class AnalyticsComponent implements OnInit {
     sales: signal<boolean>(false),
     customers: signal<boolean>(false),
     inventory: signal<boolean>(false),
-    traffic: signal<boolean>(false)
+    traffic: signal<boolean>(false),
+    journey: signal<boolean>(false)
   };
 
   // Data Stores
@@ -86,6 +95,41 @@ export class AnalyticsComponent implements OnInit {
   trafficGeo = signal<Models.TrafficGeoResponse | null>(null);
   trafficConversion = signal<Models.TrafficConversionResponse | null>(null);
   visitEvents = signal<any[]>([]);
+
+  // Customer Journey Stores
+  journeyFunnel = signal<Models.JourneyFunnelResponse | null>(null);
+  journeyProductInterest = signal<Models.ProductInterestRow[]>([]);
+  journeyAbandonedCarts = signal<Models.AbandonedCartsResponse | null>(null);
+  selectedDeviceJourney = signal<Models.JourneyEventRead[]>([]);
+  selectedDeviceHash = signal<string>('');
+  displayDeviceTimelineModal = signal<boolean>(false);
+  deviceSearchInput = signal<string>('');
+  timelineLoading = signal<boolean>(false);
+  timelineError = signal<string | null>(null);
+  deviceCopied = signal<boolean>(false);
+  productInterestLimit = signal<number>(20);
+  abandonedCartsLimit = signal<number>(50);
+
+  // Customer Journey Computed Metrics
+  landedStage = computed(() => this.journeyFunnel()?.stages?.find(s => s.stage === 'landed') ?? null);
+  viewedProductStage = computed(() => this.journeyFunnel()?.stages?.find(s => s.stage === 'viewed_product') ?? null);
+  addedToCartStage = computed(() => this.journeyFunnel()?.stages?.find(s => s.stage === 'added_to_cart') ?? null);
+  beganCheckoutStage = computed(() => this.journeyFunnel()?.stages?.find(s => s.stage === 'began_checkout') ?? null);
+  purchasedStage = computed(() => this.journeyFunnel()?.stages?.find(s => s.stage === 'purchased') ?? null);
+
+  cartCloseRate = computed(() => {
+    const cart = this.addedToCartStage()?.devices || 0;
+    const purchased = this.purchasedStage()?.devices || 0;
+    if (cart === 0) return 0;
+    return Math.min(100, (purchased / cart) * 100);
+  });
+
+  funnelDropoffRate = computed(() => {
+    const landed = this.landedStage()?.devices || 0;
+    const purchased = this.purchasedStage()?.devices || 0;
+    if (landed === 0) return 0;
+    return Math.max(0, 100 - (purchased / landed) * 100);
+  });
 
   // Visitor Log Filters & Search
   visitorSearchQuery = signal<string>('');
@@ -228,6 +272,9 @@ export class AnalyticsComponent implements OnInit {
         break;
       case 'traffic':
         this.fetchTrafficTab(period);
+        break;
+      case 'journey':
+        this.fetchJourneyTab(period);
         break;
     }
   }
@@ -721,6 +768,36 @@ export class AnalyticsComponent implements OnInit {
       this.visitEvents.set(res.visits || []);
 
       this.buildTrafficCharts();
+    });
+  }
+
+  private fetchJourneyTab(period: string): void {
+    this.loadingStates.journey.set(true);
+    forkJoin({
+      funnel: this.analyticsService.getJourneyFunnel(period).pipe(catchError(() => of(null))),
+      productInterest: this.analyticsService.getJourneyProductInterest(period, this.productInterestLimit()).pipe(catchError(() => of(null))),
+      abandonedCarts: this.analyticsService.getJourneyAbandonedCarts(period, this.abandonedCartsLimit()).pipe(catchError(() => of(null)))
+    })
+    .pipe(finalize(() => this.loadingStates.journey.set(false)))
+    .subscribe(res => {
+      if (res.funnel) {
+        this.journeyFunnel.set(res.funnel);
+        this.buildJourneyFunnelChart(res.funnel);
+      } else {
+        this.journeyFunnel.set(null);
+      }
+
+      if (res.productInterest && res.productInterest.products) {
+        this.journeyProductInterest.set(res.productInterest.products);
+      } else {
+        this.journeyProductInterest.set([]);
+      }
+
+      if (res.abandonedCarts) {
+        this.journeyAbandonedCarts.set(res.abandonedCarts);
+      } else {
+        this.journeyAbandonedCarts.set(null);
+      }
     });
   }
 
@@ -1228,5 +1305,245 @@ export class AnalyticsComponent implements OnInit {
         }
       }
     };
+  }
+
+  private buildJourneyFunnelChart(funnel: Models.JourneyFunnelResponse): void {
+    if (!funnel || !funnel.stages || funnel.stages.length === 0) return;
+
+    const stageLabelMap: Record<string, string> = {
+      landed: 'Landed (Storefront)',
+      viewed_product: 'Viewed Product',
+      added_to_cart: 'Added to Cart',
+      began_checkout: 'Began Checkout',
+      purchased: 'Completed Purchase'
+    };
+
+    const bgColors = [
+      'rgba(59, 130, 246, 0.75)',  // Landed - Blue
+      'rgba(168, 85, 247, 0.75)', // Viewed - Purple
+      'rgba(6, 182, 212, 0.75)',   // Added to Cart - Cyan
+      'rgba(245, 158, 11, 0.75)',  // Began Checkout - Amber
+      'rgba(16, 185, 129, 0.75)'   // Purchased - Emerald Green
+    ];
+
+    const borderColors = [
+      '#60a5fa',
+      '#c084fc',
+      '#22d3ee',
+      '#fbbf24',
+      '#34d399'
+    ];
+
+    const labels = funnel.stages.map(s => stageLabelMap[s.stage] || s.stage);
+    const dataValues = funnel.stages.map(s => s.devices);
+
+    this.charts['journeyFunnelChart'] = {
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Unique Devices',
+          data: dataValues,
+          backgroundColor: bgColors,
+          borderColor: borderColors,
+          borderWidth: 1.5,
+          borderRadius: 8,
+          borderSkipped: false,
+          barThickness: 16,
+          maxBarThickness: 18,
+          barPercentage: 0.5,
+          categoryPercentage: 0.75
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { top: 8, bottom: 8, left: 4, right: 16 }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleColor: '#fff',
+            bodyColor: '#cbd5e1',
+            titleFont: { family: 'Inter, sans-serif', weight: 'bold', size: 12 },
+            bodyFont: { family: 'Inter, sans-serif', size: 11 },
+            padding: 12,
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            borderWidth: 1,
+            cornerRadius: 10,
+            displayColors: true,
+            boxPadding: 4,
+            callbacks: {
+              label: (context: any) => {
+                const stage = funnel.stages[context.dataIndex];
+                if (!stage) return `${context.parsed.x} devices`;
+                const lines = [`  Devices: ${stage.devices.toLocaleString()}`];
+                lines.push(`  Retained from Landed: ${stage.pct_of_landed.toFixed(1)}%`);
+                if (stage.pct_of_previous !== null && stage.pct_of_previous !== undefined) {
+                  lines.push(`  Step Survival: ${stage.pct_of_previous.toFixed(1)}%`);
+                }
+                return lines;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.04)',
+              borderDash: [4, 4]
+            },
+            ticks: {
+              color: '#94a3b8',
+              font: { size: 11, family: 'Inter, sans-serif' },
+              precision: 0,
+              stepSize: 1
+            },
+            beginAtZero: true
+          },
+          y: {
+            grid: { display: false },
+            ticks: {
+              color: '#f8fafc',
+              font: { size: 12, family: 'Inter, sans-serif', weight: '600' },
+              padding: 8
+            }
+          }
+        }
+      }
+    };
+  }
+
+  // --- DEVICE JOURNEY INSPECTION ---
+
+  inspectDeviceJourney(deviceIdHash: string): void {
+    if (!deviceIdHash) return;
+    const cleanHash = deviceIdHash.trim();
+    this.selectedDeviceHash.set(cleanHash);
+    this.deviceSearchInput.set(cleanHash);
+    this.displayDeviceTimelineModal.set(true);
+    this.loadDeviceTimeline(cleanHash);
+  }
+
+  loadDeviceTimeline(hash: string): void {
+    const trimmed = (hash || '').trim();
+    if (!trimmed || trimmed.length !== 64) {
+      this.timelineError.set('Device ID hash must be exactly a 64-character SHA-256 hex string.');
+      this.selectedDeviceJourney.set([]);
+      return;
+    }
+
+    this.timelineLoading.set(true);
+    this.timelineError.set(null);
+    this.selectedDeviceHash.set(trimmed);
+
+    this.analyticsService.getDeviceJourney(trimmed, 200)
+      .pipe(finalize(() => this.timelineLoading.set(false)))
+      .subscribe({
+        next: (events) => {
+          this.selectedDeviceJourney.set(events || []);
+          if (!events || events.length === 0) {
+            this.timelineError.set('No journey events recorded for this device hash in the retention window.');
+          }
+        },
+        error: (err) => {
+          console.error('Failed to load device journey:', err);
+          this.timelineError.set(err?.error?.detail || 'Failed to load device journey trail.');
+          this.selectedDeviceJourney.set([]);
+        }
+      });
+  }
+
+  copyToClipboard(text: string): void {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.deviceCopied.set(true);
+        setTimeout(() => this.deviceCopied.set(false), 2000);
+      });
+    }
+  }
+
+  getJourneyEventIcon(event: string): string {
+    switch (event) {
+      case 'page_view': return 'pi pi-compass text-blue-400';
+      case 'view_product': return 'pi pi-eye text-purple-400';
+      case 'add_to_cart': return 'pi pi-shopping-cart text-cyan-400';
+      case 'remove_from_cart': return 'pi pi-trash text-orange-400';
+      case 'begin_checkout': return 'pi pi-credit-card text-amber-400';
+      case 'purchase': return 'pi pi-check-circle text-emerald-400';
+      default: return 'pi pi-circle text-slate-400';
+    }
+  }
+
+  getJourneyEventBadgeClass(event: string): string {
+    switch (event) {
+      case 'page_view': return 'glass-badge glass-badge-blue';
+      case 'view_product': return 'glass-badge glass-badge-purple';
+      case 'add_to_cart': return 'glass-badge glass-badge-teal';
+      case 'remove_from_cart': return 'glass-badge glass-badge-orange';
+      case 'begin_checkout': return 'glass-badge glass-badge-amber';
+      case 'purchase': return 'glass-badge glass-badge-green';
+      default: return 'glass-badge glass-badge-grey';
+    }
+  }
+
+  getJourneyStageIcon(stage: string): string {
+    switch (stage) {
+      case 'landed': return 'pi pi-compass';
+      case 'viewed_product': return 'pi pi-eye';
+      case 'added_to_cart': return 'pi pi-shopping-cart';
+      case 'began_checkout': return 'pi pi-credit-card';
+      case 'purchased': return 'pi pi-check-circle';
+      default: return 'pi pi-arrow-right';
+    }
+  }
+
+  getJourneyStageColor(stage: string): string {
+    switch (stage) {
+      case 'landed': return '#3b82f6';
+      case 'viewed_product': return '#a855f7';
+      case 'added_to_cart': return '#06b6d4';
+      case 'began_checkout': return '#f59e0b';
+      case 'purchased': return '#10b981';
+      default: return '#94a3b8';
+    }
+  }
+
+  getJourneyEventMarkerClass(event: string): string {
+    switch (event) {
+      case 'page_view': return 'marker-page-view';
+      case 'view_product': return 'marker-view-product';
+      case 'add_to_cart': return 'marker-add-to-cart';
+      case 'remove_from_cart': return 'marker-remove-from-cart';
+      case 'begin_checkout': return 'marker-begin-checkout';
+      case 'purchase': return 'marker-purchase';
+      default: return 'marker-default';
+    }
+  }
+
+  getJourneyEventBorderClass(event: string): string {
+    switch (event) {
+      case 'page_view': return 'border-glow-page-view';
+      case 'view_product': return 'border-glow-view-product';
+      case 'add_to_cart': return 'border-glow-add-to-cart';
+      case 'remove_from_cart': return 'border-glow-remove-from-cart';
+      case 'begin_checkout': return 'border-glow-begin-checkout';
+      case 'purchase': return 'border-glow-purchase';
+      default: return '';
+    }
+  }
+
+  getJourneyEventLabel(event: string): string {
+    switch (event) {
+      case 'page_view': return 'Page View';
+      case 'view_product': return 'Viewed Product';
+      case 'add_to_cart': return 'Added To Cart';
+      case 'remove_from_cart': return 'Removed From Cart';
+      case 'begin_checkout': return 'Began Checkout';
+      case 'purchase': return 'Order Placed';
+      default: return (event || '').replace(/_/g, ' ');
+    }
   }
 }

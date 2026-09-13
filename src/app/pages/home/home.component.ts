@@ -374,7 +374,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     showProductDetails(product: Product) {
         // Navigate to product details page instead of modal
-        this.router.navigate(['/products', product.id]);
+        this.router.navigate(['/products', product.slug || product.id]);
     }
 
     addToCart(product: Product) {

@@ -16,7 +16,7 @@
           [ngModel]="selectedPeriod()"
           (ngModelChange)="setPeriod($event)"
           styleClass="premium-dropdown"
-          [disabled]="loadingStates.overview() || loadingStates.sales() || loadingStates.customers() || loadingStates.inventory() || loadingStates.traffic()"
+          [disabled]="loadingStates.overview() || loadingStates.sales() || loadingStates.customers() || loadingStates.inventory() || loadingStates.traffic() || loadingStates.journey()"
         ></p-dropdown>
       </div>
     </div>
@@ -59,6 +59,13 @@
         (click)="setTab('traffic')"
       >
         <i class="pi pi-globe mr-2"></i>Traffic & Marketing
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'journey'" 
+        (click)="setTab('journey')"
+      >
+        <i class="pi pi-compass mr-2"></i>Customer Journey
       </button>
     </div>
   </div>
@@ -1019,6 +1026,663 @@
         }
       </div>
     }
+
+    <!-- 6. CUSTOMER JOURNEY TAB -->
+    @if (activeTab() === 'journey') {
+      <div class="tab-pane animate-fade-in">
+
+        <!-- Skeletons while loading -->
+        @if (loadingStates.journey()) {
+          <div class="grid mb-4">
+            <div class="col-12 sm:col-6 md:col-4 xl:col" *ngFor="let i of [1,2,3,4,5]">
+              <p-card styleClass="premium-card">
+                <p-skeleton width="60%" styleClass="mb-2"></p-skeleton>
+                <p-skeleton width="80%" height="2rem" styleClass="mb-2"></p-skeleton>
+                <p-skeleton width="40%"></p-skeleton>
+              </p-card>
+            </div>
+          </div>
+          <div class="grid mb-4">
+            <div class="col-12 lg:col-7">
+              <p-card styleClass="premium-card">
+                <p-skeleton width="40%" height="1.5rem" styleClass="mb-3"></p-skeleton>
+                <p-skeleton height="280px"></p-skeleton>
+              </p-card>
+            </div>
+            <div class="col-12 lg:col-5">
+              <p-card styleClass="premium-card">
+                <p-skeleton width="50%" height="1.5rem" styleClass="mb-3"></p-skeleton>
+                <p-skeleton height="280px"></p-skeleton>
+              </p-card>
+            </div>
+          </div>
+        } @else {
+          <!-- Journey KPI Summary Cards -->
+          <div class="funnel-kpi-grid mb-4">
+            <!-- Stage 1: Landed -->
+            <div class="funnel-kpi-col">
+              <div class="premium-stat-card funnel-kpi-card bg-glow-blue h-full">
+                <div>
+                  <div class="flex justify-content-between align-items-center mb-1">
+                    <span class="label">1. Landed Storefront</span>
+                    <div class="icon-wrap blue"><i class="pi pi-compass"></i></div>
+                  </div>
+                  <div class="value">{{ (landedStage()?.devices || 0) | number }}</div>
+                </div>
+                <div class="funnel-kpi-footer">
+                  <span class="glass-badge glass-badge-blue font-bold text-2xs px-2 py-0.5">Top of Funnel</span>
+                  <span class="footer-metric-text">100% baseline</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage 2: Viewed Product -->
+            <div class="funnel-kpi-col">
+              <div class="premium-stat-card funnel-kpi-card bg-glow-purple h-full">
+                <div>
+                  <div class="flex justify-content-between align-items-center mb-1">
+                    <span class="label">2. Viewed Product</span>
+                    <div class="icon-wrap purple"><i class="pi pi-eye"></i></div>
+                  </div>
+                  <div class="value">{{ (viewedProductStage()?.devices || 0) | number }}</div>
+                </div>
+                <div class="funnel-kpi-footer">
+                  <span class="glass-badge glass-badge-purple font-bold text-2xs px-2 py-0.5">{{ (viewedProductStage()?.pct_of_landed || 0) | number:'1.1-1' }}% of Landed</span>
+                  <span class="footer-metric-text" *ngIf="viewedProductStage()?.pct_of_previous !== null">({{ viewedProductStage()?.pct_of_previous | number:'1.1-1' }}% survival)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage 3: Added to Cart -->
+            <div class="funnel-kpi-col">
+              <div class="premium-stat-card funnel-kpi-card bg-glow-teal h-full">
+                <div>
+                  <div class="flex justify-content-between align-items-center mb-1">
+                    <span class="label">3. Added to Cart</span>
+                    <div class="icon-wrap teal"><i class="pi pi-shopping-cart"></i></div>
+                  </div>
+                  <div class="value">{{ (addedToCartStage()?.devices || 0) | number }}</div>
+                </div>
+                <div class="funnel-kpi-footer">
+                  <span class="glass-badge glass-badge-teal font-bold text-2xs px-2 py-0.5">{{ (addedToCartStage()?.pct_of_landed || 0) | number:'1.1-1' }}% of Landed</span>
+                  <span class="footer-metric-text" *ngIf="addedToCartStage()?.pct_of_previous !== null">({{ addedToCartStage()?.pct_of_previous | number:'1.1-1' }}% survival)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage 4: Began Checkout -->
+            <div class="funnel-kpi-col">
+              <div class="premium-stat-card funnel-kpi-card bg-glow-amber h-full">
+                <div>
+                  <div class="flex justify-content-between align-items-center mb-1">
+                    <span class="label">4. Began Checkout</span>
+                    <div class="icon-wrap amber"><i class="pi pi-credit-card"></i></div>
+                  </div>
+                  <div class="value">{{ (beganCheckoutStage()?.devices || 0) | number }}</div>
+                </div>
+                <div class="funnel-kpi-footer">
+                  <span class="glass-badge glass-badge-amber font-bold text-2xs px-2 py-0.5">{{ (beganCheckoutStage()?.pct_of_landed || 0) | number:'1.1-1' }}% of Landed</span>
+                  <span class="footer-metric-text" *ngIf="beganCheckoutStage()?.pct_of_previous !== null">({{ beganCheckoutStage()?.pct_of_previous | number:'1.1-1' }}% survival)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage 5: Purchased -->
+            <div class="funnel-kpi-col">
+              <div class="premium-stat-card funnel-kpi-card bg-glow-green h-full">
+                <div>
+                  <div class="flex justify-content-between align-items-center mb-1">
+                    <span class="label">5. Purchased</span>
+                    <div class="icon-wrap green"><i class="pi pi-check-circle"></i></div>
+                  </div>
+                  <div class="value">{{ (purchasedStage()?.devices || 0) | number }}</div>
+                </div>
+                <div class="funnel-kpi-footer">
+                  <span class="glass-badge glass-badge-green font-bold text-2xs px-2 py-0.5">{{ (purchasedStage()?.pct_of_landed || 0) | number:'1.1-1' }}% Conversion</span>
+                  <span class="footer-metric-text" *ngIf="purchasedStage()?.pct_of_previous !== null">({{ purchasedStage()?.pct_of_previous | number:'1.1-1' }}% close)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Explanatory note badge if provided by backend -->
+          <div *ngIf="journeyFunnel()?.note" class="glass-card p-3 mb-4 flex align-items-center gap-2 text-xs text-color-secondary border-left-3 border-blue-500">
+            <i class="pi pi-info-circle text-blue-400 text-base"></i>
+            <span>{{ journeyFunnel()?.note }}</span>
+          </div>
+
+          <!-- Funnel Visualization & Step Survival Analysis -->
+          <div class="grid mb-4">
+            <!-- Left: Horizontal Funnel Chart -->
+            <div class="col-12 lg:col-7">
+              <p-card styleClass="premium-card funnel-chart-card h-full flex flex-column justify-content-between">
+                <ng-template pTemplate="header">
+                  <div class="card-header flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-2 p-3 border-bottom-1 border-white-alpha-10">
+                    <div>
+                      <h3 class="m-0 text-base font-bold text-white flex align-items-center gap-2">
+                        <i class="pi pi-filter text-blue-400"></i>
+                        Conversion Funnel Progression
+                      </h3>
+                      <p class="m-0 text-xs text-color-secondary mt-1">
+                        Unique devices progressing from initial landing to final purchase.
+                      </p>
+                    </div>
+                    <div class="flex align-items-center gap-2 flex-wrap">
+                      <span class="glass-badge glass-badge-green font-bold text-xs px-2.5 py-1">
+                        <i class="pi pi-check mr-1"></i>{{ (purchasedStage()?.pct_of_landed || 0) | number:'1.1-1' }}% Conversion
+                      </span>
+                      <span class="glass-badge glass-badge-blue text-xs font-semibold px-2 py-1">
+                        {{ (landedStage()?.devices || 0) }} Visitors
+                      </span>
+                    </div>
+                  </div>
+                </ng-template>
+
+                <!-- Chart Area -->
+                <div class="chart-container" style="position: relative; height: 260px;">
+                  <p-chart 
+                    *ngIf="charts['journeyFunnelChart']" 
+                    type="bar" 
+                    [data]="charts['journeyFunnelChart'].data" 
+                    [options]="charts['journeyFunnelChart'].options"
+                  ></p-chart>
+                  <div *ngIf="!charts['journeyFunnelChart']" class="flex flex-column align-items-center justify-content-center h-full text-color-secondary">
+                    <i class="pi pi-chart-bar text-3xl mb-2 text-slate-600"></i>
+                    <span>No funnel events recorded for {{ selectedPeriod() }}</span>
+                  </div>
+                </div>
+
+                <!-- Executive Funnel Metrics Strip (Maintains clean gaps and card balance) -->
+                <div class="funnel-metrics-strip grid gap-2 md:gap-3 mt-3 pt-3 border-top-1 border-white-alpha-10">
+                  <div class="col funnel-metric-item p-3 border-round-xl">
+                    <div class="metric-title text-3xs font-bold text-slate-400 uppercase tracking-wider mb-1">End-to-End Conversion</div>
+                    <div class="metric-val text-xl md:text-2xl font-bold text-emerald-400 font-mono">
+                      {{ (purchasedStage()?.pct_of_landed || 0) | number:'1.1-1' }}%
+                    </div>
+                    <div class="metric-sub text-3xs text-slate-500 mt-1">
+                      {{ (purchasedStage()?.devices || 0) }} of {{ (landedStage()?.devices || 0) }} converted
+                    </div>
+                  </div>
+
+                  <div class="col funnel-metric-item p-3 border-round-xl">
+                    <div class="metric-title text-3xs font-bold text-slate-400 uppercase tracking-wider mb-1">Cart Completion Rate</div>
+                    <div class="metric-val text-xl md:text-2xl font-bold text-cyan-400 font-mono">
+                      {{ cartCloseRate() | number:'1.1-1' }}%
+                    </div>
+                    <div class="metric-sub text-3xs text-slate-500 mt-1">
+                      {{ (purchasedStage()?.devices || 0) }} of {{ (addedToCartStage()?.devices || 0) }} carters
+                    </div>
+                  </div>
+
+                  <div class="col funnel-metric-item p-3 border-round-xl">
+                    <div class="metric-title text-3xs font-bold text-slate-400 uppercase tracking-wider mb-1">Funnel Drop-Off</div>
+                    <div class="metric-val text-xl md:text-2xl font-bold text-rose-400 font-mono">
+                      {{ funnelDropoffRate() | number:'1.1-1' }}%
+                    </div>
+                    <div class="metric-sub text-3xs text-slate-500 mt-1">
+                      {{ (landedStage()?.devices || 0) - (purchasedStage()?.devices || 0) }} dropped out
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Funnel Progression Pipeline (Flow from Step 1 to Step 5) -->
+                <div class="funnel-pipeline-flow flex align-items-center justify-content-between gap-1 md:gap-2 mt-3 p-3 border-round-xl bg-black-alpha-30 border-1 border-white-alpha-10 overflow-x-auto">
+                  <!-- Stage 1 -->
+                  <div class="pipeline-step flex flex-column align-items-center text-center">
+                    <span class="step-dot" style="background-color: #3b82f6; box-shadow: 0 0 8px #3b82f6;"></span>
+                    <span class="step-name text-3xs font-semibold text-slate-400">Landed</span>
+                    <span class="step-count font-bold text-white font-mono text-xs">{{ (landedStage()?.devices || 0) | number }}</span>
+                  </div>
+
+                  <!-- Connector 1->2 -->
+                  <div class="pipeline-connector flex flex-column align-items-center flex-1 px-1">
+                    <div class="connector-line w-full bg-white-alpha-20 relative" style="height: 2px;"></div>
+                    <span class="connector-rate text-4xs font-bold text-purple-300 mt-1">
+                      {{ (viewedProductStage()?.pct_of_previous || 0) | number:'1.0-0' }}%
+                    </span>
+                  </div>
+
+                  <!-- Stage 2 -->
+                  <div class="pipeline-step flex flex-column align-items-center text-center">
+                    <span class="step-dot" style="background-color: #a855f7; box-shadow: 0 0 8px #a855f7;"></span>
+                    <span class="step-name text-3xs font-semibold text-slate-400">Viewed</span>
+                    <span class="step-count font-bold text-white font-mono text-xs">{{ (viewedProductStage()?.devices || 0) | number }}</span>
+                  </div>
+
+                  <!-- Connector 2->3 -->
+                  <div class="pipeline-connector flex flex-column align-items-center flex-1 px-1">
+                    <div class="connector-line w-full bg-white-alpha-20 relative" style="height: 2px;"></div>
+                    <span class="connector-rate text-4xs font-bold text-cyan-300 mt-1">
+                      {{ (addedToCartStage()?.pct_of_previous || 0) | number:'1.0-0' }}%
+                    </span>
+                  </div>
+
+                  <!-- Stage 3 -->
+                  <div class="pipeline-step flex flex-column align-items-center text-center">
+                    <span class="step-dot" style="background-color: #06b6d4; box-shadow: 0 0 8px #06b6d4;"></span>
+                    <span class="step-name text-3xs font-semibold text-slate-400">Cart</span>
+                    <span class="step-count font-bold text-white font-mono text-xs">{{ (addedToCartStage()?.devices || 0) | number }}</span>
+                  </div>
+
+                  <!-- Connector 3->4 -->
+                  <div class="pipeline-connector flex flex-column align-items-center flex-1 px-1">
+                    <div class="connector-line w-full bg-white-alpha-20 relative" style="height: 2px;"></div>
+                    <span class="connector-rate text-4xs font-bold text-amber-300 mt-1">
+                      {{ (beganCheckoutStage()?.pct_of_previous || 0) | number:'1.0-0' }}%
+                    </span>
+                  </div>
+
+                  <!-- Stage 4 -->
+                  <div class="pipeline-step flex flex-column align-items-center text-center">
+                    <span class="step-dot" style="background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
+                    <span class="step-name text-3xs font-semibold text-slate-400">Checkout</span>
+                    <span class="step-count font-bold text-white font-mono text-xs">{{ (beganCheckoutStage()?.devices || 0) | number }}</span>
+                  </div>
+
+                  <!-- Connector 4->5 -->
+                  <div class="pipeline-connector flex flex-column align-items-center flex-1 px-1">
+                    <div class="connector-line w-full bg-white-alpha-20 relative" style="height: 2px;"></div>
+                    <span class="connector-rate text-4xs font-bold text-emerald-300 mt-1">
+                      {{ (purchasedStage()?.pct_of_previous || 0) | number:'1.0-0' }}%
+                    </span>
+                  </div>
+
+                  <!-- Stage 5 -->
+                  <div class="pipeline-step flex flex-column align-items-center text-center">
+                    <span class="step-dot" style="background-color: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                    <span class="step-name text-3xs font-semibold text-slate-400">Purchased</span>
+                    <span class="step-count font-bold text-white font-mono text-xs">{{ (purchasedStage()?.devices || 0) | number }}</span>
+                  </div>
+                </div>
+
+              </p-card>
+            </div>
+
+            <!-- Right: Stage Transition & Drop-off Diagnostics -->
+            <div class="col-12 lg:col-5">
+              <p-card styleClass="premium-card h-full">
+                <ng-template pTemplate="header">
+                  <div class="card-header p-3 border-bottom-1 border-white-alpha-10">
+                    <h3 class="m-0 text-base font-bold text-white flex align-items-center gap-2">
+                      <i class="pi pi-sliders-h text-purple-400"></i>
+                      Stage Survival & Drop-Off
+                    </h3>
+                    <p class="m-0 text-xs text-color-secondary mt-1">
+                      Step-by-step conversion efficiency and dropout rates.
+                    </p>
+                  </div>
+                </ng-template>
+
+                <div class="flex flex-column gap-3 p-1">
+                  @for (stage of journeyFunnel()?.stages || []; track stage.stage; let idx = $index) {
+                    <div class="funnel-stage-node p-3 border-round-xl">
+                      <div class="flex justify-content-between align-items-center mb-2">
+                        <div class="flex align-items-center gap-2">
+                          <i [class]="getJourneyStageIcon(stage.stage)" [style.color]="getJourneyStageColor(stage.stage)"></i>
+                          <span class="text-sm font-semibold text-white capitalize">{{ stage.stage.replace('_', ' ') }}</span>
+                        </div>
+                        <span class="text-sm font-bold text-white font-mono">{{ stage.devices | number }} devices</span>
+                      </div>
+
+                      <div class="flex justify-content-between align-items-center text-xs text-color-secondary">
+                        <span>% of Landed: <strong class="text-white">{{ stage.pct_of_landed | number:'1.1-1' }}%</strong></span>
+                        @if (stage.pct_of_previous !== null && stage.pct_of_previous !== undefined) {
+                          <div class="flex align-items-center gap-2">
+                            <span class="text-emerald-400 font-semibold flex align-items-center">
+                              <i class="pi pi-arrow-right mr-1 text-2xs"></i>{{ stage.pct_of_previous | number:'1.1-1' }}% survival
+                            </span>
+                            <span class="text-rose-400 font-semibold" *ngIf="stage.pct_of_previous < 100">
+                              (-{{ (100 - stage.pct_of_previous) | number:'1.1-1' }}% drop)
+                            </span>
+                          </div>
+                        } @else {
+                          <span class="text-blue-400 font-medium">Starting Point</span>
+                        }
+                      </div>
+
+                      <!-- Progress bar of stage retention -->
+                      <div class="w-full bg-black-alpha-30 border-round-xl h-0.5rem mt-2 overflow-hidden">
+                        <div class="h-full border-round-xl transition-all transition-duration-500"
+                             [style.width.%]="stage.pct_of_landed"
+                             [style.backgroundColor]="getJourneyStageColor(stage.stage)">
+                        </div>
+                      </div>
+                    </div>
+                  } @empty {
+                    <div class="text-center py-5 text-color-secondary">
+                      <i class="pi pi-inbox text-3xl mb-2 text-slate-600 block"></i>
+                      No stage data available.
+                    </div>
+                  }
+                </div>
+              </p-card>
+            </div>
+          </div>
+
+          <!-- Product Interest Matrix & Abandoned Carts Tables -->
+          <div class="grid mb-4">
+            <!-- 1. Product Interest & Demand Matrix -->
+            <div class="col-12 lg:col-7">
+              <p-card styleClass="premium-card h-full">
+                <ng-template pTemplate="header">
+                  <div class="card-header flex justify-content-between align-items-center p-3 border-bottom-1 border-white-alpha-10">
+                    <div>
+                      <h3 class="m-0 text-base font-bold text-white flex align-items-center gap-2">
+                        <i class="pi pi-star text-amber-400"></i>
+                        Product Interest & Intent Matrix
+                      </h3>
+                      <p class="m-0 text-xs text-color-secondary mt-1">
+                        Ranked by unique visitors who inspected product details, indicating conversion intent.
+                      </p>
+                    </div>
+                    <span class="glass-badge glass-badge-blue text-xs font-semibold px-2.5 py-1">
+                      Top {{ journeyProductInterest().length }}
+                    </span>
+                  </div>
+                </ng-template>
+
+                <p-table 
+                  [value]="journeyProductInterest()" 
+                  styleClass="premium-table-ui text-xs sm:text-sm" 
+                  [responsiveLayout]="'scroll'"
+                  [paginator]="journeyProductInterest().length > 6"
+                  [rows]="6"
+                  [paginatorDropdownAppendTo]="'self'"
+                >
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-center">Viewers</th>
+                      <th class="text-center">Carters</th>
+                      <th class="text-center">Sold</th>
+                      <th class="text-center">View → Cart Rate</th>
+                      <th class="text-center">Friction / Intent</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-prod>
+                    <tr>
+                      <td>
+                        <div class="font-medium text-white max-w-14rem truncate" [title]="prod.name">
+                          {{ prod.name }}
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <span class="font-mono text-slate-200">{{ prod.viewers | number }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="font-mono text-cyan-400 font-semibold">{{ prod.carters | number }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="font-mono text-emerald-400 font-semibold">{{ prod.units_sold | number }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span class="font-mono font-bold" [ngClass]="prod.view_to_cart_pct >= 20 ? 'text-emerald-400' : (prod.view_to_cart_pct > 0 ? 'text-amber-400' : 'text-slate-500')">
+                          {{ prod.view_to_cart_pct | number:'1.1-1' }}%
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        @if (prod.view_to_cart_pct >= 25) {
+                          <span class="glass-badge glass-badge-green text-3xs font-bold px-2 py-0.5">High Intent</span>
+                        } @else if (prod.viewers >= 5 && prod.carters === 0) {
+                          <span class="glass-badge glass-badge-rose text-3xs font-bold px-2 py-0.5">Cart Friction</span>
+                        } @else if (prod.carters > 0 && prod.units_sold === 0) {
+                          <span class="glass-badge glass-badge-amber text-3xs font-bold px-2 py-0.5">Drop at Pay</span>
+                        } @else {
+                          <span class="glass-badge glass-badge-grey text-3xs font-semibold px-2 py-0.5">Normal</span>
+                        }
+                      </td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-color-secondary">
+                        No product interest events recorded in this period.
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </p-card>
+            </div>
+
+            <!-- 2. Abandoned Carts Explorer -->
+            <div class="col-12 lg:col-5">
+              <p-card styleClass="premium-card h-full">
+                <ng-template pTemplate="header">
+                  <div class="card-header flex justify-content-between align-items-center p-3 border-bottom-1 border-white-alpha-10">
+                    <div>
+                      <h3 class="m-0 text-base font-bold text-white flex align-items-center gap-2">
+                        <i class="pi pi-shopping-bag text-rose-400"></i>
+                        Abandoned Carts
+                      </h3>
+                      <p class="m-0 text-xs text-color-secondary mt-1">
+                        Devices with items added to cart but no purchase completed.
+                      </p>
+                    </div>
+                    <span class="glass-badge glass-badge-rose text-xs font-bold px-2.5 py-1">
+                      {{ journeyAbandonedCarts()?.devices || 0 }} Devices
+                    </span>
+                  </div>
+                </ng-template>
+
+                <p-table 
+                  [value]="journeyAbandonedCarts()?.carts || []" 
+                  styleClass="premium-table-ui text-xs sm:text-sm" 
+                  [responsiveLayout]="'scroll'"
+                  [paginator]="(journeyAbandonedCarts()?.carts?.length || 0) > 6"
+                  [rows]="6"
+                  [paginatorDropdownAppendTo]="'self'"
+                >
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Device Hash</th>
+                      <th class="text-center">Products</th>
+                      <th>Last Seen</th>
+                      <th class="text-center">Action</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-cart>
+                    <tr>
+                      <td>
+                        <div class="flex align-items-center gap-1.5 font-mono text-3xs text-slate-300">
+                          <i class="pi pi-mobile text-slate-500"></i>
+                          <span>{{ cart.device_id_hash | slice:0:8 }}...{{ cart.device_id_hash | slice:-6 }}</span>
+                          <button 
+                            type="button" 
+                            class="p-0 border-none bg-transparent cursor-pointer text-slate-500 hover:text-blue-400"
+                            [pTooltip]="'Copy full hash'"
+                            tooltipPosition="top"
+                            (click)="copyToClipboard(cart.device_id_hash)"
+                          >
+                            <i class="pi pi-copy text-3xs"></i>
+                          </button>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <span class="glass-badge glass-badge-teal text-2xs font-bold px-2 py-0.5">
+                          {{ cart.products_touched }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="text-xs text-color-secondary">
+                          {{ cart.last_seen ? (cart.last_seen | date:'short') : 'N/A' }}
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        <button 
+                          pButton 
+                          icon="pi pi-history" 
+                          label="Inspect" 
+                          class="p-button-outlined p-button-sm p-button-rounded text-2xs px-2.5 py-1"
+                          (click)="inspectDeviceJourney(cart.device_id_hash)"
+                        ></button>
+                      </td>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="4" class="text-center py-4 text-color-secondary">
+                        No abandoned carts recorded for this period.
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </p-card>
+            </div>
+          </div>
+
+          <!-- Manual Device Journey Lookup Banner -->
+          <div class="glass-card p-4 mb-4 border-round-xl">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center gap-3">
+              <div>
+                <h4 class="m-0 text-sm font-bold text-white flex align-items-center gap-2">
+                  <i class="pi pi-search text-blue-400"></i>
+                  Lookup Any Device Journey Trail
+                </h4>
+                <p class="m-0 text-xs text-color-secondary mt-1">
+                  Input a 64-character SHA-256 device ID hash to inspect its chronological storefront activity.
+                </p>
+              </div>
+
+              <div class="flex align-items-center gap-2 w-full md:w-auto">
+                <input 
+                  type="text" 
+                  pInputText 
+                  placeholder="Paste 64-character device hash..."
+                  [ngModel]="deviceSearchInput()"
+                  (ngModelChange)="deviceSearchInput.set($event)"
+                  class="p-inputtext-sm w-full md:w-24rem font-mono text-xs"
+                />
+                <button 
+                  pButton 
+                  icon="pi pi-search" 
+                  label="Inspect" 
+                  class="p-button-sm p-button-primary"
+                  [disabled]="!deviceSearchInput() || deviceSearchInput().trim().length !== 64"
+                  (click)="inspectDeviceJourney(deviceSearchInput())"
+                ></button>
+              </div>
+            </div>
+          </div>
+
+        }
+      </div>
+    }
+
+    <!-- DEVICE JOURNEY TIMELINE PLAYBACK MODAL -->
+    <p-dialog 
+      [(visible)]="displayDeviceTimelineModal" 
+      [modal]="true" 
+      [style]="{ width: '92vw', maxWidth: '760px' }"
+      [closable]="true"
+      [dismissableMask]="true"
+      header="Device Journey Trail Playback"
+      styleClass="premium-dialog"
+    >
+      <div class="device-journey-modal-content p-2">
+        <!-- Device Info Header -->
+        <div class="device-info-banner p-3 mb-3 border-round-xl flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3">
+          <div class="flex align-items-center gap-3">
+            <div class="device-icon-box flex align-items-center justify-content-center border-round-lg">
+              <i class="pi pi-mobile text-blue-400 text-lg"></i>
+            </div>
+            <div>
+              <div class="flex align-items-center gap-2 mb-1">
+                <span class="text-3xs text-slate-400 font-bold uppercase tracking-wider">Device Fingerprint SHA-256</span>
+                <span class="glass-badge glass-badge-blue text-3xs font-semibold py-0.5 px-2">
+                  {{ selectedDeviceJourney().length }} Events Recorded
+                </span>
+              </div>
+              <span class="font-mono text-xs text-slate-200 select-all word-break-all">{{ selectedDeviceHash() }}</span>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            pButton 
+            [icon]="deviceCopied() ? 'pi pi-check' : 'pi pi-copy'" 
+            [label]="deviceCopied() ? 'Copied' : 'Copy Hash'"
+            class="p-button-outlined p-button-sm text-2xs p-1 px-3 border-round-lg"
+            (click)="copyToClipboard(selectedDeviceHash())"
+          ></button>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="timelineError()" class="p-3 mb-3 border-round-lg bg-red-900-20 border-1 border-red-500-30 text-rose-300 text-xs flex align-items-center gap-2">
+          <i class="pi pi-exclamation-triangle text-base"></i>
+          <span>{{ timelineError() }}</span>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="timelineLoading()" class="flex flex-column align-items-center justify-content-center py-6">
+          <p-progressSpinner styleClass="w-3rem h-3rem"></p-progressSpinner>
+          <span class="text-xs text-color-secondary mt-2">Retrieving journey events from server...</span>
+        </div>
+
+        <!-- Event Timeline -->
+        <div *ngIf="!timelineLoading() && selectedDeviceJourney().length > 0" class="timeline-container pr-2 max-h-30rem overflow-y-auto">
+          <p-timeline [value]="selectedDeviceJourney()" styleClass="premium-timeline">
+            <ng-template pTemplate="marker" let-event>
+              <span class="timeline-custom-marker"
+                    [ngClass]="getJourneyEventMarkerClass(event.event)">
+                <i [class]="getJourneyEventIcon(event.event)"></i>
+              </span>
+            </ng-template>
+            <ng-template pTemplate="content" let-event let-i="index">
+              <div class="timeline-event-card mb-3" [ngClass]="getJourneyEventBorderClass(event.event)">
+                <div class="flex justify-content-between align-items-center flex-wrap gap-2 mb-2 pb-2 border-bottom-1 border-white-alpha-10">
+                  <div class="flex align-items-center gap-2">
+                    <span class="step-chip">#{{ i + 1 }}</span>
+                    <span class="font-bold text-xs uppercase" [ngClass]="getJourneyEventBadgeClass(event.event)">
+                      {{ getJourneyEventLabel(event.event) }}
+                    </span>
+                  </div>
+                  <span class="timeline-time-badge text-3xs text-slate-400 flex align-items-center gap-1">
+                    <i class="pi pi-clock text-4xs text-slate-500"></i>
+                    <span>{{ event.created_at | date:'medium' }}</span>
+                  </span>
+                </div>
+
+                <!-- Event Details (Rich visual chips) -->
+                <div class="flex flex-column gap-2 text-xs pt-1">
+                  <!-- Product Row -->
+                  <div *ngIf="event.product_name" class="flex align-items-center justify-content-between bg-black-alpha-30 px-2.5 py-1.5 border-round-lg border-1 border-white-alpha-05">
+                    <div class="flex align-items-center gap-2">
+                      <i class="pi pi-box text-purple-400 text-sm"></i>
+                      <span class="text-white font-semibold text-xs">{{ event.product_name }}</span>
+                    </div>
+                    <span *ngIf="event.quantity !== null && event.quantity !== undefined" 
+                          class="glass-badge glass-badge-cyan text-3xs font-bold px-2 py-0.5">
+                      Qty: {{ event.quantity }}
+                    </span>
+                  </div>
+
+                  <!-- Path Row -->
+                  <div *ngIf="event.path" class="flex align-items-center gap-2 text-xs">
+                    <span class="text-slate-400 text-3xs font-semibold uppercase flex align-items-center gap-1">
+                      <i class="pi pi-compass text-blue-400"></i> Route:
+                    </span>
+                    <span class="font-mono text-slate-300 text-3xs bg-black-alpha-20 px-2 py-0.5 border-round border-1 border-white-alpha-05 truncate max-w-22rem">
+                      {{ event.path }}
+                    </span>
+                  </div>
+
+                  <!-- Order ID Row -->
+                  <div *ngIf="event.order_id" class="flex align-items-center gap-2 p-2 border-round-lg bg-emerald-950-30 border-1 border-emerald-500-30 text-emerald-300">
+                    <i class="pi pi-check-circle text-emerald-400 text-sm"></i>
+                    <span class="text-3xs font-semibold uppercase">Order Placed:</span>
+                    <span class="font-mono text-emerald-300 font-bold text-xs">{{ event.order_id }}</span>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </p-timeline>
+        </div>
+
+        <div *ngIf="!timelineLoading() && selectedDeviceJourney().length === 0 && !timelineError()" class="text-center py-6 text-color-secondary">
+          <i class="pi pi-inbox text-3xl mb-2 text-slate-600 block"></i>
+          <span>No journey records found for this device.</span>
+        </div>
+      </div>
+    </p-dialog>
 
   </div>
 </div>

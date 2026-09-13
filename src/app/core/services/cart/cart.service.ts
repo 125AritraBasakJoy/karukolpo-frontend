@@ -4,6 +4,7 @@ import { CartItem } from '../../../models/cart.model';
 import { Product } from '../../../models/product.model';
 import { MessageService } from 'primeng/api';
 import { ProductService } from '../product/product.service';
+import { JourneyService } from '../tracking/journey.service';
 
 @Injectable({
   providedIn: 'root'
@@ -31,6 +32,7 @@ export class CartService {
   constructor(
     private messageService: MessageService,
     private productService: ProductService,
+    private journeyService: JourneyService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     // Load cart from localStorage if needed (optional enhancement)
@@ -129,6 +131,7 @@ export class CartService {
       this.cart.update(items => [...items, { product, quantity: 1 }]);
     }
     this.messageService.add({ severity: 'success', summary: 'Added to Cart', detail: `${product.name} added to cart` });
+    this.journeyService.track('add_to_cart', { product_id: String(product.id), quantity: 1 });
     this.saveCart();
   }
 
@@ -159,6 +162,7 @@ export class CartService {
     }
 
     if (newQuantity <= 0) {
+      this.journeyService.track('remove_from_cart', { product_id: String(item.product.id) });
       this.cart.update(items => items.filter(i => i.product.id !== item.product.id));
     } else {
       this.cart.update(items => items.map(i =>

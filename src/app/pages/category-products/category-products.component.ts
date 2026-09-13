@@ -107,7 +107,7 @@ export class CategoryProductsComponent implements OnInit {
     }
 
     showProductDetails(product: Product) {
-        this.router.navigate(['/products', product.id]);
+        this.router.navigate(['/products', product.slug || product.id]);
     }
 
     addToCart(product: Product) {

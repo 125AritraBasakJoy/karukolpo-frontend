@@ -872,6 +872,153 @@ textarea,
     }
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   THERMAL RECEIPT PREVIEW MODAL & SCROLLBAR THEMING (GLOBAL OVERRIDES)
+   ───────────────────────────────────────────────────────────────── */
+.thermal-preview-dialog {
+    &.p-dialog {
+        border-radius: 20px !important;
+        background: #0f172a !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8) !important;
+        overflow: hidden !important;
+    }
+
+    .p-dialog-header {
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 1rem 1.25rem !important;
+    }
+
+    .p-dialog-content {
+        background: #090e1a !important;
+        padding: 0.75rem 0.5rem 0.75rem 1rem !important;
+        max-height: 70vh !important;
+        overflow-y: auto !important;
+
+        /* Cross-Browser Themed Scrollbar Slider (Matches Admin Dark Theme) */
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(59, 130, 246, 0.5) rgba(15, 23, 42, 0.7) !important;
+
+        &::-webkit-scrollbar {
+            width: 7px !important;
+        }
+        &::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.7) !important;
+            border-radius: 9999px !important;
+            margin: 4px 0 !important;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.45) !important;
+            border-radius: 9999px !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            transition: all 0.2s ease !important;
+
+            &:hover {
+                background: rgba(59, 130, 246, 0.8) !important;
+                box-shadow: 0 0 10px rgba(59, 130, 246, 0.6) !important;
+            }
+        }
+    }
+
+    .p-dialog-footer {
+        background: #0f172a !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 0.75rem 1rem !important;
+    }
+}
+
+/* Unified Thermal Dialog Action Buttons (Ensures never clipped or hidden) */
+.thermal-modal-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+    box-sizing: border-box !important;
+
+    .thermal-btn-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+}
+
+.btn-thermal {
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 10px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.4rem !important;
+    padding: 0 0.85rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    white-space: nowrap !important;
+    border: none !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+
+    i {
+        font-size: 0.85rem !important;
+        line-height: 1 !important;
+    }
+
+    &.btn-close {
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #94a3b8 !important;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.22) !important;
+        }
+    }
+
+    &.btn-download {
+        background: rgba(59, 130, 246, 0.1) !important;
+        border: 1px solid rgba(59, 130, 246, 0.25) !important;
+        color: #60a5fa !important;
+
+        &:hover {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border-color: rgba(59, 130, 246, 0.5) !important;
+            color: #93c5fd !important;
+        }
+    }
+
+    &.btn-print {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border: 1px solid rgba(96, 165, 250, 0.35) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+
+        &:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5) !important;
+            transform: translateY(-1px);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    &[disabled],
+    &:disabled {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        transform: none !important;
+    }
+}
+
+
 .pwa-install-content {
     text-align: center;
 }
@@ -1809,6 +1956,34 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
     color: #cbd5e1 !important;
     border: 1px solid rgba(148, 163, 184, 0.2) !important;
     box-shadow: 0 4px 12px rgba(148, 163, 184, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.03) !important;
+}
+
+.glass-badge-teal {
+    background: rgba(20, 184, 166, 0.12) !important;
+    color: #2dd4bf !important;
+    border: 1px solid rgba(20, 184, 166, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-badge-amber {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-badge-orange {
+    background: rgba(249, 115, 22, 0.12) !important;
+    color: #fb923c !important;
+    border: 1px solid rgba(249, 115, 22, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.glass-badge-rose {
+    background: rgba(244, 63, 94, 0.12) !important;
+    color: #fb7185 !important;
+    border: 1px solid rgba(244, 63, 94, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 /* ── Premium Date & Time Picker System (Matches Reference Input & Panel Design) ── */

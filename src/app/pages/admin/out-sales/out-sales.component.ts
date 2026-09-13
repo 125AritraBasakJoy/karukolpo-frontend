@@ -71,6 +71,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   askPrintModalVisible = signal<boolean>(false);
   thermalPreviewModalVisible = signal<boolean>(false);
   recordedSaleForInvoice = signal<any>(null);
+  isDownloadingThermal = signal<boolean>(false);
 
   items: SaleItemRow[] = [];
   paymentMethod = 'cash';
@@ -425,6 +426,16 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   declinePrintPrompt() {
     this.askPrintModalVisible.set(false);
     this.resetForm();
+  }
+
+  async onDownloadThermalInvoice() {
+    if (this.isDownloadingThermal()) return;
+    this.isDownloadingThermal.set(true);
+    try {
+      await this.thermalInvoice?.downloadReceipt();
+    } finally {
+      this.isDownloadingThermal.set(false);
+    }
   }
 
   onPrintThermalInvoice() {

@@ -82,6 +82,7 @@ export class OutSalesListComponent implements OnInit {
   // Thermal Receipt Modal State
   thermalPreviewModalVisible = signal<boolean>(false);
   selectedSaleForInvoice = signal<Order | null>(null);
+  isDownloadingThermal = signal<boolean>(false);
 
   // Edit Modal State
   editDialogVisible = signal<boolean>(false);
@@ -862,8 +863,14 @@ export class OutSalesListComponent implements OnInit {
     this.thermalInvoice?.printReceipt();
   }
 
-  onDownloadThermalInvoice() {
-    this.thermalInvoice?.downloadReceipt();
+  async onDownloadThermalInvoice() {
+    if (this.isDownloadingThermal()) return;
+    this.isDownloadingThermal.set(true);
+    try {
+      await this.thermalInvoice?.downloadReceipt();
+    } finally {
+      this.isDownloadingThermal.set(false);
+    }
   }
 
   closeThermalPreview() {

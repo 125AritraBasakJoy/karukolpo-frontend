@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { THERMAL_LOGO_BASE64 } from '../thermal-invoice/thermal-logo.constant';
 
 @Component({
     selector: 'app-invoice',
@@ -148,7 +149,18 @@ export class InvoiceComponent {
     }
 
 
-    async downloadReceipt(): Promise<void> {
+    async downloadReceipt(customData?: any): Promise<void> {
+        if (customData) {
+            this.orderedItems = customData.items || [];
+            this.orderFormSnapshot = customData.snapshot || {};
+            this.orderPaymentMethod = customData.method || '';
+            this.orderDeliveryCharge = customData.deliveryCharge || 0;
+            this.orderTotal = customData.total || 0;
+            this.orderDiscount = customData.discount || 0;
+            this.placedOrderId = customData.id || '';
+            this.placedOrderNumber = customData.orderNumber || '';
+        }
+
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = pdf.internal.pageSize.getWidth();    // 210
         const margin = 20;
@@ -188,10 +200,9 @@ export class InvoiceComponent {
         //  LOGO (top-left)
         // =====================
         try {
-            const logo = await this.loadImageAsBase64('assets/invoice-logo-mandala.jpg');
             const logoH = 22; // desired height in mm
-            const logoW = (logo.width / logo.height) * logoH; // maintain aspect ratio
-            pdf.addImage(logo.data, 'JPEG', margin, y, logoW, logoH);
+            const logoW = (829 / 560) * logoH; // maintain aspect ratio (~32.57mm)
+            pdf.addImage(THERMAL_LOGO_BASE64, 'JPEG', margin, y, logoW, logoH);
         } catch (e) {
             console.warn('Could not load logo for PDF:', e);
         }
@@ -444,6 +455,31 @@ export class InvoiceComponent {
         // =====================
         //  SAVE
         // =====================
-        pdf.save(`Invoice-${this.invoiceNumber}.pdf`);
+        this.savePdf(pdf, `Invoice-${this.invoiceNumber}.pdf`);
+    }
+
+    private savePdf(pdf: jsPDF, filename: string): void {
+        try {
+            const blob = pdf.output('blob');
+            if (typeof window !== 'undefined' && window.URL && document) {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => {
+                    try {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                    } catch (e) {}
+                }, 1000);
+                return;
+            }
+        } catch (err) {
+            console.warn('Direct blob download failed, falling back to pdf.save():', err);
+        }
+        pdf.save(filename);
     }
 }

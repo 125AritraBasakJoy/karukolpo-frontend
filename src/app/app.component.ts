@@ -6,6 +6,7 @@ import { OrderService } from './core/services/order/order.service';
 import { NotificationService } from './core/services/notification/notification.service';
 import { VersionService } from './core/services/version/version.service';
 import { TrackingService } from './core/services/tracking/tracking.service';
+import { JourneyService } from './core/services/tracking/journey.service';
 import { MaintenanceService } from './core/services/maintenance/maintenance.service';
 import { PwaInstallService } from './core/services/pwa/pwa-install.service';
 import { FooterComponent } from './components/footer/footer.component';
@@ -31,6 +32,7 @@ export class AppComponent implements OnInit {
     private router: Router,
     private versionService: VersionService,
     private trackingService: TrackingService,
+    private journeyService: JourneyService,
     private maintenanceService: MaintenanceService,
     private pwaInstallService: PwaInstallService,
     @Inject(PLATFORM_ID) private platformId: Object
@@ -74,7 +76,9 @@ export class AppComponent implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      this.checkRoute(event.urlAfterRedirects || event.url);
+      const url = event.urlAfterRedirects || event.url;
+      this.checkRoute(url);
+      this.journeyService.track('page_view', { path: url });
     });
 
     // Notification logic consolidated in NotificationService

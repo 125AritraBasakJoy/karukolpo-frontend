@@ -376,7 +376,7 @@
 <p-confirmDialog></p-confirmDialog>
 
 <!-- Themed Thermal Receipt Preview Modal -->
-<p-dialog [(visible)]="thermalPreviewModalVisible" [modal]="true" [style]="{ width: 'min(95vw, 440px)' }"
+<p-dialog [(visible)]="thermalPreviewModalVisible" [modal]="true" [style]="{ width: 'min(95vw, 480px)' }"
     styleClass="premium-dialog thermal-preview-dialog" appendTo="body" [draggable]="false" [resizable]="false"
     (onHide)="closeThermalPreview()">
     <ng-template pTemplate="header">
@@ -388,26 +388,20 @@
         </div>
     </ng-template>
 
-    <div class="thermal-dialog-body p-2 flex justify-content-center overflow-y-auto custom-scrollbar">
+    <div class="thermal-dialog-body p-1 flex justify-content-center">
         <app-thermal-invoice #thermalInvoice [order]="selectedSaleForInvoice()"></app-thermal-invoice>
     </div>
 
     <ng-template pTemplate="footer">
-        <div class="thermal-modal-footer">
-            <button type="button" class="btn-thermal btn-close" (click)="closeThermalPreview()">
-                <i class="pi pi-times"></i>
-                <span>Close</span>
+        <div class="thermal-modal-footer flex align-items-center justify-content-end gap-2 w-full">
+            <button type="button" class="btn-thermal btn-download" (click)="onDownloadThermalInvoice()" [disabled]="isDownloadingThermal()">
+                <i class="pi" [ngClass]="isDownloadingThermal() ? 'pi-spin pi-spinner' : 'pi-download'"></i>
+                <span>{{ isDownloadingThermal() ? 'Downloading...' : 'Download' }}</span>
             </button>
-            <div class="thermal-btn-group">
-                <button type="button" class="btn-thermal btn-download" (click)="onDownloadThermalInvoice()">
-                    <i class="pi pi-download"></i>
-                    <span>Download</span>
-                </button>
-                <button type="button" class="btn-thermal btn-print" (click)="onPrintThermalInvoice()">
-                    <i class="pi pi-print"></i>
-                    <span>Print & Download</span>
-                </button>
-            </div>
+            <button type="button" class="btn-thermal btn-print" (click)="onPrintThermalInvoice()">
+                <i class="pi pi-print"></i>
+                <span>Print</span>
+            </button>
         </div>
     </ng-template>
 </p-dialog>

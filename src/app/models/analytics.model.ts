@@ -249,3 +249,52 @@ export interface SalesBySourceResponse {
   period: string;
   by_source: SalesBySourceItem[];
 }
+
+export interface FunnelStage {
+  stage: 'landed' | 'viewed_product' | 'added_to_cart' | 'began_checkout' | 'purchased' | string;
+  devices: number;
+  pct_of_landed: number;
+  pct_of_previous: number | null;
+}
+
+export interface JourneyFunnelResponse {
+  period: string;
+  note: string;
+  stages: FunnelStage[];
+}
+
+export interface ProductInterestRow {
+  product_id: string;
+  name: string;
+  viewers: number;
+  carters: number;
+  units_sold: number;
+  view_to_cart_pct: number;
+}
+
+export interface ProductInterestResponse {
+  period: string;
+  products: ProductInterestRow[];
+}
+
+export interface AbandonedCartRow {
+  device_id_hash: string;
+  last_seen: string | null;
+  products_touched: number;
+}
+
+export interface AbandonedCartsResponse {
+  period: string;
+  devices: number;
+  carts: AbandonedCartRow[];
+}
+
+export interface JourneyEventRead {
+  event: 'page_view' | 'view_product' | 'add_to_cart' | 'remove_from_cart' | 'begin_checkout' | 'purchase' | string;
+  path: string | null;
+  product_id: string | null;
+  product_name: string | null;
+  quantity: number | null;
+  order_id: string | null;
+  created_at: string;
+}

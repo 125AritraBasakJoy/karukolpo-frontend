@@ -24,6 +24,7 @@ import { CartService } from '../../core/services/cart/cart.service';
 import { PaymentService } from '../../core/services/payment/payment.service';
 import { ProductService } from '../../core/services/product/product.service';
 import { GtagService } from '../../core/services/gtag/gtag.service';
+import { JourneyService } from '../../core/services/tracking/journey.service';
 import { District, districts } from '../../data/bangladesh-data';
 import { CartItem } from '../../models/cart.model';
 import { Order } from '../../models/order.model';
@@ -96,7 +97,8 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         private paymentService: PaymentService,
         private productService: ProductService,
         public cartService: CartService,
-        private gtagService: GtagService
+        private gtagService: GtagService,
+        private journeyService: JourneyService
     ) {
         effect(() => {
             if (this.checkoutRequested()) {
@@ -208,6 +210,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         // Close the checkout modal and open the payment selection modal
         this.displayCheckoutModal = false;
         this.displayOrderSuccessModal = true;
+        this.journeyService.track('begin_checkout');
         this.selectedPaymentMethod = null;
         this.bkashPhone = this.checkoutForm.phoneNumber;
         // Reset placedOrderId to ensure a new order is created

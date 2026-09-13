@@ -13,8 +13,8 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import JsBarcode from 'jsbarcode';
+import { THERMAL_LOGO_BASE64 } from './thermal-logo.constant';
 
 export interface ThermalReceiptItem {
   name: string;
@@ -35,6 +35,8 @@ export interface ThermalReceiptItem {
 export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   @ViewChild('thermalReceipt', { static: false }) receiptElementRef!: ElementRef<HTMLElement>;
   @ViewChild('barcodeSvg', { static: false }) barcodeSvgRef?: ElementRef<SVGSVGElement>;
+
+  readonly logoSrc = THERMAL_LOGO_BASE64;
 
   /** Full order/sale object if available */
   @Input() order: any = null;
@@ -270,83 +272,422 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   }
 
   /**
-   * Generates a 58mm PDF and triggers download
+   * Generates a crisp 58mm thermal receipt PDF directly via offscreen Canvas 2D
+   * Runs in ~10ms without freezing the browser or locking the event loop.
    */
   async downloadReceipt(): Promise<void> {
-    if (!this.isBrowser || !this.receiptElementRef?.nativeElement) return;
+    if (!this.isBrowser) return;
 
     try {
-      const element = this.receiptElementRef.nativeElement;
-      const canvas = await html2canvas(element, {
-        scale: 3, // High DPI for crisp thermal printing
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      });
-
+      const canvas = await this.generateThermalCanvas();
       const imgData = canvas.toDataURL('image/png');
-      const pdfWidth = 58; // 58mm
+      const pdfWidth = 58; // 58mm roll width
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [pdfWidth, Math.max(pdfHeight + 4, 60)]
+        format: [pdfWidth, pdfHeight]
       });
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Thermal-Receipt-${this.orderNumberDisplay}.pdf`);
+      this.savePdf(pdf, `Thermal-Receipt-${this.orderNumberDisplay}.pdf`);
       this.downloadCompleted.emit();
     } catch (e) {
       console.error('Failed to download thermal receipt PDF:', e);
     }
   }
 
+  private async generateThermalCanvas(): Promise<HTMLCanvasElement> {
+    const width = 576; // 58mm roll at standard thermal resolution
+    const margin = 24;
+    const printableWidth = width - margin * 2; // 528px
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = width;
+    tempCanvas.height = 3500;
+    const ctx = tempCanvas.getContext('2d')!;
+
+    // Pure white background for thermal printer contrast
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, tempCanvas.height);
+    ctx.fillStyle = '#000000';
+
+    const fontMono = "'Courier New', Courier, monospace, 'Segoe UI', 'Noto Sans Bengali', sans-serif";
+    const fontSans = "'Segoe UI', 'Noto Sans Bengali', 'Inter', -apple-system, sans-serif";
+
+    let y = 20;
+
+    // 1. Logo
+    try {
+      const logoImg = await this.loadImageElement(this.logoSrc);
+      const logoW = 240;
+      const logoH = logoImg.naturalHeight && logoImg.naturalWidth
+        ? (logoImg.naturalHeight / logoImg.naturalWidth) * logoW
+        : 162;
+      const logoX = (width - logoW) / 2;
+      ctx.drawImage(logoImg, logoX, y, logoW, logoH);
+      y += logoH + 10;
+    } catch (e) {
+      console.warn('Could not load logo for canvas:', e);
+    }
+
+    // 2. Store Header
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    ctx.font = `bold 22px ${fontMono}`;
+    ctx.fillText('KARUKOLPO', width / 2, y);
+    y += 28;
+
+    ctx.font = `14px ${fontMono}`;
+    ctx.fillText('Pathrail, Delduar, Tangail-1912', width / 2, y);
+    y += 20;
+
+    ctx.fillText('www.karukolpocrafts.com', width / 2, y);
+    y += 24;
+
+    // Double Line
+    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y += 6;
+
+    // Receipt Type
+    ctx.font = `bold 16px ${fontMono}`;
+    ctx.fillText('*** POS SALES RECEIPT ***', width / 2, y);
+    y += 24;
+
+    // Dashed Line
+    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y += 8;
+
+    // 3. Metadata Section
+    ctx.font = `14.5px ${fontMono}`;
+    y = this.drawCanvasRow(ctx, margin, width - margin, 'RECEIPT #:', this.orderNumberDisplay, y, true);
+    y = this.drawCanvasRow(ctx, margin, width - margin, 'DATE:', this.formattedDateOnly, y, false);
+    y = this.drawCanvasRow(ctx, margin, width - margin, 'TIME:', this.formattedTimeOnly, y, false);
+    y = this.drawCanvasRow(ctx, margin, width - margin, 'PAYMENT:', this.paymentMethodDisplay.toUpperCase(), y, true);
+    y += 4;
+
+    // 4. Customer Section (if present)
+    if (this.customerNameDisplay || this.customerPhoneDisplay || this.customerAddressDisplay) {
+      y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+      y += 6;
+
+      ctx.textAlign = 'left';
+      ctx.font = `bold 14.5px ${fontMono}`;
+      ctx.fillText('CUSTOMER INFO:', margin, y);
+      y += 22;
+
+      if (this.customerNameDisplay) {
+        y = this.drawCanvasRow(ctx, margin, width - margin, 'Name:', this.customerNameDisplay, y, true);
+      }
+      if (this.customerPhoneDisplay) {
+        y = this.drawCanvasRow(ctx, margin, width - margin, 'Phone:', this.customerPhoneDisplay, y, true);
+      }
+      if (this.customerAddressDisplay) {
+        y = this.drawCanvasRow(ctx, margin, width - margin, 'Address:', this.customerAddressDisplay, y, false);
+      }
+      y += 4;
+    }
+
+    // Double Line
+    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y += 6;
+
+    // 5. Items Header
+    ctx.font = `bold 15px ${fontMono}`;
+    ctx.textAlign = 'left';
+    ctx.fillText('ITEM / DETAILS', margin, y);
+    ctx.textAlign = 'right';
+    ctx.fillText('TOTAL', width - margin, y);
+    y += 22;
+
+    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y += 8;
+
+    // 6. Line Items List
+    for (const item of this.parsedItems) {
+      // Product Name (wrapped)
+      ctx.textAlign = 'left';
+      ctx.font = `bold 15px ${fontSans}`;
+      y = this.drawCanvasWrappedText(ctx, item.name, margin, y, printableWidth, 21);
+
+      // Qty x Price (left) and Line Total (right)
+      ctx.font = `14.5px ${fontSans}`;
+      ctx.textAlign = 'left';
+      const qtyText = `${item.quantity} x ৳${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      ctx.fillText(qtyText, margin, y);
+
+      ctx.textAlign = 'right';
+      ctx.font = `bold 15.5px ${fontSans}`;
+      const totalText = `৳${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      ctx.fillText(totalText, width - margin, y);
+      y += 20;
+
+      // Discount pill if item has discount
+      if (item.discount && item.discount > 0) {
+        ctx.textAlign = 'left';
+        ctx.font = `italic 12.5px ${fontSans}`;
+        const regFormatted = item.regularPrice ? item.regularPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '';
+        const discFormatted = item.discount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        ctx.fillText(`Reg: ৳${regFormatted} (Save: -৳${discFormatted})`, margin, y);
+        y += 18;
+      }
+
+      y += 6;
+    }
+
+    // Dashed Line
+    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y += 8;
+
+    // 7. Totals Section
+    ctx.font = `14.5px ${fontSans}`;
+    const subtotalFormatted = `৳${this.subtotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    y = this.drawCanvasRow(ctx, margin, width - margin, 'Subtotal:', subtotalFormatted, y, true);
+
+    if (this.totalDiscountDisplay > 0) {
+      const discountFormatted = `-৳${this.totalDiscountDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      y = this.drawCanvasRow(ctx, margin, width - margin, 'Discount:', discountFormatted, y, true);
+    }
+
+    const deliveryFormatted = `৳${this.deliveryChargeDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    y = this.drawCanvasRow(ctx, margin, width - margin, 'Delivery Charge:', deliveryFormatted, y, false);
+    y += 4;
+
+    // Double Line
+    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y += 8;
+
+    // Grand Total
+    ctx.font = `bold 20px ${fontSans}`;
+    const grandFormatted = `৳${this.grandTotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    ctx.textAlign = 'left';
+    ctx.fillText('TOTAL:', margin, y);
+    ctx.textAlign = 'right';
+    ctx.fillText(grandFormatted, width - margin, y);
+    y += 28;
+
+    // Dashed Line
+    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y += 8;
+
+    // 8. Note (if any)
+    const noteText = this.order?.note || this.note;
+    if (noteText) {
+      ctx.textAlign = 'left';
+      ctx.font = `bold 14px ${fontMono}`;
+      ctx.fillText('Note:', margin, y);
+      y += 18;
+      ctx.font = `13px ${fontMono}`;
+      y = this.drawCanvasWrappedText(ctx, noteText, margin, y, printableWidth, 18);
+      y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+      y += 8;
+    }
+
+    // 9. Barcode
+    try {
+      const barcodeCanvas = document.createElement('canvas');
+      JsBarcode(barcodeCanvas, this.orderNumberDisplay, {
+        format: 'CODE128',
+        width: 2,
+        height: 52,
+        displayValue: true,
+        font: 'monospace',
+        fontSize: 13,
+        margin: 4,
+        lineColor: '#000000'
+      });
+      const bx = (width - barcodeCanvas.width) / 2;
+      ctx.drawImage(barcodeCanvas, bx, y);
+      y += barcodeCanvas.height + 12;
+    } catch (e) {
+      console.warn('Could not generate barcode for canvas:', e);
+    }
+
+    // 10. Footer Text
+    ctx.textAlign = 'center';
+    ctx.font = `bold 15px ${fontMono}`;
+    ctx.fillText('THANK YOU FOR YOUR PURCHASE!', width / 2, y);
+    y += 22;
+
+    ctx.font = `13px ${fontMono}`;
+    ctx.fillText('Crafted with tradition & passion.', width / 2, y);
+    y += 20;
+
+    ctx.font = `bold 14px ${fontMono}`;
+    ctx.fillText('Hotline: 01675-718846', width / 2, y);
+    y += 28;
+
+    // Final crop to exact content height
+    const finalHeight = Math.max(y, 350);
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = width;
+    finalCanvas.height = finalHeight;
+    const finalCtx = finalCanvas.getContext('2d')!;
+    finalCtx.drawImage(tempCanvas, 0, 0, width, finalHeight, 0, 0, width, finalHeight);
+
+    return finalCanvas;
+  }
+
+  private loadImageElement(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      if (img.complete && img.naturalWidth > 0) {
+        resolve(img);
+        return;
+      }
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Failed to load image for canvas'));
+      img.src = src;
+    });
+  }
+
+  private drawCanvasRow(
+    ctx: CanvasRenderingContext2D,
+    leftX: number,
+    rightX: number,
+    leftText: string,
+    rightText: string,
+    y: number,
+    rightBold: boolean = false
+  ): number {
+    ctx.textAlign = 'left';
+    ctx.fillText(leftText, leftX, y);
+
+    ctx.textAlign = 'right';
+    if (rightBold) {
+      const prevFont = ctx.font;
+      ctx.font = prevFont.includes('bold') ? prevFont : `bold ${prevFont}`;
+      ctx.fillText(rightText, rightX, y);
+      ctx.font = prevFont;
+    } else {
+      ctx.fillText(rightText, rightX, y);
+    }
+    return y + 21;
+  }
+
+  private drawCanvasDashedLine(ctx: CanvasRenderingContext2D, x1: number, x2: number, y: number): number {
+    ctx.save();
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    ctx.lineTo(x2, y);
+    ctx.stroke();
+    ctx.restore();
+    return y + 4;
+  }
+
+  private drawCanvasDoubleLine(ctx: CanvasRenderingContext2D, x1: number, x2: number, y: number): number {
+    ctx.save();
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    ctx.lineTo(x2, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x1, y + 4);
+    ctx.lineTo(x2, y + 4);
+    ctx.stroke();
+    ctx.restore();
+    return y + 6;
+  }
+
+  private drawCanvasWrappedText(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    lineHeight: number
+  ): number {
+    const words = text.split(' ');
+    let line = '';
+    let curY = y;
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + (line ? ' ' : '') + words[n];
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && n > 0) {
+        ctx.fillText(line, x, curY);
+        line = words[n];
+        curY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) {
+      ctx.fillText(line, x, curY);
+      curY += lineHeight;
+    }
+    return curY;
+  }
+
+  private savePdf(pdf: jsPDF, filename: string): void {
+    try {
+      const blob = pdf.output('blob');
+      if (typeof window !== 'undefined' && window.URL && document) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          try {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          } catch (e) {}
+        }, 1000);
+        return;
+      }
+    } catch (err) {
+      console.warn('Direct blob download failed, falling back to pdf.save():', err);
+    }
+    pdf.save(filename);
+  }
+
   /**
-   * Executes both PDF download and sends to machine printer via isolated iframe
+   * Executes printing directly to the machine printer (Laptop & Mobile, Cable & Bluetooth)
    */
   async printReceipt(): Promise<void> {
     if (!this.isBrowser || !this.receiptElementRef?.nativeElement) return;
 
-    // 1. Download PDF as requested
-    await this.downloadReceipt();
-
-    // 2. Machine print via isolated iframe formatted specifically for 58mm roll
+    // Machine print via isolated document stream formatted specifically for 58mm rolls
     try {
-      const printContent = this.receiptElementRef.nativeElement.innerHTML;
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-
-      const doc = iframe.contentWindow?.document;
-      if (!doc) return;
-
-      doc.open();
-      doc.write(`
+      let printContent = this.receiptElementRef.nativeElement.innerHTML;
+      if (this.logoSrc && !printContent.includes('data:image')) {
+        printContent = printContent.replace(/src="[^"]*assets\/invoice-logo-mandala\.jpg[^"]*"/g, `src="${this.logoSrc}"`);
+      }
+      const baseOrigin = window.location.origin;
+      const receiptHtml = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
+          <base href="${baseOrigin}/">
           <title>Receipt-${this.orderNumberDisplay}</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
             @page {
               size: 58mm auto;
-              margin: 1mm 1.5mm 3mm 1.5mm;
+              margin: 0mm 1mm 2mm 1mm;
             }
             * {
               box-sizing: border-box;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
             }
-            body {
+            html, body {
               margin: 0;
               padding: 0;
-              width: 55mm;
+              width: 54mm;
               font-family: 'Courier New', Courier, monospace, sans-serif;
               color: #000000;
               background: #ffffff;
@@ -366,13 +707,13 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               margin: 0 auto 4px auto;
               filter: grayscale(100%) contrast(160%);
             }
-            .store-title {
+            .store-name {
               font-size: 14px;
               font-weight: 900;
               letter-spacing: 1px;
               margin: 2px 0;
             }
-            .store-sub {
+            .store-info {
               font-size: 9px;
               line-height: 1.2;
             }
@@ -392,25 +733,24 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               font-size: 10px;
               margin-bottom: 2px;
             }
-            .customer-box {
-              font-size: 10px;
-              margin: 3px 0;
+            .customer-section {
+              margin: 2px 0;
             }
             .item-row {
               margin-bottom: 4px;
             }
-            .item-name {
+            .item-title {
               font-weight: bold;
               font-size: 10.5px;
               word-break: break-word;
             }
-            .item-calc {
+            .item-calc-row {
               display: flex;
               justify-content: space-between;
               font-size: 10px;
             }
-            .item-discount-note {
-              font-size: 9px;
+            .item-discount-pill {
+              font-size: 8.5px;
               font-style: italic;
             }
             .totals-row {
@@ -426,15 +766,15 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               font-weight: 900;
               margin: 4px 0;
             }
-            .footer-msg {
+            .receipt-footer {
               font-size: 9.5px;
               margin-top: 6px;
               text-align: center;
             }
-            .barcode-wrapper {
+            .barcode-container {
               display: flex;
               justify-content: center;
-              margin: 4px 0;
+              margin: 3px 0;
             }
             svg {
               max-width: 100%;
@@ -442,22 +782,85 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
           </style>
         </head>
-        <body onload="setTimeout(function(){ window.focus(); window.print(); }, 250);">
+        <body>
           ${printContent}
+          <script>
+            function triggerPrintWhenReady() {
+              var images = Array.from(document.images);
+              var pending = images.filter(function(img) { return !img.complete; });
+              if (pending.length === 0) {
+                setTimeout(function() {
+                  window.focus();
+                  window.print();
+                }, 100);
+              } else {
+                Promise.all(pending.map(function(img) {
+                  return new Promise(function(resolve) {
+                    img.onload = img.onerror = resolve;
+                  });
+                })).then(function() {
+                  setTimeout(function() {
+                    window.focus();
+                    window.print();
+                  }, 150);
+                });
+              }
+            }
+            if (document.readyState === 'complete') {
+              triggerPrintWhenReady();
+            } else {
+              window.addEventListener('load', triggerPrintWhenReady);
+            }
+          </script>
         </body>
         </html>
-      `);
-      doc.close();
+      `;
 
-      setTimeout(() => {
-        try {
-          document.body.removeChild(iframe);
-        } catch (e) {}
-      }, 60000);
+      const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        // Mobile browsers handle popup print windows much better than hidden iframes
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.open();
+          printWindow.document.write(receiptHtml);
+          printWindow.document.close();
+        } else {
+          // Fallback if popup blocked
+          this.triggerIframePrint(receiptHtml);
+        }
+      } else {
+        // Desktop / Laptop (USB Cable / Bluetooth) - print cleanly through isolated iframe
+        this.triggerIframePrint(receiptHtml);
+      }
 
       this.printCompleted.emit();
     } catch (e) {
       console.error('Failed to trigger machine print:', e);
     }
+  }
+
+  private triggerIframePrint(html: string): void {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    setTimeout(() => {
+      try {
+        document.body.removeChild(iframe);
+      } catch (e) {}
+    }, 60000);
   }
 }

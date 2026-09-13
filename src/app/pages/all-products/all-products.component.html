@@ -10,7 +10,7 @@
                 tooltipPosition="bottom"></button>
             <div class="page-title-group">
                 <h1 class="page-title">{{ getPageTitle() }}</h1>
-                <span class="product-count">{{ filteredProducts().length }} Items Available</span>
+                <span class="product-count">{{ totalCount() }} Items Available</span>
             </div>
         </div>
 
@@ -19,30 +19,50 @@
             <div class="search-container">
                 <span class="p-input-icon-left">
                     <i class="pi pi-search"></i>
-                    <input pInputText type="text" [(ngModel)]="searchQuery"
-                        (ngModelChange)="searchQuery.set($event)" placeholder="Search products..." />
+                    <input pInputText type="text" [ngModel]="searchQuery()"
+                        (ngModelChange)="onSearchInput($event)" placeholder="Search products by name or details..." />
                 </span>
             </div>
 
-            <div class="controls-group">
-                <div class="filter-control-item">
+            <div class="controls-group flex-wrap">
+                <!-- Category Filter -->
+                <div class="filter-control-item min-w-10rem">
                     <span class="control-label">Category</span>
-                    <p-dropdown [options]="categories()" [(ngModel)]="selectedCategoryId"
-                        (ngModelChange)="selectedCategoryId.set($event)" optionLabel="name" optionValue="id"
+                    <p-dropdown [options]="categories()" [ngModel]="selectedCategoryId()"
+                        (ngModelChange)="onCategoryChange($event)" optionLabel="name" optionValue="id"
                         [showClear]="true" appendTo="body" placeholder="All Categories"></p-dropdown>
                 </div>
 
-                <div class="filter-control-item">
+                <!-- Price Range Filter -->
+                <div class="filter-control-item min-w-10rem">
+                    <span class="control-label">Price Range</span>
+                    <p-dropdown [options]="priceRangeOptions" [ngModel]="selectedPriceRange()"
+                        (ngModelChange)="onPriceRangeChange($event)" optionLabel="label" optionValue="value"
+                        appendTo="body"></p-dropdown>
+                </div>
+
+                <!-- In-Stock Filter Toggle -->
+                <div class="filter-control-item in-stock-item">
+                    <span class="control-label">Availability</span>
+                    <button type="button" class="stock-toggle-btn" [class.active]="inStockOnly()" (click)="toggleInStockOnly()">
+                        <i class="pi" [ngClass]="inStockOnly() ? 'pi-check-circle text-emerald-400' : 'pi-circle text-slate-500'"></i>
+                        <span>In Stock Only</span>
+                    </button>
+                </div>
+
+                <!-- Sort By (Effective Price & In-Stock Aware) -->
+                <div class="filter-control-item min-w-11rem">
                     <span class="control-label">Sort By</span>
-                    <p-dropdown [options]="sortOptions" [(ngModel)]="sortOrder" (ngModelChange)="sortOrder.set($event)"
+                    <p-dropdown [options]="sortOptions" [ngModel]="sortOrder()" (ngModelChange)="onSortChange($event)"
                         optionLabel="label" optionValue="value" appendTo="body"></p-dropdown>
                 </div>
 
-                @if (searchQuery() || selectedCategoryId()) {
+                <!-- Reset Filters Button -->
+                @if (hasActiveFilters()) {
                 <button pButton icon="pi pi-filter-slash" 
                     class="p-button-text p-button-rounded p-button-danger mt-auto" 
                     (click)="clearFilters()"
-                    pTooltip="Clear Filters"></button>
+                    pTooltip="Clear All Filters"></button>
                 }
             </div>
         </div>
@@ -64,9 +84,9 @@
         }
 
         @if (!loading()) {
-        @if (filteredProducts().length > 0) {
+        @if (products().length > 0) {
         <div class="grid g-3">
-            @for (product of filteredProducts(); track product.id; let index = $index) {
+            @for (product of products(); track product.id; let index = $index) {
             <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-3 stagger-item" [style.--index]="index">
                 <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
                     <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
@@ -127,7 +147,7 @@
             </div>
             <h2 class="text-3xl font-bold m-0 mb-2">No matching items</h2>
             <p class="text-600 m-0 mb-5 max-w-20rem">We couldn't find anything matching your current filters. Try a
-                different search or category.</p>
+                different search, price range, or category.</p>
             <button pButton label="Reset All Filters" icon="pi pi-refresh"
                 class="p-button-outlined p-button-primary px-5 border-round-xl" (click)="clearFilters()"></button>
         </div>

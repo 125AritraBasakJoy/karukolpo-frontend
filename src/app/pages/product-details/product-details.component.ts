@@ -197,7 +197,7 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   showProductDetails(product: Product) {
-    this.router.navigate(['/products', product.id]);
+    this.router.navigate(['/products', product.slug || product.id]);
   }
 
   // 📱 Swipe Gesture Handling

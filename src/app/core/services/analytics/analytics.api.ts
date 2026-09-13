@@ -28,4 +28,8 @@ export const ANALYTICS_API = {
     TRAFFIC_GEO: (period = '30d') => `${BASE}/traffic/geo?period=${period}`,
     TRAFFIC_CONVERSION: (period = '30d') => `${BASE}/traffic/conversion?period=${period}`,
     SALES_BY_SOURCE: (period = '30d') => `${BASE}/sales-by-source?period=${period}`,
+    JOURNEY_FUNNEL: (period = '30d') => `${BASE}/journey/funnel?period=${period}`,
+    JOURNEY_PRODUCT_INTEREST: (period = '30d', limit = 20) => `${BASE}/journey/product-interest?period=${period}&limit=${limit}`,
+    JOURNEY_ABANDONED_CARTS: (period = '30d', limit = 50) => `${BASE}/journey/abandoned-carts?period=${period}&limit=${limit}`,
+    JOURNEY_DEVICE_TIMELINE: (deviceIdHash: string, limit = 200) => `track/journey?device=${encodeURIComponent(deviceIdHash)}&limit=${limit}`,
 } as const;

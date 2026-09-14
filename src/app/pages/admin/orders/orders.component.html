@@ -267,7 +267,7 @@
                     </div>
 
                     <!-- Items Scrollable List (Dynamic height adapting to item count) -->
-                    <div class="overflow-y-auto mb-2 custom-scrollbar pr-1 items-scroll-area" 
+                    <div class="overflow-y-auto overflow-x-hidden mb-2 custom-scrollbar pr-1 items-scroll-area" 
                         style="max-height: min(60vh, 520px);">
                         @if (filteredOrderItems().length === 0) {
                         <div class="p-5 text-center flex flex-column align-items-center justify-content-center text-gray-400">
@@ -279,48 +279,51 @@
                         <div class="order-items-list">
                             @for (item of filteredOrderItems(); track item.product.id || $index) {
                             <div class="order-item-tile flex align-items-center justify-content-between gap-3">
-                                <!-- Product Image & Titles -->
-                                <div class="flex align-items-center gap-3 min-w-0 flex-grow-1">
+                                <!-- Left: Thumbnail + Info Stack -->
+                                <div class="order-item-left flex align-items-center min-w-0 flex-grow-1">
                                     <div class="order-item-img-container overflow-hidden flex-shrink-0">
                                         @if (item.product.imageUrl) {
                                         <img [src]="item.product.imageUrl" class="w-full h-full object-cover" [alt]="item.product.name" />
                                         } @else {
                                         <div class="w-full h-full flex align-items-center justify-content-center bg-white-alpha-10">
-                                            <i class="pi pi-image text-lg text-gray-500"></i>
+                                            <i class="pi pi-box text-lg text-gray-400"></i>
                                         </div>
                                         }
                                     </div>
+
                                     <div class="order-item-info min-w-0 flex-grow-1">
-                                        <div class="order-item-title font-semibold text-white text-sm sm:text-base line-clamp-1" 
+                                        <div class="order-item-title font-semibold text-white text-sm line-clamp-1" 
                                             [pTooltip]="item.product.name" tooltipPosition="top">
                                             {{ item.product.name }}
+                                        </div>
+
+                                        <!-- Meta Details: Qty x Price, Original Price, Discount Pill -->
+                                        <div class="order-item-meta flex flex-wrap align-items-center gap-1.5 mt-1">
+                                            <span class="order-item-qty-pill font-mono">
+                                                {{ item.quantity }} × {{ getItemFinalUnitPrice(item) | currency:'BDT':'৳' }}
+                                            </span>
+
+                                            @if (isItemDiscounted(item)) {
+                                            <span class="order-item-regular-price font-mono">
+                                                {{ getItemRegularUnitPrice(item) | currency:'BDT':'৳' }}
+                                            </span>
+                                            <span class="order-item-discount-pill font-mono">
+                                                {{ getItemDiscountLabel(item) }}
+                                            </span>
+                                            }
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Quantity Pill & Line Total in balanced row -->
-                                <div class="flex align-items-center gap-2 sm:gap-3 flex-shrink-0 text-right">
-                                    <span class="order-item-qty-badge">
-                                        ×{{ item.quantity }}
-                                    </span>
-
-                                    @if (isItemDiscounted(item)) {
-                                    <div class="flex flex-column align-items-end justify-content-center">
-                                        <div class="flex align-items-center gap-1.5 line-height-1 mb-1">
-                                            <span class="order-item-discount-pill font-mono">
-                                                {{ getItemDiscountLabel(item) }}
-                                            </span>
-                                            <span class="order-item-original-price font-mono">
-                                                {{ getItemRegularTotal(item) | currency:'BDT':'৳' }}
-                                            </span>
-                                        </div>
-                                        <span class="order-item-total font-bold text-base md:text-lg">
-                                            {{ getItemFinalTotal(item) | currency:'BDT':'৳' }}
-                                        </span>
-                                    </div>
-                                    } @else {
-                                    <span class="order-item-total">
+                                <!-- Right: Line Total & Savings Badge -->
+                                <div class="order-item-total-col flex flex-column align-items-end justify-content-center flex-shrink-0 text-right">
+                                    <span class="order-item-total-heading">Total</span>
+                                    <span class="order-item-total-val font-bold text-base sm:text-lg font-mono">
                                         {{ getItemFinalTotal(item) | currency:'BDT':'৳' }}
+                                    </span>
+                                    @if (isItemDiscounted(item) && getItemSavings(item) > 0) {
+                                    <span class="order-item-savings-pill font-mono">
+                                        Saved {{ getItemSavings(item) | currency:'BDT':'৳' }}
                                     </span>
                                     }
                                 </div>

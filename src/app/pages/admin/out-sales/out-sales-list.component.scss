@@ -29,36 +29,43 @@
         position: absolute;
         left: 1rem;
         color: #64748b;
-        font-size: 0.9rem;
+        font-size: 1rem;
         pointer-events: none;
+        z-index: 10;
     }
 
     .clear-icon {
         position: absolute;
-        right: 1rem;
+        right: 0.75rem;
         color: #64748b;
         font-size: 0.85rem;
         cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: all 0.2s;
+        z-index: 10;
 
         &:hover {
+            background: rgba(255, 255, 255, 0.1);
             color: #f8fafc;
         }
     }
 
     .search-input {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 0.65rem 2.25rem 0.65rem 2.5rem;
-        color: #fff;
-        font-size: 0.875rem;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        padding: 0.7rem 2.5rem 0.7rem 2.6rem !important;
+        color: #fff !important;
+        font-size: 0.875rem !important;
         min-width: 260px;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
 
         &:focus {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15) !important;
         }
 
         &::placeholder {

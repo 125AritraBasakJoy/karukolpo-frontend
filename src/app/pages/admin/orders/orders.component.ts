@@ -674,6 +674,12 @@ export class OrdersComponent implements OnInit {
     return '';
   }
 
+  getItemSavings(item: CartItem): number {
+    const regular = this.getItemRegularTotal(item);
+    const finalTotal = this.getItemFinalTotal(item);
+    return Math.max(0, regular - finalTotal);
+  }
+
   getCustomerName(order: Order | null): string {
     if (!order) return 'Unknown Customer';
     return order.address?.full_name || order.fullName || 'Unknown Customer';

@@ -11,13 +11,15 @@ import { MaintenanceService } from './core/services/maintenance/maintenance.serv
 import { PwaInstallService } from './core/services/pwa/pwa-install.service';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
+import { TargetedOfferComponent } from './components/targeted-offer/targeted-offer.component';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { LoadingComponent } from './components/loading/loading.component';
+import { environment } from '../environments/environment';
 import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, CommonModule, LoadingComponent],
+  imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, TargetedOfferComponent, CommonModule, LoadingComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
@@ -40,6 +42,15 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
+      if (!window.location.pathname.startsWith('/admin')) {
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        if (typeof (window as any).gtag !== 'function') {
+          (window as any).gtag = function () {
+            (window as any).dataLayer.push(arguments);
+          };
+        }
+      }
+
       // Programmatically unregister any old/leftover service worker in development mode
       if (isDevMode() && 'serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -110,19 +121,20 @@ export class AppComponent implements OnInit {
 
   private initGoogleAnalytics() {
     if (isPlatformBrowser(this.platformId) && !window.location.pathname.startsWith('/admin')) {
+      const gaId = (environment as any).gaMeasurementId || 'G-2LZ6GZQF66';
       const script1 = document.createElement('script');
       script1.async = true;
-      script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-2LZ6GZQF66';
+      script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
       document.head.appendChild(script1);
 
-      const script2 = document.createElement('script');
-      script2.innerHTML = `
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-2LZ6GZQF66');
-      `;
-      document.head.appendChild(script2);
+      (window as any).dataLayer = (window as any).dataLayer || [];
+      if (typeof (window as any).gtag !== 'function') {
+        (window as any).gtag = function () {
+          (window as any).dataLayer.push(arguments);
+        };
+      }
+      (window as any).gtag('js', new Date());
+      (window as any).gtag('config', gaId);
     }
   }
 

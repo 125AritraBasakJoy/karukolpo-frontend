@@ -14,39 +14,39 @@ const API_ENDPOINTS = {
 export class AnalyticsService {
   constructor(private apiService: ApiService) {}
 
-  getOverview(period = '30d'): Observable<Models.OverviewResponse> {
+  getOverview(period = '30d', channel = 'all'): Observable<Models.OverviewResponse> {
     return this.apiService.get<Models.OverviewResponse>(
-      API_ENDPOINTS.ANALYTICS.OVERVIEW(period)
+      API_ENDPOINTS.ANALYTICS.OVERVIEW(period, channel)
     );
   }
 
-  getRevenueTimeseries(period = '30d', granularity = 'day'): Observable<Models.RevenueTimeseriesResponse> {
+  getRevenueTimeseries(period = '30d', granularity = 'day', channel = 'all'): Observable<Models.RevenueTimeseriesResponse> {
     return this.apiService.get<Models.RevenueTimeseriesResponse>(
-      API_ENDPOINTS.ANALYTICS.REVENUE_TIMESERIES(period, granularity)
+      API_ENDPOINTS.ANALYTICS.REVENUE_TIMESERIES(period, granularity, channel)
     );
   }
 
-  getOrdersBreakdown(period = '30d'): Observable<Models.OrdersBreakdownResponse> {
+  getOrdersBreakdown(period = '30d', channel = 'all'): Observable<Models.OrdersBreakdownResponse> {
     return this.apiService.get<Models.OrdersBreakdownResponse>(
-      API_ENDPOINTS.ANALYTICS.ORDERS_BREAKDOWN(period)
+      API_ENDPOINTS.ANALYTICS.ORDERS_BREAKDOWN(period, channel)
     );
   }
 
-  getGeography(period = '30d', groupBy = 'district'): Observable<Models.GeographyResponse> {
+  getGeography(period = '30d', groupBy = 'district', channel = 'all'): Observable<Models.GeographyResponse> {
     return this.apiService.get<Models.GeographyResponse>(
-      API_ENDPOINTS.ANALYTICS.GEOGRAPHY(period, groupBy)
+      API_ENDPOINTS.ANALYTICS.GEOGRAPHY(period, groupBy, channel)
     );
   }
 
-  getTopProducts(period = '30d', by = 'revenue', limit = 10): Observable<Models.TopProduct[]> {
+  getTopProducts(period = '30d', by = 'revenue', limit = 10, channel = 'all'): Observable<Models.TopProduct[]> {
     return this.apiService.get<Models.TopProduct[]>(
-      API_ENDPOINTS.ANALYTICS.TOP_PRODUCTS(period, by, limit)
+      API_ENDPOINTS.ANALYTICS.TOP_PRODUCTS(period, by, limit, channel)
     );
   }
 
-  getTopCategories(period = '30d', limit = 10): Observable<Models.TopCategory[]> {
+  getTopCategories(period = '30d', limit = 10, channel = 'all'): Observable<Models.TopCategory[]> {
     return this.apiService.get<Models.TopCategory[]>(
-      API_ENDPOINTS.ANALYTICS.TOP_CATEGORIES(period, limit)
+      API_ENDPOINTS.ANALYTICS.TOP_CATEGORIES(period, limit, channel)
     );
   }
 
@@ -56,57 +56,57 @@ export class AnalyticsService {
     );
   }
 
-  getCustomers(period = '30d', limit = 10): Observable<Models.CustomersResponse> {
+  getCustomers(period = '30d', limit = 10, channel = 'all'): Observable<Models.CustomersResponse> {
     return this.apiService.get<Models.CustomersResponse>(
-      API_ENDPOINTS.ANALYTICS.CUSTOMERS(period, limit)
+      API_ENDPOINTS.ANALYTICS.CUSTOMERS(period, limit, channel)
     );
   }
 
-  getDiscounts(period = '30d'): Observable<Models.DiscountsResponse> {
+  getDiscounts(period = '30d', channel = 'all'): Observable<Models.DiscountsResponse> {
     return this.apiService.get<Models.DiscountsResponse>(
-      API_ENDPOINTS.ANALYTICS.DISCOUNTS(period)
+      API_ENDPOINTS.ANALYTICS.DISCOUNTS(period, channel)
     );
   }
 
-  getCustomerSegments(period = '30d'): Observable<Models.CustomerSegmentsResponse> {
+  getCustomerSegments(period = '30d', channel = 'all'): Observable<Models.CustomerSegmentsResponse> {
     return this.apiService.get<Models.CustomerSegmentsResponse>(
-      API_ENDPOINTS.ANALYTICS.CUSTOMER_SEGMENTS(period)
+      API_ENDPOINTS.ANALYTICS.CUSTOMER_SEGMENTS(period, channel)
     );
   }
 
-  getCustomerCohorts(months = 6): Observable<Models.CohortsResponse> {
+  getCustomerCohorts(months = 6, channel = 'all'): Observable<Models.CohortsResponse> {
     return this.apiService.get<Models.CohortsResponse>(
-      API_ENDPOINTS.ANALYTICS.CUSTOMER_COHORTS(months)
+      API_ENDPOINTS.ANALYTICS.CUSTOMER_COHORTS(months, channel)
     );
   }
 
-  getPatternsTime(period = '30d'): Observable<Models.PatternsTimeResponse> {
+  getPatternsTime(period = '30d', channel = 'all'): Observable<Models.PatternsTimeResponse> {
     return this.apiService.get<Models.PatternsTimeResponse>(
-      API_ENDPOINTS.ANALYTICS.PATTERNS_TIME(period)
+      API_ENDPOINTS.ANALYTICS.PATTERNS_TIME(period, channel)
     );
   }
 
-  getPatternsBasket(period = '30d', limit = 10): Observable<Models.PatternsBasketResponse> {
+  getPatternsBasket(period = '30d', limit = 10, channel = 'all'): Observable<Models.PatternsBasketResponse> {
     return this.apiService.get<Models.PatternsBasketResponse>(
-      API_ENDPOINTS.ANALYTICS.PATTERNS_BASKET(period, limit)
+      API_ENDPOINTS.ANALYTICS.PATTERNS_BASKET(period, limit, channel)
     );
   }
 
-  getInventorySlowMovers(period = '30d'): Observable<Models.SlowMoversResponse> {
+  getInventorySlowMovers(period = '30d', channel = 'all'): Observable<Models.SlowMoversResponse> {
     return this.apiService.get<Models.SlowMoversResponse>(
-      API_ENDPOINTS.ANALYTICS.INVENTORY_SLOW_MOVERS(period)
+      API_ENDPOINTS.ANALYTICS.INVENTORY_SLOW_MOVERS(period, channel)
     );
   }
 
-  getOrdersRisk(period = '30d'): Observable<Models.OrdersRiskResponse> {
+  getOrdersRisk(period = '30d', channel = 'all'): Observable<Models.OrdersRiskResponse> {
     return this.apiService.get<Models.OrdersRiskResponse>(
-      API_ENDPOINTS.ANALYTICS.ORDERS_RISK(period)
+      API_ENDPOINTS.ANALYTICS.ORDERS_RISK(period, channel)
     );
   }
 
-  getProfitableProducts(period = '30d', limit = 10): Observable<Models.ProfitableProduct[]> {
+  getProfitableProducts(period = '30d', limit = 10, channel = 'all'): Observable<Models.ProfitableProduct[]> {
     return this.apiService.get<Models.ProfitableProduct[]>(
-      API_ENDPOINTS.ANALYTICS.PRODUCTS_PROFITABLE(period, limit)
+      API_ENDPOINTS.ANALYTICS.PRODUCTS_PROFITABLE(period, limit, channel)
     );
   }
 
@@ -167,6 +167,12 @@ export class AnalyticsService {
   getJourneyAbandonedCarts(period = '30d', limit = 50): Observable<Models.AbandonedCartsResponse> {
     return this.apiService.get<Models.AbandonedCartsResponse>(
       API_ENDPOINTS.ANALYTICS.JOURNEY_ABANDONED_CARTS(period, limit)
+    );
+  }
+
+  getJourneyEngagement(limit = 50): Observable<Models.EngagementResponse> {
+    return this.apiService.get<Models.EngagementResponse>(
+      API_ENDPOINTS.ANALYTICS.JOURNEY_ENGAGEMENT(limit)
     );
   }
 

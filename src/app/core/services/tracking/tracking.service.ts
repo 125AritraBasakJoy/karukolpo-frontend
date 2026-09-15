@@ -34,7 +34,8 @@ export class TrackingService {
       referrer,
       utm_source,
       utm_medium,
-      utm_campaign
+      utm_campaign,
+      landing_query: window.location.search || null
     };
 
     this.apiService.post('track/visit', payload).subscribe({

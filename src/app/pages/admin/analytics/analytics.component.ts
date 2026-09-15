@@ -20,7 +20,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { AnalyticsService, ProductService, TrackingService } from '../../../core/services';
 import * as Models from '../../../models/analytics.model';
 
-type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic' | 'journey';
+type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic' | 'journey' | 'engagement';
 
 @Component({
   selector: 'app-analytics',
@@ -53,6 +53,7 @@ export class AnalyticsComponent implements OnInit {
   // Tabs and Filters
   activeTab = signal<AnalyticsTab>('overview');
   selectedPeriod = signal<string>('30d');
+  selectedChannel = signal<'all' | 'online' | 'offline'>('all');
   
   // sales-specific filters
   salesGranularity = signal<string>('day');
@@ -67,7 +68,8 @@ export class AnalyticsComponent implements OnInit {
     customers: signal<boolean>(false),
     inventory: signal<boolean>(false),
     traffic: signal<boolean>(false),
-    journey: signal<boolean>(false)
+    journey: signal<boolean>(false),
+    engagement: signal<boolean>(false)
   };
 
   // Data Stores
@@ -109,6 +111,17 @@ export class AnalyticsComponent implements OnInit {
   deviceCopied = signal<boolean>(false);
   productInterestLimit = signal<number>(20);
   abandonedCartsLimit = signal<number>(50);
+
+  // Engagement Stores
+  journeyEngagement = signal<Models.EngagementResponse | null>(null);
+  engagementLimit = signal<number>(50);
+
+  // Channel Dropdown options
+  channelDropdownOptions = [
+    { label: 'All Channels', value: 'all' },
+    { label: 'Online Store', value: 'online' },
+    { label: 'Offline / POS', value: 'offline' }
+  ];
 
   // Customer Journey Computed Metrics
   landedStage = computed(() => this.journeyFunnel()?.stages?.find(s => s.stage === 'landed') ?? null);
@@ -250,25 +263,30 @@ export class AnalyticsComponent implements OnInit {
     this.selectedPeriod.set(period);
   }
 
+  setChannel(channel: 'all' | 'online' | 'offline'): void {
+    this.selectedChannel.set(channel);
+  }
+
   // Load Data based on the active tab
   private loadTabData(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const tab = this.activeTab();
     const period = this.selectedPeriod();
+    const channel = this.selectedChannel();
 
     switch (tab) {
       case 'overview':
-        this.fetchOverviewTab(period);
+        this.fetchOverviewTab(period, channel);
         break;
       case 'sales':
-        this.fetchSalesTab(period, this.salesGranularity());
+        this.fetchSalesTab(period, this.salesGranularity(), channel);
         break;
       case 'customers':
-        this.fetchCustomersTab(period, this.geoGroupBy());
+        this.fetchCustomersTab(period, this.geoGroupBy(), channel);
         break;
       case 'inventory':
-        this.fetchInventoryTab(period);
+        this.fetchInventoryTab(period, channel);
         break;
       case 'traffic':
         this.fetchTrafficTab(period);
@@ -276,16 +294,19 @@ export class AnalyticsComponent implements OnInit {
       case 'journey':
         this.fetchJourneyTab(period);
         break;
+      case 'engagement':
+        this.fetchEngagementTab();
+        break;
     }
   }
 
   // --- TAB FETCHERS ---
 
-  private fetchOverviewTab(period: string): void {
+  private fetchOverviewTab(period: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.overview.set(true);
     forkJoin({
-      overview: this.analyticsService.getOverview(period).pipe(catchError(() => of({}))),
-      timeseries: this.analyticsService.getRevenueTimeseries(period, 'day').pipe(catchError(() => of({}))),
+      overview: this.analyticsService.getOverview(period, channel).pipe(catchError(() => of({}))),
+      timeseries: this.analyticsService.getRevenueTimeseries(period, 'day', channel).pipe(catchError(() => of({}))),
       traffic: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => of({}))),
       conversion: this.analyticsService.getTrafficConversion(period).pipe(catchError(() => of({})))
     })
@@ -295,20 +316,18 @@ export class AnalyticsComponent implements OnInit {
       const rawOverview = res.overview as any;
       const mappedOverview: Models.OverviewResponse = {
         total_revenue: rawOverview.revenue?.realized?.total ? parseFloat(rawOverview.revenue.realized.total) : (rawOverview.total_revenue || 0),
-        revenue_growth_percentage: rawOverview.revenue?.realized_goods_change_pct ?? (rawOverview.revenue_growth_percentage || 0),
+        revenue_growth_percentage: rawOverview.revenue?.realized_goods_change_pct !== undefined ? rawOverview.revenue.realized_goods_change_pct : null,
         total_orders: rawOverview.orders?.completed ?? (rawOverview.orders?.total ?? (rawOverview.total_orders || 0)),
-        orders_growth_percentage: rawOverview.orders?.booked_change_pct ?? (rawOverview.orders_growth_percentage || 0),
+        orders_growth_percentage: rawOverview.orders?.booked_change_pct !== undefined ? rawOverview.orders.booked_change_pct : null,
         average_order_value: rawOverview.aov?.realized_total ? parseFloat(rawOverview.aov.realized_total) : (rawOverview.average_order_value || 0),
-        conversion_rate: rawOverview.conversion_rate || 0,
+        conversion_rate: 0,
         active_customers: rawOverview.customers?.total ?? (rawOverview.active_customers || 0)
       };
 
       // Map traffic overview
       const rawTraffic = res.traffic as any;
       const mappedTraffic: Models.TrafficOverviewResponse = {
-        total_sessions: rawTraffic?.total_visits ?? (rawTraffic?.total_sessions ?? 0),
-        bounce_rate: rawTraffic?.bounce_rate ?? 0,
-        avg_session_duration: rawTraffic?.avg_session_duration ?? 0
+        total_sessions: rawTraffic?.total_visits ?? (rawTraffic?.total_sessions ?? 0)
       };
 
       // Map conversion
@@ -327,27 +346,28 @@ export class AnalyticsComponent implements OnInit {
         steps: mappedSteps.length > 0 ? mappedSteps : (rawConv.steps || [])
       };
 
-      // Compute conversion rate if it's 0 on overview
-      if (mappedOverview.conversion_rate === 0) {
-        const totalVisits = mappedTraffic.total_sessions || 1;
-        mappedOverview.conversion_rate = parseFloat(((mappedOverview.total_orders / totalVisits) * 100).toFixed(2));
-      }
+      // A1: Calculate conversion rate from GET /admin/analytics/traffic/conversion
+      const visitors = (rawConv?.by_source ?? []).reduce((n: number, r: any) => n + (r.unique_visitors || 0), 0);
+      const buyers = (rawConv?.by_source ?? []).reduce((n: number, r: any) => n + (r.buyers || 0), 0);
+      mappedOverview.conversion_rate = visitors ? +(buyers / visitors * 100).toFixed(2) : 0;
 
       this.overviewData.set(mappedOverview);
       this.trafficOverview.set(mappedTraffic);
       this.trafficConversion.set(mappedConv);
 
-      // Map timeseries
+      // Map timeseries (A5: explicit numeric check and dual-series data)
       const rawTS = res.timeseries as any;
       const mappedPoints: Models.RevenueTimeseriesPoint[] = [];
       if (rawTS && rawTS.labels) {
         rawTS.labels.forEach((label: string, index: number) => {
-          const revenueVal = rawTS.realized?.total?.[index] 
-            ? parseFloat(rawTS.realized.total[index]) 
-            : (rawTS.booked?.total?.[index] ? parseFloat(rawTS.booked.total[index]) : 0);
+          const realized = parseFloat(rawTS.realized?.total?.[index] ?? '0');
+          const booked = parseFloat(rawTS.booked?.total?.[index] ?? '0');
+          const revenueVal = realized > 0 ? realized : booked;
           mappedPoints.push({
             date: label,
             revenue: revenueVal,
+            realized_revenue: realized,
+            booked_revenue: booked,
             orders: 0
           });
         });
@@ -362,14 +382,14 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
-  private fetchSalesTab(period: string, granularity: string): void {
+  private fetchSalesTab(period: string, granularity: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.sales.set(true);
     forkJoin({
-      timeseries: this.analyticsService.getRevenueTimeseries(period, granularity).pipe(catchError(() => of({}))),
-      breakdown: this.analyticsService.getOrdersBreakdown(period).pipe(catchError(() => of({}))),
-      profitable: this.analyticsService.getProfitableProducts(period, 10).pipe(catchError(() => of([]))),
-      discounts: this.analyticsService.getDiscounts(period).pipe(catchError(() => of({}))),
-      risk: this.analyticsService.getOrdersRisk(period).pipe(catchError(() => of({ orders: [] }))),
+      timeseries: this.analyticsService.getRevenueTimeseries(period, granularity, channel).pipe(catchError(() => of({}))),
+      breakdown: this.analyticsService.getOrdersBreakdown(period, channel).pipe(catchError(() => of({}))),
+      profitable: this.analyticsService.getProfitableProducts(period, 10, channel).pipe(catchError(() => of([]))),
+      discounts: this.analyticsService.getDiscounts(period, channel).pipe(catchError(() => of({}))),
+      risk: this.analyticsService.getOrdersRisk(period, channel).pipe(catchError(() => of({ orders: [] }))),
       salesBySource: this.analyticsService.getSalesBySource(period).pipe(catchError(() => of({ by_source: [] })))
     })
     .pipe(finalize(() => this.loadingStates.sales.set(false)))
@@ -379,12 +399,14 @@ export class AnalyticsComponent implements OnInit {
       const mappedPoints: Models.RevenueTimeseriesPoint[] = [];
       if (rawTS && rawTS.labels) {
         rawTS.labels.forEach((label: string, index: number) => {
-          const revenueVal = rawTS.realized?.total?.[index] 
-            ? parseFloat(rawTS.realized.total[index]) 
-            : (rawTS.booked?.total?.[index] ? parseFloat(rawTS.booked.total[index]) : 0);
+          const realized = parseFloat(rawTS.realized?.total?.[index] ?? '0');
+          const booked = parseFloat(rawTS.booked?.total?.[index] ?? '0');
+          const revenueVal = realized > 0 ? realized : booked;
           mappedPoints.push({
             date: label,
             revenue: revenueVal,
+            realized_revenue: realized,
+            booked_revenue: booked,
             orders: 0
           });
         });
@@ -515,14 +537,14 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
-  private fetchCustomersTab(period: string, geoGroupBy: string): void {
+  private fetchCustomersTab(period: string, geoGroupBy: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.customers.set(true);
     forkJoin({
-      customers: this.analyticsService.getCustomers(period, 10).pipe(catchError(() => of({}))),
-      segments: this.analyticsService.getCustomerSegments(period).pipe(catchError(() => of({}))),
-      cohorts: this.analyticsService.getCustomerCohorts(6).pipe(catchError(() => of({ cohorts: [] }))),
-      timePatterns: this.analyticsService.getPatternsTime(period).pipe(catchError(() => of({}))),
-      geo: this.analyticsService.getGeography(period, geoGroupBy).pipe(catchError(() => of({ data: [] })))
+      customers: this.analyticsService.getCustomers(period, 10, channel).pipe(catchError(() => of({}))),
+      segments: this.analyticsService.getCustomerSegments(period, channel).pipe(catchError(() => of({}))),
+      cohorts: this.analyticsService.getCustomerCohorts(6, channel).pipe(catchError(() => of({ cohorts: [] }))),
+      timePatterns: this.analyticsService.getPatternsTime(period, channel).pipe(catchError(() => of({}))),
+      geo: this.analyticsService.getGeography(period, geoGroupBy, channel).pipe(catchError(() => of({ data: [] })))
     })
     .pipe(finalize(() => this.loadingStates.customers.set(false)))
     .subscribe(res => {
@@ -612,14 +634,14 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
-  private fetchInventoryTab(period: string): void {
+  private fetchInventoryTab(period: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.inventory.set(true);
     forkJoin({
-      topProdRev: this.analyticsService.getTopProducts(period, 'revenue', 8).pipe(catchError(() => of([]))),
-      topCat: this.analyticsService.getTopCategories(period, 8).pipe(catchError(() => of([]))),
+      topProdRev: this.analyticsService.getTopProducts(period, 'revenue', 8, channel).pipe(catchError(() => of([]))),
+      topCat: this.analyticsService.getTopCategories(period, 8, channel).pipe(catchError(() => of([]))),
       health: this.analyticsService.getInventoryHealth().pipe(catchError(() => of({}))),
-      slowMovers: this.analyticsService.getInventorySlowMovers(period).pipe(catchError(() => of({ products: [] }))),
-      basket: this.analyticsService.getPatternsBasket(period, 8).pipe(catchError(() => of({ pairs: [] }))),
+      slowMovers: this.analyticsService.getInventorySlowMovers(period, channel).pipe(catchError(() => of({ products: [] }))),
+      basket: this.analyticsService.getPatternsBasket(period, 8, channel).pipe(catchError(() => of({ pairs: [] }))),
       products: this.productService.getProducts(0, 1000, undefined, true).pipe(catchError(() => of([])))
     })
     .pipe(finalize(() => this.loadingStates.inventory.set(false)))
@@ -709,17 +731,16 @@ export class AnalyticsComponent implements OnInit {
     })
     .pipe(finalize(() => this.loadingStates.traffic.set(false)))
     .subscribe(res => {
-      // Map Traffic Overview
+      // Map Traffic Overview (A2: no bounce_rate or avg_session_duration)
       const rawTraffic = res.overview as any;
       this.trafficOverview.set({
-        total_sessions: rawTraffic?.total_visits || 0,
-        bounce_rate: rawTraffic?.bounce_rate || 0,
-        avg_session_duration: rawTraffic?.avg_session_duration || 0
+        total_sessions: rawTraffic?.total_visits || 0
       });
 
-      // Map Traffic Sources
+      // Map Traffic Sources (prefer resolved source if available)
       const rawSources = res.sources as any;
-      const mappedSourcesList: Models.TrafficSource[] = (rawSources?.by_source || []).map((s: any) => ({
+      const sourcesData = rawSources?.by_resolved_source || rawSources?.by_source || [];
+      const mappedSourcesList: Models.TrafficSource[] = sourcesData.map((s: any) => ({
         source: s.key || 'Direct',
         sessions: s.visits || 0,
         conversions: 0,
@@ -729,30 +750,28 @@ export class AnalyticsComponent implements OnInit {
         sources: mappedSourcesList.length > 0 ? mappedSourcesList : (rawSources.sources || [])
       });
 
-      // Map Landing Pages
+      // Map Landing Pages (A2: no bounce_rate)
       const rawLanding = res.landing as any;
       const mappedLandingList: Models.LandingPageTraffic[] = (rawLanding?.landing_pages || []).map((l: any) => ({
         path: l.path || '/',
-        sessions: l.visits || 0,
-        bounce_rate: l.bounce_rate || 0
+        sessions: l.visits || 0
       }));
       this.trafficLanding.set({
         pages: mappedLandingList.length > 0 ? mappedLandingList : (rawLanding.pages || [])
       });
 
-      // Map Geo
+      // Map Geo (A2: no conversion_rate)
       const rawGeo = res.geo as any;
       const mappedGeoList: Models.GeoRegionTraffic[] = (rawGeo?.countries || []).map((g: any) => ({
         region: g.country === '??' ? 'Local / Unknown Location' : (g.country === 'BD' ? 'Bangladesh' : g.country || 'Unknown Location'),
         country: g.country === '??' ? 'Local / Unknown Location' : (g.country === 'BD' ? 'Bangladesh' : g.country || 'Unknown Location'),
-        sessions: g.unique_visitors || 0,
-        conversion_rate: 0
+        sessions: g.unique_visitors || 0
       }));
       this.trafficGeo.set({
         regions: mappedGeoList.length > 0 ? mappedGeoList : (rawGeo.regions || [])
       });
 
-      // Map Attribution
+      // Map Attribution (B2: unattributed orders and attribution rule footnote)
       const rawAttr = res.attribution as any;
       const mappedAttrList: Models.MarketingChannel[] = (rawAttr?.by_source || []).map((row: any) => ({
         channel: row.key || 'Direct',
@@ -761,7 +780,9 @@ export class AnalyticsComponent implements OnInit {
         roi: 0
       }));
       this.marketingAttribution.set({
-        channels: mappedAttrList.length > 0 ? mappedAttrList : (rawAttr.channels || [])
+        channels: mappedAttrList.length > 0 ? mappedAttrList : (rawAttr.channels || []),
+        unattributed_orders: rawAttr.unattributed_orders ?? 0,
+        attribution: rawAttr.attribution ?? ''
       });
 
       // Set Visitor logs
@@ -801,6 +822,38 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
+  fetchEngagementTab(): void {
+    this.loadingStates.engagement.set(true);
+    this.analyticsService.getJourneyEngagement(this.engagementLimit())
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => this.loadingStates.engagement.set(false))
+      )
+      .subscribe(res => {
+        this.journeyEngagement.set(res);
+      });
+  }
+
+  setEngagementLimit(limit: number): void {
+    this.engagementLimit.set(limit);
+    this.fetchEngagementTab();
+  }
+
+  formatDwellSeconds(seconds: number): string {
+    if (!seconds || seconds <= 0) return '0s';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m === 0) return `${s}s`;
+    return `${m}m ${s}s`;
+  }
+
+  getEngagementSeverity(score: number): 'success' | 'info' | 'warn' | 'secondary' {
+    if (score >= 50) return 'success';
+    if (score >= 20) return 'info';
+    if (score >= 5) return 'warn';
+    return 'secondary';
+  }
+
   // --- CHART BUILDERS ---
 
   private buildOverviewCharts(): void {
@@ -815,8 +868,8 @@ export class AnalyticsComponent implements OnInit {
           labels: ts.data.map(p => p.date),
           datasets: [
             {
-              label: 'Revenue (BDT)',
-              data: ts.data.map(p => p.revenue),
+              label: 'Realized Revenue (BDT)',
+              data: ts.data.map(p => p.realized_revenue ?? p.revenue),
               borderColor: '#6366f1',
               backgroundColor: 'rgba(99, 102, 241, 0.08)',
               fill: true,
@@ -829,13 +882,28 @@ export class AnalyticsComponent implements OnInit {
               pointHoverBorderWidth: 2
             },
             {
+              label: 'Booked Revenue (BDT)',
+              data: ts.data.map(p => p.booked_revenue ?? p.revenue),
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.02)',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.4,
+              borderWidth: 2,
+              pointRadius: isSinglePoint ? 5 : 3,
+              pointHoverRadius: 7,
+              pointBackgroundColor: '#38bdf8',
+              pointBorderWidth: 1,
+              pointHoverBorderWidth: 2
+            },
+            {
               label: 'Orders',
               data: ts.data.map(p => p.orders),
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.04)',
-              fill: true,
+              fill: false,
               tension: 0.4,
-              borderWidth: 3,
+              borderWidth: 2,
               pointRadius: isSinglePoint ? 5 : 3,
               pointHoverRadius: 7,
               pointBackgroundColor: '#10b981',
@@ -1443,8 +1511,12 @@ export class AnalyticsComponent implements OnInit {
       .pipe(finalize(() => this.timelineLoading.set(false)))
       .subscribe({
         next: (events) => {
-          this.selectedDeviceJourney.set(events || []);
-          if (!events || events.length === 0) {
+          const indexedEvents = (events || []).map((e, idx) => ({
+            ...e,
+            step_number: idx + 1
+          }));
+          this.selectedDeviceJourney.set(indexedEvents);
+          if (!indexedEvents || indexedEvents.length === 0) {
             this.timelineError.set('No journey events recorded for this device hash in the retention window.');
           }
         },

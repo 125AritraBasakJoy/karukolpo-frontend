@@ -257,11 +257,12 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       if (this.barcodeSvgRef?.nativeElement) {
         JsBarcode(this.barcodeSvgRef.nativeElement, this.orderNumberDisplay, {
           format: 'CODE128',
-          width: 1.2,
-          height: 32,
+          width: 1.8,
+          height: 38,
           displayValue: true,
           font: 'monospace',
-          fontSize: 10,
+          fontOptions: 'bold',
+          fontSize: 11,
           margin: 4,
           lineColor: '#000000'
         });
@@ -326,7 +327,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         ? (logoImg.naturalHeight / logoImg.naturalWidth) * logoW
         : 162;
       const logoX = (width - logoW) / 2;
+      ctx.save();
+      ctx.filter = 'grayscale(100%) contrast(350%) brightness(85%)';
       ctx.drawImage(logoImg, logoX, y, logoW, logoH);
+      ctx.restore();
       y += logoH + 10;
     } catch (e) {
       console.warn('Could not load logo for canvas:', e);
@@ -681,104 +685,193 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
             * {
               box-sizing: border-box;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color: #000000 !important;
             }
             html, body {
               margin: 0;
               padding: 0;
               width: 54mm;
-              font-family: 'Courier New', Courier, monospace, sans-serif;
-              color: #000000;
-              background: #ffffff;
-              font-size: 11px;
-              line-height: 1.25;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
+              color: #000000 !important;
+              background: #ffffff !important;
+              font-size: 11.5px;
+              font-weight: 700;
+              line-height: 1.35;
+              -webkit-text-stroke: 0.25px #000000;
+              text-rendering: geometricPrecision;
             }
             .text-center { text-align: center; }
             .text-right { text-align: right; }
             .text-left { text-align: left; }
-            .font-bold { font-weight: bold; }
+            .font-bold { font-weight: 900 !important; }
             .uppercase { text-transform: uppercase; }
             
             .receipt-logo {
               display: block;
               max-width: 36mm;
+              max-height: 36mm;
               height: auto;
               margin: 0 auto 4px auto;
-              filter: grayscale(100%) contrast(160%);
+              filter: grayscale(100%) contrast(350%) brightness(85%);
+              -webkit-filter: grayscale(100%) contrast(350%) brightness(85%);
             }
             .store-name {
-              font-size: 14px;
+              font-size: 16px;
               font-weight: 900;
-              letter-spacing: 1px;
-              margin: 2px 0;
+              letter-spacing: 0.5px;
+              margin: 2px 0 1px 0;
+              line-height: 1.2;
             }
             .store-info {
-              font-size: 9px;
-              line-height: 1.2;
+              font-size: 11px;
+              font-weight: 700;
+              line-height: 1.35;
+            }
+            .receipt-type-title {
+              font-size: 12px;
+              font-weight: 900;
+              letter-spacing: 0.5px;
+              margin: 3px 0;
             }
             .thermal-divider {
               border: 0;
-              border-top: 1px dashed #000000;
-              margin: 4px 0;
+              border-top: 1.5px dashed #000000;
+              margin: 5px 0;
             }
             .thermal-divider-double {
               border: 0;
-              border-top: 2px solid #000000;
-              margin: 5px 0;
+              border-top: 2.5px double #000000;
+              margin: 6px 0;
+            }
+            .meta-section {
+              font-size: 11.5px;
+              font-weight: 700;
+              margin: 3px 0;
             }
             .meta-row {
               display: flex;
               justify-content: space-between;
-              font-size: 10px;
+              align-items: baseline;
+              font-size: 11.5px;
+              font-weight: 700;
               margin-bottom: 2px;
             }
+            .meta-label {
+              font-size: 11.5px;
+              font-weight: 700;
+            }
+            .meta-val {
+              font-weight: 800;
+              text-align: right;
+            }
             .customer-section {
-              margin: 2px 0;
+              font-size: 11.5px;
+              font-weight: 700;
+              margin: 3px 0;
+            }
+            .address-text {
+              max-width: 32mm;
+              word-break: break-word;
+              font-weight: 700;
+            }
+            .items-header {
+              display: flex;
+              justify-content: space-between;
+              font-size: 12px;
+              font-weight: 900;
+              padding: 1px 0;
+            }
+            .item-hdr-name {
+              flex: 1;
+            }
+            .item-hdr-total {
+              width: 17mm;
             }
             .item-row {
-              margin-bottom: 4px;
+              margin-bottom: 5px;
             }
             .item-title {
-              font-weight: bold;
-              font-size: 10.5px;
+              font-weight: 800;
+              font-size: 12px;
+              line-height: 1.25;
               word-break: break-word;
             }
             .item-calc-row {
               display: flex;
               justify-content: space-between;
-              font-size: 10px;
+              align-items: flex-start;
+              font-size: 11.5px;
+              font-weight: 700;
+              margin-top: 2px;
+            }
+            .item-calc-details {
+              font-size: 11.5px;
+              font-weight: 700;
+              flex: 1;
             }
             .item-discount-pill {
-              font-size: 8.5px;
-              font-style: italic;
+              font-size: 10.5px;
+              font-weight: 800;
+              margin-top: 1px;
+            }
+            .item-line-total {
+              font-size: 12px;
+              font-weight: 800;
+              width: 17mm;
+              text-align: right;
+            }
+            .totals-section {
+              font-size: 11.5px;
+              font-weight: 700;
             }
             .totals-row {
               display: flex;
               justify-content: space-between;
-              font-size: 10.5px;
+              font-size: 11.5px;
+              font-weight: 700;
               margin-bottom: 2px;
+            }
+            .discount-row {
+              font-weight: 800;
             }
             .grand-total-row {
               display: flex;
               justify-content: space-between;
-              font-size: 13px;
+              font-size: 15.5px;
               font-weight: 900;
               margin: 4px 0;
             }
+            .note-section {
+              font-size: 11px;
+              font-weight: 700;
+              margin: 3px 0;
+            }
             .receipt-footer {
-              font-size: 9.5px;
+              font-size: 11px;
+              font-weight: 700;
               margin-top: 6px;
               text-align: center;
+              line-height: 1.35;
             }
             .barcode-container {
               display: flex;
               justify-content: center;
-              margin: 3px 0;
+              margin: 3px 0 5px 0;
             }
             svg {
               max-width: 100%;
-              height: auto;
+              height: 38px;
+            }
+            .return-policy {
+              font-size: 10.5px;
+              margin-top: 2px;
+            }
+            .contact-support {
+              font-size: 11.5px;
+              font-weight: 800;
+              margin-top: 2px;
             }
           </style>
         </head>

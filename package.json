@@ -31,7 +31,7 @@
     "jspdf-autotable": "^5.0.7",
     "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",
-    "primeng": "^19.0.0",
+    "primeng": "19.1.4",
     "quill": "^2.0.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
@@ -52,5 +52,11 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.9.3",
     "webpack-bundle-analyzer": "^5.2.0"
+  },
+  "overrides": {
+    "primeng": {
+      "@angular/core": "$@angular/core",
+      "@angular/common": "$@angular/common"
+    }
   }
 }

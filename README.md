@@ -53,6 +53,7 @@ Karukolpo is a premium E-commerce platform dedicated to showcasing and selling e
    ```bash
    npm install
    ```
+   > **Note**: A `.npmrc` file is included with `legacy-peer-deps=true` to automatically resolve Angular 20 and PrimeNG peer dependencies. You do not need to pass extra CLI flags. If performing a clean install from the committed lockfile, you can also run `npm ci`.
 
 ### Development
 Start the local server:

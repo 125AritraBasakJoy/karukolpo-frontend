@@ -5,7 +5,7 @@ import { NotificationRead } from '../../models/notification.model';
 import { ButtonModule } from 'primeng/button';
 import { BadgeModule } from 'primeng/badge';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -17,7 +17,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         ButtonModule,
         BadgeModule,
         OverlayBadgeModule,
-        OverlayPanelModule,
+        PopoverModule,
         TooltipModule,
         TagModule,
         ProgressSpinnerModule

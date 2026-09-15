@@ -10,6 +10,7 @@ interface JourneyEvent {
   path?: string | null;
   product_id?: string | null;
   quantity?: number | null;
+  dwell_ms?: number | null;
 }
 
 /** Must not exceed MAX_EVENTS_PER_BATCH in app/routers/track.py, or the batch 422s. */
@@ -20,6 +21,7 @@ const FLUSH_DELAY_MS = 10000;
 export class JourneyService {
   private queue: JourneyEvent[] = [];
   private timer: any = null;
+  private pageEnteredAt = Date.now();
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -39,6 +41,14 @@ export class JourneyService {
     // authenticated admins from view_product, but it cannot tell for these events —
     // they carry no token — so the filter has to be here.
     if (window.location.pathname.startsWith('/admin')) return;
+
+    if (event === 'page_view') {
+      const now = Date.now();
+      // Time spent on the PREVIOUS page, capped to the backend's bound. A tab left open
+      // overnight says nothing about interest and would dominate any ranking it fed.
+      detail = { ...detail, dwell_ms: Math.min(now - this.pageEnteredAt, 3_600_000) };
+      this.pageEnteredAt = now;
+    }
 
     this.queue.push({ event, ...detail });
 

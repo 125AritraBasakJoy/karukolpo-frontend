@@ -21,6 +21,7 @@ export * from './version/version.service';
 export * from './tracking/tracking.service';
 export * from './pwa/pwa-install.service';
 export * from './gtag/gtag.service';
+export * from './offers/offers.service';
 
 // APIs & Helpers
 export * from './api/api-config';

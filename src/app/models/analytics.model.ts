@@ -1,8 +1,8 @@
 export interface OverviewResponse {
   total_revenue: number;
-  revenue_growth_percentage: number;
+  revenue_growth_percentage: number | null;
   total_orders: number;
-  orders_growth_percentage: number;
+  orders_growth_percentage: number | null;
   average_order_value: number;
   conversion_rate: number;
   active_customers: number;
@@ -11,6 +11,8 @@ export interface OverviewResponse {
 export interface RevenueTimeseriesPoint {
   date: string;
   revenue: number;
+  booked_revenue?: number;
+  realized_revenue?: number;
   orders: number;
 }
 
@@ -188,12 +190,14 @@ export interface MarketingChannel {
 
 export interface AttributionResponse {
   channels: MarketingChannel[];
+  unattributed_orders?: number;
+  attribution?: string;
 }
 
 export interface TrafficOverviewResponse {
   total_sessions: number;
-  bounce_rate: number;
-  avg_session_duration: number;
+  bounce_rate?: number;
+  avg_session_duration?: number;
 }
 
 export interface TrafficSource {
@@ -210,7 +214,7 @@ export interface TrafficSourcesResponse {
 export interface LandingPageTraffic {
   path: string;
   sessions: number;
-  bounce_rate: number;
+  bounce_rate?: number;
 }
 
 export interface TrafficLandingResponse {
@@ -221,7 +225,7 @@ export interface GeoRegionTraffic {
   region: string;
   country: string;
   sessions: number;
-  conversion_rate: number;
+  conversion_rate?: number;
 }
 
 export interface TrafficGeoResponse {
@@ -297,4 +301,24 @@ export interface JourneyEventRead {
   quantity: number | null;
   order_id: string | null;
   created_at: string;
+  step_number?: number;
 }
+
+export interface EngagementRow {
+  device_id_hash: string;
+  customer_phone?: string | null;
+  top_product_id?: string | null;
+  top_product_name?: string | null;
+  product_views: number;
+  sessions: number;
+  dwell_seconds: number;
+  score: number;
+  last_seen?: string | null;
+}
+
+export interface EngagementResponse {
+  window_days: number;
+  computed_at?: string | null;
+  devices: EngagementRow[];
+}
+

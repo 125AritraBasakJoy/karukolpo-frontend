@@ -1,0 +1,34 @@
+<div *ngIf="offer() && !isExpired() && !isDismissed()" class="targeted-offer-bar">
+  <div class="offer-container flex flex-column md:flex-row align-items-center justify-content-between gap-3 py-2 px-3 sm:px-4">
+    <div class="offer-content flex align-items-center gap-3 flex-wrap">
+      <div class="offer-badge flex align-items-center gap-2">
+        <span class="pulse-dot"></span>
+        <span class="badge-text" *ngIf="offer()?.reason === 'repeat_product_views'">Still thinking about this?</span>
+        <span class="badge-text" *ngIf="offer()?.reason === 'returning_visitor'">Back again? Special deal:</span>
+        <span class="badge-text" *ngIf="offer()?.reason !== 'repeat_product_views' && offer()?.reason !== 'returning_visitor'">Limited-Time Offer:</span>
+      </div>
+
+      <div class="offer-product flex align-items-center gap-2">
+        <span class="product-name font-semibold text-white">{{ offer()?.name }}</span>
+        <div class="pricing flex align-items-center gap-2 text-sm">
+          <span class="original-price text-slate-400 line-through">৳{{ offer()?.original_price }}</span>
+          <span class="effective-price font-bold text-amber-400">৳{{ offer()?.effective_price }}</span>
+        </div>
+      </div>
+
+      <div class="offer-timer flex align-items-center gap-2 text-xs text-slate-300 bg-slate-800 border-1 border-slate-700 px-2 py-1 border-round-lg shadow-1">
+        <i class="pi pi-clock text-amber-400"></i>
+        <span>Ends in: <strong class="text-white font-mono">{{ countdown() }}</strong></span>
+      </div>
+    </div>
+
+    <div class="offer-actions flex align-items-center gap-2">
+      <a [routerLink]="['/products', offer()?.slug || offer()?.product_id]" class="btn-claim text-xs font-semibold py-2 px-3 border-round-md">
+        View Piece <i class="pi pi-arrow-right text-xs ml-1"></i>
+      </a>
+      <button type="button" class="btn-dismiss p-link text-slate-400 hover:text-white" (click)="dismiss()" aria-label="Close offer">
+        <i class="pi pi-times text-sm"></i>
+      </button>
+    </div>
+  </div>
+</div>

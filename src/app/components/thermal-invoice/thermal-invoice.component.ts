@@ -257,12 +257,13 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       if (this.barcodeSvgRef?.nativeElement) {
         JsBarcode(this.barcodeSvgRef.nativeElement, this.orderNumberDisplay, {
           format: 'CODE128',
-          width: 1.2,
+          width: 1.4,
           height: 32,
           displayValue: true,
           font: 'monospace',
+          fontOptions: 'bold',
           fontSize: 10,
-          margin: 4,
+          margin: 2,
           lineColor: '#000000'
         });
       }
@@ -326,7 +327,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         ? (logoImg.naturalHeight / logoImg.naturalWidth) * logoW
         : 162;
       const logoX = (width - logoW) / 2;
+      ctx.save();
+      ctx.filter = 'grayscale(100%) contrast(350%) brightness(85%)';
       ctx.drawImage(logoImg, logoX, y, logoW, logoH);
+      ctx.restore();
       y += logoH + 10;
     } catch (e) {
       console.warn('Could not load logo for canvas:', e);
@@ -677,45 +681,63 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
           <style>
             @page {
               size: 58mm auto;
-              margin: 0mm 1mm 2mm 1mm;
+              margin: 0mm !important;
             }
             * {
               box-sizing: border-box;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color: #000000 !important;
             }
             html, body {
-              margin: 0;
+              margin: 0 auto;
               padding: 0;
-              width: 54mm;
-              font-family: 'Courier New', Courier, monospace, sans-serif;
-              color: #000000;
-              background: #ffffff;
+              width: 48mm;
+              max-width: 48mm;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
+              color: #000000 !important;
+              background: #ffffff !important;
               font-size: 11px;
-              line-height: 1.25;
+              font-weight: 600;
+              line-height: 1.3;
+              text-rendering: geometricPrecision;
+              image-rendering: -webkit-optimize-contrast;
+              image-rendering: crisp-edges;
             }
             .text-center { text-align: center; }
             .text-right { text-align: right; }
             .text-left { text-align: left; }
-            .font-bold { font-weight: bold; }
+            .font-bold { font-weight: 800 !important; }
             .uppercase { text-transform: uppercase; }
             
             .receipt-logo {
               display: block;
-              max-width: 36mm;
+              max-width: 32mm;
+              max-height: 32mm;
               height: auto;
-              margin: 0 auto 4px auto;
-              filter: grayscale(100%) contrast(160%);
+              margin: 0 auto 3px auto;
+              filter: grayscale(100%) contrast(190%) brightness(102%);
+              -webkit-filter: grayscale(100%) contrast(190%) brightness(102%);
+              image-rendering: -webkit-optimize-contrast;
+              image-rendering: crisp-edges;
             }
             .store-name {
-              font-size: 14px;
-              font-weight: 900;
-              letter-spacing: 1px;
-              margin: 2px 0;
+              font-size: 15px;
+              font-weight: 800;
+              letter-spacing: 0.3px;
+              margin: 2px 0 1px 0;
+              line-height: 1.2;
             }
             .store-info {
-              font-size: 9px;
-              line-height: 1.2;
+              font-size: 10.5px;
+              font-weight: 600;
+              line-height: 1.3;
+            }
+            .receipt-type-title {
+              font-size: 11.5px;
+              font-weight: 800;
+              letter-spacing: 0.5px;
+              margin: 3px 0;
             }
             .thermal-divider {
               border: 0;
@@ -724,61 +746,137 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
             .thermal-divider-double {
               border: 0;
-              border-top: 2px solid #000000;
-              margin: 5px 0;
+              border-top: 1.5px solid #000000;
+              margin: 4px 0;
+            }
+            .meta-section {
+              font-size: 11px;
+              font-weight: 600;
+              margin: 3px 0;
             }
             .meta-row {
               display: flex;
               justify-content: space-between;
-              font-size: 10px;
+              align-items: baseline;
+              font-size: 11px;
+              font-weight: 600;
               margin-bottom: 2px;
             }
+            .meta-label {
+              font-size: 11px;
+              font-weight: 600;
+            }
+            .meta-val {
+              font-weight: 700;
+              text-align: right;
+            }
             .customer-section {
-              margin: 2px 0;
+              font-size: 11px;
+              font-weight: 600;
+              margin: 3px 0;
+            }
+            .address-text {
+              max-width: 30mm;
+              word-break: break-word;
+              font-weight: 600;
+            }
+            .items-header {
+              display: flex;
+              justify-content: space-between;
+              font-size: 11.5px;
+              font-weight: 800;
+              padding: 1px 0;
+            }
+            .item-hdr-name {
+              flex: 1;
+            }
+            .item-hdr-total {
+              width: 16mm;
             }
             .item-row {
               margin-bottom: 4px;
             }
             .item-title {
-              font-weight: bold;
-              font-size: 10.5px;
+              font-weight: 700;
+              font-size: 11.5px;
+              line-height: 1.25;
               word-break: break-word;
             }
             .item-calc-row {
               display: flex;
               justify-content: space-between;
-              font-size: 10px;
+              align-items: flex-start;
+              font-size: 11px;
+              font-weight: 600;
+              margin-top: 1px;
+            }
+            .item-calc-details {
+              font-size: 11px;
+              font-weight: 600;
+              flex: 1;
             }
             .item-discount-pill {
-              font-size: 8.5px;
-              font-style: italic;
+              font-size: 10px;
+              font-weight: 600;
+              margin-top: 1px;
+            }
+            .item-line-total {
+              font-size: 11.5px;
+              font-weight: 700;
+              width: 16mm;
+              text-align: right;
+            }
+            .totals-section {
+              font-size: 11px;
+              font-weight: 600;
             }
             .totals-row {
               display: flex;
               justify-content: space-between;
-              font-size: 10.5px;
+              font-size: 11px;
+              font-weight: 600;
               margin-bottom: 2px;
+            }
+            .discount-row {
+              font-weight: 700;
             }
             .grand-total-row {
               display: flex;
               justify-content: space-between;
-              font-size: 13px;
-              font-weight: 900;
-              margin: 4px 0;
+              font-size: 14.5px;
+              font-weight: 800;
+              margin: 3px 0;
+            }
+            .note-section {
+              font-size: 10.5px;
+              font-weight: 600;
+              margin: 2px 0;
             }
             .receipt-footer {
-              font-size: 9.5px;
-              margin-top: 6px;
+              font-size: 10.5px;
+              font-weight: 600;
+              margin-top: 5px;
               text-align: center;
+              line-height: 1.3;
             }
             .barcode-container {
               display: flex;
               justify-content: center;
-              margin: 3px 0;
+              margin: 2px 0 4px 0;
             }
             svg {
               max-width: 100%;
-              height: auto;
+              height: 32px;
+              shape-rendering: crispEdges !important;
+            }
+            .return-policy {
+              font-size: 10px;
+              margin-top: 2px;
+            }
+            .contact-support {
+              font-size: 11px;
+              font-weight: 700;
+              margin-top: 1px;
             }
           </style>
         </head>

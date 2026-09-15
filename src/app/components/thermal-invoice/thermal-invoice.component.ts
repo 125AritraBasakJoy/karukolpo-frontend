@@ -681,7 +681,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
           <style>
             @page {
               size: 58mm auto;
-              margin: 0mm 1mm 2mm 1mm;
+              margin: 0mm !important;
             }
             * {
               box-sizing: border-box;
@@ -690,9 +690,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               color: #000000 !important;
             }
             html, body {
-              margin: 0;
+              margin: 0 auto;
               padding: 0;
-              width: 54mm;
+              width: 48mm;
+              max-width: 48mm;
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
               color: #000000 !important;
               background: #ffffff !important;
@@ -701,6 +702,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               line-height: 1.35;
               -webkit-text-stroke: 0.25px #000000;
               text-rendering: geometricPrecision;
+              image-rendering: -webkit-optimize-contrast;
+              image-rendering: crisp-edges;
             }
             .text-center { text-align: center; }
             .text-right { text-align: right; }
@@ -716,6 +719,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               margin: 0 auto 4px auto;
               filter: grayscale(100%) contrast(350%) brightness(85%);
               -webkit-filter: grayscale(100%) contrast(350%) brightness(85%);
+              image-rendering: -webkit-optimize-contrast;
+              image-rendering: crisp-edges;
             }
             .store-name {
               font-size: 16px;
@@ -863,6 +868,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             svg {
               max-width: 100%;
               height: 38px;
+              shape-rendering: crispEdges !important;
             }
             .return-policy {
               font-size: 10.5px;

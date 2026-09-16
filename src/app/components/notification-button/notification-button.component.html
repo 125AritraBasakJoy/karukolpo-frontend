@@ -1,22 +1,22 @@
 <div class="notification-btn-wrapper relative inline-flex">
     <button pButton
             type="button"
-            styleClass="p-button-outlined p-button-secondary border-circle w-3rem h-3rem p-0 flex align-items-center justify-content-center"
+            class="notif-bell-btn p-button-text p-button-rounded"
             (click)="togglePanel($event, op)"
             pTooltip="Notifications"
             tooltipPosition="bottom">
-        <i class="pi pi-bell text-xl"></i>
+        <i class="pi pi-bell"></i>
     </button>
     <span *ngIf="unreadCount > 0" class="notif-badge-pill">
         {{ unreadCount > 99 ? '99+' : unreadCount }}
     </span>
 </div>
 
-<p-popover #op [style]="{width: '380px'}" styleClass="notification-panel">
-    <ng-template pTemplate>
-        <div class="flex flex-column surface-card border-round-xl shadow-4 overflow-hidden">
+<p-popover #op [style]="{width: 'min(380px, 92vw)'}" styleClass="notification-panel">
+    <ng-template #content pTemplate="content">
+        <div class="flex flex-column border-round-xl shadow-4 overflow-hidden" style="background: #0f172a;">
             <!-- Header -->
-            <div class="flex align-items-center justify-content-between p-3 border-bottom-1 surface-border bg-slate-900">
+            <div class="flex align-items-center justify-content-between p-3 border-bottom-1 surface-border" style="background: rgba(15, 23, 42, 0.95);">
                 <div class="flex align-items-center gap-2">
                     <i class="pi pi-bell text-primary text-xl"></i>
                     <span class="font-bold text-lg text-white">Notifications</span>
@@ -24,26 +24,26 @@
                 <div class="flex align-items-center gap-1">
                     <button *ngIf="unreadCount > 0"
                             pButton label="Mark all read" [text]="true" size="small"
-                            styleClass="p-0 text-xs text-primary hover:text-primary-400 font-medium ml-1"
+                            class="p-0 text-xs text-primary hover:text-primary-400 font-medium ml-1"
                             (click)="markAllRead()"></button>
                 </div>
             </div>
 
             <!-- Filter Tabs -->
-            <div class="flex p-2 gap-2 border-bottom-1 surface-border bg-slate-900/50">
+            <div class="flex p-2 gap-2 border-bottom-1 surface-border" style="background: rgba(15, 23, 42, 0.7);">
                 <button pButton
                         [label]="'All (' + notifications.length + ')'"
                         [outlined]="unreadOnly"
                         [text]="unreadOnly"
                         size="small"
-                        styleClass="p-button-sm text-xs border-round-lg py-1 px-3"
+                        class="p-button-sm text-xs border-round-lg py-1 px-3"
                         (click)="setFilter(false)"></button>
                 <button pButton
                         [label]="'Unread (' + unreadCount + ')'"
                         [outlined]="!unreadOnly"
                         [text]="!unreadOnly"
                         size="small"
-                        styleClass="p-button-sm text-xs border-round-lg py-1 px-3"
+                        class="p-button-sm text-xs border-round-lg py-1 px-3"
                         (click)="setFilter(true)"></button>
             </div>
 
@@ -105,7 +105,7 @@
             </div>
 
             <!-- Footer -->
-            <div class="p-2 border-top-1 surface-border bg-slate-900/80 text-center">
+            <div class="p-2 border-top-1 surface-border text-center" style="background: rgba(15, 23, 42, 0.9);">
                 <span class="text-xs text-slate-500">Click a notification to mark as read</span>
             </div>
         </div>

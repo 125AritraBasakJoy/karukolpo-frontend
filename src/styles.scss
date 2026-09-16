@@ -1415,11 +1415,13 @@ textarea,
     border-radius: 16px !important;
     box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5) !important;
 
+    .p-popover-content,
     .p-overlaypanel-content {
         padding: 0 !important;
         background: transparent !important;
     }
 
+    .p-popover-close-button,
     .p-overlaypanel-close {
         display: none !important;
     }

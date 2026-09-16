@@ -9,6 +9,7 @@ import { PopoverModule } from 'primeng/popover';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SharedModule } from 'primeng/api';
 
 @Component({
     selector: 'app-notification-button',
@@ -20,7 +21,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         PopoverModule,
         TooltipModule,
         TagModule,
-        ProgressSpinnerModule
+        ProgressSpinnerModule,
+        SharedModule
     ],
     templateUrl: './notification-button.component.html',
     styleUrls: ['./notification-button.component.scss'],

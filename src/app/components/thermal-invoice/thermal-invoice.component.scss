@@ -294,6 +294,14 @@
     size: 58mm;
     margin: 0;
   }
+  @page {
+    @top-left { content: none; }
+    @top-center { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-center { content: none; }
+    @bottom-right { content: none; }
+  }
 
   * {
     -webkit-print-color-adjust: exact !important;

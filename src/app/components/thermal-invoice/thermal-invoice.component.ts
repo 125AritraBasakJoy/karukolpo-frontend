@@ -673,11 +673,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       }
 
       // Pre-calculate estimated receipt height in millimeters from host element
-      let estimatedHeightMm = 135;
+      let estimatedHeightMm = 100;
       if (this.receiptElementRef?.nativeElement) {
-        const elHeight = this.receiptElementRef.nativeElement.offsetHeight;
+        const elHeight = this.receiptElementRef.nativeElement.scrollHeight;
         if (elHeight > 0) {
-          estimatedHeightMm = Math.ceil((elHeight * 25.4) / 96) + 3;
+          estimatedHeightMm = Math.ceil((elHeight * 25.4) / 96);
         }
       }
 
@@ -929,15 +929,22 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             function applyExactPageHeight() {
               try {
                 var body = document.body;
-                var html = document.documentElement;
-                var heightPx = Math.max(
-                  body ? body.scrollHeight : 0,
-                  body ? body.offsetHeight : 0,
-                  html ? html.clientHeight : 0,
-                  html ? html.scrollHeight : 0,
-                  html ? html.offsetHeight : 0
-                );
+                if (!body) return;
+                // Find the last visible element's bottom edge to get exact content height.
+                // body.scrollHeight includes the <script> tag and any trailing whitespace.
+                var lastEl = body.lastElementChild;
+                while (lastEl && lastEl.tagName === 'SCRIPT') {
+                  lastEl = lastEl.previousElementSibling;
+                }
+                var heightPx = 0;
+                if (lastEl) {
+                  var rect = lastEl.getBoundingClientRect();
+                  heightPx = rect.bottom;
+                } else {
+                  heightPx = body.scrollHeight;
+                }
                 if (heightPx > 0) {
+                  // Convert px to mm precisely — no buffer added
                   var heightMm = Math.ceil((heightPx * 25.4) / 96);
                   var style = document.getElementById('dynamic-page-size');
                   if (!style) {

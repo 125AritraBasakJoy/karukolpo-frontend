@@ -8,7 +8,7 @@ export const ANALYTICS_API = {
     OVERVIEW: (period = '30d', channel = 'all') => `${BASE}/overview?period=${period}&channel=${channel}`,
     REVENUE_TIMESERIES: (period = '30d', granularity = 'day', channel = 'all') => `${BASE}/revenue-timeseries?period=${period}&granularity=${granularity}&channel=${channel}`,
     ORDERS_BREAKDOWN: (period = '30d', channel = 'all') => `${BASE}/orders-breakdown?period=${period}&channel=${channel}`,
-    GEOGRAPHY: (period = '30d', groupBy = 'district', channel = 'all') => `${BASE}/geography?period=${period}&group_by=${groupBy}&channel=${channel}`,
+    GEOGRAPHY: (period = '30d', groupBy = 'district', channel = 'all', limit = 50) => `${BASE}/geography?period=${period}&group_by=${groupBy}&channel=${channel}&limit=${limit}`,
     TOP_PRODUCTS: (period = '30d', by = 'revenue', limit = 10, channel = 'all') => `${BASE}/top-products?period=${period}&by=${by}&limit=${limit}&channel=${channel}`,
     TOP_CATEGORIES: (period = '30d', limit = 10, channel = 'all') => `${BASE}/top-categories?period=${period}&limit=${limit}&channel=${channel}`,
     INVENTORY_HEALTH: `${BASE}/inventory-health`,

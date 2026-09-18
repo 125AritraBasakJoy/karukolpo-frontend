@@ -248,6 +248,8 @@
 /* Footer & Barcode */
 .receipt-footer {
   margin-top: 5px;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
   text-align: center;
   font-size: 10px;
   font-weight: 600;
@@ -289,7 +291,7 @@
 /* Print Media Query */
 @media print {
   @page {
-    size: 58mm auto;
+    size: 58mm;
     margin: 0mm !important;
   }
 
@@ -320,8 +322,13 @@
     max-width: 45mm !important;
     box-shadow: none !important;
     border: none !important;
-    padding: 0mm 0.5mm 3mm 0.5mm !important;
+    padding: 0mm 0.5mm 0mm 0.5mm !important;
     image-rendering: -webkit-optimize-contrast !important;
     image-rendering: crisp-edges !important;
+  }
+
+  .receipt-footer {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
   }
 }

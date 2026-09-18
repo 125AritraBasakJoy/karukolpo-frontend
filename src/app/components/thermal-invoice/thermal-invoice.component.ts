@@ -671,6 +671,16 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       if (this.logoSrc && !printContent.includes('data:image')) {
         printContent = printContent.replace(/src="[^"]*assets\/invoice-logo-mandala\.jpg[^"]*"/g, `src="${this.logoSrc}"`);
       }
+
+      // Pre-calculate estimated receipt height in millimeters from host element
+      let estimatedHeightMm = 135;
+      if (this.receiptElementRef?.nativeElement) {
+        const elHeight = this.receiptElementRef.nativeElement.offsetHeight;
+        if (elHeight > 0) {
+          estimatedHeightMm = Math.ceil((elHeight * 25.4) / 96) + 3;
+        }
+      }
+
       const baseOrigin = window.location.origin;
       const receiptHtml = `
         <!DOCTYPE html>
@@ -680,9 +690,9 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
           <base href="${baseOrigin}/">
           <title>Receipt-${this.orderNumberDisplay}</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
+          <style id="base-page-style">
             @page {
-              size: 58mm auto;
+              size: 58mm ${estimatedHeightMm}mm;
               margin: 0mm !important;
             }
             * {
@@ -871,6 +881,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               font-size: 10px;
               font-weight: 600;
               margin-top: 5px;
+              margin-bottom: 0 !important;
+              padding-bottom: 0 !important;
               text-align: center;
               line-height: 1.3;
             }
@@ -898,24 +910,50 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         <body>
           ${printContent}
           <script>
+            function applyExactPageHeight() {
+              try {
+                var body = document.body;
+                var html = document.documentElement;
+                var heightPx = Math.max(
+                  body ? body.scrollHeight : 0,
+                  body ? body.offsetHeight : 0,
+                  html ? html.clientHeight : 0,
+                  html ? html.scrollHeight : 0,
+                  html ? html.offsetHeight : 0
+                );
+                if (heightPx > 0) {
+                  var heightMm = Math.ceil((heightPx * 25.4) / 96) + 2;
+                  var style = document.getElementById('dynamic-page-size');
+                  if (!style) {
+                    style = document.createElement('style');
+                    style.id = 'dynamic-page-size';
+                    document.head.appendChild(style);
+                  }
+                  style.textContent = '@page { size: 58mm ' + heightMm + 'mm !important; margin: 0mm !important; }';
+                }
+              } catch (e) {
+                console.error('Failed to set exact page height', e);
+              }
+            }
+
+            function executePrint() {
+              applyExactPageHeight();
+              window.focus();
+              window.print();
+            }
+
             function triggerPrintWhenReady() {
               var images = Array.from(document.images);
               var pending = images.filter(function(img) { return !img.complete; });
               if (pending.length === 0) {
-                setTimeout(function() {
-                  window.focus();
-                  window.print();
-                }, 100);
+                setTimeout(executePrint, 100);
               } else {
                 Promise.all(pending.map(function(img) {
                   return new Promise(function(resolve) {
                     img.onload = img.onerror = resolve;
                   });
                 })).then(function() {
-                  setTimeout(function() {
-                    window.focus();
-                    window.print();
-                  }, 150);
+                  setTimeout(executePrint, 150);
                 });
               }
             }

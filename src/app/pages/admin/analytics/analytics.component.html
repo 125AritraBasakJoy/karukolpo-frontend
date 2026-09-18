@@ -122,6 +122,12 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.overview()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some overview metrics from the server. Displayed figures may be partial.</span>
+          </div>
+
           <!-- Stats Grid -->
           <div class="grid mb-4" *ngIf="overviewData()">
             <!-- Revenue -->
@@ -138,7 +144,7 @@
                   <i class="pi" *ngIf="overviewData()?.revenue_growth_percentage !== null" 
                      [ngClass]="overviewData()!.revenue_growth_percentage! >= 0 ? 'pi-arrow-up-right' : 'pi-arrow-down-left'"></i>
                   <span class="ml-1 font-semibold">
-                    {{ overviewData()?.revenue_growth_percentage === null ? 'new' : (overviewData()?.revenue_growth_percentage | number:'1.1-1') + '% (goods)' }} vs last period
+                    {{ overviewData()?.revenue_growth_percentage === null ? 'new' : (overviewData()?.revenue_growth_percentage | number:'1.1-1') + '% (goods revenue)' }} vs last period
                   </span>
                 </div>
               </div>
@@ -147,7 +153,7 @@
             <div class="col-12 sm:col-6 lg:col-3">
               <div class="premium-stat-card bg-glow-green">
                 <div class="flex justify-content-between align-items-center mb-3">
-                  <span class="label">Completed Orders</span>
+                  <span class="label">Orders Completed (Realized)</span>
                   <div class="icon-wrap green"><i class="pi pi-shopping-bag"></i></div>
                 </div>
                 <div class="value">{{ overviewData()?.total_orders | number }}</div>
@@ -166,12 +172,15 @@
             <div class="col-12 sm:col-6 lg:col-3">
               <div class="premium-stat-card bg-glow-purple">
                 <div class="flex justify-content-between align-items-center mb-3">
-                  <span class="label">Conversion Rate</span>
+                  <span class="label flex align-items-center gap-1">
+                    Conversion Rate
+                    <i class="pi pi-info-circle text-xs text-color-secondary" pTooltip="Approximate: calculated from distinct buyers vs visitors across sources (clamped to 100%)" tooltipPosition="top"></i>
+                  </span>
                   <div class="icon-wrap purple"><i class="pi pi-percentage"></i></div>
                 </div>
                 <div class="value">{{ overviewData()?.conversion_rate }}%</div>
                 <div class="trend text-color-secondary text-xs mt-2">
-                  <span>Buyers ÷ Visitors by source</span>
+                  <span>Buyers ÷ Visitors (approx.)</span>
                 </div>
               </div>
             </div>
@@ -238,13 +247,19 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.sales()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some sales data from the server. Displayed figures may be partial.</span>
+          </div>
+
           <div class="grid">
             <!-- Revenue Timeseries with Granularity Selector -->
             <div class="col-12 lg:col-8">
               <div class="glass-panel p-4 mb-4">
                 <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
                   <h3 class="panel-title flex align-items-center gap-2">
-                    <i class="pi pi-chart-bar text-indigo-500"></i> Detailed Revenue Analysis
+                    <i class="pi pi-chart-bar text-indigo-500"></i> Realized vs Booked Revenue
                   </h3>
                   <div class="flex align-items-center gap-2">
                     <label class="text-xs font-semibold text-color-secondary uppercase">Granularity:</label>
@@ -323,6 +338,27 @@
                 </h3>
                 <div class="chart-wrapper" style="position: relative; height: 260px;">
                   <p-chart type="doughnut" [data]="charts['salesPayment'].data" [options]="charts['salesPayment'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- Discounts & Coupons Impact (Item 9) -->
+              <div class="glass-panel p-4 mb-4" *ngIf="discountsData()">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <h3 class="panel-title flex align-items-center gap-2">
+                    <i class="pi pi-percentage text-purple-400"></i> Discounts & Promo Impact
+                  </h3>
+                  <p-tag severity="info" [value]="(discountsData()?.discount_impact | number:'1.0-1') + '% orders'"></p-tag>
+                </div>
+                <div class="flex justify-content-between align-items-baseline mb-3 p-2 border-round bg-white-alpha-5">
+                  <span class="text-xs text-color-secondary">Total Given (incl. delivery):</span>
+                  <span class="font-bold text-white text-sm">{{ discountsData()?.total_discount_amount | number:'1.0-0' }} BDT</span>
+                </div>
+                <div class="promo-codes-list flex flex-column gap-2" *ngIf="discountsData()?.promo_code_usage && discountsData()!.promo_code_usage.length > 0">
+                  <div class="text-3xs text-color-secondary uppercase font-semibold">Promo Codes Used</div>
+                  <div class="flex justify-content-between align-items-center p-2 border-round bg-white-alpha-5 text-xs" *ngFor="let promo of discountsData()!.promo_code_usage">
+                    <span class="font-bold text-indigo-300 font-mono">{{ promo.code }}</span>
+                    <span class="text-color-secondary">{{ promo.count }} uses ({{ promo.discount_value | number:'1.0-0' }} BDT)</span>
+                  </div>
                 </div>
               </div>
 
@@ -423,6 +459,12 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.customers()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some customer analytics data from the server. Displayed figures may be partial.</span>
+          </div>
+
           <div class="grid">
             <!-- Main Grid Side -->
             <div class="col-12 lg:col-8">
@@ -559,10 +601,16 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.inventory()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some inventory metrics from the server. Displayed figures may be partial.</span>
+          </div>
+
           <!-- Inventory Health Grid -->
           <div class="grid mb-4" *ngIf="inventoryHealth()">
             <!-- Total Catalog Products -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-blue">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">Total Products</span>
@@ -575,7 +623,7 @@
               </div>
             </div>
             <!-- In Stock Products -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-green">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">In Stock</span>
@@ -587,8 +635,8 @@
                 </div>
               </div>
             </div>
-            <!-- Low Stock Warning -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <!-- Low Stock Warning (Item 4: Dynamic threshold from backend) -->
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-orange">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">Low Stock</span>
@@ -596,12 +644,12 @@
                 </div>
                 <div class="value text-orange-400">{{ inventoryHealth()?.low_stock }}</div>
                 <div class="trend text-color-secondary text-xs mt-2">
-                  <span>Qty is 5 or less</span>
+                  <span>Qty ≤ {{ inventoryHealth()?.low_stock_threshold ?? 5 }}</span>
                 </div>
               </div>
             </div>
             <!-- Out of Stock Alerts -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-red">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">Out of Stock</span>
@@ -610,6 +658,26 @@
                 <div class="value text-red-400">{{ inventoryHealth()?.out_of_stock }}</div>
                 <div class="trend text-color-secondary text-xs mt-2">
                   <span>Requires restocking</span>
+                </div>
+              </div>
+            </div>
+            <!-- Inventory Valuation (Item 3: retail / cost basis) -->
+            <div class="col-12 sm:col-6 md:col-4 xl:col" *ngIf="inventoryHealth()?.stock_value || inventoryHealth()?.stock_value_cost">
+              <div class="premium-stat-card bg-glow-purple">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Stock Valuation</span>
+                  <div class="icon-wrap purple"><i class="pi pi-wallet"></i></div>
+                </div>
+                <div class="value text-purple-300">
+                  {{ (inventoryHealth()?.stock_value_cost ?? inventoryHealth()?.stock_value) | number:'1.0-0' }} BDT
+                </div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span *ngIf="inventoryHealth()?.stock_value_cost">
+                    Cost basis ({{ inventoryHealth()?.cost_coverage_pct ?? 0 | number:'1.0-1' }}% coverage)
+                  </span>
+                  <span *ngIf="!inventoryHealth()?.stock_value_cost">
+                    Retail basis
+                  </span>
                 </div>
               </div>
             </div>
@@ -628,12 +696,17 @@
               </div>
             </div>
 
-            <!-- Top Categories Chart -->
+            <!-- Top Categories Chart (Item: share_of_goods_pct & non-additive subtitle) -->
             <div class="col-12 lg:col-6" *ngIf="charts['topCategoriesChart']">
               <div class="glass-panel p-4 mb-4">
-                <h3 class="panel-title flex align-items-center gap-2 mb-4">
-                  <i class="pi pi-tags text-blue-500"></i> Category Sales (Units)
-                </h3>
+                <div class="mb-4">
+                  <h3 class="panel-title flex align-items-center gap-2 mb-1">
+                    <i class="pi pi-tags text-blue-500"></i> Category Sales (Units)
+                  </h3>
+                  <div class="text-3xs text-color-secondary">
+                    Categories overlap (multi-tagged products); % share reflects proportion of period goods revenue.
+                  </div>
+                </div>
                 <div class="chart-wrapper" style="position: relative; height: 260px;">
                   <p-chart type="bar" [data]="charts['topCategoriesChart'].data" [options]="charts['topCategoriesChart'].options"></p-chart>
                 </div>
@@ -725,6 +798,12 @@
             <div class="col-12 lg:col-6"><p-card styleClass="premium-card mb-4"><p-skeleton height="260px"></p-skeleton></p-card></div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.traffic()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some traffic & marketing data from the server. Displayed figures may be partial.</span>
+          </div>
+
           <!-- Traffic Details Grid -->
           <div class="grid">
             <!-- Traffic Sources Pie -->

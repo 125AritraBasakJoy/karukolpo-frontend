@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, effect, inject, PLATFORM_ID, Inject } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser, DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -41,6 +41,9 @@ type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic'
     TooltipModule,
     InputTextModule
   ],
+  providers: [
+    { provide: DATE_PIPE_DEFAULT_OPTIONS, useValue: { timezone: '+0600' } }
+  ],
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.scss', '../admin-styles.scss']
 })
@@ -63,6 +66,17 @@ export class AnalyticsComponent implements OnInit {
 
   // Loading States
   loadingStates = {
+    overview: signal<boolean>(false),
+    sales: signal<boolean>(false),
+    customers: signal<boolean>(false),
+    inventory: signal<boolean>(false),
+    traffic: signal<boolean>(false),
+    journey: signal<boolean>(false),
+    engagement: signal<boolean>(false)
+  };
+
+  // Error States (Item 8: record failures so widgets can alert rather than silently rendering zeros)
+  errorStates = {
     overview: signal<boolean>(false),
     sales: signal<boolean>(false),
     customers: signal<boolean>(false),
@@ -260,6 +274,9 @@ export class AnalyticsComponent implements OnInit {
   }
 
   setPeriod(period: string): void {
+    if (period === '12m' && this.salesGranularity() === 'day') {
+      this.salesGranularity.set('week');
+    }
     this.selectedPeriod.set(period);
   }
 
@@ -274,6 +291,10 @@ export class AnalyticsComponent implements OnInit {
     const tab = this.activeTab();
     const period = this.selectedPeriod();
     const channel = this.selectedChannel();
+
+    if (period === '12m' && this.salesGranularity() === 'day') {
+      this.salesGranularity.set('week');
+    }
 
     switch (tab) {
       case 'overview':
@@ -304,20 +325,26 @@ export class AnalyticsComponent implements OnInit {
 
   private fetchOverviewTab(period: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.overview.set(true);
+    this.errorStates.overview.set(false);
+    let hasError = false;
     forkJoin({
-      overview: this.analyticsService.getOverview(period, channel).pipe(catchError(() => of({}))),
-      timeseries: this.analyticsService.getRevenueTimeseries(period, 'day', channel).pipe(catchError(() => of({}))),
-      traffic: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => of({}))),
-      conversion: this.analyticsService.getTrafficConversion(period).pipe(catchError(() => of({})))
+      overview: this.analyticsService.getOverview(period, channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      timeseries: this.analyticsService.getRevenueTimeseries(period, 'day', channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      traffic: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => { hasError = true; return of({}); })),
+      conversion: this.analyticsService.getTrafficConversion(period).pipe(catchError(() => { hasError = true; return of({}); }))
     })
     .pipe(finalize(() => this.loadingStates.overview.set(false)))
     .subscribe(res => {
+      if (hasError) {
+        this.errorStates.overview.set(true);
+      }
       // Map overview
       const rawOverview = res.overview as any;
       const mappedOverview: Models.OverviewResponse = {
         total_revenue: rawOverview.revenue?.realized?.total ? parseFloat(rawOverview.revenue.realized.total) : (rawOverview.total_revenue || 0),
         revenue_growth_percentage: rawOverview.revenue?.realized_goods_change_pct !== undefined ? rawOverview.revenue.realized_goods_change_pct : null,
-        total_orders: rawOverview.orders?.completed ?? (rawOverview.orders?.total ?? (rawOverview.total_orders || 0)),
+        // Item 6: Use orders.realized to pair with revenue.realized.*
+        total_orders: rawOverview.orders?.realized ?? (rawOverview.orders?.completed ?? (rawOverview.orders?.total ?? (rawOverview.total_orders || 0))),
         orders_growth_percentage: rawOverview.orders?.booked_change_pct !== undefined ? rawOverview.orders.booked_change_pct : null,
         average_order_value: rawOverview.aov?.realized_total ? parseFloat(rawOverview.aov.realized_total) : (rawOverview.average_order_value || 0),
         conversion_rate: 0,
@@ -346,29 +373,33 @@ export class AnalyticsComponent implements OnInit {
         steps: mappedSteps.length > 0 ? mappedSteps : (rawConv.steps || [])
       };
 
-      // A1: Calculate conversion rate from GET /admin/analytics/traffic/conversion
+      // Item 7: Calculate conversion rate, clamped between 0 and 100%
       const visitors = (rawConv?.by_source ?? []).reduce((n: number, r: any) => n + (r.unique_visitors || 0), 0);
       const buyers = (rawConv?.by_source ?? []).reduce((n: number, r: any) => n + (r.buyers || 0), 0);
-      mappedOverview.conversion_rate = visitors ? +(buyers / visitors * 100).toFixed(2) : 0;
+      const rawConvRate = visitors ? +(buyers / visitors * 100).toFixed(2) : 0;
+      mappedOverview.conversion_rate = Math.min(100, Math.max(0, rawConvRate));
 
       this.overviewData.set(mappedOverview);
       this.trafficOverview.set(mappedTraffic);
       this.trafficConversion.set(mappedConv);
 
-      // Map timeseries (A5: explicit numeric check and dual-series data)
+      // Map timeseries (Item 1 & 5: separate series and realized orders mapping)
       const rawTS = res.timeseries as any;
       const mappedPoints: Models.RevenueTimeseriesPoint[] = [];
       if (rawTS && rawTS.labels) {
         rawTS.labels.forEach((label: string, index: number) => {
           const realized = parseFloat(rawTS.realized?.total?.[index] ?? '0');
           const booked = parseFloat(rawTS.booked?.total?.[index] ?? '0');
-          const revenueVal = realized > 0 ? realized : booked;
+          const realizedOrders = rawTS.realized?.orders?.[index] ?? 0;
+          const bookedOrders = rawTS.booked?.orders?.[index] ?? 0;
           mappedPoints.push({
             date: label,
-            revenue: revenueVal,
+            revenue: realized,
             realized_revenue: realized,
             booked_revenue: booked,
-            orders: 0
+            orders: realizedOrders,
+            realized_orders: realizedOrders,
+            booked_orders: bookedOrders
           });
         });
       }
@@ -384,30 +415,38 @@ export class AnalyticsComponent implements OnInit {
 
   private fetchSalesTab(period: string, granularity: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.sales.set(true);
+    this.errorStates.sales.set(false);
+    let hasError = false;
     forkJoin({
-      timeseries: this.analyticsService.getRevenueTimeseries(period, granularity, channel).pipe(catchError(() => of({}))),
-      breakdown: this.analyticsService.getOrdersBreakdown(period, channel).pipe(catchError(() => of({}))),
-      profitable: this.analyticsService.getProfitableProducts(period, 10, channel).pipe(catchError(() => of([]))),
-      discounts: this.analyticsService.getDiscounts(period, channel).pipe(catchError(() => of({}))),
-      risk: this.analyticsService.getOrdersRisk(period, channel).pipe(catchError(() => of({ orders: [] }))),
-      salesBySource: this.analyticsService.getSalesBySource(period).pipe(catchError(() => of({ by_source: [] })))
+      timeseries: this.analyticsService.getRevenueTimeseries(period, granularity, channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      breakdown: this.analyticsService.getOrdersBreakdown(period, channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      profitable: this.analyticsService.getProfitableProducts(period, 10, channel).pipe(catchError(() => { hasError = true; return of([]); })),
+      discounts: this.analyticsService.getDiscounts(period, channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      risk: this.analyticsService.getOrdersRisk(period, channel).pipe(catchError(() => { hasError = true; return of({ orders: [] }); })),
+      salesBySource: this.analyticsService.getSalesBySource(period).pipe(catchError(() => { hasError = true; return of({ by_source: [] }); }))
     })
     .pipe(finalize(() => this.loadingStates.sales.set(false)))
     .subscribe(res => {
-      // Map timeseries
+      if (hasError) {
+        this.errorStates.sales.set(true);
+      }
+      // Map timeseries (Item 1 & 5: separate series and realized orders mapping)
       const rawTS = res.timeseries as any;
       const mappedPoints: Models.RevenueTimeseriesPoint[] = [];
       if (rawTS && rawTS.labels) {
         rawTS.labels.forEach((label: string, index: number) => {
           const realized = parseFloat(rawTS.realized?.total?.[index] ?? '0');
           const booked = parseFloat(rawTS.booked?.total?.[index] ?? '0');
-          const revenueVal = realized > 0 ? realized : booked;
+          const realizedOrders = rawTS.realized?.orders?.[index] ?? 0;
+          const bookedOrders = rawTS.booked?.orders?.[index] ?? 0;
           mappedPoints.push({
             date: label,
-            revenue: revenueVal,
+            revenue: realized,
             realized_revenue: realized,
             booked_revenue: booked,
-            orders: 0
+            orders: realizedOrders,
+            realized_orders: realizedOrders,
+            booked_orders: bookedOrders
           });
         });
       }
@@ -430,13 +469,15 @@ export class AnalyticsComponent implements OnInit {
         });
       }
 
+      // Item 2: Map revenue_by_payment_method for money value
+      const rev = rawBreakdown?.revenue_by_payment_method ?? {};
       const mappedByPayment: Models.PaymentMethodBreakdown[] = [];
       if (rawBreakdown && rawBreakdown.by_payment_method) {
         Object.entries(rawBreakdown.by_payment_method).forEach(([method, count]) => {
           mappedByPayment.push({
             method,
             count: count as number,
-            value: count as number
+            value: parseFloat(rev[method] ?? '0')
           });
         });
       }
@@ -539,15 +580,21 @@ export class AnalyticsComponent implements OnInit {
 
   private fetchCustomersTab(period: string, geoGroupBy: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.customers.set(true);
+    this.errorStates.customers.set(false);
+    let hasError = false;
+    const geoLimit = geoGroupBy === 'subdistrict' ? 500 : 50;
     forkJoin({
-      customers: this.analyticsService.getCustomers(period, 10, channel).pipe(catchError(() => of({}))),
-      segments: this.analyticsService.getCustomerSegments(period, channel).pipe(catchError(() => of({}))),
-      cohorts: this.analyticsService.getCustomerCohorts(6, channel).pipe(catchError(() => of({ cohorts: [] }))),
-      timePatterns: this.analyticsService.getPatternsTime(period, channel).pipe(catchError(() => of({}))),
-      geo: this.analyticsService.getGeography(period, geoGroupBy, channel).pipe(catchError(() => of({ data: [] })))
+      customers: this.analyticsService.getCustomers(period, 10, channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      segments: this.analyticsService.getCustomerSegments(period, channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      cohorts: this.analyticsService.getCustomerCohorts(6, channel).pipe(catchError(() => { hasError = true; return of({ cohorts: [] }); })),
+      timePatterns: this.analyticsService.getPatternsTime(period, channel).pipe(catchError(() => { hasError = true; return of({}); })),
+      geo: this.analyticsService.getGeography(period, geoGroupBy, channel, geoLimit).pipe(catchError(() => { hasError = true; return of({ data: [] }); }))
     })
     .pipe(finalize(() => this.loadingStates.customers.set(false)))
     .subscribe(res => {
+      if (hasError) {
+        this.errorStates.customers.set(true);
+      }
       // Map Customers
       const rawCust = res.customers as any;
       const mappedTopCust: Models.TopCustomer[] = (rawCust?.top_customers || []).map((c: any) => ({
@@ -636,17 +683,23 @@ export class AnalyticsComponent implements OnInit {
 
   private fetchInventoryTab(period: string, channel: 'all' | 'online' | 'offline' = 'all'): void {
     this.loadingStates.inventory.set(true);
+    this.errorStates.inventory.set(false);
+    let hasError = false;
     forkJoin({
-      topProdRev: this.analyticsService.getTopProducts(period, 'revenue', 8, channel).pipe(catchError(() => of([]))),
-      topCat: this.analyticsService.getTopCategories(period, 8, channel).pipe(catchError(() => of([]))),
-      health: this.analyticsService.getInventoryHealth().pipe(catchError(() => of({}))),
-      slowMovers: this.analyticsService.getInventorySlowMovers(period, channel).pipe(catchError(() => of({ products: [] }))),
-      basket: this.analyticsService.getPatternsBasket(period, 8, channel).pipe(catchError(() => of({ pairs: [] }))),
-      products: this.productService.getProducts(0, 1000, undefined, true).pipe(catchError(() => of([])))
+      topProdRev: this.analyticsService.getTopProducts(period, 'revenue', 8, channel).pipe(catchError(() => { hasError = true; return of([]); })),
+      topCat: this.analyticsService.getTopCategories(period, 8, channel).pipe(catchError(() => { hasError = true; return of([]); })),
+      health: this.analyticsService.getInventoryHealth().pipe(catchError(() => { hasError = true; return of({}); })),
+      slowMovers: this.analyticsService.getInventorySlowMovers(period, channel).pipe(catchError(() => { hasError = true; return of({ products: [] }); })),
+      basket: this.analyticsService.getPatternsBasket(period, 8, channel).pipe(catchError(() => { hasError = true; return of({ pairs: [] }); })),
+      productsCount: this.productService.getProductsWithCount({ limit: 100 }).pipe(catchError(() => { hasError = true; return of({ items: [], total: 0 }); }))
     })
     .pipe(finalize(() => this.loadingStates.inventory.set(false)))
     .subscribe(res => {
-      const productsList = res.products || [];
+      if (hasError) {
+        this.errorStates.inventory.set(true);
+      }
+      const productsList = res.productsCount?.items || [];
+      const totalCatalogProducts = res.productsCount?.total ?? 0;
 
       // Map Top Products
       const mappedTopProducts: Models.TopProduct[] = (res.topProdRev || []).map((p: any) => {
@@ -654,7 +707,7 @@ export class AnalyticsComponent implements OnInit {
         return {
           product_id: p.product_id,
           name: p.name,
-          code: matchedProd?.code || `PROD-${p.product_id?.slice(-4)}`,
+          code: matchedProd?.code || `PROD-${p.product_id?.toString().slice(-4)}`,
           revenue: p.revenue ? parseFloat(p.revenue) : 0,
           units_sold: p.units || 0,
           stock: matchedProd?.stock || 0
@@ -662,31 +715,37 @@ export class AnalyticsComponent implements OnInit {
       });
       this.topProducts.set(mappedTopProducts);
 
-      // Map Top Categories
+      // Map Top Categories (include share_of_goods_pct)
       const mappedTopCategories: Models.TopCategory[] = (res.topCat || []).map((c: any) => ({
         category_id: c.category_id,
         name: c.name,
         revenue: c.revenue ? parseFloat(c.revenue) : 0,
-        units_sold: c.units || 0
+        units_sold: c.units || 0,
+        share_of_goods_pct: c.share_of_goods_pct !== undefined ? parseFloat(c.share_of_goods_pct) : undefined
       }));
       this.topCategories.set(mappedTopCategories);
 
-      // Map Inventory Health
+      // Map Inventory Health (Items 3 & 4: from backend /inventory-health & unpaginated count)
       const rawHealth = res.health as any;
-      const totalProductsCount = productsList.length;
-      const outOfStockCount = productsList.filter(p => !p.isInStock || (p.stock !== undefined && p.stock <= 0)).length;
-      const inStockCount = Math.max(0, totalProductsCount - outOfStockCount);
-      const lowStockCount = productsList.filter(p => p.isInStock && p.stock !== undefined && p.stock > 0 && p.stock <= 5).length;
-      
-      const calculatedValue = productsList.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0);
-      const estimatedValue = rawHealth?.stock_value ? parseFloat(rawHealth.stock_value) : calculatedValue;
+      const totalProductsCount = totalCatalogProducts > 0 ? totalCatalogProducts : (rawHealth.total_products || productsList.length);
+      const outOfStockCount = rawHealth.out_of_stock_count ?? (rawHealth.out_of_stock ?? 0);
+      const lowStockCount = (Array.isArray(rawHealth.low_stock) ? rawHealth.low_stock.length : (rawHealth.low_stock_count ?? rawHealth.low_stock ?? 0));
+      const lowStockThreshold = rawHealth.low_stock_threshold ?? 5;
+      const inStockCount = rawHealth.in_stock_count ?? Math.max(0, totalProductsCount - outOfStockCount);
+      const stockValue = rawHealth.stock_value ? parseFloat(rawHealth.stock_value) : 0;
+      const stockValueCost = rawHealth.stock_value_cost ? parseFloat(rawHealth.stock_value_cost) : undefined;
+      const costCoveragePct = rawHealth.cost_coverage_pct ? parseFloat(rawHealth.cost_coverage_pct) : undefined;
 
       this.inventoryHealth.set({
         total_products: totalProductsCount,
         in_stock: inStockCount,
         out_of_stock: outOfStockCount,
         low_stock: lowStockCount,
-        estimated_value: estimatedValue
+        estimated_value: stockValue,
+        stock_value: stockValue,
+        stock_value_cost: stockValueCost,
+        cost_coverage_pct: costCoveragePct,
+        low_stock_threshold: lowStockThreshold
       });
 
       // Map Slow Movers
@@ -721,16 +780,21 @@ export class AnalyticsComponent implements OnInit {
 
   private fetchTrafficTab(period: string): void {
     this.loadingStates.traffic.set(true);
+    this.errorStates.traffic.set(false);
+    let hasError = false;
     forkJoin({
-      overview: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => of({}))),
-      sources: this.analyticsService.getTrafficSources(period).pipe(catchError(() => of({ sources: [] }))),
-      landing: this.analyticsService.getTrafficLanding(period).pipe(catchError(() => of({ pages: [] }))),
-      geo: this.analyticsService.getTrafficGeo(period).pipe(catchError(() => of({ regions: [] }))),
-      attribution: this.analyticsService.getMarketingAttribution(period).pipe(catchError(() => of({ channels: [] }))),
-      visits: this.trackingService.getVisits(150).pipe(catchError(() => of([])))
+      overview: this.analyticsService.getTrafficOverview(period).pipe(catchError(() => { hasError = true; return of({}); })),
+      sources: this.analyticsService.getTrafficSources(period).pipe(catchError(() => { hasError = true; return of({ sources: [] }); })),
+      landing: this.analyticsService.getTrafficLanding(period).pipe(catchError(() => { hasError = true; return of({ pages: [] }); })),
+      geo: this.analyticsService.getTrafficGeo(period).pipe(catchError(() => { hasError = true; return of({ regions: [] }); })),
+      attribution: this.analyticsService.getMarketingAttribution(period).pipe(catchError(() => { hasError = true; return of({ channels: [] }); })),
+      visits: this.trackingService.getVisits(150).pipe(catchError(() => { hasError = true; return of([]); }))
     })
     .pipe(finalize(() => this.loadingStates.traffic.set(false)))
     .subscribe(res => {
+      if (hasError) {
+        this.errorStates.traffic.set(true);
+      }
       // Map Traffic Overview (A2: no bounce_rate or avg_session_duration)
       const rawTraffic = res.overview as any;
       this.trafficOverview.set({
@@ -945,7 +1009,7 @@ export class AnalyticsComponent implements OnInit {
     const ts = this.revenueTimeseries();
     const bd = this.ordersBreakdown();
 
-    // 1. Sales Tab Revenue Timeseries
+    // 1. Sales Tab Revenue Timeseries (Item 1: Plot Realized and Booked separately)
     if (ts && ts.data.length > 0) {
       const isSinglePoint = ts.data.length === 1;
       this.charts['salesRevenue'] = {
@@ -953,8 +1017,8 @@ export class AnalyticsComponent implements OnInit {
           labels: ts.data.map(p => p.date),
           datasets: [
             {
-              label: 'Revenue (BDT)',
-              data: ts.data.map(p => p.revenue),
+              label: 'Realized Revenue (BDT)',
+              data: ts.data.map(p => p.realized_revenue ?? 0),
               borderColor: '#6366f1',
               backgroundColor: 'rgba(99, 102, 241, 0.08)',
               fill: true,
@@ -963,6 +1027,20 @@ export class AnalyticsComponent implements OnInit {
               pointRadius: isSinglePoint ? 5 : 3,
               pointHoverRadius: 7,
               pointBackgroundColor: '#6366f1',
+              pointBorderWidth: 1
+            },
+            {
+              label: 'Booked Revenue (BDT)',
+              data: ts.data.map(p => p.booked_revenue ?? 0),
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.02)',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.3,
+              borderWidth: 2,
+              pointRadius: isSinglePoint ? 5 : 3,
+              pointHoverRadius: 7,
+              pointBackgroundColor: '#38bdf8',
               pointBorderWidth: 1
             }
           ]
@@ -986,8 +1064,9 @@ export class AnalyticsComponent implements OnInit {
       };
     }
 
-    // 3. Payment Method Doughnut
+    // 3. Payment Method Doughnut (Item 2: charts money value, custom tooltip for money + count)
     if (bd && bd.by_payment_method.length > 0) {
+      const baseDoughnut = this.getDoughnutOptions();
       this.charts['salesPayment'] = {
         data: {
           labels: bd.by_payment_method.map(p => p.method),
@@ -997,7 +1076,23 @@ export class AnalyticsComponent implements OnInit {
             borderWidth: 0
           }]
         },
-        options: this.getDoughnutOptions()
+        options: {
+          ...baseDoughnut,
+          plugins: {
+            ...baseDoughnut.plugins,
+            tooltip: {
+              ...baseDoughnut.plugins?.tooltip,
+              callbacks: {
+                label: (context: any) => {
+                  const item = bd.by_payment_method[context.dataIndex];
+                  const value = context.parsed;
+                  const count = item?.count ?? 0;
+                  return ` ${context.label}: ${value.toLocaleString()} BDT (${count} orders)`;
+                }
+              }
+            }
+          }
+        }
       };
     }
 
@@ -1010,7 +1105,7 @@ export class AnalyticsComponent implements OnInit {
           datasets: [
             {
               label: 'Gross Profit (BDT)',
-              data: profitable.map(p => p.revenue * p.margin_percentage / 100),
+              data: profitable.map(p => p.profit),
               backgroundColor: '#10b981',
               borderRadius: 6,
               borderWidth: 0
@@ -1167,8 +1262,9 @@ export class AnalyticsComponent implements OnInit {
       };
     }
 
-    // 2. Top Categories Bar Chart
+    // 2. Top Categories Bar Chart (Includes share_of_goods_pct and revenue)
     if (categories.length > 0) {
+      const baseBar = this.getBarChartOptions(false);
       this.charts['topCategoriesChart'] = {
         data: {
           labels: categories.map(c => c.name),
@@ -1179,7 +1275,29 @@ export class AnalyticsComponent implements OnInit {
             borderRadius: 6
           }]
         },
-        options: this.getBarChartOptions(false)
+        options: {
+          ...baseBar,
+          plugins: {
+            ...baseBar.plugins,
+            tooltip: {
+              ...baseBar.plugins?.tooltip,
+              callbacks: {
+                label: (context: any) => {
+                  const cat = categories[context.dataIndex];
+                  const units = context.parsed.y ?? context.parsed;
+                  let str = ` Units: ${units.toLocaleString()}`;
+                  if (cat?.revenue) {
+                    str += ` | Rev: ${cat.revenue.toLocaleString()} BDT`;
+                  }
+                  if (cat?.share_of_goods_pct !== undefined) {
+                    str += ` (${cat.share_of_goods_pct}% of goods)`;
+                  }
+                  return str;
+                }
+              }
+            }
+          }
+        }
       };
     }
   }

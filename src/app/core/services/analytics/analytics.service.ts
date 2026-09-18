@@ -32,9 +32,9 @@ export class AnalyticsService {
     );
   }
 
-  getGeography(period = '30d', groupBy = 'district', channel = 'all'): Observable<Models.GeographyResponse> {
+  getGeography(period = '30d', groupBy = 'district', channel = 'all', limit = 50): Observable<Models.GeographyResponse> {
     return this.apiService.get<Models.GeographyResponse>(
-      API_ENDPOINTS.ANALYTICS.GEOGRAPHY(period, groupBy, channel)
+      API_ENDPOINTS.ANALYTICS.GEOGRAPHY(period, groupBy, channel, limit)
     );
   }
 

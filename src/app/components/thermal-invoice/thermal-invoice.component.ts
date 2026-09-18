@@ -688,12 +688,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         <head>
           <meta charset="utf-8">
           <base href="${baseOrigin}/">
-          <title>Receipt-${this.orderNumberDisplay}</title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style id="base-page-style">
             @page {
               size: 58mm ${estimatedHeightMm}mm;
-              margin: 0mm !important;
+              margin: 0;
             }
             * {
               box-sizing: border-box;
@@ -929,7 +928,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
                     style.id = 'dynamic-page-size';
                     document.head.appendChild(style);
                   }
-                  style.textContent = '@page { size: 58mm ' + heightMm + 'mm !important; margin: 0mm !important; }';
+                  style.textContent = '@page { size: 58mm ' + heightMm + 'mm; margin: 0; }';
                 }
               } catch (e) {
                 console.error('Failed to set exact page height', e);

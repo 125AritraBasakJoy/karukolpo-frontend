@@ -930,29 +930,28 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               try {
                 var body = document.body;
                 if (!body) return;
-                // Find the last visible element's bottom edge to get exact content height.
-                // body.scrollHeight includes the <script> tag and any trailing whitespace.
+                // Walk backwards from last child to find last visible (non-script) element
                 var lastEl = body.lastElementChild;
                 while (lastEl && lastEl.tagName === 'SCRIPT') {
                   lastEl = lastEl.previousElementSibling;
                 }
                 var heightPx = 0;
                 if (lastEl) {
-                  var rect = lastEl.getBoundingClientRect();
-                  heightPx = rect.bottom;
-                } else {
+                  // offsetTop + offsetHeight gives exact bottom relative to body
+                  heightPx = lastEl.offsetTop + lastEl.offsetHeight;
+                }
+                if (!heightPx || heightPx <= 0) {
                   heightPx = body.scrollHeight;
                 }
                 if (heightPx > 0) {
-                  // Convert px to mm precisely — no buffer added
                   var heightMm = Math.ceil((heightPx * 25.4) / 96);
-                  var style = document.getElementById('dynamic-page-size');
-                  if (!style) {
-                    style = document.createElement('style');
-                    style.id = 'dynamic-page-size';
-                    document.head.appendChild(style);
+                  // Update the EXISTING base-page-style — not a new element.
+                  // This ensures only ONE @page rule exists so mobile Chrome
+                  // cannot ignore the dynamic override.
+                  var baseStyle = document.getElementById('base-page-style');
+                  if (baseStyle) {
+                    baseStyle.textContent = '@page { size: 58mm ' + heightMm + 'mm; margin: 0; } @page { @top-left{content:none} @top-center{content:none} @top-right{content:none} @bottom-left{content:none} @bottom-center{content:none} @bottom-right{content:none} }';
                   }
-                  style.textContent = '@page { size: 58mm ' + heightMm + 'mm; margin: 0; } @page { @top-left { content: none; } @top-center { content: none; } @top-right { content: none; } @bottom-left { content: none; } @bottom-center { content: none; } @bottom-right { content: none; } }';
                 }
               } catch (e) {
                 console.error('Failed to set exact page height', e);
@@ -960,9 +959,14 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
 
             function executePrint() {
+              // First pass: measure and set page height
               applyExactPageHeight();
-              window.focus();
-              window.print();
+              // Second pass after layout recalc to catch any reflow
+              requestAnimationFrame(function() {
+                applyExactPageHeight();
+                window.focus();
+                window.print();
+              });
             }
 
             function triggerPrintWhenReady() {

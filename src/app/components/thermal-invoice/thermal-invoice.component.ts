@@ -735,7 +735,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               max-width: 30mm;
               max-height: 30mm;
               height: auto;
-              margin: 0 auto 3px auto;
+              margin: 0 auto 1px auto;
               filter: grayscale(100%) contrast(190%) brightness(102%);
               -webkit-filter: grayscale(100%) contrast(190%) brightness(102%);
               image-rendering: -webkit-optimize-contrast;
@@ -745,34 +745,34 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               font-size: 15px;
               font-weight: 800;
               letter-spacing: 0.3px;
-              margin: 2px 0 1px 0;
+              margin: 1px 0;
               line-height: 1.2;
             }
             .store-info {
               font-size: 10px;
               font-weight: 600;
-              line-height: 1.3;
+              line-height: 1.25;
             }
             .receipt-type-title {
-              font-size: 11.5px;
+              font-size: 11px;
               font-weight: 800;
               letter-spacing: 0.5px;
-              margin: 3px 0;
+              margin: 2px 0;
             }
             .thermal-divider {
               border: 0;
               border-top: 1px dashed #000000;
-              margin: 4px 0;
+              margin: 2px 0;
             }
             .thermal-divider-double {
               border: 0;
               border-top: 1.5px solid #000000;
-              margin: 4px 0;
+              margin: 2px 0;
             }
             .meta-section {
               font-size: 10.5px;
               font-weight: 600;
-              margin: 3px 0;
+              margin: 2px 0;
             }
             .meta-row {
               display: flex;
@@ -795,18 +795,19 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             .customer-section {
               font-size: 10.5px;
               font-weight: 600;
-              margin: 3px 0;
+              margin: 2px 0;
             }
             .address-text {
-              max-width: 26mm;
+              max-width: 28mm;
               word-break: break-word;
+              font-size: 10px;
               font-weight: 600;
               text-align: right;
             }
             .items-header {
               display: flex;
               justify-content: space-between;
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 800;
               padding: 1px 0;
             }
@@ -818,35 +819,39 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               text-align: right;
               white-space: nowrap;
             }
+            .items-list { width: 100%; }
             .item-row {
-              margin-bottom: 4px;
+              margin-bottom: 3px;
             }
             .item-title {
+              font-size: 10.5px;
               font-weight: 700;
-              font-size: 11px;
               line-height: 1.25;
               word-break: break-word;
+            }
+            .item-code {
+              font-weight: 600;
+              font-size: 9.5px;
             }
             .item-calc-row {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              font-size: 10.5px;
-              font-weight: 600;
               margin-top: 1px;
             }
             .item-calc-details {
-              font-size: 10.5px;
+              font-size: 10px;
               font-weight: 600;
               flex: 1;
             }
             .item-discount-pill {
-              font-size: 9.5px;
-              font-weight: 600;
+              font-size: 8.5px;
+              font-weight: 700;
+              line-height: 1.2;
               margin-top: 1px;
             }
             .item-line-total {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 700;
               min-width: 12mm;
               text-align: right;
@@ -855,10 +860,12 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             .totals-section {
               font-size: 10.5px;
               font-weight: 600;
+              margin: 2px 0;
             }
             .totals-row {
               display: flex;
               justify-content: space-between;
+              align-items: baseline;
               font-size: 10.5px;
               font-weight: 600;
               margin-bottom: 2px;
@@ -867,15 +874,16 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               white-space: nowrap;
             }
             .discount-row {
+              font-size: 10px;
               font-weight: 700;
             }
             .grand-total-row {
               display: flex;
               justify-content: space-between;
               align-items: baseline;
-              font-size: 13.5px;
+              font-size: 13px;
               font-weight: 800;
-              margin: 3px 0;
+              margin: 2px 0;
             }
             .grand-total-row span:last-child {
               white-space: nowrap;
@@ -888,25 +896,25 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             .receipt-footer {
               font-size: 10px;
               font-weight: 600;
-              margin-top: 5px;
+              margin-top: 2px;
               margin-bottom: 0 !important;
               padding-bottom: 0 !important;
               text-align: center;
-              line-height: 1.3;
+              line-height: 1.25;
             }
             .barcode-container {
               display: flex;
               justify-content: center;
-              margin: 2px 0 4px 0;
+              margin: 1px 0 2px 0;
             }
             svg {
               max-width: 100%;
-              height: 30px;
+              height: 28px;
               shape-rendering: crispEdges !important;
             }
             .return-policy {
               font-size: 9.5px;
-              margin-top: 2px;
+              margin-top: 1px;
             }
             .contact-support {
               font-size: 10.5px;
@@ -930,7 +938,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
                   html ? html.offsetHeight : 0
                 );
                 if (heightPx > 0) {
-                  var heightMm = Math.ceil((heightPx * 25.4) / 96) + 2;
+                  var heightMm = Math.ceil((heightPx * 25.4) / 96);
                   var style = document.getElementById('dynamic-page-size');
                   if (!style) {
                     style = document.createElement('style');

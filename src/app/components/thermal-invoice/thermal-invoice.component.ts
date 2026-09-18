@@ -300,9 +300,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   }
 
   private async generateThermalCanvas(): Promise<HTMLCanvasElement> {
-    const width = 576; // 58mm roll at standard thermal resolution
-    const margin = 24;
-    const printableWidth = width - margin * 2; // 528px
+    const width = 576; // 58mm roll total pixel width
+    const leftX = 18;
+    const rightX = 468; // 45mm safe printable width for 48mm thermal printhead
+    const printableWidth = rightX - leftX; // 450px
+    const centerX = (leftX + rightX) / 2; // Optical center of printable content
 
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = width;
@@ -322,11 +324,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     // 1. Logo
     try {
       const logoImg = await this.loadImageElement(this.logoSrc);
-      const logoW = 240;
+      const logoW = 210;
       const logoH = logoImg.naturalHeight && logoImg.naturalWidth
         ? (logoImg.naturalHeight / logoImg.naturalWidth) * logoW
-        : 162;
-      const logoX = (width - logoW) / 2;
+        : 142;
+      const logoX = centerX - logoW / 2;
       ctx.save();
       ctx.filter = 'grayscale(100%) contrast(350%) brightness(85%)';
       ctx.drawImage(logoImg, logoX, y, logoW, logoH);
@@ -341,151 +343,151 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     ctx.textBaseline = 'top';
 
     ctx.font = `bold 22px ${fontMono}`;
-    ctx.fillText('KARUKOLPO', width / 2, y);
+    ctx.fillText('KARUKOLPO', centerX, y);
     y += 28;
 
     ctx.font = `14px ${fontMono}`;
-    ctx.fillText('Pathrail, Delduar, Tangail-1912', width / 2, y);
+    ctx.fillText('Pathrail, Delduar, Tangail-1912', centerX, y);
     y += 20;
 
-    ctx.fillText('www.karukolpocrafts.com', width / 2, y);
+    ctx.fillText('www.karukolpocrafts.com', centerX, y);
     y += 24;
 
     // Double Line
-    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 6;
 
     // Receipt Type
     ctx.font = `bold 16px ${fontMono}`;
-    ctx.fillText('*** POS SALES RECEIPT ***', width / 2, y);
+    ctx.fillText('*** POS SALES RECEIPT ***', centerX, y);
     y += 24;
 
     // Dashed Line
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
     // 3. Metadata Section
-    ctx.font = `14.5px ${fontMono}`;
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'RECEIPT #:', this.orderNumberDisplay, y, true);
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'DATE:', this.formattedDateOnly, y, false);
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'TIME:', this.formattedTimeOnly, y, false);
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'PAYMENT:', this.paymentMethodDisplay.toUpperCase(), y, true);
+    ctx.font = `14px ${fontMono}`;
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'RECEIPT #:', this.orderNumberDisplay, y, true);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'DATE:', this.formattedDateOnly, y, false);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'TIME:', this.formattedTimeOnly, y, false);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'PAYMENT:', this.paymentMethodDisplay.toUpperCase(), y, true);
     y += 4;
 
     // 4. Customer Section (if present)
     if (this.customerNameDisplay || this.customerPhoneDisplay || this.customerAddressDisplay) {
-      y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+      y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
       y += 6;
 
       ctx.textAlign = 'left';
-      ctx.font = `bold 14.5px ${fontMono}`;
-      ctx.fillText('CUSTOMER INFO:', margin, y);
+      ctx.font = `bold 14px ${fontMono}`;
+      ctx.fillText('CUSTOMER INFO:', leftX, y);
       y += 22;
 
       if (this.customerNameDisplay) {
-        y = this.drawCanvasRow(ctx, margin, width - margin, 'Name:', this.customerNameDisplay, y, true);
+        y = this.drawCanvasRow(ctx, leftX, rightX, 'Name:', this.customerNameDisplay, y, true);
       }
       if (this.customerPhoneDisplay) {
-        y = this.drawCanvasRow(ctx, margin, width - margin, 'Phone:', this.customerPhoneDisplay, y, true);
+        y = this.drawCanvasRow(ctx, leftX, rightX, 'Phone:', this.customerPhoneDisplay, y, true);
       }
       if (this.customerAddressDisplay) {
-        y = this.drawCanvasRow(ctx, margin, width - margin, 'Address:', this.customerAddressDisplay, y, false);
+        y = this.drawCanvasRow(ctx, leftX, rightX, 'Address:', this.customerAddressDisplay, y, false);
       }
       y += 4;
     }
 
     // Double Line
-    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 6;
 
     // 5. Items Header
-    ctx.font = `bold 15px ${fontMono}`;
+    ctx.font = `bold 14.5px ${fontMono}`;
     ctx.textAlign = 'left';
-    ctx.fillText('ITEM / DETAILS', margin, y);
+    ctx.fillText('ITEM / DETAILS', leftX, y);
     ctx.textAlign = 'right';
-    ctx.fillText('TOTAL', width - margin, y);
+    ctx.fillText('TOTAL', rightX, y);
     y += 22;
 
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
     // 6. Line Items List
     for (const item of this.parsedItems) {
       // Product Name (wrapped)
       ctx.textAlign = 'left';
-      ctx.font = `bold 15px ${fontSans}`;
-      y = this.drawCanvasWrappedText(ctx, item.name, margin, y, printableWidth, 21);
+      ctx.font = `bold 14.5px ${fontSans}`;
+      y = this.drawCanvasWrappedText(ctx, item.name, leftX, y, printableWidth, 20);
 
       // Qty x Price (left) and Line Total (right)
-      ctx.font = `14.5px ${fontSans}`;
+      ctx.font = `14px ${fontSans}`;
       ctx.textAlign = 'left';
       const qtyText = `${item.quantity} x ৳${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-      ctx.fillText(qtyText, margin, y);
+      ctx.fillText(qtyText, leftX, y);
 
       ctx.textAlign = 'right';
-      ctx.font = `bold 15.5px ${fontSans}`;
+      ctx.font = `bold 14.5px ${fontSans}`;
       const totalText = `৳${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-      ctx.fillText(totalText, width - margin, y);
-      y += 20;
+      ctx.fillText(totalText, rightX, y);
+      y += 19;
 
       // Discount pill if item has discount
       if (item.discount && item.discount > 0) {
         ctx.textAlign = 'left';
-        ctx.font = `italic 12.5px ${fontSans}`;
+        ctx.font = `italic 12px ${fontSans}`;
         const regFormatted = item.regularPrice ? item.regularPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '';
         const discFormatted = item.discount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        ctx.fillText(`Reg: ৳${regFormatted} (Save: -৳${discFormatted})`, margin, y);
-        y += 18;
+        ctx.fillText(`Reg: ৳${regFormatted} (Save: -৳${discFormatted})`, leftX, y);
+        y += 17;
       }
 
       y += 6;
     }
 
     // Dashed Line
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
     // 7. Totals Section
-    ctx.font = `14.5px ${fontSans}`;
+    ctx.font = `14px ${fontSans}`;
     const subtotalFormatted = `৳${this.subtotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'Subtotal:', subtotalFormatted, y, true);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'Subtotal:', subtotalFormatted, y, true);
 
     if (this.totalDiscountDisplay > 0) {
       const discountFormatted = `-৳${this.totalDiscountDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-      y = this.drawCanvasRow(ctx, margin, width - margin, 'Discount:', discountFormatted, y, true);
+      y = this.drawCanvasRow(ctx, leftX, rightX, 'Discount:', discountFormatted, y, true);
     }
 
     const deliveryFormatted = `৳${this.deliveryChargeDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'Delivery Charge:', deliveryFormatted, y, false);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'Delivery Charge:', deliveryFormatted, y, false);
     y += 4;
 
     // Double Line
-    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 8;
 
     // Grand Total
-    ctx.font = `bold 20px ${fontSans}`;
+    ctx.font = `bold 18px ${fontSans}`;
     const grandFormatted = `৳${this.grandTotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
     ctx.textAlign = 'left';
-    ctx.fillText('TOTAL:', margin, y);
+    ctx.fillText('TOTAL:', leftX, y);
     ctx.textAlign = 'right';
-    ctx.fillText(grandFormatted, width - margin, y);
-    y += 28;
+    ctx.fillText(grandFormatted, rightX, y);
+    y += 26;
 
     // Dashed Line
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
     // 8. Note (if any)
     const noteText = this.order?.note || this.note;
     if (noteText) {
       ctx.textAlign = 'left';
-      ctx.font = `bold 14px ${fontMono}`;
-      ctx.fillText('Note:', margin, y);
+      ctx.font = `bold 13.5px ${fontMono}`;
+      ctx.fillText('Note:', leftX, y);
       y += 18;
-      ctx.font = `13px ${fontMono}`;
-      y = this.drawCanvasWrappedText(ctx, noteText, margin, y, printableWidth, 18);
-      y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+      ctx.font = `12.5px ${fontMono}`;
+      y = this.drawCanvasWrappedText(ctx, noteText, leftX, y, printableWidth, 18);
+      y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
       y += 8;
     }
 
@@ -495,14 +497,14 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       JsBarcode(barcodeCanvas, this.orderNumberDisplay, {
         format: 'CODE128',
         width: 2,
-        height: 52,
+        height: 50,
         displayValue: true,
         font: 'monospace',
-        fontSize: 13,
+        fontSize: 12,
         margin: 4,
         lineColor: '#000000'
       });
-      const bx = (width - barcodeCanvas.width) / 2;
+      const bx = centerX - barcodeCanvas.width / 2;
       ctx.drawImage(barcodeCanvas, bx, y);
       y += barcodeCanvas.height + 12;
     } catch (e) {
@@ -511,16 +513,16 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     // 10. Footer Text
     ctx.textAlign = 'center';
-    ctx.font = `bold 15px ${fontMono}`;
-    ctx.fillText('THANK YOU FOR YOUR PURCHASE!', width / 2, y);
+    ctx.font = `bold 14.5px ${fontMono}`;
+    ctx.fillText('THANK YOU FOR YOUR PURCHASE!', centerX, y);
     y += 22;
 
-    ctx.font = `13px ${fontMono}`;
-    ctx.fillText('Crafted with tradition & passion.', width / 2, y);
+    ctx.font = `12.5px ${fontMono}`;
+    ctx.fillText('Crafted with tradition & passion.', centerX, y);
     y += 20;
 
-    ctx.font = `bold 14px ${fontMono}`;
-    ctx.fillText('Hotline: 01675-718846', width / 2, y);
+    ctx.font = `bold 13.5px ${fontMono}`;
+    ctx.fillText('Hotline: 01675-718846', centerX, y);
     y += 28;
 
     // Final crop to exact content height
@@ -690,10 +692,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               color: #000000 !important;
             }
             html, body {
-              margin: 0 auto;
-              padding: 0;
-              width: 48mm;
-              max-width: 48mm;
+              margin: 0 !important;
+              padding: 0 0.5mm 0 1.5mm !important;
+              width: 45mm !important;
+              max-width: 45mm !important;
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
               color: #000000 !important;
               background: #ffffff !important;
@@ -712,8 +714,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             
             .receipt-logo {
               display: block;
-              max-width: 32mm;
-              max-height: 32mm;
+              max-width: 30mm;
+              max-height: 30mm;
               height: auto;
               margin: 0 auto 3px auto;
               filter: grayscale(100%) contrast(190%) brightness(102%);
@@ -729,7 +731,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               line-height: 1.2;
             }
             .store-info {
-              font-size: 10.5px;
+              font-size: 10px;
               font-weight: 600;
               line-height: 1.3;
             }
@@ -750,7 +752,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               margin: 4px 0;
             }
             .meta-section {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
               margin: 3px 0;
             }
@@ -758,32 +760,35 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               display: flex;
               justify-content: space-between;
               align-items: baseline;
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
               margin-bottom: 2px;
             }
             .meta-label {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
+              white-space: nowrap;
             }
             .meta-val {
               font-weight: 700;
               text-align: right;
+              word-break: break-word;
             }
             .customer-section {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
               margin: 3px 0;
             }
             .address-text {
-              max-width: 30mm;
+              max-width: 26mm;
               word-break: break-word;
               font-weight: 600;
+              text-align: right;
             }
             .items-header {
               display: flex;
               justify-content: space-between;
-              font-size: 11.5px;
+              font-size: 11px;
               font-weight: 800;
               padding: 1px 0;
             }
@@ -791,14 +796,16 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               flex: 1;
             }
             .item-hdr-total {
-              width: 16mm;
+              min-width: 12mm;
+              text-align: right;
+              white-space: nowrap;
             }
             .item-row {
               margin-bottom: 4px;
             }
             .item-title {
               font-weight: 700;
-              font-size: 11.5px;
+              font-size: 11px;
               line-height: 1.25;
               word-break: break-word;
             }
@@ -806,36 +813,40 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
               margin-top: 1px;
             }
             .item-calc-details {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
               flex: 1;
             }
             .item-discount-pill {
-              font-size: 10px;
+              font-size: 9.5px;
               font-weight: 600;
               margin-top: 1px;
             }
             .item-line-total {
-              font-size: 11.5px;
+              font-size: 11px;
               font-weight: 700;
-              width: 16mm;
+              min-width: 12mm;
               text-align: right;
+              white-space: nowrap;
             }
             .totals-section {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
             }
             .totals-row {
               display: flex;
               justify-content: space-between;
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
               margin-bottom: 2px;
+            }
+            .totals-row span:last-child {
+              white-space: nowrap;
             }
             .discount-row {
               font-weight: 700;
@@ -843,17 +854,21 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             .grand-total-row {
               display: flex;
               justify-content: space-between;
-              font-size: 14.5px;
+              align-items: baseline;
+              font-size: 13.5px;
               font-weight: 800;
               margin: 3px 0;
             }
+            .grand-total-row span:last-child {
+              white-space: nowrap;
+            }
             .note-section {
-              font-size: 10.5px;
+              font-size: 10px;
               font-weight: 600;
               margin: 2px 0;
             }
             .receipt-footer {
-              font-size: 10.5px;
+              font-size: 10px;
               font-weight: 600;
               margin-top: 5px;
               text-align: center;
@@ -866,15 +881,15 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
             svg {
               max-width: 100%;
-              height: 32px;
+              height: 30px;
               shape-rendering: crispEdges !important;
             }
             .return-policy {
-              font-size: 10px;
+              font-size: 9.5px;
               margin-top: 2px;
             }
             .contact-support {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 700;
               margin-top: 1px;
             }

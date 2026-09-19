@@ -672,13 +672,31 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         printContent = printContent.replace(/src="[^"]*assets\/invoice-logo-mandala\.jpg[^"]*"/g, `src="${this.logoSrc}"`);
       }
 
-      // Pre-calculate estimated receipt height in millimeters from host element
-      let estimatedHeightMm = 100;
-      if (this.receiptElementRef?.nativeElement) {
-        const elHeight = this.receiptElementRef.nativeElement.scrollHeight;
-        if (elHeight > 0) {
-          estimatedHeightMm = Math.ceil((elHeight * 25.4) / 96);
+      // Measure exact print-layout height using a hidden off-screen div
+      // that replicates the print body's 45mm width and CSS.
+      // This is accurate because content reflows at the actual print width.
+      let estimatedHeightMm = 80; // conservative fallback
+      try {
+        const measureDiv = document.createElement('div');
+        measureDiv.style.cssText = `
+          position: fixed; left: -9999px; top: 0;
+          width: 54mm; max-width: 54mm;
+          margin: 0; padding: 0 2mm 0 2mm;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
+          font-size: 11px; font-weight: 600; line-height: 1.3;
+          box-sizing: border-box; overflow: hidden;
+          visibility: hidden;
+        `;
+        measureDiv.innerHTML = printContent;
+        document.body.appendChild(measureDiv);
+        // Force layout calculation
+        const measuredHeight = measureDiv.scrollHeight;
+        if (measuredHeight > 0) {
+          estimatedHeightMm = Math.ceil((measuredHeight * 25.4) / 96);
         }
+        document.body.removeChild(measureDiv);
+      } catch (e) {
+        console.error('Height measurement failed, using fallback', e);
       }
 
       const baseOrigin = window.location.origin;
@@ -711,9 +729,9 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
             html, body {
               margin: 0 !important;
-              padding: 0 0.5mm 0 1.5mm !important;
-              width: 45mm !important;
-              max-width: 45mm !important;
+              padding: 0 2mm 0 2mm !important;
+              width: 54mm !important;
+              max-width: 54mm !important;
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
               color: #000000 !important;
               background: #ffffff !important;
@@ -926,61 +944,18 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         <body>
           ${printContent}
           <script>
-            function applyExactPageHeight() {
-              try {
-                var body = document.body;
-                if (!body) return;
-                // Walk backwards from last child to find last visible (non-script) element
-                var lastEl = body.lastElementChild;
-                while (lastEl && lastEl.tagName === 'SCRIPT') {
-                  lastEl = lastEl.previousElementSibling;
-                }
-                var heightPx = 0;
-                if (lastEl) {
-                  // offsetTop + offsetHeight gives exact bottom relative to body
-                  heightPx = lastEl.offsetTop + lastEl.offsetHeight;
-                }
-                if (!heightPx || heightPx <= 0) {
-                  heightPx = body.scrollHeight;
-                }
-                if (heightPx > 0) {
-                  var heightMm = Math.ceil((heightPx * 25.4) / 96);
-                  // Update the EXISTING base-page-style — not a new element.
-                  // This ensures only ONE @page rule exists so mobile Chrome
-                  // cannot ignore the dynamic override.
-                  var baseStyle = document.getElementById('base-page-style');
-                  if (baseStyle) {
-                    baseStyle.textContent = '@page { size: 58mm ' + heightMm + 'mm; margin: 0; } @page { @top-left{content:none} @top-center{content:none} @top-right{content:none} @bottom-left{content:none} @bottom-center{content:none} @bottom-right{content:none} }';
-                  }
-                }
-              } catch (e) {
-                console.error('Failed to set exact page height', e);
-              }
-            }
-
-            function executePrint() {
-              // First pass: measure and set page height
-              applyExactPageHeight();
-              // Second pass after layout recalc to catch any reflow
-              requestAnimationFrame(function() {
-                applyExactPageHeight();
-                window.focus();
-                window.print();
-              });
-            }
-
             function triggerPrintWhenReady() {
               var images = Array.from(document.images);
               var pending = images.filter(function(img) { return !img.complete; });
               if (pending.length === 0) {
-                setTimeout(executePrint, 100);
+                setTimeout(function() { window.focus(); window.print(); }, 100);
               } else {
                 Promise.all(pending.map(function(img) {
                   return new Promise(function(resolve) {
                     img.onload = img.onerror = resolve;
                   });
                 })).then(function() {
-                  setTimeout(executePrint, 150);
+                  setTimeout(function() { window.focus(); window.print(); }, 150);
                 });
               }
             }
@@ -997,18 +972,17 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // Mobile browsers handle popup print windows much better than hidden iframes
+        // Mobile: popup window — Chrome respects @page { size } better here
         const printWindow = window.open('', '_blank');
         if (printWindow) {
           printWindow.document.open();
           printWindow.document.write(receiptHtml);
           printWindow.document.close();
         } else {
-          // Fallback if popup blocked
           this.triggerIframePrint(receiptHtml);
         }
       } else {
-        // Desktop / Laptop (USB Cable / Bluetooth) - print cleanly through isolated iframe
+        // Desktop: iframe — more reliable layout in constrained container
         this.triggerIframePrint(receiptHtml);
       }
 

@@ -313,9 +313,9 @@
   html, body {
     background: #ffffff !important;
     margin: 0 !important;
-    padding: 0 0.5mm 0 1.5mm !important;
-    width: 45mm !important;
-    max-width: 45mm !important;
+    padding: 0 2mm 0 2mm !important;
+    width: 54mm !important;
+    max-width: 54mm !important;
     image-rendering: -webkit-optimize-contrast !important;
     image-rendering: crisp-edges !important;
   }
@@ -323,15 +323,15 @@
   .thermal-receipt-wrapper {
     padding: 0 !important;
     background: transparent !important;
-    width: 45mm !important;
+    width: 54mm !important;
   }
 
   .thermal-receipt {
-    width: 45mm !important;
-    max-width: 45mm !important;
+    width: 54mm !important;
+    max-width: 54mm !important;
     box-shadow: none !important;
     border: none !important;
-    padding: 0mm 0.5mm 0mm 0.5mm !important;
+    padding: 0mm 0mm 0mm 0mm !important;
     image-rendering: -webkit-optimize-contrast !important;
     image-rendering: crisp-edges !important;
   }

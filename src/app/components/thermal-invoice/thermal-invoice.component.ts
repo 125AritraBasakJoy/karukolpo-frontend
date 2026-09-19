@@ -680,7 +680,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         const measureDiv = document.createElement('div');
         measureDiv.style.cssText = `
           position: fixed; left: -9999px; top: 0;
-          width: 54mm; max-width: 54mm;
+          width: 50mm; max-width: 50mm;
           margin: 0; padding: 0 2mm 0 2mm;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
           font-size: 11px; font-weight: 600; line-height: 1.3;
@@ -689,10 +689,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         `;
         measureDiv.innerHTML = printContent;
         document.body.appendChild(measureDiv);
-        // Force layout calculation
         const measuredHeight = measureDiv.scrollHeight;
         if (measuredHeight > 0) {
-          estimatedHeightMm = Math.ceil((measuredHeight * 25.4) / 96);
+          // Math.ceil + 1mm safety to prevent content from breaking to page 2
+          estimatedHeightMm = Math.ceil((measuredHeight * 25.4) / 96) + 1;
         }
         document.body.removeChild(measureDiv);
       } catch (e) {
@@ -730,8 +730,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             html, body {
               margin: 0 !important;
               padding: 0 2mm 0 2mm !important;
-              width: 54mm !important;
-              max-width: 54mm !important;
+              width: 50mm !important;
+              max-width: 50mm !important;
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
               color: #000000 !important;
               background: #ffffff !important;

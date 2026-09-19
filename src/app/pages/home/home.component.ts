@@ -222,8 +222,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         // Resolve the image against the domain actually serving the app, so the
         // social-share image never points at a stale/wrong host.
         const imageUrl = isPlatformBrowser(this.platformId)
-            ? `${window.location.origin}/assets/landing-bg.webp`
-            : 'https://karukolpo.com/assets/landing-bg.webp';
+            ? `${window.location.origin}/assets/hero-banner.webp`
+            : 'https://karukolpo.com/assets/hero-banner.webp';
         const siteUrl = 'https://karukolpo.com/';
 
         this.titleService.setTitle(title);

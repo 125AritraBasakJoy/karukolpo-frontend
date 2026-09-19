@@ -444,6 +444,17 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     this.resetForm();
   }
 
+  async onPrintUsbThermalInvoice() {
+    if (!this.thermalInvoice) return;
+    const res = await this.thermalInvoice.printViaUsb();
+    if (res.success) {
+      this.thermalPreviewModalVisible.set(false);
+      this.resetForm();
+    } else if (res.message && !res.message.includes('cancelled')) {
+      alert(res.message);
+    }
+  }
+
   onCloseThermalPreview() {
     this.thermalPreviewModalVisible.set(false);
     this.resetForm();

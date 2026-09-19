@@ -673,15 +673,14 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       }
 
       // Measure exact print-layout height using a hidden off-screen div
-      // that replicates the print body's 45mm width and CSS.
-      // This is accurate because content reflows at the actual print width.
+      // that replicates the print body's 53mm width and CSS.
       let estimatedHeightMm = 80; // conservative fallback
       try {
         const measureDiv = document.createElement('div');
         measureDiv.style.cssText = `
           position: fixed; left: -9999px; top: 0;
-          width: 50mm; max-width: 50mm;
-          margin: 0; padding: 0 2mm 0 2mm;
+          width: 53mm; max-width: 53mm;
+          margin: 0 auto; padding: 0 1.5mm 0 1.5mm;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
           font-size: 11px; font-weight: 600; line-height: 1.3;
           box-sizing: border-box; overflow: hidden;
@@ -728,10 +727,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               color: #000000 !important;
             }
             html, body {
-              margin: 0 !important;
-              padding: 0 2mm 0 2mm !important;
-              width: 50mm !important;
-              max-width: 50mm !important;
+              margin: 0 auto !important;
+              padding: 0 1.5mm 0 1.5mm !important;
+              width: 53mm !important;
+              max-width: 53mm !important;
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
               color: #000000 !important;
               background: #ffffff !important;
@@ -927,7 +926,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
             svg {
               max-width: 100%;
-              height: 28px;
+              height: 22px;
               shape-rendering: crispEdges !important;
             }
             .return-policy {
@@ -1014,5 +1013,229 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         document.body.removeChild(iframe);
       } catch (e) {}
     }, 60000);
+  }
+
+  /**
+   * Directly prints via Web Serial / WebUSB API to USB-connected thermal printer.
+   * Sends raw ESC/POS commands with zero paper wastage (feeds only 3 lines).
+   */
+  async printViaUsb(): Promise<{ success: boolean; message?: string }> {
+    if (!this.isBrowser) {
+      return { success: false, message: 'Not running in a browser environment.' };
+    }
+
+    const hasSerial = typeof navigator !== 'undefined' && 'serial' in navigator;
+    const hasUsb = typeof navigator !== 'undefined' && 'usb' in navigator;
+
+    if (!hasSerial && !hasUsb) {
+      return {
+        success: false,
+        message: 'Your browser does not support Web Serial or WebUSB. Please use Google Chrome or Microsoft Edge on desktop.'
+      };
+    }
+
+    const escPosData = this.buildEscPosReceipt();
+
+    // 1. Try Web Serial API first (standard for USB POS printers with virtual COM/USB ports)
+    if (hasSerial) {
+      try {
+        const port = await (navigator as any).serial.requestPort();
+        await port.open({ baudRate: 9600 });
+        const writer = port.writable.getWriter();
+        await writer.write(escPosData);
+        writer.releaseLock();
+        await port.close();
+        this.printCompleted.emit();
+        return { success: true };
+      } catch (err: any) {
+        if (err.name === 'NotFoundError' || err.name === 'AbortError') {
+          return { success: false, message: 'Printer selection was cancelled.' };
+        }
+        console.warn('Web Serial attempt encountered error, trying WebUSB fallback...', err);
+      }
+    }
+
+    // 2. Try WebUSB fallback (for native USB class printers)
+    if (hasUsb) {
+      try {
+        const device = await (navigator as any).usb.requestDevice({ filters: [] });
+        await device.open();
+        if (device.configuration === null) {
+          await device.selectConfiguration(1);
+        }
+        let targetInterfaceNumber: number | null = null;
+        let targetEndpointNumber: number | null = null;
+
+        for (const iface of (device.configuration?.interfaces || [])) {
+          const alternate = iface.alternates ? iface.alternates[0] : iface.alternate;
+          if (alternate && alternate.endpoints) {
+            const outEp = alternate.endpoints.find((ep: any) => ep.direction === 'out');
+            if (outEp) {
+              targetInterfaceNumber = iface.interfaceNumber;
+              targetEndpointNumber = outEp.endpointNumber;
+              break;
+            }
+          }
+        }
+
+        if (targetInterfaceNumber !== null && targetEndpointNumber !== null) {
+          await device.claimInterface(targetInterfaceNumber);
+          await device.transferOut(targetEndpointNumber, escPosData);
+          await device.close();
+          this.printCompleted.emit();
+          return { success: true };
+        } else {
+          await device.close();
+          return { success: false, message: 'No suitable USB OUT endpoint found on selected device.' };
+        }
+      } catch (err: any) {
+        if (err.name === 'NotFoundError' || err.name === 'AbortError') {
+          return { success: false, message: 'USB device selection was cancelled.' };
+        }
+        return { success: false, message: err.message || 'Failed to print via USB.' };
+      }
+    }
+
+    return { success: false, message: 'Unable to communicate with the USB printer.' };
+  }
+
+  /**
+   * Builds raw ESC/POS byte array formatted for 58mm (32 characters per line).
+   * Feeds only 3 lines after content (zero paper wastage).
+   */
+  buildEscPosReceipt(): Uint8Array {
+    const bytes: number[] = [];
+
+    const addBytes = (...b: number[]) => bytes.push(...b);
+    const addText = (text: string) => {
+      const sanitized = (text || '')
+        .replace(/৳/g, 'Tk.')
+        .replace(/[^\x00-\x7F]/g, '');
+      for (let i = 0; i < sanitized.length; i++) {
+        bytes.push(sanitized.charCodeAt(i));
+      }
+    };
+    const addLine = (text: string = '') => {
+      addText(text);
+      bytes.push(0x0A); // LF
+    };
+
+    // Helper to format two columns to exactly 32 chars (standard 58mm line width)
+    const format2Col = (left: string, right: string, totalWidth: number = 32): string => {
+      const cleanLeft = (left || '').replace(/৳/g, 'Tk.');
+      const cleanRight = (right || '').replace(/৳/g, 'Tk.');
+      const spacesNeeded = Math.max(1, totalWidth - cleanLeft.length - cleanRight.length);
+      return cleanLeft + ' '.repeat(spacesNeeded) + cleanRight;
+    };
+
+    // 1. Initialize printer
+    addBytes(0x1B, 0x40); // ESC @
+    addBytes(0x1B, 0x74, 0x00); // Character code table PC437
+
+    // 2. Header (Centered)
+    addBytes(0x1B, 0x61, 0x01); // ESC a 1 (Center)
+    addBytes(0x1D, 0x21, 0x11); // GS ! 0x11 (Double width + height)
+    addLine('KARUKOLPO');
+    addBytes(0x1D, 0x21, 0x00); // Normal text
+    addLine('Pathrail, Delduar, Tangail-1912');
+    addLine('www.karukolpocrafts.com');
+    addLine('================================');
+    addBytes(0x1B, 0x45, 0x01); // Bold ON
+    addLine('POS SALES RECEIPT');
+    addBytes(0x1B, 0x45, 0x00); // Bold OFF
+    addLine('--------------------------------');
+
+    // 3. Metadata (Left aligned)
+    addBytes(0x1B, 0x61, 0x00); // ESC a 0 (Left)
+    addLine(format2Col('RECEIPT #:', this.orderNumberDisplay));
+    addLine(format2Col('DATE:', this.formattedDateOnly));
+    addLine(format2Col('TIME:', this.formattedTimeOnly));
+    addLine(format2Col('PAYMENT:', this.paymentMethodDisplay.toUpperCase()));
+
+    // Customer info (if any)
+    if (this.customerNameDisplay || this.customerPhoneDisplay || this.customerAddressDisplay) {
+      addLine('--------------------------------');
+      addBytes(0x1B, 0x45, 0x01);
+      addLine('CUSTOMER INFO:');
+      addBytes(0x1B, 0x45, 0x00);
+      if (this.customerNameDisplay) {
+        addLine(format2Col('Name:', this.customerNameDisplay));
+      }
+      if (this.customerPhoneDisplay) {
+        addLine(format2Col('Phone:', this.customerPhoneDisplay));
+      }
+      if (this.customerAddressDisplay) {
+        addLine(`Address: ${this.customerAddressDisplay.substring(0, 45)}`);
+      }
+    }
+
+    // 4. Line Items
+    addLine('================================');
+    addLine(format2Col('ITEM / DETAILS', 'TOTAL'));
+    addLine('--------------------------------');
+
+    for (const item of this.parsedItems) {
+      const name = item.name || 'Product';
+      addLine(name.length > 32 ? name.substring(0, 32) : name);
+      const leftCol = `  ${item.quantity} x Tk.${item.unitPrice.toFixed(0)}`;
+      const rightCol = `Tk.${item.lineTotal.toFixed(0)}`;
+      addLine(format2Col(leftCol, rightCol, 32));
+    }
+
+    // 5. Totals
+    addLine('--------------------------------');
+    addLine(format2Col('Subtotal:', `Tk.${this.subtotalDisplay.toFixed(0)}`));
+    if (this.totalDiscountDisplay > 0) {
+      addLine(format2Col('Discount:', `-Tk.${this.totalDiscountDisplay.toFixed(0)}`));
+    }
+    if (this.deliveryChargeDisplay > 0) {
+      addLine(format2Col('Delivery Charge:', `Tk.${this.deliveryChargeDisplay.toFixed(0)}`));
+    }
+    addLine('================================');
+    addBytes(0x1B, 0x45, 0x01); // Bold ON
+    addBytes(0x1D, 0x21, 0x01); // Double height
+    addLine(format2Col('TOTAL:', `Tk.${this.grandTotalDisplay.toFixed(0)}`, 32));
+    addBytes(0x1D, 0x21, 0x00); // Normal
+    addBytes(0x1B, 0x45, 0x00); // Bold OFF
+    addLine('--------------------------------');
+
+    // Note (if any)
+    const noteText = this.order?.note || this.note;
+    if (noteText) {
+      addLine(`Note: ${noteText}`);
+      addLine('--------------------------------');
+    }
+
+    // 6. Barcode & Footer (Centered)
+    addBytes(0x1B, 0x61, 0x01); // ESC a 1 (Center)
+
+    const rawOrderNo = (this.orderNumberDisplay || 'ORD').replace(/[^a-zA-Z0-9-]/g, '');
+    if (rawOrderNo) {
+      try {
+        addBytes(0x1D, 0x68, 45); // GS h 45 (height)
+        addBytes(0x1D, 0x77, 2);  // GS w 2 (width)
+        addBytes(0x1D, 0x48, 2);  // GS H 2 (HRI text below)
+        addBytes(0x1D, 0x66, 0);  // GS f 0
+        const barcodeBytes = Array.from(rawOrderNo).map(c => c.charCodeAt(0));
+        addBytes(0x1D, 0x6B, 73, barcodeBytes.length + 2, 0x7B, 0x42, ...barcodeBytes);
+        bytes.push(0x0A);
+      } catch (e) {
+        addLine(`* ${rawOrderNo} *`);
+      }
+    }
+
+    addBytes(0x1B, 0x45, 0x01); // Bold ON
+    addLine('THANK YOU FOR YOUR PURCHASE!');
+    addBytes(0x1B, 0x45, 0x00); // Bold OFF
+    addLine('Crafted with tradition & passion.');
+    addLine('Hotline: 01675-718846');
+
+    // 7. Tear-off feed: feed exactly 3 lines so hotline text clears the tear blade
+    addBytes(0x1B, 0x64, 0x03); // ESC d 3
+
+    // 8. Partial cut (if cutter exists)
+    addBytes(0x1D, 0x56, 0x42, 0x00); // GS V 66 0
+
+    return new Uint8Array(bytes);
   }
 }

@@ -110,13 +110,6 @@
                         </td>
                         <td>
                             <div class="price-value">{{ order.totalAmount | currency:'BDT':'৳' }}</div>
-                            <div class="table-items-count mt-1 flex align-items-center gap-1 cursor-pointer" 
-                                [pTooltip]="getOrderItemsTooltip(order)" tooltipPosition="top">
-                                <i class="pi pi-box text-xs text-blue-400"></i>
-                                <span class="text-xs text-gray-400 hover:text-white transition-colors">
-                                    {{ order.items?.length || 0 }} {{ (order.items?.length === 1) ? 'item' : 'items' }}
-                                </span>
-                            </div>
                         </td>
                         <td>
                             <p-tag [value]="order.paymentStatus || 'Pending'"

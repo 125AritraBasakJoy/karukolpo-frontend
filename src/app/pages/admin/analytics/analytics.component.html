@@ -1703,7 +1703,8 @@
                   <h3 class="panel-title m-0 flex align-items-center gap-2">
                     <i class="pi pi-bolt text-amber-400"></i> Top Engaged Devices & Customers
                   </h3>
-                  <span class="bg-amber-950 text-amber-400 text-xs font-semibold px-2 py-0.5 border-round border-1 border-amber-800">
+                  <span class="glass-badge glass-badge-amber">
+                    <i class="pi pi-history text-xs"></i>
                     Rolling {{ journeyEngagement()?.window_days || 7 }}-Day Window
                   </span>
                 </div>
@@ -1859,53 +1860,55 @@
     <p-dialog 
       [(visible)]="displayDeviceTimelineModal" 
       [modal]="true" 
-      [style]="{ width: '92vw', maxWidth: '760px' }"
+      [style]="{ width: '94vw', maxWidth: '720px' }"
       [closable]="true"
       [dismissableMask]="true"
       header="Device Journey Trail Playback"
       styleClass="premium-dialog"
     >
-      <div class="device-journey-modal-content p-0 sm:p-2">
+      <div class="device-journey-modal-content p-0">
         <!-- Device Info Header -->
-        <div class="device-info-banner p-2 sm:p-3 mb-3 border-round-xl flex flex-column sm:flex-row justify-content-between align-items-stretch sm:align-items-center gap-2 sm:gap-3">
-          <div class="flex align-items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <div class="device-icon-box flex-shrink-0 flex align-items-center justify-content-center border-round-lg">
-              <i class="pi pi-mobile text-blue-400 text-base sm:text-lg"></i>
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="flex align-items-center flex-wrap gap-1 sm:gap-2 mb-1">
-                <span class="text-3xs text-slate-400 font-bold uppercase tracking-wider">Device Fingerprint SHA-256</span>
-                <span class="glass-badge glass-badge-blue text-3xs font-semibold py-0.5 px-2">
-                  {{ selectedDeviceJourney().length }} Events Recorded
-                </span>
+        <div class="device-info-banner p-2.5 mb-2 sm:mb-3 border-round-xl">
+          <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-2">
+            <div class="flex align-items-center gap-2 sm:gap-2.5 min-w-0 flex-1 w-full sm:w-auto">
+              <div class="device-icon-box flex-shrink-0 flex align-items-center justify-content-center border-round-lg">
+                <i class="pi pi-mobile text-blue-400 text-sm sm:text-base"></i>
               </div>
-              <div class="font-mono text-xs text-slate-200 select-all word-break-all line-height-2">{{ selectedDeviceHash() }}</div>
+              <div class="min-w-0 flex-1">
+                <div class="flex align-items-center flex-wrap gap-1 sm:gap-1.5 mb-0.5">
+                  <span class="text-4xs sm:text-3xs text-slate-400 font-bold uppercase tracking-wider">Device Fingerprint SHA-256</span>
+                  <span class="glass-badge glass-badge-blue text-4xs sm:text-3xs font-semibold py-0.5 px-2">
+                    {{ selectedDeviceJourney().length }} Events Recorded
+                  </span>
+                </div>
+                <div class="font-mono text-3xs sm:text-2xs text-slate-200 select-all word-break-all line-height-2">{{ selectedDeviceHash() }}</div>
+              </div>
             </div>
+            <button 
+              type="button" 
+              pButton 
+              [icon]="deviceCopied() ? 'pi pi-check' : 'pi pi-copy'" 
+              [label]="deviceCopied() ? 'Copied' : 'Copy Hash'"
+              class="align-self-end sm:align-self-center p-button-outlined p-button-sm text-3xs py-1.5 px-2.5 border-round-lg flex-shrink-0"
+              (click)="copyToClipboard(selectedDeviceHash())"
+            ></button>
           </div>
-          <button 
-            type="button" 
-            pButton 
-            [icon]="deviceCopied() ? 'pi pi-check' : 'pi pi-copy'" 
-            [label]="deviceCopied() ? 'Copied' : 'Copy Hash'"
-            class="w-full sm:w-auto p-button-outlined p-button-sm text-2xs py-1.5 px-3 border-round-lg flex-shrink-0"
-            (click)="copyToClipboard(selectedDeviceHash())"
-          ></button>
         </div>
 
         <!-- Error State -->
-        <div *ngIf="timelineError()" class="p-3 mb-3 border-round-lg bg-red-900-20 border-1 border-red-500-30 text-rose-300 text-xs flex align-items-center gap-2">
+        <div *ngIf="timelineError()" class="p-2.5 mb-2 border-round-lg bg-red-900-20 border-1 border-red-500-30 text-rose-300 text-xs flex align-items-center gap-2">
           <i class="pi pi-exclamation-triangle text-base flex-shrink-0"></i>
           <span class="word-break-all">{{ timelineError() }}</span>
         </div>
 
         <!-- Loading State -->
-        <div *ngIf="timelineLoading()" class="flex flex-column align-items-center justify-content-center py-6">
-          <p-progressSpinner styleClass="w-3rem h-3rem"></p-progressSpinner>
+        <div *ngIf="timelineLoading()" class="flex flex-column align-items-center justify-content-center py-5">
+          <p-progressSpinner styleClass="w-2.5rem h-2.5rem"></p-progressSpinner>
           <span class="text-xs text-color-secondary mt-2">Retrieving journey events from server...</span>
         </div>
 
         <!-- Event Timeline -->
-        <div *ngIf="!timelineLoading() && selectedDeviceJourney().length > 0" class="timeline-container pr-1 sm:pr-2 max-h-30rem overflow-y-auto overflow-x-hidden">
+        <div *ngIf="!timelineLoading() && selectedDeviceJourney().length > 0" class="timeline-container pr-1 sm:pr-2">
           <p-timeline [value]="selectedDeviceJourney()" styleClass="premium-timeline">
             <ng-template pTemplate="marker" let-event>
               <span class="timeline-custom-marker"
@@ -1914,27 +1917,37 @@
               </span>
             </ng-template>
             <ng-template pTemplate="content" let-event>
-              <div class="timeline-event-card mb-3" [ngClass]="getJourneyEventBorderClass(event.event)">
-                <div class="flex justify-content-between align-items-start sm:align-items-center flex-wrap gap-1.5 sm:gap-2 mb-2 pb-2 border-bottom-1 border-white-alpha-10">
-                  <div class="flex align-items-center flex-wrap gap-1.5">
+              <div class="timeline-event-card" [ngClass]="getJourneyEventBorderClass(event.event)">
+                <!-- Event Header Row -->
+                <div class="timeline-card-header flex justify-content-between align-items-center flex-wrap gap-1.5">
+                  <div class="flex align-items-center gap-1.5 min-w-0 flex-wrap">
                     <span class="step-chip">#{{ event.step_number || 1 }}</span>
-                    <span class="font-bold text-xs uppercase" [ngClass]="getJourneyEventBadgeClass(event.event)">
+                    <span class="font-bold text-3xs uppercase" [ngClass]="getJourneyEventBadgeClass(event.event)">
                       {{ getJourneyEventLabel(event.event) }}
                     </span>
                   </div>
-                  <span class="timeline-time-badge text-3xs text-slate-400 flex align-items-center gap-1">
+                  <span class="timeline-time-badge text-3xs text-slate-400 flex align-items-center gap-1 flex-shrink-0">
                     <i class="pi pi-clock text-4xs text-slate-500"></i>
                     <span>{{ event.created_at | date:'medium' }}</span>
                   </span>
                 </div>
 
-                <!-- Event Details (Rich visual chips) -->
-                <div class="flex flex-column gap-2 text-xs pt-1">
+                <!-- Event Details (rendered only when data is present) -->
+                <div *ngIf="event.product_name || event.path || event.order_id" 
+                     class="timeline-card-details flex flex-column gap-1.5 mt-2 pt-2 border-top-1 border-white-alpha-05">
+                  
                   <!-- Product Row -->
-                  <div *ngIf="event.product_name" class="flex align-items-center justify-content-between flex-wrap gap-2 bg-black-alpha-30 px-2.5 py-1.5 border-round-lg border-1 border-white-alpha-05 min-w-0">
+                  <div *ngIf="event.product_name" class="timeline-product-strip flex align-items-center justify-content-between gap-2 p-2 border-round-lg min-w-0">
                     <div class="flex align-items-center gap-2 min-w-0 flex-1">
-                      <i class="pi pi-box text-purple-400 text-sm flex-shrink-0"></i>
-                      <span class="text-white font-semibold text-xs word-break-all">{{ event.product_name }}</span>
+                      <div class="product-mini-badge flex align-items-center justify-content-center border-round flex-shrink-0">
+                        <i class="pi pi-box text-purple-300 text-xs"></i>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <span class="text-4xs uppercase tracking-wider text-slate-400 font-bold block line-height-1 mb-0.5">Product</span>
+                        <span class="text-white font-semibold text-xs word-break-all block line-height-2" [title]="event.product_name">
+                          {{ event.product_name }}
+                        </span>
+                      </div>
                     </div>
                     <span *ngIf="event.quantity !== null && event.quantity !== undefined" 
                           class="glass-badge glass-badge-cyan text-3xs font-bold px-2 py-0.5 flex-shrink-0">
@@ -1943,20 +1956,17 @@
                   </div>
 
                   <!-- Path Row -->
-                  <div *ngIf="event.path" class="flex align-items-center flex-wrap gap-1 sm:gap-2 text-xs min-w-0">
-                    <span class="text-slate-400 text-3xs font-semibold uppercase flex align-items-center gap-1 flex-shrink-0">
-                      <i class="pi pi-compass text-blue-400"></i> Route:
-                    </span>
-                    <span class="font-mono text-slate-300 text-3xs bg-black-alpha-20 px-2 py-0.5 border-round border-1 border-white-alpha-05 word-break-all max-w-full">
-                      {{ event.path }}
-                    </span>
+                  <div *ngIf="event.path" class="timeline-route-strip flex align-items-center gap-1.5 px-2 py-1 border-round-md text-3xs min-w-0">
+                    <i class="pi pi-compass text-blue-400 text-xs flex-shrink-0"></i>
+                    <span class="text-slate-400 font-semibold uppercase flex-shrink-0 tracking-wider">Route:</span>
+                    <span class="font-mono text-blue-300 word-break-all min-w-0 flex-1 select-all line-height-2">{{ event.path }}</span>
                   </div>
 
                   <!-- Order ID Row -->
-                  <div *ngIf="event.order_id" class="flex align-items-center flex-wrap gap-2 p-2 border-round-lg bg-emerald-950-30 border-1 border-emerald-500-30 text-emerald-300 min-w-0">
+                  <div *ngIf="event.order_id" class="timeline-order-strip flex align-items-center gap-2 p-2 border-round-lg text-xs min-w-0">
                     <i class="pi pi-check-circle text-emerald-400 text-sm flex-shrink-0"></i>
-                    <span class="text-3xs font-semibold uppercase flex-shrink-0">Order Placed:</span>
-                    <span class="font-mono text-emerald-300 font-bold text-xs word-break-all">{{ event.order_id }}</span>
+                    <span class="text-3xs font-semibold uppercase tracking-wider text-emerald-300 flex-shrink-0">Order Placed:</span>
+                    <span class="font-mono text-emerald-200 font-bold text-xs word-break-all select-all min-w-0 flex-1">{{ event.order_id }}</span>
                   </div>
                 </div>
               </div>

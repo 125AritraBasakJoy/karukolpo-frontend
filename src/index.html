@@ -24,14 +24,14 @@
   <meta property="og:url" content="https://karukolpo.com/">
   <meta property="og:title" content="Karukolpo | Authentic Bangladeshi Handcrafts">
   <meta property="og:description" content="Premium Bangladeshi handcrafted products and heritage-inspired home decor.">
-  <meta property="og:image" content="https://karukolpo.com/assets/landing-bg.webp">
+  <meta property="og:image" content="https://karukolpo.com/assets/hero-banner.webp">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://karukolpo.com/">
   <meta property="twitter:title" content="Karukolpo | Authentic Bangladeshi Handcrafts">
   <meta property="twitter:description" content="Premium Bangladeshi handcrafted products and heritage-inspired home decor.">
-  <meta property="twitter:image" content="https://karukolpo.com/assets/landing-bg.webp">
+  <meta property="twitter:image" content="https://karukolpo.com/assets/hero-banner.webp">
 
   <!-- Canonical URL -->
   <link rel="canonical" href="https://karukolpo.com/"/>
@@ -41,18 +41,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
-  <!-- Preload Critical Hero Asset -->
-  <link rel="preload" as="image" href="assets/landing-bg.webp" type="image/webp" fetchpriority="high">
+  <!-- Preload Critical Hero Asset (Desktop & Mobile) -->
+  <link rel="preload" as="image" href="assets/hero-banner.webp" type="image/webp" media="(min-width: 769px)" fetchpriority="high">
+  <link rel="preload" as="image" href="assets/hero-banner-mobile.webp" type="image/webp" media="(max-width: 768px)" fetchpriority="high">
 
   <!-- Inline Critical CSS: Zero-flicker shell -->
   <style>
     :root { --accent-color: #3b82f6; --surface-card: #0f172a; }
     body { margin: 0; background: #020617; font-family: Inter, sans-serif; }
     .header-shell { height: 80px; background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; padding: 0 1rem; position: sticky; top: 0; z-index: 1000; }
-    .hero-shell { position: relative; height: 100vh; min-height: 500px; width: 100%; overflow: hidden; background: #000; }
-    .hero-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+    .hero-shell { position: relative; height: 100vh; height: 100svh; min-height: 500px; width: 100%; overflow: hidden; background: #000; }
+    .hero-picture { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    .hero-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
     .hero-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 1; }
-    .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2; text-align: center; color: #fff; width: 100%; }
+    .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2; text-align: center; color: #fff; width: 100%; padding: 0 1rem; box-sizing: border-box; }
     .hero-title { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 800; margin: 0; line-height: 1.1; }
     .hero-tag { font-size: clamp(1rem, 3vw, 1.25rem); margin-top: 1rem; opacity: 0.9; }
   </style>
@@ -125,7 +127,10 @@
 
     <!-- Hero Shell -->
     <div class="hero-shell">
-      <img src="assets/landing-bg.webp" class="hero-image" alt="Karukolpo Official Hero Banner" fetchpriority="high" decoding="async" loading="eager">
+      <picture class="hero-picture">
+        <source media="(max-width: 768px)" srcset="assets/hero-banner-mobile.webp" type="image/webp">
+        <img src="assets/hero-banner.webp" class="hero-image" alt="Karukolpo Official Hero Banner" fetchpriority="high" decoding="async" loading="eager">
+      </picture>
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <h1 class="hero-title">Karukolpo</h1>

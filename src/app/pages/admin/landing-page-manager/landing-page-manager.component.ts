@@ -48,7 +48,7 @@ export class LandingPageManagerComponent implements OnInit {
         } else {
             // Defaults
             this.tagline = 'Authentic Bangladeshi Handcrafts';
-            this.imageUrl = 'assets/landing-bg.webp';
+            this.imageUrl = 'assets/hero-banner.webp';
         }
     }
 

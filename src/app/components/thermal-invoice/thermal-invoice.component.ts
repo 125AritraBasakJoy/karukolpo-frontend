@@ -321,24 +321,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     let y = 20;
 
-    // 1. Logo
-    try {
-      const logoImg = await this.loadImageElement(this.logoSrc);
-      const logoW = 210;
-      const logoH = logoImg.naturalHeight && logoImg.naturalWidth
-        ? (logoImg.naturalHeight / logoImg.naturalWidth) * logoW
-        : 142;
-      const logoX = centerX - logoW / 2;
-      ctx.save();
-      ctx.filter = 'grayscale(100%) contrast(350%) brightness(85%)';
-      ctx.drawImage(logoImg, logoX, y, logoW, logoH);
-      ctx.restore();
-      y += logoH + 10;
-    } catch (e) {
-      console.warn('Could not load logo for canvas:', e);
-    }
-
-    // 2. Store Header
+    // 1. Store Header (No logo)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
 
@@ -359,22 +342,22 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     // Receipt Type
     ctx.font = `bold 16px ${fontMono}`;
-    ctx.fillText('*** INVOICE ***', centerX, y);
+    ctx.fillText('*** MONEY RECEIPT ***', centerX, y);
     y += 24;
 
     // Dashed Line
     y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
-    // 3. Metadata Section
+    // 2. Metadata Section
     ctx.font = `14px ${fontMono}`;
-    y = this.drawCanvasRow(ctx, leftX, rightX, 'INVOICE #:', this.orderNumberDisplay, y, true);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'RECEIPT #:', this.orderNumberDisplay, y, true);
     y = this.drawCanvasRow(ctx, leftX, rightX, 'DATE:', this.formattedDateOnly, y, false);
     y = this.drawCanvasRow(ctx, leftX, rightX, 'TIME:', this.formattedTimeOnly, y, false);
     y = this.drawCanvasRow(ctx, leftX, rightX, 'PAYMENT:', this.paymentMethodDisplay.toUpperCase(), y, true);
     y += 4;
 
-    // 4. Customer Section (if present)
+    // 3. Customer Section (if present)
     if (this.customerNameDisplay || this.customerPhoneDisplay || this.customerAddressDisplay) {
       y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
       y += 6;
@@ -400,7 +383,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 6;
 
-    // 5. Items Header
+    // 4. Items Header
     ctx.font = `bold 14.5px ${fontMono}`;
     ctx.textAlign = 'left';
     ctx.fillText('ITEM / DETAILS', leftX, y);
@@ -411,32 +394,32 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
-    // 6. Line Items List
+    // 5. Line Items List
     for (const item of this.parsedItems) {
       // Product Name (wrapped)
       ctx.textAlign = 'left';
-      ctx.font = `bold 14.5px ${fontSans}`;
+      ctx.font = `bold 14.5px ${fontMono}`;
       y = this.drawCanvasWrappedText(ctx, item.name, leftX, y, printableWidth, 20);
 
       // Qty x Price (left) and Line Total (right)
-      ctx.font = `14px ${fontSans}`;
+      ctx.font = `14px ${fontMono}`;
       ctx.textAlign = 'left';
-      const qtyText = `${item.quantity} x ৳${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      const qtyText = `${item.quantity} x Tk. ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
       ctx.fillText(qtyText, leftX, y);
 
       ctx.textAlign = 'right';
-      ctx.font = `bold 14.5px ${fontSans}`;
-      const totalText = `৳${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      ctx.font = `bold 14.5px ${fontMono}`;
+      const totalText = `Tk. ${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
       ctx.fillText(totalText, rightX, y);
       y += 19;
 
       // Discount pill if item has discount
       if (item.discount && item.discount > 0) {
         ctx.textAlign = 'left';
-        ctx.font = `italic 12px ${fontSans}`;
+        ctx.font = `italic 12px ${fontMono}`;
         const regFormatted = item.regularPrice ? item.regularPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '';
         const discFormatted = item.discount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        ctx.fillText(`Reg: ৳${regFormatted} (Save: -৳${discFormatted})`, leftX, y);
+        ctx.fillText(`Reg: Tk. ${regFormatted} (Save: -Tk. ${discFormatted})`, leftX, y);
         y += 17;
       }
 
@@ -447,27 +430,29 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
-    // 7. Totals Section
-    ctx.font = `14px ${fontSans}`;
-    const subtotalFormatted = `৳${this.subtotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    // 6. Totals Section
+    ctx.font = `14px ${fontMono}`;
+    const subtotalFormatted = `Tk. ${this.subtotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
     y = this.drawCanvasRow(ctx, leftX, rightX, 'Subtotal:', subtotalFormatted, y, true);
 
     if (this.totalDiscountDisplay > 0) {
-      const discountFormatted = `-৳${this.totalDiscountDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      const discountFormatted = `-Tk. ${this.totalDiscountDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
       y = this.drawCanvasRow(ctx, leftX, rightX, 'Discount:', discountFormatted, y, true);
     }
 
-    const deliveryFormatted = `৳${this.deliveryChargeDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-    y = this.drawCanvasRow(ctx, leftX, rightX, 'Delivery Charge:', deliveryFormatted, y, false);
-    y += 4;
+    if (this.deliveryChargeDisplay > 0) {
+      const deliveryFormatted = `Tk. ${this.deliveryChargeDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      y = this.drawCanvasRow(ctx, leftX, rightX, 'Delivery Charge:', deliveryFormatted, y, false);
+      y += 4;
+    }
 
     // Double Line
     y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 8;
 
     // Grand Total
-    ctx.font = `bold 18px ${fontSans}`;
-    const grandFormatted = `৳${this.grandTotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    ctx.font = `bold 18px ${fontMono}`;
+    const grandFormatted = `Tk. ${this.grandTotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
     ctx.textAlign = 'left';
     ctx.fillText('TOTAL:', leftX, y);
     ctx.textAlign = 'right';
@@ -668,11 +653,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     // Machine print via isolated document stream formatted specifically for 58mm rolls
     try {
       let printContent = this.receiptElementRef.nativeElement.innerHTML;
-      if (this.logoSrc && !printContent.includes('data:image')) {
-        printContent = printContent.replace(/src="[^"]*assets\/invoice-logo-mandala\.jpg[^"]*"/g, `src="${this.logoSrc}"`);
-      }
 
-      // Measure exact height from the actual rendered receipt DOM element
+      // Measure exact height from the actual rendered receipt DOM element (includes the 1-line gap)
       let estimatedHeightMm = 80;
       try {
         const nativeEl = this.receiptElementRef?.nativeElement;
@@ -713,13 +695,14 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
               color: #000000 !important;
+              font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace !important;
             }
             html, body {
               margin: 0 auto !important;
               padding: 0 1.5mm 0 1.5mm !important;
               width: 53mm !important;
               max-width: 53mm !important;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
+              font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace !important;
               color: #000000 !important;
               background: #ffffff !important;
               font-size: 11px;
@@ -735,21 +718,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             .font-bold { font-weight: 800 !important; }
             .uppercase { text-transform: uppercase; }
             
-            .receipt-logo {
-              display: block;
-              max-width: 30mm;
-              max-height: 30mm;
-              height: auto;
-              margin: 0 auto 1px auto;
-              filter: grayscale(100%) contrast(190%) brightness(102%);
-              -webkit-filter: grayscale(100%) contrast(190%) brightness(102%);
-              image-rendering: -webkit-optimize-contrast;
-              image-rendering: crisp-edges;
-            }
             .store-name {
-              font-size: 15px;
+              font-size: 16px;
               font-weight: 800;
-              letter-spacing: 0.3px;
+              letter-spacing: 0.5px;
               margin: 1px 0;
               line-height: 1.2;
             }
@@ -759,20 +731,23 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               line-height: 1.25;
             }
             .receipt-type-title {
-              font-size: 11px;
+              font-size: 12px;
               font-weight: 800;
               letter-spacing: 0.5px;
               margin: 2px 0;
             }
-            .thermal-divider {
-              border: 0;
-              border-top: 1px dashed #000000;
-              margin: 2px 0;
-            }
+            .thermal-divider,
             .thermal-divider-double {
-              border: 0;
-              border-top: 1.5px solid #000000;
+              font-family: 'Courier New', Courier, monospace;
+              font-size: 11px;
+              font-weight: 700;
+              line-height: 1.1;
+              letter-spacing: -0.3px;
+              text-align: center;
+              white-space: nowrap;
+              overflow: hidden;
               margin: 2px 0;
+              border: none;
             }
             .meta-section {
               font-size: 10.5px;
@@ -927,6 +902,12 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               margin-top: 1px;
               margin-bottom: 0 !important;
               padding-bottom: 0 !important;
+            }
+            .footer-trailing-gap {
+              height: 14px;
+              width: 100%;
+              margin: 0 !important;
+              padding: 0 !important;
             }
           </style>
         </head>
@@ -1224,13 +1205,13 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     addLine('www.karukolpocrafts.com');
     addLine('================================');
     addBytes(0x1B, 0x45, 0x01); // Bold ON
-    addLine('INVOICE');
+    addLine('MONEY RECEIPT');
     addBytes(0x1B, 0x45, 0x00); // Bold OFF
     addLine('--------------------------------');
 
     // 3. Metadata (Left aligned)
     addBytes(0x1B, 0x61, 0x00); // ESC a 0 (Left)
-    addLine(format2Col('INVOICE #:', this.orderNumberDisplay));
+    addLine(format2Col('RECEIPT #:', this.orderNumberDisplay));
     addLine(format2Col('DATE:', this.formattedDateOnly));
     addLine(format2Col('TIME:', this.formattedTimeOnly));
     addLine(format2Col('PAYMENT:', this.paymentMethodDisplay.toUpperCase()));
@@ -1313,7 +1294,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     addLine('Crafted with tradition & passion.');
     addLine('Hotline: 01675-718846');
 
-    // Printing stops immediately after Hotline number - zero extra feed or cut command
+    // Exactly 1 line gap after Hotline number, then stop printing
+    bytes.push(0x0A);
     return new Uint8Array(bytes);
   }
 }

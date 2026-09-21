@@ -2,21 +2,20 @@
 <div class="thermal-receipt-wrapper">
   <div #thermalReceipt class="thermal-receipt">
 
-    <!-- Store Logo & Header -->
+    <!-- Store Header (No Logo) -->
     <div class="receipt-header text-center">
-      <img [src]="logoSrc" alt="Karukolpo" class="receipt-logo" />
       <div class="store-name">KARUKOLPO</div>
       <div class="store-info">Pathrail, Delduar, Tangail-1912</div>
       <div class="store-info">www.karukolpocrafts.com</div>
     </div>
 
-    <div class="thermal-divider-double"></div>
+    <div class="thermal-divider-double">================================</div>
 
     <div class="text-center receipt-type-title">
       MONEY RECEIPT
     </div>
 
-    <div class="thermal-divider"></div>
+    <div class="thermal-divider">--------------------------------</div>
 
     <!-- Metadata: Receipt No & Date -->
     <div class="meta-section">
@@ -40,7 +39,7 @@
 
     <!-- Customer Details (if present) -->
     <div *ngIf="customerNameDisplay || customerPhoneDisplay || customerAddressDisplay" class="customer-section">
-      <div class="thermal-divider"></div>
+      <div class="thermal-divider">--------------------------------</div>
       <div class="meta-label font-bold mb-1">CUSTOMER INFO:</div>
       <div *ngIf="customerNameDisplay" class="meta-row">
         <span>Name:</span>
@@ -56,7 +55,7 @@
       </div>
     </div>
 
-    <div class="thermal-divider-double"></div>
+    <div class="thermal-divider-double">================================</div>
 
     <!-- Items Table Header -->
     <div class="items-header">
@@ -64,7 +63,7 @@
       <div class="item-hdr-col item-hdr-total text-right">TOTAL</div>
     </div>
 
-    <div class="thermal-divider"></div>
+    <div class="thermal-divider">--------------------------------</div>
 
     <!-- Line Items List -->
     <div class="items-list">
@@ -77,53 +76,52 @@
         <!-- Line 2: Qty x Unit Price with discount info -->
         <div class="item-calc-row">
           <div class="item-calc-details">
-            <span>{{ item.quantity }} x ৳{{ item.unitPrice | number:'1.0-2' }}</span>
-            <!-- Discount callout shown directly with unit price -->
+            <span>{{ item.quantity }} x Tk. {{ item.unitPrice | number:'1.0-2' }}</span>
             <div *ngIf="item.discount && item.discount > 0" class="item-discount-pill">
-              Reg: ৳{{ item.regularPrice | number:'1.0-2' }} (Save: -৳{{ item.discount | number:'1.0-2' }})
+              Reg: Tk. {{ item.regularPrice | number:'1.0-2' }} (Save: -Tk. {{ item.discount | number:'1.0-2' }})
             </div>
           </div>
           <div class="item-line-total font-bold text-right">
-            ৳{{ item.lineTotal | number:'1.0-2' }}
+            Tk. {{ item.lineTotal | number:'1.0-2' }}
           </div>
         </div>
       </div>
     </div>
 
-    <div class="thermal-divider"></div>
+    <div class="thermal-divider">--------------------------------</div>
 
     <!-- Totals Summary -->
     <div class="totals-section">
       <div class="totals-row">
         <span>Subtotal:</span>
-        <span class="font-bold">৳{{ subtotalDisplay | number:'1.0-2' }}</span>
+        <span class="font-bold">Tk. {{ subtotalDisplay | number:'1.0-2' }}</span>
       </div>
 
       <div *ngIf="totalDiscountDisplay > 0" class="totals-row discount-row">
         <span>Discount:</span>
-        <span class="font-bold">-৳{{ totalDiscountDisplay | number:'1.0-2' }}</span>
+        <span class="font-bold">-Tk. {{ totalDiscountDisplay | number:'1.0-2' }}</span>
       </div>
 
-      <div class="totals-row">
+      <div *ngIf="deliveryChargeDisplay > 0" class="totals-row">
         <span>Delivery Charge:</span>
-        <span>৳{{ deliveryChargeDisplay | number:'1.0-2' }}</span>
+        <span>Tk. {{ deliveryChargeDisplay | number:'1.0-2' }}</span>
       </div>
 
-      <div class="thermal-divider-double"></div>
+      <div class="thermal-divider-double">================================</div>
 
       <div class="grand-total-row">
         <span class="font-bold">TOTAL:</span>
-        <span class="font-bold">৳{{ grandTotalDisplay | number:'1.0-2' }}</span>
+        <span class="font-bold">Tk. {{ grandTotalDisplay | number:'1.0-2' }}</span>
       </div>
 
-      <div class="thermal-divider"></div>
+      <div class="thermal-divider">--------------------------------</div>
     </div>
 
     <!-- Additional Note if provided -->
     <div *ngIf="order?.note || note" class="note-section">
       <div class="meta-label">Note:</div>
       <div class="note-text">{{ order?.note || note }}</div>
-      <div class="thermal-divider"></div>
+      <div class="thermal-divider">--------------------------------</div>
     </div>
 
     <!-- Footer Barcode & Thank You -->
@@ -134,7 +132,9 @@
 
       <div class="font-bold uppercase tracking-wider mt-1">THANK YOU FOR YOUR PURCHASE!</div>
       <div class="return-policy">Crafted with tradition & passion.</div>
-      <div class="contact-support">Hotline: 01675-718846</div>
+      <div class="contact-support font-bold">Hotline: 01675-718846</div>
+      <!-- Exactly 1 line gap after Hotline number before print stops -->
+      <div class="footer-trailing-gap"></div>
     </div>
 
   </div>

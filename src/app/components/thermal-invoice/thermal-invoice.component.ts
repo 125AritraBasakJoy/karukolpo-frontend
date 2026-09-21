@@ -9,9 +9,11 @@ import {
   OnChanges,
   SimpleChanges,
   Inject,
+  inject,
   PLATFORM_ID
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { BluetoothPrinterService } from '../../core/services/bluetooth-printer/bluetooth-printer.service';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import { THERMAL_LOGO_BASE64 } from './thermal-logo.constant';
@@ -57,6 +59,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   @Output() downloadCompleted = new EventEmitter<void>();
 
   private isBrowser: boolean;
+
+  private readonly bluetoothPrinter = inject(BluetoothPrinterService);
 
   constructor(@Inject(PLATFORM_ID) platformId: Object) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -987,176 +991,21 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   }
 
   /**
-   * Directly prints via Bluetooth (Web Bluetooth BLE API or paired Bluetooth Serial COM port)
-   * with fallback to USB. Feeds zero extra gap after Hotline number.
+   * Prints via Bluetooth (Web Bluetooth BLE), falling back to Web Serial / USB.
+   * The pairing chooser is only shown the very first time; the paired printer
+   * connection is reused for every subsequent print (see BluetoothPrinterService).
    */
   async printViaBluetooth(): Promise<{ success: boolean; message?: string }> {
     if (!this.isBrowser) {
       return { success: false, message: 'Not running in a browser environment.' };
     }
-
-    const hasBluetooth = typeof navigator !== 'undefined' && 'bluetooth' in navigator;
-    const hasSerial = typeof navigator !== 'undefined' && 'serial' in navigator;
-    const hasUsb = typeof navigator !== 'undefined' && 'usb' in navigator;
-
-    if (!hasBluetooth && !hasSerial && !hasUsb) {
-      return {
-        success: false,
-        message: 'Your browser does not support Bluetooth or Serial printing. Please use Google Chrome or Microsoft Edge.'
-      };
+    const result = await this.bluetoothPrinter.print(this.buildEscPosReceipt());
+    if (result.success) {
+      this.printCompleted.emit();
     }
-
-    const escPosData = this.buildEscPosReceipt();
-
-    // 1. Try Web Bluetooth API first (Direct BLE thermal printers on Mobile & Desktop Chrome)
-    if (hasBluetooth) {
-      try {
-        const device = await (navigator as any).bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [
-            '000018f0-0000-1000-8000-00805f9b34fb', // Standard POS Printer Service
-            '0000ff00-0000-1000-8000-00805f9b34fb', // ESC/POS BLE Service
-            '0000fee7-0000-1000-8000-00805f9b34fb', // Common Thermal POS Service
-            '0000ffe0-0000-1000-8000-00805f9b34fb', // Generic BLE serial / HMSoft
-            '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC transparent UART
-            'e7810a71-73ae-499d-8c15-faa9aef0c3f2'  // Serial BLE
-          ]
-        });
-
-        if (device && device.gatt) {
-          const server = await device.gatt.connect();
-          let writeChar: any = null;
-
-          const knownServices = [
-            '000018f0-0000-1000-8000-00805f9b34fb',
-            '0000ff00-0000-1000-8000-00805f9b34fb',
-            '0000fee7-0000-1000-8000-00805f9b34fb',
-            '0000ffe0-0000-1000-8000-00805f9b34fb',
-            '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-            'e7810a71-73ae-499d-8c15-faa9aef0c3f2'
-          ];
-
-          for (const serviceUuid of knownServices) {
-            try {
-              const service = await server.getPrimaryService(serviceUuid);
-              const characteristics = await service.getCharacteristics();
-              for (const ch of characteristics) {
-                if (ch.properties.write || ch.properties.writeWithoutResponse) {
-                  writeChar = ch;
-                  break;
-                }
-              }
-              if (writeChar) break;
-            } catch (e) {
-              // Service not on this device, check next
-            }
-          }
-
-          if (!writeChar) {
-            try {
-              const services = await server.getPrimaryServices();
-              for (const service of services) {
-                const characteristics = await service.getCharacteristics();
-                for (const ch of characteristics) {
-                  if (ch.properties.write || ch.properties.writeWithoutResponse) {
-                    writeChar = ch;
-                    break;
-                  }
-                }
-                if (writeChar) break;
-              }
-            } catch (e) {}
-          }
-
-          if (writeChar) {
-            // Send in safe 100-byte chunks to avoid Bluetooth MTU overflows
-            const chunkSize = 100;
-            for (let i = 0; i < escPosData.length; i += chunkSize) {
-              const chunk = escPosData.slice(i, i + chunkSize);
-              if (writeChar.writeValueWithoutResponse) {
-                await writeChar.writeValueWithoutResponse(chunk);
-              } else {
-                await writeChar.writeValue(chunk);
-              }
-              await new Promise(r => setTimeout(r, 25));
-            }
-            try {
-              device.gatt.disconnect();
-            } catch (e) {}
-            this.printCompleted.emit();
-            return { success: true };
-          }
-        }
-      } catch (err: any) {
-        if (err.name === 'NotFoundError' || err.name === 'AbortError') {
-          return { success: false, message: 'Bluetooth device selection was cancelled.' };
-        }
-        console.warn('Direct Web Bluetooth attempt failed, trying paired Serial / COM fallback...', err);
-      }
-    }
-
-    // 2. Try Web Serial API (standard for paired Bluetooth thermal printers on Windows/Mac/Linux & USB COM)
-    if (hasSerial) {
-      try {
-        const port = await (navigator as any).serial.requestPort();
-        await port.open({ baudRate: 9600 });
-        const writer = port.writable.getWriter();
-        await writer.write(escPosData);
-        writer.releaseLock();
-        await port.close();
-        this.printCompleted.emit();
-        return { success: true };
-      } catch (err: any) {
-        if (err.name === 'NotFoundError' || err.name === 'AbortError') {
-          return { success: false, message: 'Printer selection was cancelled.' };
-        }
-        console.warn('Web Serial attempt encountered error, trying USB fallback...', err);
-      }
-    }
-
-    // 3. Try WebUSB fallback (for native USB class printers)
-    if (hasUsb) {
-      try {
-        const device = await (navigator as any).usb.requestDevice({ filters: [] });
-        await device.open();
-        if (device.configuration === null) {
-          await device.selectConfiguration(1);
-        }
-        let targetInterfaceNumber: number | null = null;
-        let targetEndpointNumber: number | null = null;
-
-        for (const iface of (device.configuration?.interfaces || [])) {
-          const alternate = iface.alternates ? iface.alternates[0] : iface.alternate;
-          if (alternate && alternate.endpoints) {
-            const outEp = alternate.endpoints.find((ep: any) => ep.direction === 'out');
-            if (outEp) {
-              targetInterfaceNumber = iface.interfaceNumber;
-              targetEndpointNumber = outEp.endpointNumber;
-              break;
-            }
-          }
-        }
-
-        if (targetInterfaceNumber !== null && targetEndpointNumber !== null) {
-          await device.claimInterface(targetInterfaceNumber);
-          await device.transferOut(targetEndpointNumber, escPosData);
-          await device.close();
-          this.printCompleted.emit();
-          return { success: true };
-        } else {
-          await device.close();
-          return { success: false, message: 'No suitable print endpoint found on selected device.' };
-        }
-      } catch (err: any) {
-        if (err.name === 'NotFoundError' || err.name === 'AbortError') {
-          return { success: false, message: 'Device selection was cancelled.' };
-        }
-        return { success: false, message: err.message || 'Failed to print.' };
-      }
-    }
-
-    return { success: false, message: 'Unable to communicate with the printer.' };
+    return result;
   }
+
 
   /** Alias for printViaBluetooth for backward compatibility */
   async printViaUsb(): Promise<{ success: boolean; message?: string }> {

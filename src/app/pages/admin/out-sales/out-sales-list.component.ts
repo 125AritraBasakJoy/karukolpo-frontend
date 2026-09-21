@@ -83,6 +83,7 @@ export class OutSalesListComponent implements OnInit {
   thermalPreviewModalVisible = signal<boolean>(false);
   selectedSaleForInvoice = signal<Order | null>(null);
   isDownloadingThermal = signal<boolean>(false);
+  isPrintingThermal = signal<boolean>(false);
 
   // Edit Modal State
   editDialogVisible = signal<boolean>(false);
@@ -864,10 +865,15 @@ export class OutSalesListComponent implements OnInit {
   }
 
   async onPrintBluetoothThermalInvoice() {
-    if (!this.thermalInvoice) return;
-    const res = await this.thermalInvoice.printViaBluetooth();
-    if (!res.success && res.message && !res.message.includes('cancelled')) {
-      alert(res.message);
+    if (!this.thermalInvoice || this.isPrintingThermal()) return;
+    this.isPrintingThermal.set(true);
+    try {
+      const res = await this.thermalInvoice.printViaBluetooth();
+      if (!res.success && res.message && !res.message.includes('cancelled')) {
+        alert(res.message);
+      }
+    } finally {
+      this.isPrintingThermal.set(false);
     }
   }
 

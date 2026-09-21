@@ -1,6 +1,7 @@
 import {
     ChangeDetectionStrategy,
     Component,
+    computed,
     ElementRef,
     Inject,
     OnDestroy,
@@ -68,14 +69,27 @@ export class HomeComponent implements OnInit, OnDestroy {
     isContactSubmitting = false;
     landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
     categoryImages: { [key: string]: string } = {
-        'Prodip': 'assets/categories/prodip.webp',
         'Protima': 'assets/categories/protima.webp',
-        'Shora': 'assets/categories/shora.webp',
-        'Home Decor': 'assets/categories/homedecor.webp',
+        'Prodip': 'assets/categories/prodip.webp',
+        'Sharee': 'assets/categories/sharee.webp',
         'Mirror': 'assets/categories/mirror.webp',
-        'Sharee': 'assets/categories/sharee.webp'
+        'Home Decor': 'assets/categories/homedecor.webp',
+        'Shora': 'assets/categories/shora.webp'
     };
-    categories = this.categoryService.categories;
+    readonly preferredCategoryOrder = ['protima', 'prodip', 'sharee', 'mirror', 'home decor', 'homedecor', 'shora'];
+    categories = computed(() => {
+        const cats = this.categoryService.categories();
+        return [...cats].sort((a, b) => {
+            const aName = (a.name || '').toLowerCase().trim();
+            const bName = (b.name || '').toLowerCase().trim();
+            const aIndex = this.preferredCategoryOrder.indexOf(aName);
+            const bIndex = this.preferredCategoryOrder.indexOf(bName);
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return aName.localeCompare(bName);
+        });
+    });
     selectedCategory: Category | null = null;
     hotDeals = signal<Product[]>([]);
     bestSelling = signal<Product[]>([]);

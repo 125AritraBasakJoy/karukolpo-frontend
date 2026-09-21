@@ -20,8 +20,11 @@
         </div>
         <!-- Scroll Down Indicator -->
         <div class="scroll-down-indicator z-2" (click)="scrollToCategories()" (keydown.enter)="scrollToCategories()"
-            aria-label="Scroll to Categories" role="button" tabindex="0">
-            <i class="pi pi-chevron-down" aria-hidden="true"></i>
+            aria-label="Scroll to browse categories" role="button" tabindex="0">
+            <span class="scroll-hint-text">Scroll</span>
+            <div class="scroll-indicator-pill">
+                <i class="pi pi-chevron-down" aria-hidden="true"></i>
+            </div>
         </div>
     </div>
 

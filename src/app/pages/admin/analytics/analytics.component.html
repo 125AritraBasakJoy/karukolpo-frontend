@@ -1090,7 +1090,7 @@
 
                           <!-- Sub-header: Device & Visitor Hash -->
                           <div class="flex justify-content-between align-items-center mb-2">
-                            <div class="flex align-items-center gap-1.5 text-xs text-slate-300">
+                            <div class="flex align-items-center gap-2 text-xs text-slate-300">
                               <i [class]="getDeviceIcon(visit.user_agent) + ' text-slate-400'"></i>
                               <span>{{ getDeviceName(visit.user_agent) }}</span>
                             </div>
@@ -1101,7 +1101,7 @@
 
                           <!-- Body: Path & Source details -->
                           <div class="mt-2 pt-2 border-top-1 border-white-alpha-5">
-                            <div class="flex flex-column gap-1.5">
+                            <div class="flex flex-column gap-2">
                               <div class="flex align-items-center gap-2">
                                 <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">Path:</span>
                                 <span class="glass-badge glass-badge-grey font-mono text-3xs px-2 py-0.5 truncate max-w-16rem">
@@ -1600,7 +1600,7 @@
                   <ng-template pTemplate="body" let-cart>
                     <tr>
                       <td>
-                        <div class="flex align-items-center gap-1.5 font-mono text-3xs text-slate-300">
+                        <div class="flex align-items-center gap-2 font-mono text-3xs text-slate-300">
                           <i class="pi pi-mobile text-slate-500"></i>
                           <span>{{ cart.device_id_hash | slice:0:8 }}...{{ cart.device_id_hash | slice:-6 }}</span>
                           <button 
@@ -1785,7 +1785,7 @@
 
                   <!-- Customer Phone -->
                   <td>
-                    <span *ngIf="dev.customer_phone" class="inline-flex align-items-center gap-1.5 bg-emerald-950 text-emerald-400 border-1 border-emerald-800 text-xs font-semibold px-2 py-1 border-round-md shadow-1">
+                    <span *ngIf="dev.customer_phone" class="inline-flex align-items-center gap-2 bg-emerald-950 text-emerald-400 border-1 border-emerald-800 text-xs font-semibold px-2 py-1 border-round-md shadow-1">
                       <i class="pi pi-phone text-xs"></i>
                       {{ dev.customer_phone }}
                     </span>
@@ -1868,14 +1868,14 @@
     >
       <div class="device-journey-modal-content p-0">
         <!-- Device Info Header -->
-        <div class="device-info-banner p-2.5 mb-2 sm:mb-3 border-round-xl">
-          <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-2">
-            <div class="flex align-items-center gap-2 sm:gap-2.5 min-w-0 flex-1 w-full sm:w-auto">
+        <div class="device-info-banner p-3 mb-3 border-round-xl">
+          <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3">
+            <div class="flex align-items-center gap-3 min-w-0 flex-1 w-full sm:w-auto">
               <div class="device-icon-box flex-shrink-0 flex align-items-center justify-content-center border-round-lg">
                 <i class="pi pi-mobile text-blue-400 text-sm sm:text-base"></i>
               </div>
               <div class="min-w-0 flex-1">
-                <div class="flex align-items-center flex-wrap gap-1 sm:gap-1.5 mb-0.5">
+                <div class="flex align-items-center flex-wrap gap-2 mb-1">
                   <span class="text-4xs sm:text-3xs text-slate-400 font-bold uppercase tracking-wider">Device Fingerprint SHA-256</span>
                   <span class="glass-badge glass-badge-blue text-4xs sm:text-3xs font-semibold py-0.5 px-2">
                     {{ selectedDeviceJourney().length }} Events Recorded
@@ -1919,8 +1919,8 @@
             <ng-template pTemplate="content" let-event>
               <div class="timeline-event-card" [ngClass]="getJourneyEventBorderClass(event.event)">
                 <!-- Event Header Row -->
-                <div class="timeline-card-header flex justify-content-between align-items-center flex-wrap gap-1.5">
-                  <div class="flex align-items-center gap-1.5 min-w-0 flex-wrap">
+                <div class="timeline-card-header flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="flex align-items-center gap-2 min-w-0 flex-wrap">
                     <span class="step-chip">#{{ event.step_number || 1 }}</span>
                     <span class="font-bold text-3xs uppercase" [ngClass]="getJourneyEventBadgeClass(event.event)">
                       {{ getJourneyEventLabel(event.event) }}
@@ -1934,16 +1934,16 @@
 
                 <!-- Event Details (rendered only when data is present) -->
                 <div *ngIf="event.product_name || event.path || event.order_id" 
-                     class="timeline-card-details flex flex-column gap-1.5 mt-2 pt-2 border-top-1 border-white-alpha-05">
+                     class="timeline-card-details flex flex-column gap-2 mt-3 pt-2 border-top-1 border-white-alpha-05">
                   
                   <!-- Product Row -->
-                  <div *ngIf="event.product_name" class="timeline-product-strip flex align-items-center justify-content-between gap-2 p-2 border-round-lg min-w-0">
-                    <div class="flex align-items-center gap-2 min-w-0 flex-1">
+                  <div *ngIf="event.product_name" class="timeline-product-strip flex align-items-center justify-content-between gap-2 border-round-lg min-w-0">
+                    <div class="flex align-items-center gap-3 min-w-0 flex-1">
                       <div class="product-mini-badge flex align-items-center justify-content-center border-round flex-shrink-0">
                         <i class="pi pi-box text-purple-300 text-xs"></i>
                       </div>
                       <div class="min-w-0 flex-1">
-                        <span class="text-4xs uppercase tracking-wider text-slate-400 font-bold block line-height-1 mb-0.5">Product</span>
+                        <span class="text-4xs uppercase tracking-wider text-slate-400 font-bold block line-height-1 mb-1">Product</span>
                         <span class="text-white font-semibold text-xs word-break-all block line-height-2" [title]="event.product_name">
                           {{ event.product_name }}
                         </span>
@@ -1956,16 +1956,20 @@
                   </div>
 
                   <!-- Path Row -->
-                  <div *ngIf="event.path" class="timeline-route-strip flex align-items-center gap-1.5 px-2 py-1 border-round-md text-3xs min-w-0">
-                    <i class="pi pi-compass text-blue-400 text-xs flex-shrink-0"></i>
-                    <span class="text-slate-400 font-semibold uppercase flex-shrink-0 tracking-wider">Route:</span>
+                  <div *ngIf="event.path" class="timeline-route-strip flex align-items-center gap-2 border-round-lg text-3xs min-w-0">
+                    <div class="route-mini-badge flex align-items-center justify-content-center border-round flex-shrink-0">
+                      <i class="pi pi-compass text-blue-400 text-xs"></i>
+                    </div>
+                    <span class="route-label text-slate-400 font-semibold uppercase tracking-wider text-4xs flex-shrink-0">Route</span>
                     <span class="font-mono text-blue-300 word-break-all min-w-0 flex-1 select-all line-height-2">{{ event.path }}</span>
                   </div>
 
                   <!-- Order ID Row -->
-                  <div *ngIf="event.order_id" class="timeline-order-strip flex align-items-center gap-2 p-2 border-round-lg text-xs min-w-0">
-                    <i class="pi pi-check-circle text-emerald-400 text-sm flex-shrink-0"></i>
-                    <span class="text-3xs font-semibold uppercase tracking-wider text-emerald-300 flex-shrink-0">Order Placed:</span>
+                  <div *ngIf="event.order_id" class="timeline-order-strip flex align-items-center gap-2 border-round-lg text-xs min-w-0">
+                    <div class="order-mini-badge flex align-items-center justify-content-center border-round flex-shrink-0">
+                      <i class="pi pi-check-circle text-emerald-400 text-xs"></i>
+                    </div>
+                    <span class="order-label text-emerald-300 font-semibold uppercase tracking-wider text-4xs flex-shrink-0">Order Placed</span>
                     <span class="font-mono text-emerald-200 font-bold text-xs word-break-all select-all min-w-0 flex-1">{{ event.order_id }}</span>
                   </div>
                 </div>

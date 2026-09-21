@@ -398,9 +398,9 @@
                 <i class="pi" [ngClass]="isDownloadingThermal() ? 'pi-spin pi-spinner' : 'pi-download'"></i>
                 <span>{{ isDownloadingThermal() ? 'Downloading...' : 'Download' }}</span>
             </button>
-            <button type="button" class="btn-thermal btn-usb" (click)="onPrintUsbThermalInvoice()" title="Direct USB print with zero wasted paper">
+            <button type="button" class="btn-thermal btn-bluetooth" (click)="onPrintBluetoothThermalInvoice()" title="Direct Bluetooth print to thermal printer">
                 <i class="pi pi-bolt"></i>
-                <span>USB Print</span>
+                <span>Bluetooth Print</span>
             </button>
             <button type="button" class="btn-thermal btn-print" (click)="onPrintThermalInvoice()">
                 <i class="pi pi-print"></i>

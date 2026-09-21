@@ -863,12 +863,16 @@ export class OutSalesListComponent implements OnInit {
     this.thermalInvoice?.printReceipt();
   }
 
-  async onPrintUsbThermalInvoice() {
+  async onPrintBluetoothThermalInvoice() {
     if (!this.thermalInvoice) return;
-    const res = await this.thermalInvoice.printViaUsb();
+    const res = await this.thermalInvoice.printViaBluetooth();
     if (!res.success && res.message && !res.message.includes('cancelled')) {
       alert(res.message);
     }
+  }
+
+  async onPrintUsbThermalInvoice() {
+    return this.onPrintBluetoothThermalInvoice();
   }
 
   async onDownloadThermalInvoice() {

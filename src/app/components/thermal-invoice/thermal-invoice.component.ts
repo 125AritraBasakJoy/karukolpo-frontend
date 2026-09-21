@@ -359,7 +359,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     // Receipt Type
     ctx.font = `bold 16px ${fontMono}`;
-    ctx.fillText('*** POS SALES RECEIPT ***', centerX, y);
+    ctx.fillText('*** INVOICE ***', centerX, y);
     y += 24;
 
     // Dashed Line
@@ -368,7 +368,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     // 3. Metadata Section
     ctx.font = `14px ${fontMono}`;
-    y = this.drawCanvasRow(ctx, leftX, rightX, 'RECEIPT #:', this.orderNumberDisplay, y, true);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'INVOICE #:', this.orderNumberDisplay, y, true);
     y = this.drawCanvasRow(ctx, leftX, rightX, 'DATE:', this.formattedDateOnly, y, false);
     y = this.drawCanvasRow(ctx, leftX, rightX, 'TIME:', this.formattedTimeOnly, y, false);
     y = this.drawCanvasRow(ctx, leftX, rightX, 'PAYMENT:', this.paymentMethodDisplay.toUpperCase(), y, true);
@@ -672,28 +672,16 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         printContent = printContent.replace(/src="[^"]*assets\/invoice-logo-mandala\.jpg[^"]*"/g, `src="${this.logoSrc}"`);
       }
 
-      // Measure exact print-layout height using a hidden off-screen div
-      // that replicates the print body's 53mm width and CSS.
-      let estimatedHeightMm = 80; // conservative fallback
+      // Measure exact height from the actual rendered receipt DOM element
+      let estimatedHeightMm = 80;
       try {
-        const measureDiv = document.createElement('div');
-        measureDiv.style.cssText = `
-          position: fixed; left: -9999px; top: 0;
-          width: 53mm; max-width: 53mm;
-          margin: 0 auto; padding: 0 1.5mm 0 1.5mm;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
-          font-size: 11px; font-weight: 600; line-height: 1.3;
-          box-sizing: border-box; overflow: hidden;
-          visibility: hidden;
-        `;
-        measureDiv.innerHTML = printContent;
-        document.body.appendChild(measureDiv);
-        const measuredHeight = measureDiv.scrollHeight;
-        if (measuredHeight > 0) {
-          // Math.ceil + 1mm safety to prevent content from breaking to page 2
-          estimatedHeightMm = Math.ceil((measuredHeight * 25.4) / 96) + 1;
+        const nativeEl = this.receiptElementRef?.nativeElement;
+        if (nativeEl) {
+          const measuredHeight = nativeEl.scrollHeight || nativeEl.offsetHeight;
+          if (measuredHeight > 0) {
+            estimatedHeightMm = Math.ceil((measuredHeight * 25.4) / 96);
+          }
         }
-        document.body.removeChild(measureDiv);
       } catch (e) {
         console.error('Height measurement failed, using fallback', e);
       }
@@ -937,6 +925,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               font-size: 10.5px;
               font-weight: 700;
               margin-top: 1px;
+              margin-bottom: 0 !important;
+              padding-bottom: 0 !important;
             }
           </style>
         </head>
@@ -1016,27 +1006,115 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   }
 
   /**
-   * Directly prints via Web Serial / WebUSB API to USB-connected thermal printer.
-   * Sends raw ESC/POS commands with zero paper wastage (feeds only 3 lines).
+   * Directly prints via Bluetooth (Web Bluetooth BLE API or paired Bluetooth Serial COM port)
+   * with fallback to USB. Feeds zero extra gap after Hotline number.
    */
-  async printViaUsb(): Promise<{ success: boolean; message?: string }> {
+  async printViaBluetooth(): Promise<{ success: boolean; message?: string }> {
     if (!this.isBrowser) {
       return { success: false, message: 'Not running in a browser environment.' };
     }
 
+    const hasBluetooth = typeof navigator !== 'undefined' && 'bluetooth' in navigator;
     const hasSerial = typeof navigator !== 'undefined' && 'serial' in navigator;
     const hasUsb = typeof navigator !== 'undefined' && 'usb' in navigator;
 
-    if (!hasSerial && !hasUsb) {
+    if (!hasBluetooth && !hasSerial && !hasUsb) {
       return {
         success: false,
-        message: 'Your browser does not support Web Serial or WebUSB. Please use Google Chrome or Microsoft Edge on desktop.'
+        message: 'Your browser does not support Bluetooth or Serial printing. Please use Google Chrome or Microsoft Edge.'
       };
     }
 
     const escPosData = this.buildEscPosReceipt();
 
-    // 1. Try Web Serial API first (standard for USB POS printers with virtual COM/USB ports)
+    // 1. Try Web Bluetooth API first (Direct BLE thermal printers on Mobile & Desktop Chrome)
+    if (hasBluetooth) {
+      try {
+        const device = await (navigator as any).bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            '000018f0-0000-1000-8000-00805f9b34fb', // Standard POS Printer Service
+            '0000ff00-0000-1000-8000-00805f9b34fb', // ESC/POS BLE Service
+            '0000fee7-0000-1000-8000-00805f9b34fb', // Common Thermal POS Service
+            '0000ffe0-0000-1000-8000-00805f9b34fb', // Generic BLE serial / HMSoft
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC transparent UART
+            'e7810a71-73ae-499d-8c15-faa9aef0c3f2'  // Serial BLE
+          ]
+        });
+
+        if (device && device.gatt) {
+          const server = await device.gatt.connect();
+          let writeChar: any = null;
+
+          const knownServices = [
+            '000018f0-0000-1000-8000-00805f9b34fb',
+            '0000ff00-0000-1000-8000-00805f9b34fb',
+            '0000fee7-0000-1000-8000-00805f9b34fb',
+            '0000ffe0-0000-1000-8000-00805f9b34fb',
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+            'e7810a71-73ae-499d-8c15-faa9aef0c3f2'
+          ];
+
+          for (const serviceUuid of knownServices) {
+            try {
+              const service = await server.getPrimaryService(serviceUuid);
+              const characteristics = await service.getCharacteristics();
+              for (const ch of characteristics) {
+                if (ch.properties.write || ch.properties.writeWithoutResponse) {
+                  writeChar = ch;
+                  break;
+                }
+              }
+              if (writeChar) break;
+            } catch (e) {
+              // Service not on this device, check next
+            }
+          }
+
+          if (!writeChar) {
+            try {
+              const services = await server.getPrimaryServices();
+              for (const service of services) {
+                const characteristics = await service.getCharacteristics();
+                for (const ch of characteristics) {
+                  if (ch.properties.write || ch.properties.writeWithoutResponse) {
+                    writeChar = ch;
+                    break;
+                  }
+                }
+                if (writeChar) break;
+              }
+            } catch (e) {}
+          }
+
+          if (writeChar) {
+            // Send in safe 100-byte chunks to avoid Bluetooth MTU overflows
+            const chunkSize = 100;
+            for (let i = 0; i < escPosData.length; i += chunkSize) {
+              const chunk = escPosData.slice(i, i + chunkSize);
+              if (writeChar.writeValueWithoutResponse) {
+                await writeChar.writeValueWithoutResponse(chunk);
+              } else {
+                await writeChar.writeValue(chunk);
+              }
+              await new Promise(r => setTimeout(r, 25));
+            }
+            try {
+              device.gatt.disconnect();
+            } catch (e) {}
+            this.printCompleted.emit();
+            return { success: true };
+          }
+        }
+      } catch (err: any) {
+        if (err.name === 'NotFoundError' || err.name === 'AbortError') {
+          return { success: false, message: 'Bluetooth device selection was cancelled.' };
+        }
+        console.warn('Direct Web Bluetooth attempt failed, trying paired Serial / COM fallback...', err);
+      }
+    }
+
+    // 2. Try Web Serial API (standard for paired Bluetooth thermal printers on Windows/Mac/Linux & USB COM)
     if (hasSerial) {
       try {
         const port = await (navigator as any).serial.requestPort();
@@ -1051,11 +1129,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         if (err.name === 'NotFoundError' || err.name === 'AbortError') {
           return { success: false, message: 'Printer selection was cancelled.' };
         }
-        console.warn('Web Serial attempt encountered error, trying WebUSB fallback...', err);
+        console.warn('Web Serial attempt encountered error, trying USB fallback...', err);
       }
     }
 
-    // 2. Try WebUSB fallback (for native USB class printers)
+    // 3. Try WebUSB fallback (for native USB class printers)
     if (hasUsb) {
       try {
         const device = await (navigator as any).usb.requestDevice({ filters: [] });
@@ -1086,17 +1164,22 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
           return { success: true };
         } else {
           await device.close();
-          return { success: false, message: 'No suitable USB OUT endpoint found on selected device.' };
+          return { success: false, message: 'No suitable print endpoint found on selected device.' };
         }
       } catch (err: any) {
         if (err.name === 'NotFoundError' || err.name === 'AbortError') {
-          return { success: false, message: 'USB device selection was cancelled.' };
+          return { success: false, message: 'Device selection was cancelled.' };
         }
-        return { success: false, message: err.message || 'Failed to print via USB.' };
+        return { success: false, message: err.message || 'Failed to print.' };
       }
     }
 
-    return { success: false, message: 'Unable to communicate with the USB printer.' };
+    return { success: false, message: 'Unable to communicate with the printer.' };
+  }
+
+  /** Alias for printViaBluetooth for backward compatibility */
+  async printViaUsb(): Promise<{ success: boolean; message?: string }> {
+    return this.printViaBluetooth();
   }
 
   /**
@@ -1141,13 +1224,13 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     addLine('www.karukolpocrafts.com');
     addLine('================================');
     addBytes(0x1B, 0x45, 0x01); // Bold ON
-    addLine('POS SALES RECEIPT');
+    addLine('INVOICE');
     addBytes(0x1B, 0x45, 0x00); // Bold OFF
     addLine('--------------------------------');
 
     // 3. Metadata (Left aligned)
     addBytes(0x1B, 0x61, 0x00); // ESC a 0 (Left)
-    addLine(format2Col('RECEIPT #:', this.orderNumberDisplay));
+    addLine(format2Col('INVOICE #:', this.orderNumberDisplay));
     addLine(format2Col('DATE:', this.formattedDateOnly));
     addLine(format2Col('TIME:', this.formattedTimeOnly));
     addLine(format2Col('PAYMENT:', this.paymentMethodDisplay.toUpperCase()));
@@ -1230,12 +1313,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     addLine('Crafted with tradition & passion.');
     addLine('Hotline: 01675-718846');
 
-    // 7. Tear-off feed: feed exactly 3 lines so hotline text clears the tear blade
-    addBytes(0x1B, 0x64, 0x03); // ESC d 3
-
-    // 8. Partial cut (if cutter exists)
-    addBytes(0x1D, 0x56, 0x42, 0x00); // GS V 66 0
-
+    // Printing stops immediately after Hotline number - zero extra feed or cut command
     return new Uint8Array(bytes);
   }
 }

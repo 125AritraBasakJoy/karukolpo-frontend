@@ -122,6 +122,12 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.overview()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some overview metrics from the server. Displayed figures may be partial.</span>
+          </div>
+
           <!-- Stats Grid -->
           <div class="grid mb-4" *ngIf="overviewData()">
             <!-- Revenue -->
@@ -138,7 +144,7 @@
                   <i class="pi" *ngIf="overviewData()?.revenue_growth_percentage !== null" 
                      [ngClass]="overviewData()!.revenue_growth_percentage! >= 0 ? 'pi-arrow-up-right' : 'pi-arrow-down-left'"></i>
                   <span class="ml-1 font-semibold">
-                    {{ overviewData()?.revenue_growth_percentage === null ? 'new' : (overviewData()?.revenue_growth_percentage | number:'1.1-1') + '% (goods)' }} vs last period
+                    {{ overviewData()?.revenue_growth_percentage === null ? 'new' : (overviewData()?.revenue_growth_percentage | number:'1.1-1') + '% (goods revenue)' }} vs last period
                   </span>
                 </div>
               </div>
@@ -147,7 +153,7 @@
             <div class="col-12 sm:col-6 lg:col-3">
               <div class="premium-stat-card bg-glow-green">
                 <div class="flex justify-content-between align-items-center mb-3">
-                  <span class="label">Completed Orders</span>
+                  <span class="label">Orders Completed (Realized)</span>
                   <div class="icon-wrap green"><i class="pi pi-shopping-bag"></i></div>
                 </div>
                 <div class="value">{{ overviewData()?.total_orders | number }}</div>
@@ -166,12 +172,15 @@
             <div class="col-12 sm:col-6 lg:col-3">
               <div class="premium-stat-card bg-glow-purple">
                 <div class="flex justify-content-between align-items-center mb-3">
-                  <span class="label">Conversion Rate</span>
+                  <span class="label flex align-items-center gap-1">
+                    Conversion Rate
+                    <i class="pi pi-info-circle text-xs text-color-secondary" pTooltip="Approximate: calculated from distinct buyers vs visitors across sources (clamped to 100%)" tooltipPosition="top"></i>
+                  </span>
                   <div class="icon-wrap purple"><i class="pi pi-percentage"></i></div>
                 </div>
                 <div class="value">{{ overviewData()?.conversion_rate }}%</div>
                 <div class="trend text-color-secondary text-xs mt-2">
-                  <span>Buyers ÷ Visitors by source</span>
+                  <span>Buyers ÷ Visitors (approx.)</span>
                 </div>
               </div>
             </div>
@@ -238,13 +247,19 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.sales()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some sales data from the server. Displayed figures may be partial.</span>
+          </div>
+
           <div class="grid">
             <!-- Revenue Timeseries with Granularity Selector -->
             <div class="col-12 lg:col-8">
               <div class="glass-panel p-4 mb-4">
                 <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4">
                   <h3 class="panel-title flex align-items-center gap-2">
-                    <i class="pi pi-chart-bar text-indigo-500"></i> Detailed Revenue Analysis
+                    <i class="pi pi-chart-bar text-indigo-500"></i> Realized vs Booked Revenue
                   </h3>
                   <div class="flex align-items-center gap-2">
                     <label class="text-xs font-semibold text-color-secondary uppercase">Granularity:</label>
@@ -323,6 +338,27 @@
                 </h3>
                 <div class="chart-wrapper" style="position: relative; height: 260px;">
                   <p-chart type="doughnut" [data]="charts['salesPayment'].data" [options]="charts['salesPayment'].options"></p-chart>
+                </div>
+              </div>
+
+              <!-- Discounts & Coupons Impact (Item 9) -->
+              <div class="glass-panel p-4 mb-4" *ngIf="discountsData()">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <h3 class="panel-title flex align-items-center gap-2">
+                    <i class="pi pi-percentage text-purple-400"></i> Discounts & Promo Impact
+                  </h3>
+                  <p-tag severity="info" [value]="(discountsData()?.discount_impact | number:'1.0-1') + '% orders'"></p-tag>
+                </div>
+                <div class="flex justify-content-between align-items-baseline mb-3 p-2 border-round bg-white-alpha-5">
+                  <span class="text-xs text-color-secondary">Total Given (incl. delivery):</span>
+                  <span class="font-bold text-white text-sm">{{ discountsData()?.total_discount_amount | number:'1.0-0' }} BDT</span>
+                </div>
+                <div class="promo-codes-list flex flex-column gap-2" *ngIf="discountsData()?.promo_code_usage && discountsData()!.promo_code_usage.length > 0">
+                  <div class="text-3xs text-color-secondary uppercase font-semibold">Promo Codes Used</div>
+                  <div class="flex justify-content-between align-items-center p-2 border-round bg-white-alpha-5 text-xs" *ngFor="let promo of discountsData()!.promo_code_usage">
+                    <span class="font-bold text-indigo-300 font-mono">{{ promo.code }}</span>
+                    <span class="text-color-secondary">{{ promo.count }} uses ({{ promo.discount_value | number:'1.0-0' }} BDT)</span>
+                  </div>
                 </div>
               </div>
 
@@ -423,6 +459,12 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.customers()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some customer analytics data from the server. Displayed figures may be partial.</span>
+          </div>
+
           <div class="grid">
             <!-- Main Grid Side -->
             <div class="col-12 lg:col-8">
@@ -559,10 +601,16 @@
             </div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.inventory()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some inventory metrics from the server. Displayed figures may be partial.</span>
+          </div>
+
           <!-- Inventory Health Grid -->
           <div class="grid mb-4" *ngIf="inventoryHealth()">
             <!-- Total Catalog Products -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-blue">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">Total Products</span>
@@ -575,7 +623,7 @@
               </div>
             </div>
             <!-- In Stock Products -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-green">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">In Stock</span>
@@ -587,8 +635,8 @@
                 </div>
               </div>
             </div>
-            <!-- Low Stock Warning -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <!-- Low Stock Warning (Item 4: Dynamic threshold from backend) -->
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-orange">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">Low Stock</span>
@@ -596,12 +644,12 @@
                 </div>
                 <div class="value text-orange-400">{{ inventoryHealth()?.low_stock }}</div>
                 <div class="trend text-color-secondary text-xs mt-2">
-                  <span>Qty is 5 or less</span>
+                  <span>Qty ≤ {{ inventoryHealth()?.low_stock_threshold ?? 5 }}</span>
                 </div>
               </div>
             </div>
             <!-- Out of Stock Alerts -->
-            <div class="col-12 sm:col-6 lg:col-3">
+            <div class="col-12 sm:col-6 md:col-4 xl:col">
               <div class="premium-stat-card bg-glow-red">
                 <div class="flex justify-content-between align-items-center mb-3">
                   <span class="label">Out of Stock</span>
@@ -610,6 +658,26 @@
                 <div class="value text-red-400">{{ inventoryHealth()?.out_of_stock }}</div>
                 <div class="trend text-color-secondary text-xs mt-2">
                   <span>Requires restocking</span>
+                </div>
+              </div>
+            </div>
+            <!-- Inventory Valuation (Item 3: retail / cost basis) -->
+            <div class="col-12 sm:col-6 md:col-4 xl:col" *ngIf="inventoryHealth()?.stock_value || inventoryHealth()?.stock_value_cost">
+              <div class="premium-stat-card bg-glow-purple">
+                <div class="flex justify-content-between align-items-center mb-3">
+                  <span class="label">Stock Valuation</span>
+                  <div class="icon-wrap purple"><i class="pi pi-wallet"></i></div>
+                </div>
+                <div class="value text-purple-300">
+                  {{ (inventoryHealth()?.stock_value_cost ?? inventoryHealth()?.stock_value) | number:'1.0-0' }} BDT
+                </div>
+                <div class="trend text-color-secondary text-xs mt-2">
+                  <span *ngIf="inventoryHealth()?.stock_value_cost">
+                    Cost basis ({{ inventoryHealth()?.cost_coverage_pct ?? 0 | number:'1.0-1' }}% coverage)
+                  </span>
+                  <span *ngIf="!inventoryHealth()?.stock_value_cost">
+                    Retail basis
+                  </span>
                 </div>
               </div>
             </div>
@@ -628,12 +696,17 @@
               </div>
             </div>
 
-            <!-- Top Categories Chart -->
+            <!-- Top Categories Chart (Item: share_of_goods_pct & non-additive subtitle) -->
             <div class="col-12 lg:col-6" *ngIf="charts['topCategoriesChart']">
               <div class="glass-panel p-4 mb-4">
-                <h3 class="panel-title flex align-items-center gap-2 mb-4">
-                  <i class="pi pi-tags text-blue-500"></i> Category Sales (Units)
-                </h3>
+                <div class="mb-4">
+                  <h3 class="panel-title flex align-items-center gap-2 mb-1">
+                    <i class="pi pi-tags text-blue-500"></i> Category Sales (Units)
+                  </h3>
+                  <div class="text-3xs text-color-secondary">
+                    Categories overlap (multi-tagged products); % share reflects proportion of period goods revenue.
+                  </div>
+                </div>
                 <div class="chart-wrapper" style="position: relative; height: 260px;">
                   <p-chart type="bar" [data]="charts['topCategoriesChart'].data" [options]="charts['topCategoriesChart'].options"></p-chart>
                 </div>
@@ -725,6 +798,12 @@
             <div class="col-12 lg:col-6"><p-card styleClass="premium-card mb-4"><p-skeleton height="260px"></p-skeleton></p-card></div>
           </div>
         } @else {
+          <!-- Error banner if partial load failed -->
+          <div *ngIf="errorStates.traffic()" class="p-3 mb-4 border-round border-1 border-red-900 bg-red-950 flex align-items-center gap-2 text-red-300 text-xs">
+            <i class="pi pi-exclamation-triangle text-base text-red-400"></i>
+            <span>Unable to load some traffic & marketing data from the server. Displayed figures may be partial.</span>
+          </div>
+
           <!-- Traffic Details Grid -->
           <div class="grid">
             <!-- Traffic Sources Pie -->
@@ -1011,7 +1090,7 @@
 
                           <!-- Sub-header: Device & Visitor Hash -->
                           <div class="flex justify-content-between align-items-center mb-2">
-                            <div class="flex align-items-center gap-1.5 text-xs text-slate-300">
+                            <div class="flex align-items-center gap-2 text-xs text-slate-300">
                               <i [class]="getDeviceIcon(visit.user_agent) + ' text-slate-400'"></i>
                               <span>{{ getDeviceName(visit.user_agent) }}</span>
                             </div>
@@ -1022,7 +1101,7 @@
 
                           <!-- Body: Path & Source details -->
                           <div class="mt-2 pt-2 border-top-1 border-white-alpha-5">
-                            <div class="flex flex-column gap-1.5">
+                            <div class="flex flex-column gap-2">
                               <div class="flex align-items-center gap-2">
                                 <span class="text-3xs text-slate-500 font-semibold uppercase w-3rem">Path:</span>
                                 <span class="glass-badge glass-badge-grey font-mono text-3xs px-2 py-0.5 truncate max-w-16rem">
@@ -1521,7 +1600,7 @@
                   <ng-template pTemplate="body" let-cart>
                     <tr>
                       <td>
-                        <div class="flex align-items-center gap-1.5 font-mono text-3xs text-slate-300">
+                        <div class="flex align-items-center gap-2 font-mono text-3xs text-slate-300">
                           <i class="pi pi-mobile text-slate-500"></i>
                           <span>{{ cart.device_id_hash | slice:0:8 }}...{{ cart.device_id_hash | slice:-6 }}</span>
                           <button 
@@ -1624,7 +1703,8 @@
                   <h3 class="panel-title m-0 flex align-items-center gap-2">
                     <i class="pi pi-bolt text-amber-400"></i> Top Engaged Devices & Customers
                   </h3>
-                  <span class="bg-amber-950 text-amber-400 text-xs font-semibold px-2 py-0.5 border-round border-1 border-amber-800">
+                  <span class="glass-badge glass-badge-amber">
+                    <i class="pi pi-history text-xs"></i>
                     Rolling {{ journeyEngagement()?.window_days || 7 }}-Day Window
                   </span>
                 </div>
@@ -1705,7 +1785,7 @@
 
                   <!-- Customer Phone -->
                   <td>
-                    <span *ngIf="dev.customer_phone" class="inline-flex align-items-center gap-1.5 bg-emerald-950 text-emerald-400 border-1 border-emerald-800 text-xs font-semibold px-2 py-1 border-round-md shadow-1">
+                    <span *ngIf="dev.customer_phone" class="inline-flex align-items-center gap-2 bg-emerald-950 text-emerald-400 border-1 border-emerald-800 text-xs font-semibold px-2 py-1 border-round-md shadow-1">
                       <i class="pi pi-phone text-xs"></i>
                       {{ dev.customer_phone }}
                     </span>
@@ -1780,53 +1860,55 @@
     <p-dialog 
       [(visible)]="displayDeviceTimelineModal" 
       [modal]="true" 
-      [style]="{ width: '92vw', maxWidth: '760px' }"
+      [style]="{ width: '94vw', maxWidth: '720px' }"
       [closable]="true"
       [dismissableMask]="true"
       header="Device Journey Trail Playback"
       styleClass="premium-dialog"
     >
-      <div class="device-journey-modal-content p-0 sm:p-2">
+      <div class="device-journey-modal-content p-0">
         <!-- Device Info Header -->
-        <div class="device-info-banner p-2 sm:p-3 mb-3 border-round-xl flex flex-column sm:flex-row justify-content-between align-items-stretch sm:align-items-center gap-2 sm:gap-3">
-          <div class="flex align-items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <div class="device-icon-box flex-shrink-0 flex align-items-center justify-content-center border-round-lg">
-              <i class="pi pi-mobile text-blue-400 text-base sm:text-lg"></i>
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="flex align-items-center flex-wrap gap-1 sm:gap-2 mb-1">
-                <span class="text-3xs text-slate-400 font-bold uppercase tracking-wider">Device Fingerprint SHA-256</span>
-                <span class="glass-badge glass-badge-blue text-3xs font-semibold py-0.5 px-2">
-                  {{ selectedDeviceJourney().length }} Events Recorded
-                </span>
+        <div class="device-info-banner p-3 mb-3 border-round-xl">
+          <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3">
+            <div class="flex align-items-center gap-3 min-w-0 flex-1 w-full sm:w-auto">
+              <div class="device-icon-box flex-shrink-0 flex align-items-center justify-content-center border-round-lg">
+                <i class="pi pi-mobile text-blue-400 text-sm sm:text-base"></i>
               </div>
-              <div class="font-mono text-xs text-slate-200 select-all word-break-all line-height-2">{{ selectedDeviceHash() }}</div>
+              <div class="min-w-0 flex-1">
+                <div class="flex align-items-center flex-wrap gap-2 mb-1">
+                  <span class="text-4xs sm:text-3xs text-slate-400 font-bold uppercase tracking-wider">Device Fingerprint SHA-256</span>
+                  <span class="glass-badge glass-badge-blue text-4xs sm:text-3xs font-semibold py-0.5 px-2">
+                    {{ selectedDeviceJourney().length }} Events Recorded
+                  </span>
+                </div>
+                <div class="font-mono text-3xs sm:text-2xs text-slate-200 select-all word-break-all line-height-2">{{ selectedDeviceHash() }}</div>
+              </div>
             </div>
+            <button 
+              type="button" 
+              pButton 
+              [icon]="deviceCopied() ? 'pi pi-check' : 'pi pi-copy'" 
+              [label]="deviceCopied() ? 'Copied' : 'Copy Hash'"
+              class="align-self-end sm:align-self-center p-button-outlined p-button-sm text-3xs py-1.5 px-2.5 border-round-lg flex-shrink-0"
+              (click)="copyToClipboard(selectedDeviceHash())"
+            ></button>
           </div>
-          <button 
-            type="button" 
-            pButton 
-            [icon]="deviceCopied() ? 'pi pi-check' : 'pi pi-copy'" 
-            [label]="deviceCopied() ? 'Copied' : 'Copy Hash'"
-            class="w-full sm:w-auto p-button-outlined p-button-sm text-2xs py-1.5 px-3 border-round-lg flex-shrink-0"
-            (click)="copyToClipboard(selectedDeviceHash())"
-          ></button>
         </div>
 
         <!-- Error State -->
-        <div *ngIf="timelineError()" class="p-3 mb-3 border-round-lg bg-red-900-20 border-1 border-red-500-30 text-rose-300 text-xs flex align-items-center gap-2">
+        <div *ngIf="timelineError()" class="p-2.5 mb-2 border-round-lg bg-red-900-20 border-1 border-red-500-30 text-rose-300 text-xs flex align-items-center gap-2">
           <i class="pi pi-exclamation-triangle text-base flex-shrink-0"></i>
           <span class="word-break-all">{{ timelineError() }}</span>
         </div>
 
         <!-- Loading State -->
-        <div *ngIf="timelineLoading()" class="flex flex-column align-items-center justify-content-center py-6">
-          <p-progressSpinner styleClass="w-3rem h-3rem"></p-progressSpinner>
+        <div *ngIf="timelineLoading()" class="flex flex-column align-items-center justify-content-center py-5">
+          <p-progressSpinner styleClass="w-2.5rem h-2.5rem"></p-progressSpinner>
           <span class="text-xs text-color-secondary mt-2">Retrieving journey events from server...</span>
         </div>
 
         <!-- Event Timeline -->
-        <div *ngIf="!timelineLoading() && selectedDeviceJourney().length > 0" class="timeline-container pr-1 sm:pr-2 max-h-30rem overflow-y-auto overflow-x-hidden">
+        <div *ngIf="!timelineLoading() && selectedDeviceJourney().length > 0" class="timeline-container pr-1 sm:pr-2">
           <p-timeline [value]="selectedDeviceJourney()" styleClass="premium-timeline">
             <ng-template pTemplate="marker" let-event>
               <span class="timeline-custom-marker"
@@ -1835,27 +1917,37 @@
               </span>
             </ng-template>
             <ng-template pTemplate="content" let-event>
-              <div class="timeline-event-card mb-3" [ngClass]="getJourneyEventBorderClass(event.event)">
-                <div class="flex justify-content-between align-items-start sm:align-items-center flex-wrap gap-1.5 sm:gap-2 mb-2 pb-2 border-bottom-1 border-white-alpha-10">
-                  <div class="flex align-items-center flex-wrap gap-1.5">
+              <div class="timeline-event-card" [ngClass]="getJourneyEventBorderClass(event.event)">
+                <!-- Event Header Row -->
+                <div class="timeline-card-header flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="flex align-items-center gap-2 min-w-0 flex-wrap">
                     <span class="step-chip">#{{ event.step_number || 1 }}</span>
-                    <span class="font-bold text-xs uppercase" [ngClass]="getJourneyEventBadgeClass(event.event)">
+                    <span class="font-bold text-3xs uppercase" [ngClass]="getJourneyEventBadgeClass(event.event)">
                       {{ getJourneyEventLabel(event.event) }}
                     </span>
                   </div>
-                  <span class="timeline-time-badge text-3xs text-slate-400 flex align-items-center gap-1">
+                  <span class="timeline-time-badge text-3xs text-slate-400 flex align-items-center gap-1 flex-shrink-0">
                     <i class="pi pi-clock text-4xs text-slate-500"></i>
                     <span>{{ event.created_at | date:'medium' }}</span>
                   </span>
                 </div>
 
-                <!-- Event Details (Rich visual chips) -->
-                <div class="flex flex-column gap-2 text-xs pt-1">
+                <!-- Event Details (rendered only when data is present) -->
+                <div *ngIf="event.product_name || event.path || event.order_id" 
+                     class="timeline-card-details flex flex-column gap-2 mt-3 pt-2 border-top-1 border-white-alpha-05">
+                  
                   <!-- Product Row -->
-                  <div *ngIf="event.product_name" class="flex align-items-center justify-content-between flex-wrap gap-2 bg-black-alpha-30 px-2.5 py-1.5 border-round-lg border-1 border-white-alpha-05 min-w-0">
-                    <div class="flex align-items-center gap-2 min-w-0 flex-1">
-                      <i class="pi pi-box text-purple-400 text-sm flex-shrink-0"></i>
-                      <span class="text-white font-semibold text-xs word-break-all">{{ event.product_name }}</span>
+                  <div *ngIf="event.product_name" class="timeline-product-strip flex align-items-center justify-content-between gap-2 border-round-lg min-w-0">
+                    <div class="flex align-items-center gap-3 min-w-0 flex-1">
+                      <div class="product-mini-badge flex align-items-center justify-content-center border-round flex-shrink-0">
+                        <i class="pi pi-box text-purple-300 text-xs"></i>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <span class="text-4xs uppercase tracking-wider text-slate-400 font-bold block line-height-1 mb-1">Product</span>
+                        <span class="text-white font-semibold text-xs word-break-all block line-height-2" [title]="event.product_name">
+                          {{ event.product_name }}
+                        </span>
+                      </div>
                     </div>
                     <span *ngIf="event.quantity !== null && event.quantity !== undefined" 
                           class="glass-badge glass-badge-cyan text-3xs font-bold px-2 py-0.5 flex-shrink-0">
@@ -1864,20 +1956,21 @@
                   </div>
 
                   <!-- Path Row -->
-                  <div *ngIf="event.path" class="flex align-items-center flex-wrap gap-1 sm:gap-2 text-xs min-w-0">
-                    <span class="text-slate-400 text-3xs font-semibold uppercase flex align-items-center gap-1 flex-shrink-0">
-                      <i class="pi pi-compass text-blue-400"></i> Route:
-                    </span>
-                    <span class="font-mono text-slate-300 text-3xs bg-black-alpha-20 px-2 py-0.5 border-round border-1 border-white-alpha-05 word-break-all max-w-full">
-                      {{ event.path }}
-                    </span>
+                  <div *ngIf="event.path" class="timeline-route-strip flex align-items-center gap-2 border-round-lg text-3xs min-w-0">
+                    <div class="route-mini-badge flex align-items-center justify-content-center border-round flex-shrink-0">
+                      <i class="pi pi-compass text-blue-400 text-xs"></i>
+                    </div>
+                    <span class="route-label text-slate-400 font-semibold uppercase tracking-wider text-4xs flex-shrink-0">Route</span>
+                    <span class="font-mono text-blue-300 word-break-all min-w-0 flex-1 select-all line-height-2">{{ event.path }}</span>
                   </div>
 
                   <!-- Order ID Row -->
-                  <div *ngIf="event.order_id" class="flex align-items-center flex-wrap gap-2 p-2 border-round-lg bg-emerald-950-30 border-1 border-emerald-500-30 text-emerald-300 min-w-0">
-                    <i class="pi pi-check-circle text-emerald-400 text-sm flex-shrink-0"></i>
-                    <span class="text-3xs font-semibold uppercase flex-shrink-0">Order Placed:</span>
-                    <span class="font-mono text-emerald-300 font-bold text-xs word-break-all">{{ event.order_id }}</span>
+                  <div *ngIf="event.order_id" class="timeline-order-strip flex align-items-center gap-2 border-round-lg text-xs min-w-0">
+                    <div class="order-mini-badge flex align-items-center justify-content-center border-round flex-shrink-0">
+                      <i class="pi pi-check-circle text-emerald-400 text-xs"></i>
+                    </div>
+                    <span class="order-label text-emerald-300 font-semibold uppercase tracking-wider text-4xs flex-shrink-0">Order Placed</span>
+                    <span class="font-mono text-emerald-200 font-bold text-xs word-break-all select-all min-w-0 flex-1">{{ event.order_id }}</span>
                   </div>
                 </div>
               </div>

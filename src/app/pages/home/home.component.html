@@ -2,23 +2,29 @@
     <!-- Hero Section -->
     <div
         class="hero-section-fullscreen flex align-items-center justify-content-center text-center text-white relative overflow-hidden">
-        <img ngSrc="assets/landing-bg.webp" priority fetchpriority="high" fill sizes="100vw"
-            style="object-fit: cover; z-index: 0;" alt="Karukolpo Official Hero Banner">
+        <picture class="hero-picture">
+            <source media="(max-width: 768px)" srcset="assets/hero-banner-mobile.webp" type="image/webp">
+            <img src="assets/hero-banner.webp" class="hero-image" alt="Karukolpo Official Hero Banner"
+                fetchpriority="high" decoding="async" loading="eager">
+        </picture>
         <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
-        <div class="z-2">
-            <h1 class="text-6xl font-bold mb-2">Karukolpo</h1>
-            <p class="text-2xl">{{ landingPageTagline() }}</p>
-            <div class="flex flex-column sm:flex-row gap-2 sm:gap-3 justify-content-center mt-4 px-3">
-                <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg glass-button"
+        <div class="z-2 hero-content-box px-3">
+            <h1 class="hero-main-title font-bold mb-2">Karukolpo</h1>
+            <p class="hero-sub-tagline">{{ landingPageTagline() }}</p>
+            <div class="flex flex-column sm:flex-row gap-2 sm:gap-3 justify-content-center mt-3 sm:mt-4 px-3">
+                <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg glass-button hero-cta-btn"
                     aria-label="Shop our full collection of products" routerLink="/all-products"></button>
-                <button pButton label="About Us" icon="pi pi-info-circle" class="p-button-lg glass-button"
+                <button pButton label="About Us" icon="pi pi-info-circle" class="p-button-lg glass-button hero-cta-btn"
                     aria-label="Learn more about our heritage and artisans" (click)="goToAboutUs()"></button>
             </div>
         </div>
         <!-- Scroll Down Indicator -->
         <div class="scroll-down-indicator z-2" (click)="scrollToCategories()" (keydown.enter)="scrollToCategories()"
-            aria-label="Scroll to Categories" role="button" tabindex="0">
-            <i class="pi pi-chevron-down" aria-hidden="true"></i>
+            aria-label="Scroll to browse categories" role="button" tabindex="0">
+            <span class="scroll-hint-text">Scroll</span>
+            <div class="scroll-indicator-pill">
+                <i class="pi pi-chevron-down" aria-hidden="true"></i>
+            </div>
         </div>
     </div>
 

@@ -14,6 +14,8 @@ export interface Product {
   code: string;
   name: string;
   slug?: string;
+  /** Transient: slug as loaded from the backend — used to detect edits so unchanged slugs are never re-sent. */
+  _originalSlug?: string;
   description: string;
   price: number;
   cost?: number;

@@ -62,6 +62,12 @@ export class CategoryProductsComponent implements OnInit {
                     this.category.set(cat);
                     this.updateSeo(cat);
 
+                    // Normalise legacy/UUID links to the readable slug URL so
+                    // the address bar (and future shares) use the canonical form.
+                    if (cat.slug && id !== cat.slug) {
+                        this.router.navigate(['/category', cat.slug], { replaceUrl: true });
+                    }
+
                     // Use products directly from the category API response
                     if (cat.products) {
                         this.products.set(cat.products);
@@ -104,6 +110,13 @@ export class CategoryProductsComponent implements OnInit {
         const title = `${category.name} | Karukolpo`;
         this.titleService.setTitle(title);
         this.metaService.updateTag({ name: 'description', content: `Browse our collection of ${category.name} handmade crafts.` });
+
+        // Canonical URL — always points at the readable slug URL (the UUID
+        // variant resolves too, so without this the two would be duplicates).
+        if (typeof window !== 'undefined' && window.location) {
+            const canonicalUrl = `${window.location.origin}/category/${category.slug || category.id}`;
+            this.metaService.updateTag({ rel: 'canonical', href: canonicalUrl }, 'rel="canonical"');
+        }
     }
 
     showProductDetails(product: Product) {

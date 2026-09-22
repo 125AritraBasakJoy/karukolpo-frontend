@@ -18,9 +18,10 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { CalendarModule, Calendar } from 'primeng/calendar';
 import { TooltipModule } from 'primeng/tooltip';
 import { Product, ProductImage } from '../../../../models/product.model';
-import { firstValueFrom, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { firstValueFrom, forkJoin, of, Subject } from 'rxjs';
+import { catchError, map, switchMap, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { ValidationMessageComponent } from '../../../../components/validation-message/validation-message.component';
+import { SlugService, SlugSuggestionResponse, isValidBackendSlug, slugifyLocal } from '../../../../core/services/slug/slug.service';
 
 @Component({
     selector: 'app-edit-product',
@@ -57,6 +58,17 @@ export class EditProductComponent implements OnInit, OnDestroy {
     savingStatus = signal<string>('');
     discountPreview = signal<any>(null);
 
+    // URL name (slug) handling
+    private slugInput$ = new Subject<string>();
+    private nameInput$ = new Subject<string>();
+    private destroy$ = new Subject<void>();
+    originalSlug = '';
+    slugTouched = false;
+    slugChecking = signal(false);
+    slugServerStatus = signal<SlugSuggestionResponse | null>(null);
+    /** True when the availability check API is unreachable — the field still works manually. */
+    slugServerUnavailable = signal(false);
+
     productForm: Partial<Product> = {};
 
     get currentDate(): Date {
@@ -89,6 +101,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
         private router: Router,
         private productService: ProductService,
         private categoryService: CategoryService,
+        private slugService: SlugService,
         private messageService: MessageService,
         @Inject(PLATFORM_ID) private platformId: Object
     ) { }
@@ -121,12 +134,105 @@ export class EditProductComponent implements OnInit, OnDestroy {
             };
             window.addEventListener('scroll', this.scrollListener, true);
         }
+
+        // Admin edits the product name -> suggest a URL name
+        this.nameInput$.pipe(
+            debounceTime(450),
+            distinctUntilChanged(),
+            switchMap(name => {
+                const trimmed = name?.trim() || '';
+                if (this.slugTouched) {
+                    return of(null);
+                }
+                if (!trimmed) {
+                    this.productForm.slug = '';
+                    this.slugServerStatus.set(null);
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('product', { name: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res, name: trimmed })),
+                    catchError(() => of({ kind: 'error' as const, name: trimmed }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result || this.slugTouched) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerUnavailable.set(false);
+                this.productForm.slug = result.res.suggestion || '';
+                this.slugServerStatus.set(result.res);
+            } else {
+                this.slugServerUnavailable.set(true);
+                const fallback = slugifyLocal(result.name);
+                this.productForm.slug = fallback || '';
+            }
+        });
+
+        // Admin types / edits the URL name -> check availability for values
+        // the backend can accept.
+        this.slugInput$.pipe(
+            debounceTime(450),
+            distinctUntilChanged(),
+            switchMap(slug => {
+                this.slugServerStatus.set(null);
+                const trimmed = slug?.trim() || '';
+                if (!trimmed || !isValidBackendSlug(trimmed) || trimmed === this.originalSlug) {
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('product', { slug: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res })),
+                    catchError(() => of({ kind: 'error' as const }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerStatus.set(result.res);
+                this.slugServerUnavailable.set(false);
+            } else {
+                this.slugServerUnavailable.set(true);
+            }
+        });
     }
 
     ngOnDestroy() {
         if (this.scrollListener) {
             window.removeEventListener('scroll', this.scrollListener, true);
         }
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    onNameModelChange(value: string): void {
+        this.nameInput$.next(value);
+    }
+
+    onSlugInput(): void {
+        const val = (this.productForm.slug || '').trim();
+        if (!val) {
+            // Admin erased the typed slug: restore auto-sync with product name
+            this.slugTouched = false;
+            this.slugServerStatus.set(null);
+            this.slugChecking.set(false);
+            if (this.productForm.name?.trim()) {
+                this.nameInput$.next(this.productForm.name);
+            }
+            return;
+        }
+        this.slugTouched = true;
+        this.slugInput$.next(this.productForm.slug || '');
+    }
+
+    /** True when the admin changed the URL name — warn: breaks shared/indexed links. */
+    get slugChanged(): boolean {
+        return !!this.productForm.slug && this.productForm.slug !== this.originalSlug;
     }
 
     formatDateForInput(dateVal: Date | string | null | undefined): Date | null {
@@ -153,6 +259,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
                     discount_starts_at: this.formatDateForInput(product.discount_starts_at),
                     discount_ends_at: this.formatDateForInput(product.discount_ends_at)
                 };
+                this.originalSlug = product.slug || '';
+                this.slugTouched = false;
+                this.slugServerStatus.set(null);
+                this.slugChecking.set(false);
                 this.inventoryForm.stock = product.stock || 0;
                 this.existingImages = product.imageObjects ? [...product.imageObjects] : [];
                 const currentPrimary = this.existingImages.find(img => img.is_primary);
@@ -286,11 +396,21 @@ export class EditProductComponent implements OnInit, OnDestroy {
         try {
             // 1. Update Basic Details
             this.savingStatus.set('Updating basic details...');
-            await firstValueFrom(this.productService.updateProduct({
+            const formPayload: any = {
                 ...this.productForm,
                 discount_starts_at: this.productForm.discount_starts_at ? new Date(this.productForm.discount_starts_at).toISOString() : null,
                 discount_ends_at: this.productForm.discount_ends_at ? new Date(this.productForm.discount_ends_at).toISOString() : null
-            } as Product));
+            };
+            // A changed URL name is only sent when the backend can accept it;
+            // otherwise the existing slug is kept (mapFrontendToBackend skips
+            // absent slugs on update).
+            let slugKept = false;
+            if (this.slugChanged && !isValidBackendSlug((formPayload.slug || '').trim())) {
+                formPayload.slug = undefined;
+                formPayload._originalSlug = undefined;
+                slugKept = true;
+            }
+            await firstValueFrom(this.productService.updateProduct(formPayload as Product));
 
             // 2. Handle Category Linking
             this.savingStatus.set('Updating category links...');
@@ -323,6 +443,14 @@ export class EditProductComponent implements OnInit, OnDestroy {
 
             this.productService.clearCache();
             this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully' });
+            if (slugKept) {
+                this.messageService.add({
+                    severity: 'info',
+                    summary: 'URL Name',
+                    detail: 'The URL name you typed could not be used, so the existing one was kept.',
+                    life: 5000
+                });
+            }
             setTimeout(() => {
                 this.router.navigate(['/admin/dashboard/inventory']);
             }, 1500);

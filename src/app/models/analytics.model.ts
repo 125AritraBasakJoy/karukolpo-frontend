@@ -10,10 +10,12 @@ export interface OverviewResponse {
 
 export interface RevenueTimeseriesPoint {
   date: string;
-  revenue: number;
+  revenue?: number;
   booked_revenue?: number;
   realized_revenue?: number;
   orders: number;
+  booked_orders?: number;
+  realized_orders?: number;
 }
 
 export interface RevenueTimeseriesResponse {
@@ -37,6 +39,7 @@ export interface PaymentMethodBreakdown {
 export interface OrdersBreakdownResponse {
   by_status: StatusBreakdown[];
   by_payment_method: PaymentMethodBreakdown[];
+  revenue_by_payment_method?: { [method: string]: string };
 }
 
 export interface GeographyPoint {
@@ -64,6 +67,7 @@ export interface TopCategory {
   name: string;
   revenue: number;
   units_sold: number;
+  share_of_goods_pct?: number;
 }
 
 export interface InventoryHealthResponse {
@@ -72,6 +76,10 @@ export interface InventoryHealthResponse {
   out_of_stock: number;
   low_stock: number;
   estimated_value: number;
+  low_stock_threshold?: number;
+  stock_value?: number;
+  stock_value_cost?: number;
+  cost_coverage_pct?: number;
 }
 
 export interface TopCustomer {

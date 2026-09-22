@@ -398,9 +398,13 @@
                 <i class="pi" [ngClass]="isDownloadingThermal() ? 'pi-spin pi-spinner' : 'pi-download'"></i>
                 <span>{{ isDownloadingThermal() ? 'Downloading...' : 'Download' }}</span>
             </button>
-            <button type="button" class="btn-thermal btn-print" (click)="onPrintThermalInvoice()">
+            <button type="button" class="btn-thermal btn-bluetooth" (click)="onPrintBluetoothThermalInvoice()" title="Direct Bluetooth print to thermal printer (pairs only once)" [disabled]="isPrintingThermal()">
+                <i class="pi" [ngClass]="isPrintingThermal() ? 'pi-spin pi-spinner' : 'pi-bolt'"></i>
+                <span>{{ isPrintingThermal() ? 'Printing...' : 'Bluetooth Print' }}</span>
+            </button>
+            <button type="button" class="btn-thermal btn-print" [disabled]="true" title="Browser print is disabled">
                 <i class="pi pi-print"></i>
-                <span>Print</span>
+                <span>Browser Print</span>
             </button>
         </div>
     </ng-template>

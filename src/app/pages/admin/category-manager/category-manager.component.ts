@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, ChangeDetectorRef, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { of } from 'rxjs';
-import { switchMap, catchError, tap } from 'rxjs/operators';
+import { of, Subject } from 'rxjs';
+import { switchMap, catchError, map, tap, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoryService } from '../../../core/services';;;
 import { ProductService } from '../../../core/services';;;
@@ -22,6 +22,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
+import { SlugService, SlugSuggestionResponse, slugifyLocal, isValidBackendSlug } from '../../../core/services/slug/slug.service';
 
 @Component({
     selector: 'app-category-manager',
@@ -77,6 +78,16 @@ export class CategoryManagerComponent implements OnInit {
 
     imageLoadError: { [key: string]: boolean } = {};
 
+    // URL name (slug) handling
+    private slugService = inject(SlugService);
+    private destroy$ = new Subject<void>();
+    /** True once the admin manually types in the URL name field — prefill stops then. */
+    slugTouched = false;
+    slugChecking = signal(false);
+    slugServerStatus = signal<SlugSuggestionResponse | null>(null);
+    /** True when the suggestion/availability API is unreachable — the field still works manually. */
+    slugServerUnavailable = signal(false);
+
     private categoryService = inject(CategoryService);
     private productService = inject(ProductService);
     private messageService = inject(MessageService);
@@ -86,7 +97,8 @@ export class CategoryManagerComponent implements OnInit {
 
     constructor() {
         this.categoryForm = this.fb.group({
-            name: ['', Validators.required]
+            name: ['', Validators.required],
+            slug: ['']
         });
     }
 
@@ -94,6 +106,100 @@ export class CategoryManagerComponent implements OnInit {
         window.scrollTo({ top: 0, behavior: 'instant' });
         this.rows = getSavedPageSize('karukolpo_categories_rows', 10);
         this.first = getSavedPageOffset('karukolpo_categories_first', 0);
+        this.setupSlugHandling();
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    /**
+     * URL name (slug): debounced suggestion prefill while the name is typed,
+     * and debounced availability/validation checks for the typed value.
+     */
+    private setupSlugHandling(): void {
+        const nameControl = this.categoryForm.get('name');
+        const slugControl = this.categoryForm.get('slug');
+
+        nameControl?.valueChanges.pipe(
+            debounceTime(450),
+            distinctUntilChanged(),
+            switchMap(name => {
+                if (this.slugTouched) {
+                    return of(null);
+                }
+                const trimmed = name?.trim() || '';
+                if (!trimmed) {
+                    slugControl?.setValue('', { emitEvent: false });
+                    this.slugServerStatus.set(null);
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('category', { name: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res, name: trimmed })),
+                    catchError(() => of({ kind: 'error' as const, name: trimmed }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result || this.slugTouched) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerUnavailable.set(false);
+                // emitEvent:false so the prefill does not count as admin input
+                slugControl?.setValue(result.res.suggestion || '', { emitEvent: false });
+                this.slugServerStatus.set(result.res);
+            } else {
+                // Suggestion API unreachable (e.g. backend not updated yet):
+                // prefill a best-effort local slug for ASCII names.
+                this.slugServerUnavailable.set(true);
+                const fallback = slugifyLocal(result.name);
+                slugControl?.setValue(fallback || '', { emitEvent: false });
+            }
+        });
+
+        slugControl?.valueChanges.pipe(
+            debounceTime(450),
+            distinctUntilChanged(),
+            switchMap(slug => {
+                this.slugServerStatus.set(null);
+                const trimmed = slug?.trim() || '';
+                if (!trimmed) {
+                    // Admin cleared the slug: restore auto-sync mode
+                    this.slugTouched = false;
+                    this.slugChecking.set(false);
+                    const currentName = nameControl?.value?.trim();
+                    if (currentName) {
+                        nameControl?.setValue(currentName);
+                    }
+                    return of(null);
+                }
+                this.slugTouched = true;
+                // Bangla/mixed input is never flagged — only check availability
+                // for values the backend can accept.
+                if (!isValidBackendSlug(trimmed)) {
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('category', { slug: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res })),
+                    catchError(() => of({ kind: 'error' as const }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerStatus.set(result.res);
+                this.slugServerUnavailable.set(false);
+            } else {
+                this.slugServerUnavailable.set(true);
+            }
+        });
     }
 
     loadCategories(event?: TableLazyLoadEvent) {
@@ -163,15 +269,25 @@ export class CategoryManagerComponent implements OnInit {
     }
 
     openNew() {
-        this.categoryForm.reset();
+        // emitEvent:false — opening the dialog must not count as admin input
+        this.categoryForm.reset({}, { emitEvent: false });
         this.currentCategoryId = null;
+        this.resetSlugState();
         this.categoryDialog = true;
     }
 
     editCategory(category: Category) {
-        this.categoryForm.patchValue(category);
+        this.categoryForm.patchValue(category, { emitEvent: false });
         this.currentCategoryId = category.id;
+        this.resetSlugState();
         this.categoryDialog = true;
+    }
+
+    private resetSlugState() {
+        this.slugTouched = false;
+        this.slugChecking.set(false);
+        this.slugServerStatus.set(null);
+        this.slugServerUnavailable.set(false);
     }
 
     deleteCategory(category: Category) {
@@ -426,7 +542,8 @@ export class CategoryManagerComponent implements OnInit {
 
     hideDialog() {
         this.categoryDialog = false;
-        this.categoryForm.reset();
+        this.categoryForm.reset({}, { emitEvent: false });
+        this.resetSlugState();
     }
 
     saveCategory() {
@@ -436,6 +553,11 @@ export class CategoryManagerComponent implements OnInit {
         }
 
         const categoryData = this.categoryForm.value;
+        // A typed URL name is only sent when the backend can accept it (e.g.
+        // Bangla input is omitted so the backend derives a proper one); an
+        // empty string maps to "not sent" in CategoryService.
+        const typedSlug = (categoryData.slug || '').trim();
+        categoryData.slug = isValidBackendSlug(typedSlug) ? typedSlug : '';
 
         if (this.currentCategoryId) {
             const updatedCategory: Category = { ...categoryData, id: this.currentCategoryId };

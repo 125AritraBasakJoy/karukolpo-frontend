@@ -20,13 +20,15 @@ import { isPlatformBrowser } from '@angular/common';
  * CategoryService - Backend API Integration
  */
 const DEFAULT_CATEGORIES: Category[] = [
-    { id: '1', name: 'Prodip', slug: 'prodip' },
     { id: '2', name: 'Protima', slug: 'protima' },
-    { id: '3', name: 'Shora', slug: 'shora' },
-    { id: '4', name: 'Home Decor', slug: 'home-decor' },
+    { id: '1', name: 'Prodip', slug: 'prodip' },
+    { id: '6', name: 'Sharee', slug: 'sharee' },
     { id: '5', name: 'Mirror', slug: 'mirror' },
-    { id: '6', name: 'Sharee', slug: 'sharee' }
+    { id: '4', name: 'Home Decor', slug: 'home-decor' },
+    { id: '3', name: 'Shora', slug: 'shora' }
 ];
+
+const PREFERRED_CATEGORY_ORDER = ['protima', 'prodip', 'sharee', 'mirror', 'home decor', 'homedecor', 'shora'];
 
 @Injectable({
     providedIn: 'root'
@@ -53,6 +55,22 @@ export class CategoryService {
     }
 
     /**
+     * Sort categories to ensure Protima, Prodip, Sharee are in the first row
+     */
+    public sortCategories(categories: Category[]): Category[] {
+        return [...categories].sort((a, b) => {
+            const aName = (a.name || '').toLowerCase().trim();
+            const bName = (b.name || '').toLowerCase().trim();
+            const aIndex = PREFERRED_CATEGORY_ORDER.indexOf(aName);
+            const bIndex = PREFERRED_CATEGORY_ORDER.indexOf(bName);
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return aName.localeCompare(bName);
+        });
+    }
+
+    /**
      * Clear service-related caches
      */
     clearCache() {
@@ -68,7 +86,7 @@ export class CategoryService {
         if (!isPlatformBrowser(this.platformId)) return DEFAULT_CATEGORIES;
         try {
             const cached = localStorage.getItem(this.CACHE_KEY);
-            return cached ? JSON.parse(cached) : DEFAULT_CATEGORIES;
+            return cached ? this.sortCategories(JSON.parse(cached)) : DEFAULT_CATEGORIES;
         } catch (e) {
             console.warn('CategoryService: Failed to load categories from cache', e);
             return DEFAULT_CATEGORIES;
@@ -78,9 +96,10 @@ export class CategoryService {
     private refreshCache() {
         this.getCategories().subscribe({
             next: (cats) => {
-                this.categories.set(cats);
+                const sorted = this.sortCategories(cats);
+                this.categories.set(sorted);
                 if (isPlatformBrowser(this.platformId)) {
-                    localStorage.setItem(this.CACHE_KEY, JSON.stringify(cats));
+                    localStorage.setItem(this.CACHE_KEY, JSON.stringify(sorted));
                 }
             },
             error: (err) => console.error('CategoryService: Background refresh failed', err)
@@ -98,7 +117,7 @@ export class CategoryService {
 
         const query = buildListQuery(skip, limit);
         const request = this.apiService.get<any[]>(`${API_ENDPOINTS.CATEGORIES.LIST}${query}`).pipe(
-            map(categories => categories.map(cat => this.mapBackendToFrontend(cat))),
+            map(categories => this.sortCategories(categories.map(cat => this.mapBackendToFrontend(cat)))),
             shareReplay(1),
             finalize(() => this.pendingCategoriesRequest = null)
         );
@@ -128,7 +147,7 @@ export class CategoryService {
      * POST /categories (requires auth)
      */
     addCategory(category: Category): Observable<Category> {
-        const backendCategory = { name: category.name };
+        const backendCategory = { name: category.name, slug: category.slug || undefined };
         return this.apiService.post<any>(API_ENDPOINTS.CATEGORIES.CREATE, backendCategory).pipe(
             map(cat => this.mapBackendToFrontend(cat)),
             tap(() => this.refreshCache())
@@ -140,7 +159,7 @@ export class CategoryService {
      * PATCH /categories/{id} (requires auth)
      */
     updateCategory(category: Category): Observable<Category> {
-        const backendCategory = { name: category.name };
+        const backendCategory = { name: category.name, slug: category.slug || undefined };
         return this.apiService.patch<any>(API_ENDPOINTS.CATEGORIES.UPDATE(category.id), backendCategory).pipe(
             map(cat => this.mapBackendToFrontend(cat)),
             tap(() => this.refreshCache())
@@ -282,7 +301,7 @@ export class CategoryService {
         const category: Category = {
             id: backendCategory.id?.toString() || '',
             name: backendCategory.name,
-            slug: backendCategory.slug || this.generateSlug(backendCategory.name)
+            slug: backendCategory.slug || backendCategory.id
         };
 
         if (backendCategory.products && Array.isArray(backendCategory.products)) {
@@ -292,21 +311,5 @@ export class CategoryService {
         }
 
         return category;
-    }
-
-    /**
-     * Generate URL-friendly slug from category name
-     */
-    private generateSlug(name: string): string {
-        if (!name) return 'category';
-        // Replace spaces and special URL-unsafe chars with hyphens
-        // but try to keep Unicode characters if they are roughly word-like
-        let slug = name.toLowerCase()
-            .trim()
-            .replace(/[\s\t\n\r]+/g, '-')       // spaces/tabs/newlines to hyphens
-            .replace(/[^\w\u00C0-\u1FFF\u2C00-\uD7FF-]+/g, '') // keep word chars, hyphens, and most Unicode ranges
-            .replace(/-+/g, '-');               // collapse multiple hyphens
-
-        return slug || 'category';
     }
 }

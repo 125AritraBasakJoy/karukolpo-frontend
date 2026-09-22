@@ -693,6 +693,7 @@ export class ProductService {
       code: data.code || `PROD-${data.id}`,
       name: data.name || '',
       slug: data.slug || undefined,
+      _originalSlug: data.slug || undefined,
       description: data.description ? this.decodeHtml(data.description) : '',
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
       cost: cost,
@@ -754,6 +755,12 @@ export class ProductService {
       price: product.price,
       description: product.description || null
     };
+
+    // Only send the slug when the admin actually changed it, so an ordinary
+    // edit does not re-submit the current value.
+    if (product.slug && product.slug !== product._originalSlug) {
+      payload.slug = product.slug;
+    }
 
     if (product.cost !== undefined && product.cost !== null) {
       const parsedCost = typeof product.cost === 'string' ? parseFloat(product.cost) : Number(product.cost);

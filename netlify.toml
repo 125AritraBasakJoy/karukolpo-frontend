@@ -4,6 +4,12 @@
   command = "npm run build && node scripts/inject-preloads.mjs"
 
 [[redirects]]
+  from = "/sitemap.xml"
+  to = "https://api.karukolpocrafts.com/sitemap.xml"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

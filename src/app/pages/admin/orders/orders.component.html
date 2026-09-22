@@ -110,13 +110,6 @@
                         </td>
                         <td>
                             <div class="price-value">{{ order.totalAmount | currency:'BDT':'৳' }}</div>
-                            <div class="table-items-count mt-1 flex align-items-center gap-1 cursor-pointer" 
-                                [pTooltip]="getOrderItemsTooltip(order)" tooltipPosition="top">
-                                <i class="pi pi-box text-xs text-blue-400"></i>
-                                <span class="text-xs text-gray-400 hover:text-white transition-colors">
-                                    {{ order.items?.length || 0 }} {{ (order.items?.length === 1) ? 'item' : 'items' }}
-                                </span>
-                            </div>
                         </td>
                         <td>
                             <p-tag [value]="order.paymentStatus || 'Pending'"
@@ -298,7 +291,7 @@
                                         </div>
 
                                         <!-- Meta Details: Qty x Price, Original Price, Discount Pill -->
-                                        <div class="order-item-meta flex flex-wrap align-items-center gap-1.5 mt-1">
+                                        <div class="order-item-meta flex flex-wrap align-items-center gap-2 mt-1">
                                             <span class="order-item-qty-pill font-mono">
                                                 {{ item.quantity }} × {{ getItemFinalUnitPrice(item) | currency:'BDT':'৳' }}
                                             </span>

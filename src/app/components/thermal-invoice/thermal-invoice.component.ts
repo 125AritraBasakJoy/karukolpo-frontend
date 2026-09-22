@@ -9,9 +9,11 @@ import {
   OnChanges,
   SimpleChanges,
   Inject,
+  inject,
   PLATFORM_ID
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { BluetoothPrinterService } from '../../core/services/bluetooth-printer/bluetooth-printer.service';
 import jsPDF from 'jspdf';
 import JsBarcode from 'jsbarcode';
 import { THERMAL_LOGO_BASE64 } from './thermal-logo.constant';
@@ -57,6 +59,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   @Output() downloadCompleted = new EventEmitter<void>();
 
   private isBrowser: boolean;
+
+  private readonly bluetoothPrinter = inject(BluetoothPrinterService);
 
   constructor(@Inject(PLATFORM_ID) platformId: Object) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -300,9 +304,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   }
 
   private async generateThermalCanvas(): Promise<HTMLCanvasElement> {
-    const width = 576; // 58mm roll at standard thermal resolution
-    const margin = 24;
-    const printableWidth = width - margin * 2; // 528px
+    const width = 576; // 58mm roll total pixel width
+    const leftX = 18;
+    const rightX = 468; // 45mm safe printable width for 48mm thermal printhead
+    const printableWidth = rightX - leftX; // 450px
+    const centerX = (leftX + rightX) / 2; // Optical center of printable content
 
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = width;
@@ -319,173 +325,158 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     let y = 20;
 
-    // 1. Logo
-    try {
-      const logoImg = await this.loadImageElement(this.logoSrc);
-      const logoW = 240;
-      const logoH = logoImg.naturalHeight && logoImg.naturalWidth
-        ? (logoImg.naturalHeight / logoImg.naturalWidth) * logoW
-        : 162;
-      const logoX = (width - logoW) / 2;
-      ctx.save();
-      ctx.filter = 'grayscale(100%) contrast(350%) brightness(85%)';
-      ctx.drawImage(logoImg, logoX, y, logoW, logoH);
-      ctx.restore();
-      y += logoH + 10;
-    } catch (e) {
-      console.warn('Could not load logo for canvas:', e);
-    }
-
-    // 2. Store Header
+    // 1. Store Header (No logo)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
 
     ctx.font = `bold 22px ${fontMono}`;
-    ctx.fillText('KARUKOLPO', width / 2, y);
+    ctx.fillText('KARUKOLPO', centerX, y);
     y += 28;
 
     ctx.font = `14px ${fontMono}`;
-    ctx.fillText('Pathrail, Delduar, Tangail-1912', width / 2, y);
+    ctx.fillText('Pathrail, Delduar, Tangail-1912', centerX, y);
     y += 20;
 
-    ctx.fillText('www.karukolpocrafts.com', width / 2, y);
+    ctx.fillText('www.karukolpocrafts.com', centerX, y);
     y += 24;
 
     // Double Line
-    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 6;
 
     // Receipt Type
     ctx.font = `bold 16px ${fontMono}`;
-    ctx.fillText('*** POS SALES RECEIPT ***', width / 2, y);
+    ctx.fillText('*** MONEY RECEIPT ***', centerX, y);
     y += 24;
 
     // Dashed Line
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
-    // 3. Metadata Section
-    ctx.font = `14.5px ${fontMono}`;
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'RECEIPT #:', this.orderNumberDisplay, y, true);
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'DATE:', this.formattedDateOnly, y, false);
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'TIME:', this.formattedTimeOnly, y, false);
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'PAYMENT:', this.paymentMethodDisplay.toUpperCase(), y, true);
+    // 2. Metadata Section
+    ctx.font = `14px ${fontMono}`;
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'RECEIPT #:', this.orderNumberDisplay, y, true);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'DATE:', this.formattedDateOnly, y, false);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'TIME:', this.formattedTimeOnly, y, false);
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'PAYMENT:', this.paymentMethodDisplay.toUpperCase(), y, true);
     y += 4;
 
-    // 4. Customer Section (if present)
+    // 3. Customer Section (if present)
     if (this.customerNameDisplay || this.customerPhoneDisplay || this.customerAddressDisplay) {
-      y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+      y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
       y += 6;
 
       ctx.textAlign = 'left';
-      ctx.font = `bold 14.5px ${fontMono}`;
-      ctx.fillText('CUSTOMER INFO:', margin, y);
+      ctx.font = `bold 14px ${fontMono}`;
+      ctx.fillText('CUSTOMER INFO:', leftX, y);
       y += 22;
 
       if (this.customerNameDisplay) {
-        y = this.drawCanvasRow(ctx, margin, width - margin, 'Name:', this.customerNameDisplay, y, true);
+        y = this.drawCanvasRow(ctx, leftX, rightX, 'Name:', this.customerNameDisplay, y, true);
       }
       if (this.customerPhoneDisplay) {
-        y = this.drawCanvasRow(ctx, margin, width - margin, 'Phone:', this.customerPhoneDisplay, y, true);
+        y = this.drawCanvasRow(ctx, leftX, rightX, 'Phone:', this.customerPhoneDisplay, y, true);
       }
       if (this.customerAddressDisplay) {
-        y = this.drawCanvasRow(ctx, margin, width - margin, 'Address:', this.customerAddressDisplay, y, false);
+        y = this.drawCanvasRow(ctx, leftX, rightX, 'Address:', this.customerAddressDisplay, y, false);
       }
       y += 4;
     }
 
     // Double Line
-    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 6;
 
-    // 5. Items Header
-    ctx.font = `bold 15px ${fontMono}`;
+    // 4. Items Header
+    ctx.font = `bold 14.5px ${fontMono}`;
     ctx.textAlign = 'left';
-    ctx.fillText('ITEM / DETAILS', margin, y);
+    ctx.fillText('ITEM / DETAILS', leftX, y);
     ctx.textAlign = 'right';
-    ctx.fillText('TOTAL', width - margin, y);
+    ctx.fillText('TOTAL', rightX, y);
     y += 22;
 
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
-    // 6. Line Items List
+    // 5. Line Items List
     for (const item of this.parsedItems) {
       // Product Name (wrapped)
       ctx.textAlign = 'left';
-      ctx.font = `bold 15px ${fontSans}`;
-      y = this.drawCanvasWrappedText(ctx, item.name, margin, y, printableWidth, 21);
+      ctx.font = `bold 14.5px ${fontMono}`;
+      y = this.drawCanvasWrappedText(ctx, item.name, leftX, y, printableWidth, 20);
 
       // Qty x Price (left) and Line Total (right)
-      ctx.font = `14.5px ${fontSans}`;
+      ctx.font = `14px ${fontMono}`;
       ctx.textAlign = 'left';
-      const qtyText = `${item.quantity} x ৳${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-      ctx.fillText(qtyText, margin, y);
+      const qtyText = `${item.quantity} x Tk. ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      ctx.fillText(qtyText, leftX, y);
 
       ctx.textAlign = 'right';
-      ctx.font = `bold 15.5px ${fontSans}`;
-      const totalText = `৳${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-      ctx.fillText(totalText, width - margin, y);
-      y += 20;
+      ctx.font = `bold 14.5px ${fontMono}`;
+      const totalText = `Tk. ${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      ctx.fillText(totalText, rightX, y);
+      y += 19;
 
       // Discount pill if item has discount
       if (item.discount && item.discount > 0) {
         ctx.textAlign = 'left';
-        ctx.font = `italic 12.5px ${fontSans}`;
+        ctx.font = `italic 12px ${fontMono}`;
         const regFormatted = item.regularPrice ? item.regularPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : '';
         const discFormatted = item.discount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        ctx.fillText(`Reg: ৳${regFormatted} (Save: -৳${discFormatted})`, margin, y);
-        y += 18;
+        ctx.fillText(`Reg: Tk. ${regFormatted} (Save: -Tk. ${discFormatted})`, leftX, y);
+        y += 17;
       }
 
       y += 6;
     }
 
     // Dashed Line
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
-    // 7. Totals Section
-    ctx.font = `14.5px ${fontSans}`;
-    const subtotalFormatted = `৳${this.subtotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'Subtotal:', subtotalFormatted, y, true);
+    // 6. Totals Section
+    ctx.font = `14px ${fontMono}`;
+    const subtotalFormatted = `Tk. ${this.subtotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    y = this.drawCanvasRow(ctx, leftX, rightX, 'Subtotal:', subtotalFormatted, y, true);
 
     if (this.totalDiscountDisplay > 0) {
-      const discountFormatted = `-৳${this.totalDiscountDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-      y = this.drawCanvasRow(ctx, margin, width - margin, 'Discount:', discountFormatted, y, true);
+      const discountFormatted = `-Tk. ${this.totalDiscountDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      y = this.drawCanvasRow(ctx, leftX, rightX, 'Discount:', discountFormatted, y, true);
     }
 
-    const deliveryFormatted = `৳${this.deliveryChargeDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-    y = this.drawCanvasRow(ctx, margin, width - margin, 'Delivery Charge:', deliveryFormatted, y, false);
-    y += 4;
+    if (this.deliveryChargeDisplay > 0) {
+      const deliveryFormatted = `Tk. ${this.deliveryChargeDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      y = this.drawCanvasRow(ctx, leftX, rightX, 'Delivery Charge:', deliveryFormatted, y, false);
+      y += 4;
+    }
 
     // Double Line
-    y = this.drawCanvasDoubleLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDoubleLine(ctx, leftX, rightX, y);
     y += 8;
 
     // Grand Total
-    ctx.font = `bold 20px ${fontSans}`;
-    const grandFormatted = `৳${this.grandTotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    ctx.font = `bold 18px ${fontMono}`;
+    const grandFormatted = `Tk. ${this.grandTotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
     ctx.textAlign = 'left';
-    ctx.fillText('TOTAL:', margin, y);
+    ctx.fillText('TOTAL:', leftX, y);
     ctx.textAlign = 'right';
-    ctx.fillText(grandFormatted, width - margin, y);
-    y += 28;
+    ctx.fillText(grandFormatted, rightX, y);
+    y += 26;
 
     // Dashed Line
-    y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+    y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
     y += 8;
 
     // 8. Note (if any)
     const noteText = this.order?.note || this.note;
     if (noteText) {
       ctx.textAlign = 'left';
-      ctx.font = `bold 14px ${fontMono}`;
-      ctx.fillText('Note:', margin, y);
+      ctx.font = `bold 13.5px ${fontMono}`;
+      ctx.fillText('Note:', leftX, y);
       y += 18;
-      ctx.font = `13px ${fontMono}`;
-      y = this.drawCanvasWrappedText(ctx, noteText, margin, y, printableWidth, 18);
-      y = this.drawCanvasDashedLine(ctx, margin, width - margin, y);
+      ctx.font = `12.5px ${fontMono}`;
+      y = this.drawCanvasWrappedText(ctx, noteText, leftX, y, printableWidth, 18);
+      y = this.drawCanvasDashedLine(ctx, leftX, rightX, y);
       y += 8;
     }
 
@@ -495,14 +486,14 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       JsBarcode(barcodeCanvas, this.orderNumberDisplay, {
         format: 'CODE128',
         width: 2,
-        height: 52,
+        height: 50,
         displayValue: true,
         font: 'monospace',
-        fontSize: 13,
+        fontSize: 12,
         margin: 4,
         lineColor: '#000000'
       });
-      const bx = (width - barcodeCanvas.width) / 2;
+      const bx = centerX - barcodeCanvas.width / 2;
       ctx.drawImage(barcodeCanvas, bx, y);
       y += barcodeCanvas.height + 12;
     } catch (e) {
@@ -511,16 +502,16 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     // 10. Footer Text
     ctx.textAlign = 'center';
-    ctx.font = `bold 15px ${fontMono}`;
-    ctx.fillText('THANK YOU FOR YOUR PURCHASE!', width / 2, y);
+    ctx.font = `bold 14.5px ${fontMono}`;
+    ctx.fillText('THANK YOU FOR YOUR PURCHASE!', centerX, y);
     y += 22;
 
-    ctx.font = `13px ${fontMono}`;
-    ctx.fillText('Crafted with tradition & passion.', width / 2, y);
+    ctx.font = `12.5px ${fontMono}`;
+    ctx.fillText('Crafted with tradition & passion.', centerX, y);
     y += 20;
 
-    ctx.font = `bold 14px ${fontMono}`;
-    ctx.fillText('Hotline: 01675-718846', width / 2, y);
+    ctx.font = `bold 13.5px ${fontMono}`;
+    ctx.fillText('Hotline: 01675-718846', centerX, y);
     y += 28;
 
     // Final crop to exact content height
@@ -666,9 +657,21 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     // Machine print via isolated document stream formatted specifically for 58mm rolls
     try {
       let printContent = this.receiptElementRef.nativeElement.innerHTML;
-      if (this.logoSrc && !printContent.includes('data:image')) {
-        printContent = printContent.replace(/src="[^"]*assets\/invoice-logo-mandala\.jpg[^"]*"/g, `src="${this.logoSrc}"`);
+
+      // Measure exact height from the actual rendered receipt DOM element (includes the 1-line gap)
+      let estimatedHeightMm = 80;
+      try {
+        const nativeEl = this.receiptElementRef?.nativeElement;
+        if (nativeEl) {
+          const measuredHeight = nativeEl.scrollHeight || nativeEl.offsetHeight;
+          if (measuredHeight > 0) {
+            estimatedHeightMm = Math.ceil((measuredHeight * 25.4) / 96);
+          }
+        }
+      } catch (e) {
+        console.error('Height measurement failed, using fallback', e);
       }
+
       const baseOrigin = window.location.origin;
       const receiptHtml = `
         <!DOCTYPE html>
@@ -676,25 +679,34 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         <head>
           <meta charset="utf-8">
           <base href="${baseOrigin}/">
-          <title>Receipt-${this.orderNumberDisplay}</title>
+          <title> </title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
+          <style id="base-page-style">
             @page {
-              size: 58mm auto;
-              margin: 0mm !important;
+              size: 58mm ${estimatedHeightMm}mm;
+              margin: 0;
+            }
+            @page {
+              @top-left { content: none; }
+              @top-center { content: none; }
+              @top-right { content: none; }
+              @bottom-left { content: none; }
+              @bottom-center { content: none; }
+              @bottom-right { content: none; }
             }
             * {
               box-sizing: border-box;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
               color: #000000 !important;
+              font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace !important;
             }
             html, body {
-              margin: 0 auto;
-              padding: 0;
-              width: 48mm;
-              max-width: 48mm;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Bengali", "Helvetica Neue", Arial, sans-serif;
+              margin: 0 auto !important;
+              padding: 0 1.5mm 0 1.5mm !important;
+              width: 53mm !important;
+              max-width: 53mm !important;
+              font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace !important;
               color: #000000 !important;
               background: #ffffff !important;
               font-size: 11px;
@@ -710,80 +722,76 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             .font-bold { font-weight: 800 !important; }
             .uppercase { text-transform: uppercase; }
             
-            .receipt-logo {
-              display: block;
-              max-width: 32mm;
-              max-height: 32mm;
-              height: auto;
-              margin: 0 auto 3px auto;
-              filter: grayscale(100%) contrast(190%) brightness(102%);
-              -webkit-filter: grayscale(100%) contrast(190%) brightness(102%);
-              image-rendering: -webkit-optimize-contrast;
-              image-rendering: crisp-edges;
-            }
             .store-name {
-              font-size: 15px;
+              font-size: 16px;
               font-weight: 800;
-              letter-spacing: 0.3px;
-              margin: 2px 0 1px 0;
+              letter-spacing: 0.5px;
+              margin: 1px 0;
               line-height: 1.2;
             }
             .store-info {
-              font-size: 10.5px;
+              font-size: 10px;
               font-weight: 600;
-              line-height: 1.3;
+              line-height: 1.25;
             }
             .receipt-type-title {
-              font-size: 11.5px;
+              font-size: 12px;
               font-weight: 800;
               letter-spacing: 0.5px;
-              margin: 3px 0;
+              margin: 2px 0;
             }
-            .thermal-divider {
-              border: 0;
-              border-top: 1px dashed #000000;
-              margin: 4px 0;
-            }
+            .thermal-divider,
             .thermal-divider-double {
-              border: 0;
-              border-top: 1.5px solid #000000;
-              margin: 4px 0;
+              font-family: 'Courier New', Courier, monospace;
+              font-size: 11px;
+              font-weight: 700;
+              line-height: 1.1;
+              letter-spacing: -0.3px;
+              text-align: center;
+              white-space: nowrap;
+              overflow: hidden;
+              margin: 2px 0;
+              border: none;
             }
             .meta-section {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
-              margin: 3px 0;
+              margin: 2px 0;
             }
             .meta-row {
               display: flex;
               justify-content: space-between;
               align-items: baseline;
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
               margin-bottom: 2px;
             }
             .meta-label {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
+              white-space: nowrap;
             }
             .meta-val {
               font-weight: 700;
               text-align: right;
+              word-break: break-word;
             }
             .customer-section {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
-              margin: 3px 0;
+              margin: 2px 0;
             }
             .address-text {
-              max-width: 30mm;
+              max-width: 28mm;
               word-break: break-word;
+              font-size: 10px;
               font-weight: 600;
+              text-align: right;
             }
             .items-header {
               display: flex;
               justify-content: space-between;
-              font-size: 11.5px;
+              font-size: 10.5px;
               font-weight: 800;
               padding: 1px 0;
             }
@@ -791,92 +799,119 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               flex: 1;
             }
             .item-hdr-total {
-              width: 16mm;
+              min-width: 12mm;
+              text-align: right;
+              white-space: nowrap;
             }
+            .items-list { width: 100%; }
             .item-row {
-              margin-bottom: 4px;
+              margin-bottom: 3px;
             }
             .item-title {
+              font-size: 10.5px;
               font-weight: 700;
-              font-size: 11.5px;
               line-height: 1.25;
               word-break: break-word;
+            }
+            .item-code {
+              font-weight: 600;
+              font-size: 9.5px;
             }
             .item-calc-row {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              font-size: 11px;
-              font-weight: 600;
               margin-top: 1px;
             }
             .item-calc-details {
-              font-size: 11px;
+              font-size: 10px;
               font-weight: 600;
               flex: 1;
             }
             .item-discount-pill {
-              font-size: 10px;
-              font-weight: 600;
+              font-size: 8.5px;
+              font-weight: 700;
+              line-height: 1.2;
               margin-top: 1px;
             }
             .item-line-total {
-              font-size: 11.5px;
+              font-size: 10.5px;
               font-weight: 700;
-              width: 16mm;
+              min-width: 12mm;
               text-align: right;
+              white-space: nowrap;
             }
             .totals-section {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 600;
+              margin: 2px 0;
             }
             .totals-row {
               display: flex;
               justify-content: space-between;
-              font-size: 11px;
+              align-items: baseline;
+              font-size: 10.5px;
               font-weight: 600;
               margin-bottom: 2px;
             }
+            .totals-row span:last-child {
+              white-space: nowrap;
+            }
             .discount-row {
+              font-size: 10px;
               font-weight: 700;
             }
             .grand-total-row {
               display: flex;
               justify-content: space-between;
-              font-size: 14.5px;
+              align-items: baseline;
+              font-size: 13px;
               font-weight: 800;
-              margin: 3px 0;
+              margin: 2px 0;
+            }
+            .grand-total-row span:last-child {
+              white-space: nowrap;
             }
             .note-section {
-              font-size: 10.5px;
+              font-size: 10px;
               font-weight: 600;
               margin: 2px 0;
             }
             .receipt-footer {
-              font-size: 10.5px;
+              font-size: 10px;
               font-weight: 600;
-              margin-top: 5px;
+              margin-top: 2px;
+              margin-bottom: 0 !important;
+              padding-bottom: 0 !important;
               text-align: center;
-              line-height: 1.3;
+              line-height: 1.25;
             }
             .barcode-container {
               display: flex;
               justify-content: center;
-              margin: 2px 0 4px 0;
+              margin: 1px 0 2px 0;
             }
             svg {
               max-width: 100%;
-              height: 32px;
+              height: 22px;
               shape-rendering: crispEdges !important;
             }
             .return-policy {
-              font-size: 10px;
-              margin-top: 2px;
+              font-size: 9.5px;
+              margin-top: 1px;
             }
             .contact-support {
-              font-size: 11px;
+              font-size: 10.5px;
               font-weight: 700;
               margin-top: 1px;
+              margin-bottom: 0 !important;
+              padding-bottom: 0 !important;
+            }
+            .footer-trailing-gap {
+              height: 14px;
+              width: 100%;
+              margin: 0 !important;
+              padding: 0 !important;
             }
           </style>
         </head>
@@ -887,20 +922,14 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               var images = Array.from(document.images);
               var pending = images.filter(function(img) { return !img.complete; });
               if (pending.length === 0) {
-                setTimeout(function() {
-                  window.focus();
-                  window.print();
-                }, 100);
+                setTimeout(function() { window.focus(); window.print(); }, 100);
               } else {
                 Promise.all(pending.map(function(img) {
                   return new Promise(function(resolve) {
                     img.onload = img.onerror = resolve;
                   });
                 })).then(function() {
-                  setTimeout(function() {
-                    window.focus();
-                    window.print();
-                  }, 150);
+                  setTimeout(function() { window.focus(); window.print(); }, 150);
                 });
               }
             }
@@ -917,18 +946,17 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // Mobile browsers handle popup print windows much better than hidden iframes
+        // Mobile: popup window — Chrome respects @page { size } better here
         const printWindow = window.open('', '_blank');
         if (printWindow) {
           printWindow.document.open();
           printWindow.document.write(receiptHtml);
           printWindow.document.close();
         } else {
-          // Fallback if popup blocked
           this.triggerIframePrint(receiptHtml);
         }
       } else {
-        // Desktop / Laptop (USB Cable / Bluetooth) - print cleanly through isolated iframe
+        // Desktop: iframe — more reliable layout in constrained container
         this.triggerIframePrint(receiptHtml);
       }
 
@@ -960,5 +988,163 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         document.body.removeChild(iframe);
       } catch (e) {}
     }, 60000);
+  }
+
+  /**
+   * Prints via Bluetooth (Web Bluetooth BLE), falling back to Web Serial / USB.
+   * The pairing chooser is only shown the very first time; the paired printer
+   * connection is reused for every subsequent print (see BluetoothPrinterService).
+   */
+  async printViaBluetooth(): Promise<{ success: boolean; message?: string }> {
+    if (!this.isBrowser) {
+      return { success: false, message: 'Not running in a browser environment.' };
+    }
+    const result = await this.bluetoothPrinter.print(this.buildEscPosReceipt());
+    if (result.success) {
+      this.printCompleted.emit();
+    }
+    return result;
+  }
+
+
+  /** Alias for printViaBluetooth for backward compatibility */
+  async printViaUsb(): Promise<{ success: boolean; message?: string }> {
+    return this.printViaBluetooth();
+  }
+
+  /**
+   * Builds raw ESC/POS byte array formatted for 58mm (32 characters per line).
+   * Feeds only 3 lines after content (zero paper wastage).
+   */
+  buildEscPosReceipt(): Uint8Array {
+    const bytes: number[] = [];
+
+    const addBytes = (...b: number[]) => bytes.push(...b);
+    const addText = (text: string) => {
+      const sanitized = (text || '')
+        .replace(/৳/g, 'Tk.')
+        .replace(/[^\x00-\x7F]/g, '');
+      for (let i = 0; i < sanitized.length; i++) {
+        bytes.push(sanitized.charCodeAt(i));
+      }
+    };
+    const addLine = (text: string = '') => {
+      addText(text);
+      bytes.push(0x0A); // LF
+    };
+
+    // Helper to format two columns to exactly 32 chars (standard 58mm line width)
+    const format2Col = (left: string, right: string, totalWidth: number = 32): string => {
+      const cleanLeft = (left || '').replace(/৳/g, 'Tk.');
+      const cleanRight = (right || '').replace(/৳/g, 'Tk.');
+      const spacesNeeded = Math.max(1, totalWidth - cleanLeft.length - cleanRight.length);
+      return cleanLeft + ' '.repeat(spacesNeeded) + cleanRight;
+    };
+
+    // 1. Initialize printer
+    addBytes(0x1B, 0x40); // ESC @
+    addBytes(0x1B, 0x74, 0x00); // Character code table PC437
+
+    // 2. Header (Centered)
+    addBytes(0x1B, 0x61, 0x01); // ESC a 1 (Center)
+    addBytes(0x1D, 0x21, 0x11); // GS ! 0x11 (Double width + height)
+    addLine('KARUKOLPO');
+    addBytes(0x1D, 0x21, 0x00); // Normal text
+    addLine('Pathrail, Delduar, Tangail-1912');
+    addLine('www.karukolpocrafts.com');
+    addLine('================================');
+    addBytes(0x1B, 0x45, 0x01); // Bold ON
+    addLine('MONEY RECEIPT');
+    addBytes(0x1B, 0x45, 0x00); // Bold OFF
+    addLine('--------------------------------');
+
+    // 3. Metadata (Left aligned)
+    addBytes(0x1B, 0x61, 0x00); // ESC a 0 (Left)
+    addLine(format2Col('RECEIPT #:', this.orderNumberDisplay));
+    addLine(format2Col('DATE:', this.formattedDateOnly));
+    addLine(format2Col('TIME:', this.formattedTimeOnly));
+    addLine(format2Col('PAYMENT:', this.paymentMethodDisplay.toUpperCase()));
+
+    // Customer info (if any)
+    if (this.customerNameDisplay || this.customerPhoneDisplay || this.customerAddressDisplay) {
+      addLine('--------------------------------');
+      addBytes(0x1B, 0x45, 0x01);
+      addLine('CUSTOMER INFO:');
+      addBytes(0x1B, 0x45, 0x00);
+      if (this.customerNameDisplay) {
+        addLine(format2Col('Name:', this.customerNameDisplay));
+      }
+      if (this.customerPhoneDisplay) {
+        addLine(format2Col('Phone:', this.customerPhoneDisplay));
+      }
+      if (this.customerAddressDisplay) {
+        addLine(`Address: ${this.customerAddressDisplay.substring(0, 45)}`);
+      }
+    }
+
+    // 4. Line Items
+    addLine('================================');
+    addLine(format2Col('ITEM / DETAILS', 'TOTAL'));
+    addLine('--------------------------------');
+
+    for (const item of this.parsedItems) {
+      const name = item.name || 'Product';
+      addLine(name.length > 32 ? name.substring(0, 32) : name);
+      const leftCol = `  ${item.quantity} x Tk.${item.unitPrice.toFixed(0)}`;
+      const rightCol = `Tk.${item.lineTotal.toFixed(0)}`;
+      addLine(format2Col(leftCol, rightCol, 32));
+    }
+
+    // 5. Totals
+    addLine('--------------------------------');
+    addLine(format2Col('Subtotal:', `Tk.${this.subtotalDisplay.toFixed(0)}`));
+    if (this.totalDiscountDisplay > 0) {
+      addLine(format2Col('Discount:', `-Tk.${this.totalDiscountDisplay.toFixed(0)}`));
+    }
+    if (this.deliveryChargeDisplay > 0) {
+      addLine(format2Col('Delivery Charge:', `Tk.${this.deliveryChargeDisplay.toFixed(0)}`));
+    }
+    addLine('================================');
+    addBytes(0x1B, 0x45, 0x01); // Bold ON
+    addBytes(0x1D, 0x21, 0x01); // Double height
+    addLine(format2Col('TOTAL:', `Tk.${this.grandTotalDisplay.toFixed(0)}`, 32));
+    addBytes(0x1D, 0x21, 0x00); // Normal
+    addBytes(0x1B, 0x45, 0x00); // Bold OFF
+    addLine('--------------------------------');
+
+    // Note (if any)
+    const noteText = this.order?.note || this.note;
+    if (noteText) {
+      addLine(`Note: ${noteText}`);
+      addLine('--------------------------------');
+    }
+
+    // 6. Barcode & Footer (Centered)
+    addBytes(0x1B, 0x61, 0x01); // ESC a 1 (Center)
+
+    const rawOrderNo = (this.orderNumberDisplay || 'ORD').replace(/[^a-zA-Z0-9-]/g, '');
+    if (rawOrderNo) {
+      try {
+        addBytes(0x1D, 0x68, 45); // GS h 45 (height)
+        addBytes(0x1D, 0x77, 2);  // GS w 2 (width)
+        addBytes(0x1D, 0x48, 2);  // GS H 2 (HRI text below)
+        addBytes(0x1D, 0x66, 0);  // GS f 0
+        const barcodeBytes = Array.from(rawOrderNo).map(c => c.charCodeAt(0));
+        addBytes(0x1D, 0x6B, 73, barcodeBytes.length + 2, 0x7B, 0x42, ...barcodeBytes);
+        bytes.push(0x0A);
+      } catch (e) {
+        addLine(`* ${rawOrderNo} *`);
+      }
+    }
+
+    addBytes(0x1B, 0x45, 0x01); // Bold ON
+    addLine('THANK YOU FOR YOUR PURCHASE!');
+    addBytes(0x1B, 0x45, 0x00); // Bold OFF
+    addLine('Crafted with tradition & passion.');
+    addLine('Hotline: 01675-718846');
+
+    // Exactly 1 line gap after Hotline number, then stop printing
+    bytes.push(0x0A);
+    return new Uint8Array(bytes);
   }
 }

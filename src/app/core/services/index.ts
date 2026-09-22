@@ -3,6 +3,7 @@ export * from './api/api.service';
 export * from './analytics/analytics.service';
 export * from './product/product.service';
 export * from './category/category.service';
+export * from './slug/slug.service';
 export * from './order/order.service';
 export * from './payment/payment.service';
 export * from './auth/auth.service';

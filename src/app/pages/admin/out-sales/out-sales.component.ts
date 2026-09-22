@@ -72,6 +72,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   thermalPreviewModalVisible = signal<boolean>(false);
   recordedSaleForInvoice = signal<any>(null);
   isDownloadingThermal = signal<boolean>(false);
+  isPrintingThermal = signal<boolean>(false);
 
   items: SaleItemRow[] = [];
   paymentMethod = 'cash';
@@ -442,6 +443,26 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     this.thermalInvoice?.printReceipt();
     this.thermalPreviewModalVisible.set(false);
     this.resetForm();
+  }
+
+  async onPrintBluetoothThermalInvoice() {
+    if (!this.thermalInvoice || this.isPrintingThermal()) return;
+    this.isPrintingThermal.set(true);
+    try {
+      const res = await this.thermalInvoice.printViaBluetooth();
+      if (res.success) {
+        this.thermalPreviewModalVisible.set(false);
+        this.resetForm();
+      } else if (res.message && !res.message.includes('cancelled')) {
+        alert(res.message);
+      }
+    } finally {
+      this.isPrintingThermal.set(false);
+    }
+  }
+
+  async onPrintUsbThermalInvoice() {
+    return this.onPrintBluetoothThermalInvoice();
   }
 
   onCloseThermalPreview() {

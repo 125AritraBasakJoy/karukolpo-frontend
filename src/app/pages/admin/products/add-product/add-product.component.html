@@ -42,7 +42,7 @@
                 </label>
                 <div class="p-input-icon-left w-full">
                     <i class="pi" [ngClass]="slugChecking() ? 'pi-spin pi-spinner' : 'pi-link'"></i>
-                    <input type="text" pInputText id="slug" [(ngModel)]="product.slug" (ngModelChange)="onSlugInput()"
+                    <input type="text" pInputText id="slug" [(ngModel)]="product.slug" (input)="onSlugInput()"
                         placeholder="Auto-suggested from the product name" class="w-full premium-input">
                 </div>
                 <div class="slug-preview mt-2" *ngIf="product.slug">

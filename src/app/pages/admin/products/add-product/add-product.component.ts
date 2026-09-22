@@ -150,31 +150,39 @@ export class AddProductComponent implements OnInit, OnDestroy {
         this.nameInput$.pipe(
             debounceTime(450),
             distinctUntilChanged(),
-            takeUntil(this.destroy$)
-        ).subscribe(name => {
-            if (!name?.trim() || this.slugTouched) return;
-            this.slugChecking.set(true);
-            this.slugService.getSuggestion('product', { name }).pipe(takeUntil(this.destroy$)).subscribe({
-                next: (res) => {
-                    this.slugServerUnavailable.set(false);
-                    if (!this.slugTouched) {
-                        this.product.slug = res.suggestion;
-                        this.slugServerStatus.set(res);
-                    }
-                    this.slugChecking.set(false);
-                },
-                error: () => {
-                    // Suggestion API unreachable (e.g. backend not updated yet):
-                    // prefill a best-effort local slug for ASCII names and let
-                    // the admin type one for Bengali names.
-                    this.slugChecking.set(false);
-                    this.slugServerUnavailable.set(true);
-                    if (!this.slugTouched) {
-                        const fallback = slugifyLocal(name);
-                        if (fallback) this.product.slug = fallback;
-                    }
+            switchMap(name => {
+                const trimmed = name?.trim() || '';
+                if (this.slugTouched) {
+                    return of(null);
                 }
-            });
+                if (!trimmed) {
+                    this.product.slug = '';
+                    this.slugServerStatus.set(null);
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('product', { name: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res, name: trimmed })),
+                    catchError(() => of({ kind: 'error' as const, name: trimmed }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result || this.slugTouched) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerUnavailable.set(false);
+                this.product.slug = result.res.suggestion || '';
+                this.slugServerStatus.set(result.res);
+            } else {
+                // Suggestion API unreachable (e.g. backend not updated yet):
+                // prefill a best-effort local slug for ASCII names and let
+                // the admin type one for Bengali names.
+                this.slugServerUnavailable.set(true);
+                const fallback = slugifyLocal(result.name);
+                this.product.slug = fallback || '';
+            }
         });
 
         // Admin types / edits the URL name -> check availability for values
@@ -183,19 +191,29 @@ export class AddProductComponent implements OnInit, OnDestroy {
         this.slugInput$.pipe(
             debounceTime(450),
             distinctUntilChanged(),
-            takeUntil(this.destroy$)
-        ).subscribe(slug => {
-            this.slugServerStatus.set(null);
-            if (!slug?.trim() || !isValidBackendSlug(slug)) return;
-            this.slugChecking.set(true);
-            this.slugService.getSuggestion('product', { slug }).pipe(takeUntil(this.destroy$)).subscribe({
-                next: (res) => {
-                    this.slugServerStatus.set(res);
-                    this.slugServerUnavailable.set(false);
+            switchMap(slug => {
+                this.slugServerStatus.set(null);
+                const trimmed = slug?.trim() || '';
+                if (!trimmed || !isValidBackendSlug(trimmed)) {
                     this.slugChecking.set(false);
-                },
-                error: () => this.slugChecking.set(false)
-            });
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('product', { slug: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res })),
+                    catchError(() => of({ kind: 'error' as const }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerStatus.set(result.res);
+                this.slugServerUnavailable.set(false);
+            } else {
+                this.slugServerUnavailable.set(true);
+            }
         });
     }
 
@@ -204,6 +222,17 @@ export class AddProductComponent implements OnInit, OnDestroy {
     }
 
     onSlugInput(): void {
+        const val = (this.product.slug || '').trim();
+        if (!val) {
+            // Admin erased the typed slug: restore auto-sync with product name
+            this.slugTouched = false;
+            this.slugServerStatus.set(null);
+            this.slugChecking.set(false);
+            if (this.product.name?.trim()) {
+                this.nameInput$.next(this.product.name);
+            }
+            return;
+        }
         this.slugTouched = true;
         this.slugInput$.next(this.product.slug || '');
     }

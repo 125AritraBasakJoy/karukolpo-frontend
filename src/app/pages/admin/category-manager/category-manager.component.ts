@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { of, Subject } from 'rxjs';
-import { switchMap, catchError, tap, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { switchMap, catchError, map, tap, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoryService } from '../../../core/services';;;
 import { ProductService } from '../../../core/services';;;
@@ -115,9 +115,8 @@ export class CategoryManagerComponent implements OnInit {
     }
 
     /**
-     * URL name (slug): debounced suggestion prefill while the name is typed
-     * (create mode only, until the admin edits the field), plus debounced
-     * availability/validation checks for the typed value.
+     * URL name (slug): debounced suggestion prefill while the name is typed,
+     * and debounced availability/validation checks for the typed value.
      */
     private setupSlugHandling(): void {
         const nameControl = this.categoryForm.get('name');
@@ -126,53 +125,80 @@ export class CategoryManagerComponent implements OnInit {
         nameControl?.valueChanges.pipe(
             debounceTime(450),
             distinctUntilChanged(),
-            takeUntil(this.destroy$)
-        ).subscribe(name => {
-            if (this.currentCategoryId || this.slugTouched || !name?.trim() || slugControl?.value) return;
-            this.slugChecking.set(true);
-            this.slugService.getSuggestion('category', { name }).pipe(takeUntil(this.destroy$)).subscribe({
-                next: (res) => {
-                    this.slugServerUnavailable.set(false);
-                    // emitEvent:false so the prefill does not count as admin input
-                    slugControl?.setValue(res.suggestion, { emitEvent: false });
-                    this.slugServerStatus.set(res);
-                    this.slugChecking.set(false);
-                },
-                error: () => {
-                    // Suggestion API unreachable (e.g. backend not updated yet):
-                    // prefill a best-effort local slug for ASCII names.
-                    this.slugChecking.set(false);
-                    this.slugServerUnavailable.set(true);
-                    const fallback = slugifyLocal(name);
-                    if (fallback && !slugControl?.value) {
-                        slugControl?.setValue(fallback, { emitEvent: false });
-                    }
+            switchMap(name => {
+                if (this.currentCategoryId || this.slugTouched) {
+                    return of(null);
                 }
-            });
+                const trimmed = name?.trim() || '';
+                if (!trimmed) {
+                    slugControl?.setValue('', { emitEvent: false });
+                    this.slugServerStatus.set(null);
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('category', { name: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res, name: trimmed })),
+                    catchError(() => of({ kind: 'error' as const, name: trimmed }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result || this.currentCategoryId || this.slugTouched) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerUnavailable.set(false);
+                // emitEvent:false so the prefill does not count as admin input
+                slugControl?.setValue(result.res.suggestion || '', { emitEvent: false });
+                this.slugServerStatus.set(result.res);
+            } else {
+                // Suggestion API unreachable (e.g. backend not updated yet):
+                // prefill a best-effort local slug for ASCII names.
+                this.slugServerUnavailable.set(true);
+                const fallback = slugifyLocal(result.name);
+                slugControl?.setValue(fallback || '', { emitEvent: false });
+            }
         });
 
         slugControl?.valueChanges.pipe(
             debounceTime(450),
             distinctUntilChanged(),
-            takeUntil(this.destroy$)
-        ).subscribe(slug => {
-            this.slugTouched = true;
-            this.slugServerStatus.set(null);
-            // Bangla/mixed input is never flagged — only check availability
-            // for values the backend can accept.
-            if (!slug?.trim() || !isValidBackendSlug(slug)) return;
-            this.slugChecking.set(true);
-            this.slugService.getSuggestion('category', { slug }).pipe(takeUntil(this.destroy$)).subscribe({
-                next: (res) => {
-                    this.slugServerStatus.set(res);
-                    this.slugServerUnavailable.set(false);
+            switchMap(slug => {
+                this.slugServerStatus.set(null);
+                const trimmed = slug?.trim() || '';
+                if (!trimmed) {
+                    // Admin cleared the slug: restore auto-sync mode in create mode
+                    this.slugTouched = false;
                     this.slugChecking.set(false);
-                },
-                error: () => {
-                    this.slugServerUnavailable.set(true);
-                    this.slugChecking.set(false);
+                    const currentName = nameControl?.value?.trim();
+                    if (!this.currentCategoryId && currentName) {
+                        nameControl?.setValue(currentName);
+                    }
+                    return of(null);
                 }
-            });
+                this.slugTouched = true;
+                // Bangla/mixed input is never flagged — only check availability
+                // for values the backend can accept.
+                if (!isValidBackendSlug(trimmed)) {
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('category', { slug: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res })),
+                    catchError(() => of({ kind: 'error' as const }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerStatus.set(result.res);
+                this.slugServerUnavailable.set(false);
+            } else {
+                this.slugServerUnavailable.set(true);
+            }
         });
     }
 

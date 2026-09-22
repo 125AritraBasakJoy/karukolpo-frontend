@@ -6,11 +6,11 @@ export type SlugKind = 'product' | 'category';
 
 export interface SlugSuggestionResponse {
   /** Always free to use — the backend de-duplicates it. */
-  suggestion: string;
+  suggestion?: string | null;
   /** Whether the slug passed via the `slug` query param is free to use. */
-  available: boolean;
+  available?: boolean | null;
   /** Human-readable reason when the typed slug is unavailable. */
-  error: string | null;
+  error?: string | null;
 }
 
 /** Reserved words are real routes under /products/ and cannot be URL names. */

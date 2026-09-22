@@ -429,7 +429,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     selectCategory(category: Category | null) {
         if (category) {
-            this.router.navigate(['/category', category.id]);
+            this.router.navigate(['/category', category.slug || category.id]);
         } else {
             this.selectedCategory = null;
             this.loadProducts();

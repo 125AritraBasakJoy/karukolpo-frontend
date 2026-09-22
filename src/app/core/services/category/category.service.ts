@@ -147,7 +147,7 @@ export class CategoryService {
      * POST /categories (requires auth)
      */
     addCategory(category: Category): Observable<Category> {
-        const backendCategory = { name: category.name };
+        const backendCategory = { name: category.name, slug: category.slug || undefined };
         return this.apiService.post<any>(API_ENDPOINTS.CATEGORIES.CREATE, backendCategory).pipe(
             map(cat => this.mapBackendToFrontend(cat)),
             tap(() => this.refreshCache())
@@ -159,7 +159,7 @@ export class CategoryService {
      * PATCH /categories/{id} (requires auth)
      */
     updateCategory(category: Category): Observable<Category> {
-        const backendCategory = { name: category.name };
+        const backendCategory = { name: category.name, slug: category.slug || undefined };
         return this.apiService.patch<any>(API_ENDPOINTS.CATEGORIES.UPDATE(category.id), backendCategory).pipe(
             map(cat => this.mapBackendToFrontend(cat)),
             tap(() => this.refreshCache())
@@ -301,7 +301,7 @@ export class CategoryService {
         const category: Category = {
             id: backendCategory.id?.toString() || '',
             name: backendCategory.name,
-            slug: backendCategory.slug || this.generateSlug(backendCategory.name)
+            slug: backendCategory.slug || backendCategory.id
         };
 
         if (backendCategory.products && Array.isArray(backendCategory.products)) {
@@ -311,21 +311,5 @@ export class CategoryService {
         }
 
         return category;
-    }
-
-    /**
-     * Generate URL-friendly slug from category name
-     */
-    private generateSlug(name: string): string {
-        if (!name) return 'category';
-        // Replace spaces and special URL-unsafe chars with hyphens
-        // but try to keep Unicode characters if they are roughly word-like
-        let slug = name.toLowerCase()
-            .trim()
-            .replace(/[\s\t\n\r]+/g, '-')       // spaces/tabs/newlines to hyphens
-            .replace(/[^\w\u00C0-\u1FFF\u2C00-\uD7FF-]+/g, '') // keep word chars, hyphens, and most Unicode ranges
-            .replace(/-+/g, '-');               // collapse multiple hyphens
-
-        return slug || 'category';
     }
 }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../../../../core/services';;;
 import { CategoryService } from '../../../../core/services';;;
+import { SlugService, SlugSuggestionResponse, slugifyLocal, isValidBackendSlug } from '../../../../core/services/slug/slug.service';
 import { MessageService } from 'primeng/api';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
@@ -15,10 +16,11 @@ import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TooltipModule } from 'primeng/tooltip';
 import { CalendarModule, Calendar } from 'primeng/calendar';
 import { InventoryModalComponent } from '../inventory-modal/inventory-modal.component';
-import { firstValueFrom, forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { firstValueFrom, forkJoin, of, Subject } from 'rxjs';
+import { catchError, map, switchMap, tap, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'app-add-product',
@@ -37,6 +39,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
         DialogModule,
         ProgressSpinnerModule,
         CalendarModule,
+        TooltipModule,
         InventoryModalComponent
     ],
 
@@ -49,6 +52,7 @@ export class AddProductComponent implements OnInit, OnDestroy {
 
     product = {
         name: '',
+        slug: '',
         description: '',
         price: null as number | null,
         cost: null as number | null,
@@ -73,6 +77,17 @@ export class AddProductComponent implements OnInit, OnDestroy {
     createdProductId: string | null = null;
     showInventoryModal = false;
 
+    // URL name (slug) handling
+    private slugInput$ = new Subject<string>();
+    private nameInput$ = new Subject<string>();
+    private destroy$ = new Subject<void>();
+    /** False until the admin manually edits the field — suggestions only prefill while false. */
+    slugTouched = false;
+    slugChecking = signal(false);
+    slugServerStatus = signal<SlugSuggestionResponse | null>(null);
+    /** True when the suggestion/availability API is unreachable — the field still works manually. */
+    slugServerUnavailable = signal(false);
+
     discountTypeOptions = [
         { label: 'No Discount', value: null },
         { label: 'Fixed Amount (BDT)', value: 'FIXED' }
@@ -87,6 +102,7 @@ export class AddProductComponent implements OnInit, OnDestroy {
     constructor(
         private productService: ProductService,
         private categoryService: CategoryService,
+        private slugService: SlugService,
         private messageService: MessageService,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -95,6 +111,7 @@ export class AddProductComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.loadCategories();
+        this.setupSlugHandling();
 
         if (isPlatformBrowser(this.platformId)) {
             this.scrollListener = (event: Event) => {
@@ -120,6 +137,75 @@ export class AddProductComponent implements OnInit, OnDestroy {
         if (this.scrollListener) {
             window.removeEventListener('scroll', this.scrollListener, true);
         }
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    /**
+     * URL name (slug): debounced suggestion prefill while the name is typed,
+     * and debounced availability/validation checks for the typed value.
+     */
+    private setupSlugHandling(): void {
+        // Admin types the product name -> suggest a URL name (create-mode prefill)
+        this.nameInput$.pipe(
+            debounceTime(450),
+            distinctUntilChanged(),
+            takeUntil(this.destroy$)
+        ).subscribe(name => {
+            if (!name?.trim() || this.slugTouched) return;
+            this.slugChecking.set(true);
+            this.slugService.getSuggestion('product', { name }).pipe(takeUntil(this.destroy$)).subscribe({
+                next: (res) => {
+                    this.slugServerUnavailable.set(false);
+                    if (!this.slugTouched) {
+                        this.product.slug = res.suggestion;
+                        this.slugServerStatus.set(res);
+                    }
+                    this.slugChecking.set(false);
+                },
+                error: () => {
+                    // Suggestion API unreachable (e.g. backend not updated yet):
+                    // prefill a best-effort local slug for ASCII names and let
+                    // the admin type one for Bengali names.
+                    this.slugChecking.set(false);
+                    this.slugServerUnavailable.set(true);
+                    if (!this.slugTouched) {
+                        const fallback = slugifyLocal(name);
+                        if (fallback) this.product.slug = fallback;
+                    }
+                }
+            });
+        });
+
+        // Admin types / edits the URL name -> check availability for values
+        // the backend can accept. Bangla/mixed input is never flagged here —
+        // the backend derives a proper slug from the product name instead.
+        this.slugInput$.pipe(
+            debounceTime(450),
+            distinctUntilChanged(),
+            takeUntil(this.destroy$)
+        ).subscribe(slug => {
+            this.slugServerStatus.set(null);
+            if (!slug?.trim() || !isValidBackendSlug(slug)) return;
+            this.slugChecking.set(true);
+            this.slugService.getSuggestion('product', { slug }).pipe(takeUntil(this.destroy$)).subscribe({
+                next: (res) => {
+                    this.slugServerStatus.set(res);
+                    this.slugServerUnavailable.set(false);
+                    this.slugChecking.set(false);
+                },
+                error: () => this.slugChecking.set(false)
+            });
+        });
+    }
+
+    onNameModelChange(value: string): void {
+        this.nameInput$.next(value);
+    }
+
+    onSlugInput(): void {
+        this.slugTouched = true;
+        this.slugInput$.next(this.product.slug || '');
     }
 
     loadCategories() {
@@ -201,6 +287,7 @@ export class AddProductComponent implements OnInit, OnDestroy {
         }
 
         this.loading.set(true);
+        const typedSlug = (this.product.slug || '').trim();
         try {
             console.log('Creating Product Metadata...');
             this.savingStatus.set('Creating product metadata...');
@@ -208,6 +295,9 @@ export class AddProductComponent implements OnInit, OnDestroy {
             // 1. Create Product Metadata
             const productPayload: any = { 
                 name: this.product.name,
+                // A typed URL name is only sent when the backend can accept it
+                // (e.g. Bangla input is omitted so the backend derives a proper one).
+                slug: isValidBackendSlug((this.product.slug || '').trim()) ? this.product.slug!.trim() : undefined,
                 description: this.product.description,
                 price: this.product.price,
                 cost: this.product.cost,
@@ -249,6 +339,14 @@ export class AddProductComponent implements OnInit, OnDestroy {
 
             this.productCreated = true;
             this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully' });
+            if (typedSlug && !isValidBackendSlug(typedSlug)) {
+                this.messageService.add({
+                    severity: 'info',
+                    summary: 'URL Name',
+                    detail: 'The URL name you typed could not be used, so one was created automatically from the product name.',
+                    life: 5000
+                });
+            }
         } catch (error: any) {
             console.error('Error in product creation flow:', error);
             this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'Failed to create product or upload images' });
@@ -278,6 +376,7 @@ export class AddProductComponent implements OnInit, OnDestroy {
         // Reset entire form for next product
         this.product = { 
             name: '', 
+            slug: '',
             description: '', 
             price: null,
             cost: null,
@@ -288,6 +387,9 @@ export class AddProductComponent implements OnInit, OnDestroy {
         };
         this.discountPreview.set(null);
         this.selectedCategories = [];
+        this.slugTouched = false;
+        this.slugServerStatus.set(null);
+        this.slugServerUnavailable.set(false);
         this.selectedMainFile = null;
         this.selectedAdditionalFiles = [];
         this.mainImagePreview = null;

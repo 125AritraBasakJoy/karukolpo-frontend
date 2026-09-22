@@ -202,6 +202,32 @@
                 Name is required to organize your products.
             </small>
         </div>
+
+        <div class="field mb-4">
+            <label for="slug" class="font-bold block mb-2 text-slate-300">
+                URL Name
+                <i class="pi pi-info-circle text-slate-500 text-xs ml-1" pTooltip="Readable link for sharing. Lowercase letters, digits and hyphens — suggested automatically from the name."
+                    tooltipPosition="top"></i>
+            </label>
+            <div class="p-input-icon-left w-full">
+                <i class="pi" [ngClass]="slugChecking() ? 'pi-spin pi-spinner' : 'pi-link'"></i>
+                <input type="text" pInputText id="slug" formControlName="slug"
+                    placeholder="Auto-suggested from the category name" class="w-full premium-input" />
+            </div>
+            <div class="slug-preview mt-2" *ngIf="categoryForm.get('slug')?.value">
+                <i class="pi pi-globe"></i>
+                <span>karukolpocrafts.com/category/<b>{{ categoryForm.get('slug')?.value }}</b></span>
+            </div>
+            <small class="block mt-2 fadein text-green-400" *ngIf="!slugServerUnavailable() && slugServerStatus()?.available && categoryForm.get('slug')?.value">
+                <i class="pi pi-check-circle mr-1"></i>URL name is available
+            </small>
+            <small class="p-error block mt-2 fadein" *ngIf="slugServerStatus()?.error">
+                <i class="pi pi-times-circle mr-1"></i>{{ slugServerStatus()?.error }}
+            </small>
+            <small class="block mt-2 fadein slug-warning" *ngIf="slugServerUnavailable()">
+                <i class="pi pi-info-circle mr-1"></i>Suggestion service unavailable — you can type the URL name manually.
+            </small>
+        </div>
     </form>
 
     <ng-template pTemplate="footer">

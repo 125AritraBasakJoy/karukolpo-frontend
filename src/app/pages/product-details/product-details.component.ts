@@ -105,6 +105,12 @@ export class ProductDetailsComponent implements OnInit {
         if (product) {
           this.product.set(product);
           this.updateSeo(product);
+
+          // Normalise legacy/UUID links to the readable slug URL so the
+          // address bar (and future shares) use the canonical form.
+          if (product.slug && pid !== product.slug) {
+            this.router.navigate(['/products', product.slug], { replaceUrl: true });
+          }
         } else {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Product not found' });
         }
@@ -126,11 +132,23 @@ export class ProductDetailsComponent implements OnInit {
     const plainDescription = product.description?.replace(/<[^>]*>/g, '').substring(0, 160) || 'Handmade crafts from Karukolpo';
     this.metaService.updateTag({ name: 'description', content: plainDescription });
 
+    // Canonical URL — always points at the readable slug URL (the UUID variant
+    // resolves too, so without this the two would be duplicate content).
+    const canonicalUrl = this.buildCanonicalUrl(`/products/${product.slug || product.id}`);
+    if (canonicalUrl) {
+      this.metaService.updateTag({ rel: 'canonical', href: canonicalUrl }, 'rel="canonical"');
+    }
+
     // OpenGraph tags
     this.metaService.updateTag({ property: 'og:title', content: title });
     this.metaService.updateTag({ property: 'og:description', content: plainDescription });
     this.metaService.updateTag({ property: 'og:image', content: product.imageUrl || '' });
     this.metaService.updateTag({ property: 'og:type', content: 'product' });
+  }
+
+  private buildCanonicalUrl(path: string): string | null {
+    if (typeof window === 'undefined' || !window.location) return null;
+    return `${window.location.origin}${path}`;
   }
 
   loadRelatedProducts(id: string | number) {

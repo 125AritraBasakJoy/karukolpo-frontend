@@ -126,7 +126,7 @@ export class CategoryManagerComponent implements OnInit {
             debounceTime(450),
             distinctUntilChanged(),
             switchMap(name => {
-                if (this.currentCategoryId || this.slugTouched) {
+                if (this.slugTouched) {
                     return of(null);
                 }
                 const trimmed = name?.trim() || '';
@@ -144,7 +144,7 @@ export class CategoryManagerComponent implements OnInit {
             }),
             takeUntil(this.destroy$)
         ).subscribe(result => {
-            if (!result || this.currentCategoryId || this.slugTouched) return;
+            if (!result || this.slugTouched) return;
             this.slugChecking.set(false);
             if (result.kind === 'success') {
                 this.slugServerUnavailable.set(false);
@@ -167,11 +167,11 @@ export class CategoryManagerComponent implements OnInit {
                 this.slugServerStatus.set(null);
                 const trimmed = slug?.trim() || '';
                 if (!trimmed) {
-                    // Admin cleared the slug: restore auto-sync mode in create mode
+                    // Admin cleared the slug: restore auto-sync mode
                     this.slugTouched = false;
                     this.slugChecking.set(false);
                     const currentName = nameControl?.value?.trim();
-                    if (!this.currentCategoryId && currentName) {
+                    if (currentName) {
                         nameControl?.setValue(currentName);
                     }
                     return of(null);

@@ -27,7 +27,7 @@
                         <label for="name"
                             class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Product
                             Name</label>
-                        <input type="text" pInputText id="name" [(ngModel)]="productForm.name" required
+                        <input type="text" pInputText id="name" [(ngModel)]="productForm.name" (ngModelChange)="onNameModelChange($event)" required
                             placeholder="Enter product name" class="w-full premium-input" #name="ngModel">
                         <app-validation-message [control]="name.control"></app-validation-message>
                     </div>
@@ -40,7 +40,7 @@
                         </label>
                         <div class="p-input-icon-left w-full">
                             <i class="pi" [ngClass]="slugChecking() ? 'pi-spin pi-spinner' : 'pi-link'"></i>
-                            <input type="text" pInputText id="slug" [(ngModel)]="productForm.slug" (ngModelChange)="onSlugInput()"
+                            <input type="text" pInputText id="slug" [(ngModel)]="productForm.slug" (input)="onSlugInput()"
                                 placeholder="URL name" class="w-full premium-input">
                         </div>
                         <div class="slug-preview mt-2" *ngIf="productForm.slug">

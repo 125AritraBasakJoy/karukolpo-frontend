@@ -1190,7 +1190,9 @@ textarea,
         font-size: 1.1rem;
     }
 
-    .p-inputtext {
+    .p-inputtext,
+    .premium-input,
+    input {
         padding-left: 3rem !important;
     }
 }

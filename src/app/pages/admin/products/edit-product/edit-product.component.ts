@@ -19,10 +19,9 @@ import { CalendarModule, Calendar } from 'primeng/calendar';
 import { TooltipModule } from 'primeng/tooltip';
 import { Product, ProductImage } from '../../../../models/product.model';
 import { firstValueFrom, forkJoin, of, Subject } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { catchError, map, switchMap, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { ValidationMessageComponent } from '../../../../components/validation-message/validation-message.component';
-import { SlugService, SlugSuggestionResponse, isValidBackendSlug } from '../../../../core/services/slug/slug.service';
+import { SlugService, SlugSuggestionResponse, isValidBackendSlug, slugifyLocal } from '../../../../core/services/slug/slug.service';
 
 @Component({
     selector: 'app-edit-product',
@@ -61,8 +60,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
 
     // URL name (slug) handling
     private slugInput$ = new Subject<string>();
+    private nameInput$ = new Subject<string>();
     private destroy$ = new Subject<void>();
     originalSlug = '';
+    slugTouched = false;
     slugChecking = signal(false);
     slugServerStatus = signal<SlugSuggestionResponse | null>(null);
     /** True when the availability check API is unreachable — the field still works manually. */
@@ -134,27 +135,70 @@ export class EditProductComponent implements OnInit, OnDestroy {
             window.addEventListener('scroll', this.scrollListener, true);
         }
 
+        // Admin edits the product name -> suggest a URL name
+        this.nameInput$.pipe(
+            debounceTime(450),
+            distinctUntilChanged(),
+            switchMap(name => {
+                const trimmed = name?.trim() || '';
+                if (this.slugTouched) {
+                    return of(null);
+                }
+                if (!trimmed) {
+                    this.productForm.slug = '';
+                    this.slugServerStatus.set(null);
+                    this.slugChecking.set(false);
+                    return of(null);
+                }
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('product', { name: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res, name: trimmed })),
+                    catchError(() => of({ kind: 'error' as const, name: trimmed }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result || this.slugTouched) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerUnavailable.set(false);
+                this.productForm.slug = result.res.suggestion || '';
+                this.slugServerStatus.set(result.res);
+            } else {
+                this.slugServerUnavailable.set(true);
+                const fallback = slugifyLocal(result.name);
+                this.productForm.slug = fallback || '';
+            }
+        });
+
+        // Admin types / edits the URL name -> check availability for values
+        // the backend can accept.
         this.slugInput$.pipe(
             debounceTime(450),
             distinctUntilChanged(),
-            takeUntil(this.destroy$)
-        ).subscribe(slug => {
-            this.slugServerStatus.set(null);
-            // Bangla/mixed input is never flagged — only check availability
-            // for values the backend can accept.
-            if (!slug?.trim() || !isValidBackendSlug(slug) || slug === this.originalSlug) return;
-            this.slugChecking.set(true);
-            this.slugService.getSuggestion('product', { slug }).pipe(takeUntil(this.destroy$)).subscribe({
-                next: (res) => {
-                    this.slugServerStatus.set(res);
-                    this.slugServerUnavailable.set(false);
+            switchMap(slug => {
+                this.slugServerStatus.set(null);
+                const trimmed = slug?.trim() || '';
+                if (!trimmed || !isValidBackendSlug(trimmed) || trimmed === this.originalSlug) {
                     this.slugChecking.set(false);
-                },
-                error: () => {
-                    this.slugServerUnavailable.set(true);
-                    this.slugChecking.set(false);
+                    return of(null);
                 }
-            });
+                this.slugChecking.set(true);
+                return this.slugService.getSuggestion('product', { slug: trimmed }).pipe(
+                    map(res => ({ kind: 'success' as const, res })),
+                    catchError(() => of({ kind: 'error' as const }))
+                );
+            }),
+            takeUntil(this.destroy$)
+        ).subscribe(result => {
+            if (!result) return;
+            this.slugChecking.set(false);
+            if (result.kind === 'success') {
+                this.slugServerStatus.set(result.res);
+                this.slugServerUnavailable.set(false);
+            } else {
+                this.slugServerUnavailable.set(true);
+            }
         });
     }
 
@@ -166,7 +210,23 @@ export class EditProductComponent implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
+    onNameModelChange(value: string): void {
+        this.nameInput$.next(value);
+    }
+
     onSlugInput(): void {
+        const val = (this.productForm.slug || '').trim();
+        if (!val) {
+            // Admin erased the typed slug: restore auto-sync with product name
+            this.slugTouched = false;
+            this.slugServerStatus.set(null);
+            this.slugChecking.set(false);
+            if (this.productForm.name?.trim()) {
+                this.nameInput$.next(this.productForm.name);
+            }
+            return;
+        }
+        this.slugTouched = true;
         this.slugInput$.next(this.productForm.slug || '');
     }
 
@@ -200,6 +260,9 @@ export class EditProductComponent implements OnInit, OnDestroy {
                     discount_ends_at: this.formatDateForInput(product.discount_ends_at)
                 };
                 this.originalSlug = product.slug || '';
+                this.slugTouched = false;
+                this.slugServerStatus.set(null);
+                this.slugChecking.set(false);
                 this.inventoryForm.stock = product.stock || 0;
                 this.existingImages = product.imageObjects ? [...product.imageObjects] : [];
                 const currentPrimary = this.existingImages.find(img => img.is_primary);

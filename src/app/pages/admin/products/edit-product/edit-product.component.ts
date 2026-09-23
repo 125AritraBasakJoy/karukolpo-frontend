@@ -428,14 +428,53 @@ export class EditProductComponent implements OnInit, OnDestroy {
                 this.savingStatus.set('Removing image...');
                 await firstValueFrom(this.productService.removeImage(productId, this.deletedImageIds[0]));
             } else if (hasNewUploads || hasDeletes) {
-                this.savingStatus.set('Uploading & processing images (resizing, optimizing)...');
-                await firstValueFrom(this.productService.batchUpdateImages(
+                this.savingStatus.set('Uploading images...');
+                const { job_id } = await firstValueFrom(this.productService.batchUpdateImages(
                     productId,
                     hasExistingPrimaryChange ? this.newPrimaryImageId : undefined,
                     this.selectedMainImage || undefined,
                     this.selectedAdditionalImages.length > 0 ? this.selectedAdditionalImages : undefined,
                     this.deletedImageIds.length > 0 ? this.deletedImageIds : undefined
                 ));
+                // 202 received — the backend keeps resizing/optimizing in a
+                // background job. Don't block the save on it; observe it
+                // detached and apply the finished images when they arrive.
+                this.productService.pollImageJob(productId, job_id).pipe(
+                    takeUntil(this.destroy$)
+                ).subscribe({
+                    next: (images: any[]) => {
+                        this.productService.clearCache();
+                        if (images && images.length > 0) {
+                            this.existingImages = images;
+                            const primary: any = images.find(img => img.is_primary);
+                            this.newPrimaryImageId = primary ? primary.id : null;
+                        } else {
+                            this.existingImages = [];
+                            this.newPrimaryImageId = null;
+                        }
+                        this.initialPrimaryId = this.newPrimaryImageId;
+                        this.selectedMainImage = null;
+                        this.mainImagePreview = null;
+                        this.selectedAdditionalImages = [];
+                        this.additionalImagesPreviews = [];
+                        this.deletedImageIds = [];
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Images ready',
+                            detail: 'Image updates finished processing.',
+                            life: 3000
+                        });
+                    },
+                    error: (jobErr: any) => {
+                        this.productService.clearCache();
+                        this.messageService.add({
+                            severity: 'warn',
+                            summary: 'Image processing',
+                            detail: jobErr.message || 'Image processing is still running in the background — reload in a few minutes to see the images.',
+                            life: 6000
+                        });
+                    }
+                });
             } else if (hasExistingPrimaryChange) {
                 this.savingStatus.set('Updating primary image...');
                 await firstValueFrom(this.productService.setPrimaryImage(productId, this.newPrimaryImageId!));

@@ -318,7 +318,8 @@
                         class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Categorization</label>
                     <p-multiSelect id="category" [options]="categories()" optionLabel="name" optionValue="id"
                         [(ngModel)]="selectedCategoryIds" placeholder="Select Categories" [filter]="true"
-                        filterBy="name" styleClass="w-full premium-dropdown" [style]="{'width':'100%'}" display="chip"
+                        filterBy="name" styleClass="w-full premium-multiselect" panelStyleClass="premium-multiselect-panel"
+                        [style]="{'width':'100%'}" display="chip"
                         appendTo="body"></p-multiSelect>
                 </div>
             </div>

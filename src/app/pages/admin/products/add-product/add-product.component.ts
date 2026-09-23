@@ -341,33 +341,67 @@ export class AddProductComponent implements OnInit, OnDestroy {
 
             console.log('Product Created with ID:', productId);
 
-            // 2. Add Category Links
-            if (this.selectedCategories && this.selectedCategories.length > 0) {
-                this.savingStatus.set('Linking categories...');
-                const categoryIds = this.selectedCategories.map(c => c.toString());
-                if (categoryIds.length > 0) {
-                    await firstValueFrom(this.productService.addMultipleCategoriesToProduct(productId, categoryIds));
-                    console.log('Categories linked');
-                }
-            }
-
-            // 3. Bulk Upload Images
-            if (this.selectedMainFile) {
-                console.log('Uploading images in bulk...');
-                this.savingStatus.set('Uploading & processing images (resizing, optimizing)...');
-                const uploadedImages = await firstValueFrom(
-                    this.productService.bulkUploadImages(productId, this.selectedMainFile, this.selectedAdditionalFiles)
-                );
-                console.log('Bulk upload complete:', uploadedImages);
-            } else if (this.selectedAdditionalFiles.length > 0) {
+            // Additional files without a main image can never upload — bail
+            // out before doing any follow-up work.
+            if (!this.selectedMainFile && this.selectedAdditionalFiles.length > 0) {
                 this.messageService.add({ severity: 'warn', summary: 'Validation', detail: 'Main image is required' });
                 this.loading.set(false);
                 this.savingStatus.set('');
                 return;
             }
 
+            // 2 & 3. Category links and image upload are independent once the
+            // product id exists — run them in parallel instead of sequentially.
+            this.savingStatus.set('Linking categories & uploading images...');
+
+            const categoryIds = (this.selectedCategories || []).map(c => c.toString());
+            const categoryTask = categoryIds.length > 0
+                ? firstValueFrom(this.productService.addMultipleCategoriesToProduct(productId, categoryIds))
+                : Promise.resolve(null);
+
+            const uploadTask = this.selectedMainFile
+                ? firstValueFrom(this.productService.bulkUploadImages(productId, this.selectedMainFile, this.selectedAdditionalFiles))
+                : Promise.resolve(null);
+
+            const [, uploadResult] = await Promise.all([categoryTask, uploadTask]);
+
+            // The upload POST returns 202 and the backend keeps processing
+            // (resize/optimize) in a background job — that is exactly what
+            // the 202 is for, so don't hold the spinner on it. Observe the
+            // job detached: refresh caches once images are ready.
+            if (uploadResult) {
+                this.productService.pollImageJob(productId, uploadResult.job_id).pipe(
+                    takeUntil(this.destroy$)
+                ).subscribe({
+                    next: () => {
+                        this.productService.clearCache();
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Images ready',
+                            detail: 'Product images finished processing.',
+                            life: 3000
+                        });
+                    },
+                    error: (jobErr: any) => {
+                        this.productService.clearCache();
+                        this.messageService.add({
+                            severity: 'warn',
+                            summary: 'Image processing',
+                            detail: jobErr.message || 'Image processing is still running in the background — reload in a few minutes to see the images.',
+                            life: 6000
+                        });
+                    }
+                });
+            }
+
             this.productCreated = true;
-            this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully' });
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: uploadResult
+                    ? 'Product created — images are processing in the background'
+                    : 'Product created successfully'
+            });
             if (typedSlug && !isValidBackendSlug(typedSlug)) {
                 this.messageService.add({
                     severity: 'info',

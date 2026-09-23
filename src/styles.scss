@@ -97,6 +97,30 @@ main {
     --p-select-option-focus-background: var(--surface-hover);
     --p-select-option-selected-background: rgba(59, 130, 246, 0.12);
     --p-select-option-selected-color: var(--accent-color);
+
+    /* PrimeNG Checkbox Variable Overrides (Theme Matching) */
+    --p-checkbox-background: rgba(15, 23, 42, 0.8);
+    --p-checkbox-border-color: rgba(148, 163, 184, 0.4);
+    --p-checkbox-hover-border-color: #3b82f6;
+    --p-checkbox-checked-background: #3b82f6;
+    --p-checkbox-checked-border-color: #3b82f6;
+    --p-checkbox-checked-hover-background: #2563eb;
+    --p-checkbox-checked-hover-border-color: #2563eb;
+    --p-checkbox-icon-color: #ffffff;
+    --p-checkbox-icon-checked-color: #ffffff;
+    --p-checkbox-icon-checked-hover-color: #ffffff;
+    --p-checkbox-focus-ring-color: rgba(59, 130, 246, 0.3);
+
+    /* PrimeNG DataTable Variable Overrides (Theme Matching) */
+    --p-datatable-header-cell-background: rgba(15, 23, 42, 0.85);
+    --p-datatable-header-cell-color: #94a3b8;
+    --p-datatable-header-cell-border-color: rgba(59, 130, 246, 0.12);
+    --p-datatable-header-cell-hover-background: rgba(30, 41, 59, 0.95);
+    --p-datatable-header-cell-hover-color: #f8fafc;
+    --p-datatable-header-cell-selected-background: rgba(59, 130, 246, 0.1);
+    --p-datatable-header-cell-selected-color: #60a5fa;
+    --p-datatable-sort-icon-color: #64748b;
+    --p-datatable-sort-icon-hover-color: #94a3b8;
 }
 
 /* Explicit Overrides for PrimeNG v18 Overlays */
@@ -449,27 +473,182 @@ textarea,
     overflow: hidden;
 }
 
-/* Global Table Border Radius Fix */
-.p-datatable {
-    border-radius: 24px !important;
+/* Global Table Header & Table Theming */
+.p-datatable,
+.premium-table-v2 {
+    border-radius: 20px !important;
 
+    /* Caption / Header Bar */
     .p-datatable-header {
-        border-top-left-radius: 24px !important;
-        border-top-right-radius: 24px !important;
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.6) 100%) !important;
+        border: none !important;
+        padding: 1.25rem 1.5rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-top-left-radius: 20px !important;
+        border-top-right-radius: 20px !important;
+    }
+
+    /* Column Headers */
+    .p-datatable-thead > tr > th {
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+        color: #94a3b8 !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        font-size: 0.72rem !important;
+        padding: 0.9rem 1.25rem !important;
+        border: none !important;
+        border-bottom: 1px solid rgba(59, 130, 246, 0.15) !important;
+        user-select: none !important;
+        border-radius: 0 !important;
+        transition: background 0.2s ease, color 0.2s ease !important;
+        white-space: nowrap !important;
+    }
+
+    /* Sortable column hover */
+    .p-datatable-thead > tr > th.p-sortable-column:hover,
+    .p-datatable-thead > tr > th[pSortableColumn]:hover {
+        background: rgba(30, 41, 59, 0.95) !important;
+        color: #f8fafc !important;
+    }
+
+    /* Sorted column active state */
+    .p-datatable-thead > tr > th.p-highlight,
+    .p-datatable-thead > tr > th.p-sortable-column-sorted {
+        background: rgba(59, 130, 246, 0.12) !important;
+        color: #60a5fa !important;
+        border-bottom-color: rgba(59, 130, 246, 0.4) !important;
     }
 
     /* Only round top corners of th if table has no header caption */
     &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:first-child {
-        border-top-left-radius: 24px !important;
+        border-top-left-radius: 20px !important;
     }
 
     &:not(:has(.p-datatable-header)) .p-datatable-thead > tr:first-child > th:last-child {
-        border-top-right-radius: 24px !important;
+        border-top-right-radius: 20px !important;
     }
 
-    .p-datatable-thead > tr > th {
-        border-radius: 0;
+    /* Sort Icon Styling */
+    .p-sortable-column .p-sortable-column-icon,
+    p-sortIcon .p-icon,
+    .p-sort-icon {
+        color: #64748b !important;
+        font-size: 0.75rem !important;
+        transition: color 0.2s ease !important;
     }
+
+    .p-sortable-column:hover .p-sortable-column-icon,
+    .p-sortable-column:hover p-sortIcon .p-icon,
+    .p-sortable-column:hover .p-sort-icon {
+        color: #94a3b8 !important;
+    }
+
+    .p-sortable-column.p-highlight .p-sortable-column-icon,
+    .p-sortable-column.p-sortable-column-sorted .p-sortable-column-icon,
+    .p-sortable-column.p-highlight p-sortIcon .p-icon,
+    .p-sortable-column.p-highlight .p-sort-icon {
+        color: #60a5fa !important;
+    }
+}
+
+/* ==========================================================================
+   GLOBAL THEME: CHECKBOX OVERRIDES (Matches Dark Blue / Accent Theme)
+   ========================================================================== */
+.p-checkbox {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    .p-checkbox-box {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        border-radius: 6px !important;
+        border: 1.5px solid rgba(148, 163, 184, 0.4) !important;
+        background: rgba(15, 23, 42, 0.8) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+    }
+
+    &:not(.p-disabled):hover .p-checkbox-box {
+        border-color: rgba(59, 130, 246, 0.7) !important;
+        background: rgba(59, 130, 246, 0.08) !important;
+    }
+
+    /* Checked and highlight states */
+    &.p-checkbox-checked .p-checkbox-box,
+    &[data-p-checked="true"] .p-checkbox-box,
+    .p-checkbox-box.p-highlight,
+    &.p-highlight .p-checkbox-box {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.45) !important;
+    }
+
+    &:not(.p-disabled).p-checkbox-checked:hover .p-checkbox-box,
+    &:not(.p-disabled)[data-p-checked="true"]:hover .p-checkbox-box {
+        background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+        border-color: #60a5fa !important;
+    }
+
+    /* Checkmark icon (SVG and font icon) */
+    .p-checkbox-box .p-checkbox-icon,
+    .p-checkbox-icon,
+    .p-icon,
+    svg {
+        color: #ffffff !important;
+        stroke: #ffffff !important;
+        fill: #ffffff !important;
+        font-weight: 900 !important;
+    }
+
+    .p-checkbox-box svg {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+        stroke-width: 2.5 !important;
+    }
+
+    /* Focus outline */
+    &:not(.p-disabled).p-focus .p-checkbox-box,
+    .p-checkbox-box.p-focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    }
+}
+
+/* Standalone .p-checkbox-box fallback */
+.p-checkbox-box {
+    border-radius: 6px !important;
+
+    &.p-highlight,
+    &[data-p-checked="true"],
+    &.p-checkbox-checked {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.45) !important;
+
+        svg,
+        .p-checkbox-icon,
+        .p-icon {
+            color: #ffffff !important;
+            stroke: #ffffff !important;
+            fill: #ffffff !important;
+        }
+    }
+}
+
+/* Header & Row Checkbox alignments in tables */
+p-tableHeaderCheckbox,
+p-tableCheckbox {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
 }
 
 /* Premium Buttons */

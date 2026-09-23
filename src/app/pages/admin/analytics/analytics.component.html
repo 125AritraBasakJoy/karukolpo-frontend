@@ -481,11 +481,11 @@
               <!-- Top Customers List & Heatmap placeholder/Retention Cohorts -->
               <div class="grid">
                 <div class="col-12 md:col-6">
-                  <div class="glass-panel p-4 h-full">
-                    <h3 class="panel-title flex align-items-center gap-2 mb-4">
+                  <div class="glass-panel p-4 h-full flex flex-column">
+                    <h3 class="panel-title flex align-items-center gap-2 mb-4 flex-shrink-0">
                       <i class="pi pi-crown text-amber-500"></i> Top Spenders
                     </h3>
-                    <div class="top-spenders-list flex flex-column gap-3">
+                    <div class="top-spenders-list flex flex-column gap-3 flex-grow-1 overflow-y-auto" style="min-height: 280px; max-height: 540px;">
                       <div class="spender-item flex justify-content-between align-items-center p-2 border-bottom-1 border-white-alpha-10" *ngFor="let user of customersData()?.top_customers">
                         <div>
                           <div class="font-semibold text-white text-sm">{{ user.customer_name }}</div>
@@ -503,8 +503,8 @@
 
                 <!-- Geography Breakdown -->
                 <div class="col-12 md:col-6">
-                  <div class="glass-panel p-4 h-full">
-                    <div class="flex justify-content-between align-items-center mb-4">
+                  <div class="glass-panel p-4 h-full flex flex-column">
+                    <div class="flex justify-content-between align-items-center mb-4 flex-shrink-0">
                       <h3 class="panel-title flex align-items-center gap-2">
                         <i class="pi pi-map-marker text-cyan-500"></i> Regional Sales
                       </h3>
@@ -515,7 +515,7 @@
                         styleClass="premium-dropdown"
                       ></p-dropdown>
                     </div>
-                    <div class="geo-points-list flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                    <div class="geo-points-list flex flex-column gap-2 flex-grow-1 overflow-y-auto" style="min-height: 280px; max-height: 540px;">
                       @if (geographyData() && geographyData()!.data.length > 0) {
                         <div class="geo-item flex justify-content-between align-items-center p-2 bg-white-alpha-5 border-round" *ngFor="let item of geographyData()!.data">
                           <span class="text-white text-sm font-semibold">{{ item.location }}</span>

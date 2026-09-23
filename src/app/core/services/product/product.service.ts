@@ -1,12 +1,13 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, of, forkJoin, timer } from 'rxjs';
-import { map, tap, catchError, switchMap, shareReplay, finalize, filter, take } from 'rxjs/operators';
+import { Observable, of, forkJoin, timer, from } from 'rxjs';
+import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import { Product, ProductImage } from '../../../models/product.model';
 import { ApiService } from '../api/api.service';
 import { PRODUCTS_API } from './product.api';
 import { buildListQuery } from '../api/helpers';
 import { environment } from '../../../../environments/environment';
+import { downscaleImage, validateImageFile } from '../../utils/image-resize';
 
 const API_ENDPOINTS = {
   PRODUCTS: PRODUCTS_API
@@ -271,49 +272,88 @@ export class ProductService {
   }
 
   /**
-   * Poll image upload job status until SUCCESS or FAILURE
+   * Poll image upload job status until SUCCESS or FAILURE.
+   *
+   * Duration-based deadline (not attempt-based): a slow worker no longer
+   * reports failure for a job that actually succeeded. Polls fast (1.5 s)
+   * while the job is likely running, then backs off to 3 s. On deadline the
+   * observable errors with a "still running" notice — the job keeps going
+   * server-side either way.
    */
-  pollImageJob(productId: string, jobId: string, intervalMs = 1500, maxAttempts = 20): Observable<any[]> {
-    return timer(0, intervalMs).pipe(
-      switchMap(() => this.getImageJobStatus(productId, jobId)),
-      map(job => {
-        if (job.status === 'SUCCESS') {
-          return { done: true, images: job.images || [] };
-        } else if (job.status === 'FAILURE') {
-          throw new Error(job.error || 'Async image processing job failed');
-        }
-        return { done: false, images: null };
-      }),
-      filter(res => res.done),
-      take(1),
-      map(res => res.images!)
+  pollImageJob(productId: string, jobId: string, maxDurationMs = 5 * 60_000): Observable<any[]> {
+    const FAST_MS = 1500;
+    const SLOW_MS = 3000;
+    const SLOW_AFTER_POLLS = 10;
+    const deadline = Date.now() + maxDurationMs;
+
+    const poll = (attempt: number): Observable<any> =>
+      this.getImageJobStatus(productId, jobId).pipe(
+        switchMap(job => {
+          if (job.status === 'SUCCESS') {
+            return of(job);
+          }
+          if (job.status === 'FAILURE') {
+            throw new Error(job.error || 'Async image processing job failed');
+          }
+          if (Date.now() > deadline) {
+            throw new Error(
+              'Image processing is still running in the background. It will finish on its own — refresh in a few minutes to see the images.'
+            );
+          }
+          const interval = attempt < SLOW_AFTER_POLLS ? FAST_MS : SLOW_MS;
+          return timer(interval).pipe(switchMap(() => poll(attempt + 1)));
+        })
+      );
+
+    return poll(0).pipe(map(job => job.images || []));
+  }
+
+  /**
+   * Validate and downscale an image before it enters a FormData payload.
+   * Throws immediately for files the upload could never succeed with
+   * (wrong type / over the size cap) instead of letting the admin wait out
+   * the upload only to receive a 413.
+   */
+  private prepareImageForUpload(file: File): Promise<File> {
+    validateImageFile(file);
+    return downscaleImage(file);
+  }
+
+  /**
+   * Add image to product. Uploads only — the 202 means processing continues
+   * in a background job; subscribe to pollImageJob(job_id) if you need to
+   * observe completion. POST /products/{productId}/images
+   */
+  addImage(productId: string, file: File): Observable<{ job_id: string }> {
+    return from(this.prepareImageForUpload(file)).pipe(
+      switchMap(prepared => {
+        const formData = new FormData();
+        formData.append('file', prepared);
+        return this.apiService.post<{ job_id: string }>(API_ENDPOINTS.PRODUCTS.ADD_IMAGE(productId), formData);
+      })
     );
   }
 
   /**
-   * Add image to product (polls async job until finished)
-   * POST /products/{productId}/images
+   * Bulk upload images to product. Uploads only — the 202 means processing
+   * continues in a background job; subscribe to pollImageJob(job_id) if you
+   * need to observe completion. POST /products/{productId}/images/bulk
    */
-  addImage(productId: string, file: File): Observable<any[]> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.apiService.post<{ job_id: string }>(API_ENDPOINTS.PRODUCTS.ADD_IMAGE(productId), formData).pipe(
-      switchMap(res => this.pollImageJob(productId, res.job_id))
+  bulkUploadImages(productId: string, primaryFile: File, additionalFiles: File[]): Observable<{ job_id: string }> {
+    const prepared = this.prepareImageForUpload(primaryFile).then(primary =>
+      Promise.all(additionalFiles.map(file => this.prepareImageForUpload(file))).then(
+        gallery => [primary, ...gallery] as const
+      )
     );
-  }
-
-  /**
-   * Bulk upload images to product (polls async job until finished)
-   * POST /products/{productId}/images/bulk
-   */
-  bulkUploadImages(productId: string, primaryFile: File, additionalFiles: File[]): Observable<any[]> {
-    const formData = new FormData();
-    formData.append('primary_image', primaryFile);
-    additionalFiles.forEach(file => {
-      formData.append('gallery_images', file);
-    });
-    return this.apiService.post<{ job_id: string }>(API_ENDPOINTS.PRODUCTS.BULK_UPLOAD_IMAGES(productId), formData).pipe(
-      switchMap(res => this.pollImageJob(productId, res.job_id))
+    return from(prepared).pipe(
+      switchMap(files => {
+        const formData = new FormData();
+        formData.append('primary_image', files[0]);
+        files.slice(1).forEach(file => {
+          formData.append('gallery_images', file);
+        });
+        return this.apiService.post<{ job_id: string }>(API_ENDPOINTS.PRODUCTS.BULK_UPLOAD_IMAGES(productId), formData);
+      })
     );
   }
 
@@ -334,7 +374,9 @@ export class ProductService {
   }
 
   /**
-   * Batch update images (polls async job until finished)
+   * Batch update images. Uploads/deletes only — the 202 means processing
+   * continues in a background job; subscribe to pollImageJob(job_id) if you
+   * need to observe completion.
    * PATCH /products/{productId}/images/batch?new_primary_id={newPrimaryId}
    */
   batchUpdateImages(
@@ -343,33 +385,41 @@ export class ProductService {
     newPrimaryFile?: File,
     newGalleryFiles?: File[],
     deleteImageIds?: string[]
-  ): Observable<any[]> {
-    const formData = new FormData();
+  ): Observable<{ job_id: string }> {
+    const preparePrimary = newPrimaryFile
+      ? this.prepareImageForUpload(newPrimaryFile)
+      : Promise.resolve(undefined);
+    const prepareGallery = newGalleryFiles && newGalleryFiles.length > 0
+      ? Promise.all(newGalleryFiles.map(file => this.prepareImageForUpload(file)))
+      : Promise.resolve([]);
 
-    if (newPrimaryFile) {
-      formData.append('primary_image', newPrimaryFile);
-    }
+    return from(Promise.all([preparePrimary, prepareGallery])).pipe(
+      switchMap(([primary, gallery]) => {
+        const formData = new FormData();
 
-    if (newGalleryFiles && newGalleryFiles.length > 0) {
-      newGalleryFiles.forEach(file => {
-        formData.append('gallery_images', file);
-      });
-    }
+        if (primary) {
+          formData.append('primary_image', primary);
+        }
 
-    if (deleteImageIds && deleteImageIds.length > 0) {
-      deleteImageIds.forEach(id => {
-        formData.append('delete_image_ids', String(id));
-      });
-    }
+        if (gallery.length > 0) {
+          gallery.forEach(file => {
+            formData.append('gallery_images', file);
+          });
+        }
 
-    if (newPrimaryId !== undefined && newPrimaryId !== null) {
-      formData.append('new_primary_id', String(newPrimaryId));
-    }
+        if (deleteImageIds && deleteImageIds.length > 0) {
+          deleteImageIds.forEach(id => {
+            formData.append('delete_image_ids', String(id));
+          });
+        }
 
-    const url = API_ENDPOINTS.PRODUCTS.BATCH_UPDATE_IMAGES(productId);
+        if (newPrimaryId !== undefined && newPrimaryId !== null) {
+          formData.append('new_primary_id', String(newPrimaryId));
+        }
 
-    return this.apiService.patch<{ job_id: string }>(url, formData).pipe(
-      switchMap(res => this.pollImageJob(productId, res.job_id))
+        const url = API_ENDPOINTS.PRODUCTS.BATCH_UPDATE_IMAGES(productId);
+        return this.apiService.patch<{ job_id: string }>(url, formData);
+      })
     );
   }
 

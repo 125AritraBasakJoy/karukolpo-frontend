@@ -1,183 +1,211 @@
-<!-- Theme Toggle Button -->
-<app-theme-toggle></app-theme-toggle>
+<div class="track-order-page py-5 px-3 md:px-4">
+  <div class="track-order-container max-w-1000 mx-auto">
 
-<div class="page-wrapper fadein animation-duration-500">
-  <div class="track-order-container">
-    <div class="glass-card search-card p-5 mb-6">
-      <div class="search-section">
-        <h1 class="text-4xl font-bold mb-2 text-white">Track Your Order</h1>
-        <p class="text-slate-400 mb-5 text-lg">Enter your registered phone number</p>
+    <!-- Search Hero Card -->
+    <div class="artisanal-search-card p-4 md:p-5 border-round-2xl mb-4 text-center">
+      <div class="search-hero-content mx-auto">
+        <span class="track-badge mb-2 inline-block">Order Tracking</span>
+        <h1 class="track-title mb-2">Track Your Order</h1>
+        <p class="track-subtitle mb-4">Enter your registered 11-digit phone number to view live order status and delivery updates.</p>
 
-        <div
-          class="flex flex-column sm:flex-row align-items-center justify-content-center gap-3 w-full md:w-30rem mx-auto">
-          <input type="text" pInputText placeholder="Enter Phone Number (e.g. 01XXXXXXXXX)" [(ngModel)]="orderId" (keyup.enter)="trackOrder()"
-            class="w-full premium-input">
-          <button type="button" pButton icon="pi pi-search" (click)="trackOrder()"
-            class="premium-btn-primary p-button-icon-only w-full sm:w-auto px-5"></button>
+        <div class="search-input-group flex flex-column sm:flex-row align-items-center justify-content-center gap-2 mx-auto">
+          <div class="relative w-full">
+            <i class="pi pi-phone search-phone-icon"></i>
+            <input type="text" [(ngModel)]="orderId" (keyup.enter)="trackOrder()"
+                   placeholder="e.g. 01XXXXXXXXX" maxlength="14"
+                   class="artisan-track-input w-full" />
+          </div>
+          <button type="button" class="btn-track-submit w-full sm:w-auto font-bold flex align-items-center justify-content-center gap-2"
+                  [disabled]="loading()"
+                  (click)="trackOrder()">
+            <i *ngIf="!loading()" class="pi pi-search"></i>
+            <i *ngIf="loading()" class="pi pi-spin pi-spinner"></i>
+            <span>Track</span>
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="text-center mb-6">
-      <p-button label="Back to Home" icon="pi pi-arrow-left" [text]="true" styleClass="premium-btn-secondary"
-        (onClick)="goBack()"></p-button>
+    <!-- Back to Home Button -->
+    <div class="mb-4">
+      <button type="button" class="btn-back-home flex align-items-center gap-2" (click)="goBack()">
+        <i class="pi pi-arrow-left"></i>
+        <span>Back to Home</span>
+      </button>
     </div>
 
     <!-- Loading Skeleton -->
-    <div *ngIf="loading()" class="order-details mt-5">
-      <p-card styleClass="premium-card">
-        <div class="grid">
-          <div class="col-12 md:col-6">
-            <p-skeleton width="10rem" height="1.5rem" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="8rem" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="6rem" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="8rem" styleClass="mb-2"></p-skeleton>
-          </div>
-          <div class="col-12 md:col-6">
-            <p-skeleton width="8rem" height="1.5rem" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="10rem" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="12rem" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="10rem" styleClass="mb-2"></p-skeleton>
-          </div>
+    <div *ngIf="loading()" class="order-details-card p-4 border-round-2xl surface-card shadow-1">
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <p-skeleton width="12rem" height="1.8rem" styleClass="mb-3"></p-skeleton>
+          <p-skeleton width="80%" height="1.2rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="60%" height="1.2rem" styleClass="mb-2"></p-skeleton>
         </div>
-        <div class="mt-4">
-          <p-skeleton width="5rem" height="1.5rem" styleClass="mb-2"></p-skeleton>
-          <p-skeleton styleClass="mb-2"></p-skeleton>
-          <p-skeleton styleClass="mb-2"></p-skeleton>
+        <div class="col-12 md:col-6">
+          <p-skeleton width="10rem" height="1.8rem" styleClass="mb-3"></p-skeleton>
+          <p-skeleton width="70%" height="1.2rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="50%" height="1.2rem" styleClass="mb-2"></p-skeleton>
         </div>
-      </p-card>
+      </div>
     </div>
 
-    <!-- Order Details -->
-    <div *ngIf="order() && !loading()" class="order-details-container mt-6">
-      <p-card styleClass="premium-card">
-        <div
-          class="card-header flex justify-content-between align-items-center mb-5 pb-3 border-bottom-1 border-white-alpha-10">
-          <div>
-            <span class="text-slate-400 text-sm block mb-1">Order Status</span>
-            <p-tag [value]="order()?.status" [severity]="getSeverity(order()?.status)"
-              styleClass="text-sm px-3"></p-tag>
+    <!-- Order Details Display -->
+    <div *ngIf="order() && !loading()" class="order-details-card p-4 md:p-5 border-round-2xl mb-4">
+      
+      <!-- Card Header: Status & Order Number -->
+      <div class="order-card-header flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4 pb-3 border-bottom-1 border-200">
+        <div>
+          <span class="text-xs text-600 block mb-1 uppercase tracking-wider font-semibold">Order Status</span>
+          <div class="flex align-items-center gap-2">
+            <span class="status-badge" [ngClass]="'status-' + (order()?.status || 'pending').toLowerCase()">
+              {{ order()?.status }}
+            </span>
           </div>
-          <div class="text-right">
-            <span class="text-slate-400 text-sm block mb-1">Order {{ order()?.orderNumber || order()?.id }}</span>
-            <span class="font-bold text-xl text-white">{{ order()?.orderDate | date:'medium' }}</span>
+        </div>
+        <div class="text-left sm:text-right">
+          <span class="text-xs text-600 block mb-1">Order Ref: <strong class="text-800">{{ order()?.orderNumber || order()?.id }}</strong></span>
+          <span class="text-sm font-semibold text-700">{{ order()?.orderDate | date:'medium' }}</span>
+        </div>
+      </div>
+
+      <!-- Main Info Columns -->
+      <div class="grid">
+        <!-- 1. Shipping Details -->
+        <div class="col-12 md:col-4 mb-4 md:mb-0">
+          <div class="info-block p-3 border-round-xl h-full">
+            <h4 class="info-block-heading flex align-items-center gap-2 mb-3">
+              <i class="pi pi-user text-primary"></i>
+              <span>Shipping Details</span>
+            </h4>
+            <div class="info-content text-sm">
+              <p class="font-bold text-base text-900 mb-1">{{ order()?.fullName || 'Customer' }}</p>
+              <p class="text-700 mb-2 flex align-items-center gap-2">
+                <i class="pi pi-phone text-xs text-500"></i>
+                <span>{{ order()?.phoneNumber }}</span>
+              </p>
+              <p class="text-700 mb-1 line-height-2 break-word">{{ order()?.fullAddress }}</p>
+              <p class="text-600 text-xs">
+                {{ order()?.subDistrict ? order()?.subDistrict + ', ' : '' }}{{ order()?.district }}
+                <span *ngIf="order()?.postalCode">- {{ order()?.postalCode }}</span>
+              </p>
+            </div>
           </div>
         </div>
 
-        <div class="grid">
-          <!-- Customer Info -->
-          <div class="col-12 md:col-6 lg:col-4 mb-4 md:mb-0">
-            <div class="info-group">
-              <h4 class="text-blue-400 font-semibold mb-3 flex align-items-center gap-2">
-                <i class="pi pi-user"></i> Shipping Details
-              </h4>
-              <div class="info-content border-left-2 border-blue-500 pl-3">
-                <p class="font-bold m-0 mb-1 text-white">{{ order()?.fullName }}</p>
-                <p class="m-0 text-slate-400">{{ order()?.phoneNumber }}</p>
-                <p class="m-0 text-slate-400 mt-2 break-word">{{ order()?.fullAddress }}</p>
-                <p class="m-0 text-slate-400">{{ order()?.district }} - {{ order()?.postalCode }}</p>
+        <!-- 2. Order Summary -->
+        <div class="col-12 md:col-4 mb-4 md:mb-0">
+          <div class="info-block p-3 border-round-xl h-full">
+            <h4 class="info-block-heading flex align-items-center gap-2 mb-3">
+              <i class="pi pi-box text-primary"></i>
+              <span>Order Summary</span>
+            </h4>
+            <div class="info-content text-sm flex flex-column gap-2">
+              <div class="flex justify-content-between">
+                <span class="text-600">Total Items:</span>
+                <span class="font-semibold text-800">{{ order()?.items?.length || 0 }}</span>
+              </div>
+              <div class="flex justify-content-between align-items-center">
+                <span class="text-600">Payment:</span>
+                <span class="payment-method-pill font-medium">{{ order()?.paymentMethod || 'Cash on Delivery' }}</span>
+              </div>
+              <div class="flex justify-content-between">
+                <span class="text-600">Subtotal:</span>
+                <span class="font-semibold text-800">
+                  ৳{{ (order()?.subtotal || order()?.totalAmount || 0) | number:'1.0-0' }}
+                </span>
+              </div>
+              <div *ngIf="order()?.deliveryCharge" class="flex justify-content-between">
+                <span class="text-600">Delivery Charge:</span>
+                <span class="font-semibold text-800">৳{{ order()?.deliveryCharge | number:'1.0-0' }}</span>
+              </div>
+              <div class="flex justify-content-between align-items-center pt-2 border-top-1 border-200 mt-1">
+                <span class="font-bold text-base text-900">Total Amount:</span>
+                <span class="font-bold text-xl text-primary">৳{{ order()?.totalAmount | number:'1.0-0' }}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Order Summary -->
-          <div class="col-12 md:col-6 lg:col-4 mb-4 md:mb-0">
-            <div class="info-group">
-              <h4 class="text-blue-400 font-semibold mb-3 flex align-items-center gap-2">
-                <i class="pi pi-box"></i> Order Summary
-              </h4>
-              <div class="info-content border-left-2 border-blue-500 pl-3">
-                <div class="flex justify-content-between mb-2">
-                  <span class="text-slate-400">Total Items:</span>
-                  <span class="font-semibold text-white">{{ order()?.items?.length }}</span>
-                </div>
-                <div class="flex justify-content-between mb-2">
-                  <span class="text-slate-400">Payment:</span>
-                  <p-tag [value]="order()?.paymentMethod || 'N/A'" severity="info" styleClass="text-xs"></p-tag>
-                </div>
-                <div class="flex justify-content-between mb-2">
-                  <span class="text-slate-400">Subtotal:</span>
-                  <span class="font-semibold text-white">{{ (order()?.subtotal || order()?.totalAmount) |
-                    currency:'BDT':'৳' }}</span>
-                </div>
-                @if (order()?.deliveryCharge) {
-                <div class="flex justify-content-between mb-2">
-                  <span class="text-slate-400">Delivery:</span>
-                  <span class="font-semibold text-white">{{ order()?.deliveryCharge |
-                    currency:'BDT':'৳' }}</span>
-                </div>
-                }
-                <div
-                  class="flex justify-content-between align-items-center mt-3 pt-2 border-top-1 border-white-alpha-10">
-                  <span class="font-bold text-lg text-white">Total:</span>
-                  <span class="font-bold text-2xl text-blue-400">{{ order()?.totalAmount |
-                    currency:'BDT':'৳' }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Order Items -->
-          <div class="col-12 lg:col-4">
-            <div class="info-group">
-              <h4 class="text-blue-400 font-semibold mb-3 flex align-items-center gap-2">
-                <i class="pi pi-list"></i> Items
-              </h4>
-              <div class="items-list p-3 border-round-xl overflow-y-auto" style="max-height: 200px;">
-                <div *ngFor="let item of order()?.items"
-                  class="item-row flex justify-content-between align-items-center py-2 border-bottom-1 border-white-alpha-10 last:border-none">
-                  <div class="flex align-items-center gap-3">
-                    <div class="item-badge bg-blue-500 text-white text-xs px-2 py-1 border-round">{{ item.quantity }}x
-                    </div>
-                    <span class="text-sm font-medium text-slate-200">{{ item.product.name }}</span>
+        <!-- 3. Ordered Items List -->
+        <div class="col-12 md:col-4">
+          <div class="info-block p-3 border-round-xl h-full">
+            <h4 class="info-block-heading flex align-items-center gap-2 mb-3">
+              <i class="pi pi-list text-primary"></i>
+              <span>Items ({{ order()?.items?.length || 0 }})</span>
+            </h4>
+            <div class="track-items-list overflow-y-auto pr-1" style="max-height: 230px;">
+              <div *ngFor="let item of order()?.items" class="track-item-row flex align-items-center justify-content-between py-2 border-bottom-1 border-100 last:border-none">
+                <div class="flex align-items-center gap-2 min-w-0 mr-2">
+                  <img [src]="item.product.imageUrl || productService.getImageUrl(null)"
+                       [alt]="item.product.name"
+                       class="track-item-thumb flex-shrink-0" />
+                  <span class="item-qty-badge font-bold flex-shrink-0">{{ item.quantity }}x</span>
+                  <div class="min-w-0">
+                    <span class="item-product-name block text-sm font-medium text-800 text-overflow-ellipsis overflow-hidden white-space-nowrap">
+                      {{ item.product.name }}
+                    </span>
+                    <span class="text-xs text-500">Unit: ৳{{ item.product.price | number:'1.0-0' }}</span>
                   </div>
-                  <span class="text-sm font-semibold text-white">{{ (item.product.price * item.quantity) |
-                    currency:'BDT':'৳' }}</span>
                 </div>
+                <span class="item-line-total text-sm font-bold text-800 flex-shrink-0">
+                  ৳{{ (item.product.price * item.quantity) | number:'1.0-0' }}
+                </span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Actions -->
-        <div
-          class="flex flex-column md:flex-row gap-3 mt-6 pt-4 border-top-1 border-white-alpha-10 justify-content-end">
-          <p-button *ngIf="order()?.status === 'Pending'" label="Cancel Order" icon="pi pi-times" severity="danger"
-            [outlined]="true" (onClick)="cancelOrder()" styleClass="w-full md:w-auto px-4">
-          </p-button>
-          <p-button label="Back to Shop" icon="pi pi-shopping-bag" (onClick)="goBack()"
-            styleClass="premium-btn-primary w-full md:w-auto">
-          </p-button>
-        </div>
-      </p-card>
+      <!-- Action Buttons Row -->
+      <div class="order-action-bar flex flex-column sm:flex-row justify-content-end gap-3 mt-4 pt-3 border-top-1 border-200">
+        <button *ngIf="order()?.status === 'Pending'" type="button" class="btn-cancel-order flex align-items-center justify-content-center gap-2"
+                (click)="cancelOrder()">
+          <i class="pi pi-times"></i>
+          <span>Cancel Order</span>
+        </button>
+        <button type="button" class="btn-back-shop flex align-items-center justify-content-center gap-2 font-bold"
+                (click)="goBack()">
+          <i class="pi pi-shopping-bag"></i>
+          <span>Continue Shopping</span>
+        </button>
+      </div>
+
     </div>
+
   </div>
 </div>
 
-<!-- Cancel Verification Modal -->
-<p-dialog [(visible)]="displayCancelModal" [modal]="true" [style]="{width: '90vw', maxWidth: '450px'}"
-    header="Cancel Order Request" [closable]="true" styleClass="premium-dialog">
-    <div class="p-fluid mt-2">
-        <div class="mb-4">
-            <p class="text-slate-400 text-sm">To verify cancellation, please enter the registered phone number and order number.</p>
-        </div>
-        
-        <div class="field mb-3">
-            <label for="cancel_phone" class="font-semibold text-slate-300 block mb-2">Registered Phone Number</label>
-            <input pInputText id="cancel_phone" [(ngModel)]="cancelPhone" placeholder="e.g. 01XXXXXXXXX"
-                class="w-full premium-input">
-        </div>
-        
-        <div class="field mb-3">
-            <label for="cancel_order_no" class="font-semibold text-slate-300 block mb-2">Order Number</label>
-            <input pInputText id="cancel_order_no" [(ngModel)]="cancelOrderNo" placeholder="e.g. ORD-XXXX"
-                class="w-full premium-input">
-        </div>
-        
-        <div class="flex flex-column sm:flex-row gap-3 justify-content-end mt-4">
-            <button pButton label="Cancel" class="p-button-text text-white w-full sm:w-auto" (click)="displayCancelModal = false"></button>
-            <button pButton label="Submit" class="p-button-danger w-full sm:w-auto px-4" (click)="submitCancelRequest()"
-                [disabled]="!cancelPhone || !cancelOrderNo" [loading]="cancelLoading"></button>
-        </div>
+<!-- Cancel Order Modal -->
+<p-dialog [(visible)]="displayCancelModal" [modal]="true" [style]="{width: '90vw', maxWidth: '440px'}"
+          header="Cancel Order Request" [closable]="true" styleClass="artisan-cancel-dialog">
+  <div class="p-fluid mt-2">
+    <p class="text-sm text-600 mb-4 line-height-3">
+      To verify cancellation, please confirm your registered phone number and order reference number.
+    </p>
+
+    <div class="field mb-3">
+      <label for="cancel_phone" class="font-bold text-sm block mb-1 text-800">Registered Phone Number</label>
+      <input type="tel" id="cancel_phone" [(ngModel)]="cancelPhone" placeholder="01XXXXXXXXX"
+             class="artisan-track-input w-full" />
     </div>
+
+    <div class="field mb-4">
+      <label for="cancel_order_no" class="font-bold text-sm block mb-1 text-800">Order Reference Number</label>
+      <input type="text" id="cancel_order_no" [(ngModel)]="cancelOrderNo" placeholder="ORD-XXXX"
+             class="artisan-track-input w-full" />
+    </div>
+
+    <div class="flex flex-column sm:flex-row gap-2 justify-content-end">
+      <button type="button" class="btn-dialog-dismiss" (click)="displayCancelModal = false">
+        Keep Order
+      </button>
+      <button type="button" class="btn-dialog-confirm"
+              [disabled]="!cancelPhone || !cancelOrderNo || cancelLoading"
+              (click)="submitCancelRequest()">
+        <span *ngIf="!cancelLoading">Confirm Cancellation</span>
+        <span *ngIf="cancelLoading"><i class="pi pi-spin pi-spinner mr-1"></i> Cancelling...</span>
+      </button>
+    </div>
+  </div>
 </p-dialog>

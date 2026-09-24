@@ -15,13 +15,12 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ProductService } from '../../core/services/product/product.service';
-import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-track-order',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, ThemeToggleComponent, DialogModule],
+  imports: [CommonModule, FormsModule, InputTextModule, ButtonModule, CardModule, TimelineModule, ToastModule, ProgressSpinnerModule, TagModule, SkeletonModule, DialogModule],
   templateUrl: './track-order.component.html',
   styleUrls: ['./track-order.component.scss']
 })
@@ -39,7 +38,7 @@ export class TrackOrderComponent {
 
   constructor(
     private orderService: OrderService,
-    private productService: ProductService,
+    public productService: ProductService,
     private messageService: MessageService,
     private router: Router
   ) {
@@ -158,32 +157,40 @@ export class TrackOrderComponent {
     }
 
     const resolutionObservables = order.items.map(item => {
-      // If product name is already present, return item as is
-      if (item.product?.name) {
+      // Format existing imageUrl with getImageUrl if present
+      if (item.product?.imageUrl) {
+        item.product.imageUrl = this.productService.getImageUrl(item.product.imageUrl);
+      }
+
+      // If product name and image are both present, return item as is
+      if (item.product?.name && item.product?.imageUrl && !item.product.imageUrl.includes('data:image/svg+xml')) {
         return of(item);
       }
 
-      // If product ID is present but name is missing, fetch product info
-      const productId = item.product?.id;
+      // If product ID is present, fetch full product info including primary image
+      const productId = item.product?.id || (item as any).product_id;
       if (productId) {
         return this.productService.getProductById(productId).pipe(
           map(product => {
             if (product) {
-              item.product.name = product.name;
-              item.product.imageUrl = product.imageUrl;
+              item.product.name = item.product.name || product.name;
+              item.product.imageUrl = product.imageUrl || this.productService.getImageUrl(null);
               item.product.price = item.product.price || product.price;
             } else {
-              item.product.name = 'Product #' + productId;
+              item.product.name = item.product.name || ('Product #' + productId);
+              item.product.imageUrl = item.product.imageUrl || this.productService.getImageUrl(null);
             }
             return item;
           }),
           catchError(() => {
-            item.product.name = 'Product #' + productId;
+            item.product.name = item.product.name || ('Product #' + productId);
+            item.product.imageUrl = item.product.imageUrl || this.productService.getImageUrl(null);
             return of(item);
           })
         );
       }
 
+      item.product.imageUrl = item.product.imageUrl || this.productService.getImageUrl(null);
       return of(item);
     });
 

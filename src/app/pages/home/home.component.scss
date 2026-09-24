@@ -33,22 +33,81 @@
     width: 100%;
   }
 
+  .hero-brand-pill {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #FAF7F2;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
   .hero-main-title {
-    font-size: clamp(2.5rem, 8vw, 4.25rem);
-    line-height: 1.1;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.5rem, 6vw, 4.25rem);
+    line-height: 1.15;
     letter-spacing: -0.02em;
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 
   .hero-sub-tagline {
-    font-size: clamp(1.05rem, 3.5vw, 1.5rem);
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
     opacity: 0.95;
-    margin: 0.5rem 0 1rem;
+    max-width: 680px;
+    margin: 0.5rem auto 1.5rem;
+    line-height: 1.5;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   }
 
-  .hero-cta-btn {
-    @media (max-width: 576px) {
-      padding: 0.75rem 1.4rem !important;
-      font-size: 0.95rem !important;
+  .hero-btn-primary {
+    background: #B84E29 !important;
+    border-color: #B84E29 !important;
+    color: #FFFFFF !important;
+    border-radius: 9999px !important;
+    font-weight: 600 !important;
+    padding: 0.85rem 2rem !important;
+    box-shadow: 0 4px 16px rgba(184, 78, 41, 0.35) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover {
+      background: #A03F1E !important;
+      border-color: #A03F1E !important;
+      transform: translateY(-2px) !important;
+    }
+  }
+
+  .hero-btn-secondary {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    color: #FFFFFF !important;
+    border-radius: 9999px !important;
+    font-weight: 600 !important;
+    padding: 0.85rem 2rem !important;
+    backdrop-filter: blur(8px) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.25) !important;
+      border-color: #FFFFFF !important;
+      transform: translateY(-2px) !important;
+    }
+  }
+
+  .hero-features-bar {
+    .hero-feature-item {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #FAF7F2;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(6px);
+      padding: 5px 14px;
+      border-radius: 9999px;
+      letter-spacing: 0.02em;
     }
   }
 }
@@ -258,14 +317,29 @@
   }
 }
 
-// Product card styles are now global in styles.scss
+// Product card image aspect ratio and layout
+.product-img-box,
 .product-image-wrapper {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 5; // 200 / 250
-  overflow: hidden;
-  border-radius: 12px;
-  background: var(--surface-hover);
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  background: var(--surface-hover, #F7F3ED) !important;
+  display: block !important;
+
+  img,
+  .artisan-product-img,
+  .product-image {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+  }
 }
 
 // Category Redesign Styles

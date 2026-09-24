@@ -1,417 +1,363 @@
 <div class="cart-page">
-    <div class="cart-container">
-        <!-- Invoice Component -->
-        <app-invoice *ngIf="orderConfirmed" [orderedItems]="orderedItems" [orderFormSnapshot]="orderFormSnapshot"
-            [orderPaymentMethod]="orderPaymentMethod" [orderDeliveryCharge]="orderDeliveryCharge"
-            [orderTotal]="orderTotal" [orderDiscount]="orderDiscount"
-            [placedOrderId]="placedOrderId" [placedOrderNumber]="placedOrderNumber" (continueShoppingClick)="continueShopping()">
-        </app-invoice>
+  <div class="cart-container max-w-1320 mx-auto px-3 py-4 md:py-5">
 
-        <!-- Main Cart Content -->
-        <div *ngIf="!orderConfirmed">
+    <!-- Invoice Component after Order Confirmation -->
+    <app-invoice *ngIf="orderConfirmed" [orderedItems]="orderedItems" [orderFormSnapshot]="orderFormSnapshot"
+                 [orderPaymentMethod]="orderPaymentMethod" [orderDeliveryCharge]="orderDeliveryCharge"
+                 [orderTotal]="orderTotal" [orderDiscount]="orderDiscount"
+                 [placedOrderId]="placedOrderId" [placedOrderNumber]="placedOrderNumber"
+                 (continueShoppingClick)="continueShopping()">
+    </app-invoice>
 
-            <!-- Header -->
-            <div
-                class="cart-header flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 gap-4 fadein animation-duration-500">
-                <h1 class="m-0 flex align-items-center gap-3 text-white">
-                    <i class="pi pi-shopping-cart text-blue-400" aria-hidden="true"></i>
-                    <span class="cart-title">Your Cart</span>
-                    <p-tag *ngIf="cartService.cart().length > 0" [value]="cartService.totalItems() + ' items'"
-                        severity="info" [rounded]="true" styleClass="px-3" aria-live="polite"></p-tag>
-                </h1>
-                <button pButton label="Continue Shopping" icon="pi pi-arrow-left" aria-label="Continue Shopping"
-                    class="premium-btn-secondary w-full md:w-auto" (click)="goBack()"></button>
-            </div>
+    <!-- Main Cart Content -->
+    <div *ngIf="!orderConfirmed">
 
-            <!-- Empty Cart -->
-            <div *ngIf="cartService.cart().length === 0"
-                class="empty-cart text-center py-8 fadein animation-duration-500">
-                <div class="glass-card p-6 mx-auto" style="max-width: 500px;">
-                    <i class="pi pi-shopping-cart text-6xl text-slate-400 mb-4 block" aria-hidden="true"></i>
-                    <h2 class="text-white mb-3 font-bold">Your cart is empty</h2>
-                    <p class="text-slate-300 mb-5 text-lg">Browse our products and add something you love!</p>
-                    <button pButton label="Shop Now" icon="pi pi-shopping-bag" aria-label="Shop Now" class="premium-btn-primary px-6"
-                        (click)="goBack()"></button>
-                </div>
-            </div>
+      <!-- Page Header -->
+      <div class="cart-page-header mb-4">
+        <h1 class="cart-page-title mb-1">Cart &amp; Checkout</h1>
+        <p class="cart-page-subtitle">Review your items and complete your order</p>
+      </div>
 
-            <!-- Cart + Checkout -->
-            <div *ngIf="cartService.cart().length > 0" class="grid fadein animation-duration-500">
-
-                <!-- Left: Cart Items -->
-                <div class="col-12 lg:col-7">
-                    <div class="glass-card p-4 mb-4">
-                        <h2 class="text-xl font-bold mt-0 mb-4 flex align-items-center gap-2 text-white">
-                            <i class="pi pi-list text-blue-400" aria-hidden="true"></i> Cart Items
-                        </h2>
-
-                        <div *ngFor="let item of cartService.cart(); let last = last"
-                            class="cart-item-premium flex flex-column sm:flex-row align-items-start sm:align-items-center gap-4 py-3"
-                            [class.border-bottom-1]="!last" [class.border-white-alpha-10]="!last">
-
-                            <div class="flex align-items-center gap-3 w-full sm:w-auto">
-                                <img [src]="item.product.imageUrl" [alt]="item.product.name"
-                                    width="80" height="80"
-                                    class="cart-item-image border-round-xl shadow-4" loading="lazy" decoding="async">
-
-                                <div class="flex-grow-1 sm:hidden">
-                                    <div class="font-bold text-lg mb-1">{{ item.product.name }}</div>
-                                    <div class="flex align-items-center gap-2 flex-wrap">
-                                        <span *ngIf="item.product.effective_price && item.product.effective_price < item.product.price"
-                                            class="text-xs text-slate-400 line-through">{{ item.product.price | currency:'BDT':'৳':'1.2-2' }}</span>
-                                        <span class="text-primary font-semibold">{{ (item.product.effective_price ?? item.product.price) | currency:'BDT':'৳':'1.2-2' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex-grow-1 hidden sm:block">
-                                <div class="font-bold text-lg mb-1">{{ item.product.name }}</div>
-                                <div class="flex align-items-center gap-2">
-                                    <span *ngIf="item.product.effective_price && item.product.effective_price < item.product.price"
-                                        class="text-xs text-slate-400 line-through">{{ item.product.price | currency:'BDT':'৳':'1.2-2' }}</span>
-                                    <span class="text-primary font-semibold">{{ (item.product.effective_price ?? item.product.price) | currency:'BDT':'৳':'1.2-2' }}</span>
-                                </div>
-                            </div>
-
-                            <div class="flex align-items-center justify-content-between w-full sm:w-auto gap-4">
-                                <div class="flex align-items-center gap-2">
-                                    <button pButton icon="pi pi-minus"
-                                        class="p-button-rounded p-button-outlined p-button-sm"
-                                        [attr.aria-label]="'Decrease quantity of ' + item.product.name"
-                                        (click)="updateQuantity(item, -1)"></button>
-                                    <span class="font-bold text-lg w-2rem text-center" aria-label="Item quantity">{{ item.quantity }}</span>
-                                    <button pButton icon="pi pi-plus"
-                                        class="p-button-rounded p-button-outlined p-button-sm"
-                                        [attr.aria-label]="'Increase quantity of ' + item.product.name"
-                                        (click)="updateQuantity(item, 1)"></button>
-                                </div>
-
-                                <div class="text-right sm:min-width-100">
-                                    <div class="font-bold text-lg white-space-nowrap">{{ cartService.getItemSubtotal(item) | currency:'BDT':'৳':'1.2-2' }}</div>
-                                </div>
-
-                                <button pButton icon="pi pi-trash"
-                                    class="p-button-rounded p-button-text p-button-danger p-button-sm"
-                                    [attr.aria-label]="'Remove ' + item.product.name + ' from cart'"
-                                    (click)="removeItem(item)"></button>
-                            </div>
-                        </div>
-
-                        <!-- Price Summary -->
-                        <div class="mt-4 pt-4 border-top-1 border-white-alpha-10">
-                            <div class="flex justify-content-between mb-2">
-                                <span class="text-slate-300">Subtotal</span>
-                                <span class="font-semibold text-white">{{ getSubTotal() |
-                                    currency:'BDT':'৳':'1.2-2'
-                                    }}</span>
-                            </div>
-                            <div class="flex justify-content-between mb-2">
-                                <span class="text-slate-300">Delivery Charge</span>
-                                <span class="font-semibold text-white">{{ currentDeliveryCharge |
-                                    currency:'BDT':'৳':'1.2-2'
-                                    }}</span>
-                            </div>
-                            <div
-                                class="flex justify-content-between mt-3 pt-3 border-top-1 border-white-alpha-10 text-xl">
-                                <span class="font-bold text-white">Total</span>
-                                <span class="font-bold text-blue-400">{{ getTotalPrice() |
-                                    currency:'BDT':'৳':'1.2-2'
-                                    }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Shipping + Payment -->
-                <div class="col-12 lg:col-5">
-
-                    <!-- Shipping Form (hidden when payment section is shown) -->
-                    <div *ngIf="!showPaymentSection" class="glass-card p-4 mb-4">
-                        <h2 class="text-xl font-bold mt-0 mb-4 flex align-items-center gap-2 text-white">
-                            <i class="pi pi-truck text-blue-400" aria-hidden="true"></i> Shipping Details
-                        </h2>
-
-                        <div class="p-fluid">
-                            <div class="field">
-                                <label for="cart_fullname" class="text-slate-300 font-medium">Full Name <span
-                                        class="text-red-400">*</span></label>
-                                <input pInputText id="cart_fullname" name="cart_fullname" autocomplete="name"
-                                    [(ngModel)]="checkoutForm.fullName" (ngModelChange)="saveFormState()"
-                                    placeholder="Enter your name" required #fullName="ngModel"
-                                    class="w-full premium-input">
-                                <small class="p-error"
-                                    *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Full
-                                    Name is
-                                    required.</small>
-                            </div>
-
-                            <div class="field">
-                                <label for="cart_phone" class="text-slate-300 font-medium">Phone Number <span
-                                        class="text-red-400">*</span></label>
-                                <input pInputText id="cart_phone" name="cart_phone" autocomplete="tel"
-                                    [(ngModel)]="checkoutForm.phoneNumber" (ngModelChange)="saveFormState()"
-                                    placeholder="017..." maxlength="11" required #phone="ngModel"
-                                    pattern="^(?:\+88|88)?(01[3-9]\d{8})$" class="w-full premium-input">
-                                <small class="p-error" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid
-                                    Phone Number is
-                                    required.</small>
-                            </div>
-
-                            <div class="field">
-                                <label for="cart_email" class="text-slate-300 font-medium">Email Address <span
-                                        class="text-xs text-slate-400 ml-1">(Optional)</span></label>
-                                <input pInputText id="cart_email" name="cart_email" autocomplete="email" [(ngModel)]="checkoutForm.email"
-                                    (ngModelChange)="saveFormState()"
-                                    placeholder="Enter your email" #email="ngModel" [pattern]="emailRegex"
-                                    class="w-full premium-input">
-                                <small class="p-error" *ngIf="email.invalid && (email.dirty || email.touched)">Please
-                                    enter a valid email address.</small>
-                            </div>
-
-                            <div class="formgrid grid">
-                                <div class="field col-6">
-                                    <label for="cart_district" class="text-slate-300 font-medium">District <span
-                                            class="text-red-400">*</span></label>
-                                    <p-dropdown inputId="cart_district" [options]="districts" optionLabel="name"
-                                        optionValue="name" [(ngModel)]="checkoutForm.district"
-                                        (onChange)="onDistrictChange($event)" placeholder="Select District"
-                                        appendTo="body" required #district="ngModel"
-                                        ariaLabel="Select District"
-                                        styleClass="w-full premium-dropdown" [style]="{'width':'100%'}" [filter]="true"
-                                        filterBy="name"></p-dropdown>
-                                    <small class="p-error"
-                                        *ngIf="district.invalid && (district.dirty || district.touched)">District is
-                                        required.</small>
-                                </div>
-                                <div class="field col-6">
-                                    <label for="cart_subdistrict" class="text-slate-300 font-medium">Sub-District <span class="text-red-400"
-                                            *ngIf="subDistricts.length > 0">*</span></label>
-                                    <p-dropdown inputId="cart_subdistrict" [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict" (onChange)="saveFormState()"
-                                        placeholder="Select Thana" [disabled]="!subDistricts.length" appendTo="body"
-                                        ariaLabel="Select Sub-District"
-                                        [required]="subDistricts.length > 0" styleClass="w-full premium-dropdown"
-                                        [style]="{'width':'100%'}" [filter]="true"></p-dropdown>
-                                </div>
-                            </div>
-
-                            <div class="field">
-                                <label for="cart_postal" class="text-slate-300 font-medium">Postal Code <span
-                                        class="text-xs text-slate-400 ml-1">(Optional)</span></label>
-                                <input pInputText id="cart_postal" name="cart_postal" autocomplete="postal-code" [(ngModel)]="checkoutForm.postalCode"
-                                    (ngModelChange)="saveFormState()"
-                                    placeholder="Enter 4-digit postal code" maxlength="4" #postal="ngModel"
-                                    [pattern]="postalCodeRegex" class="w-full premium-input">
-                                <small class="p-error" *ngIf="postal.invalid && (postal.dirty || postal.touched)">Postal
-                                    code must be 4 digits.</small>
-                            </div>
-
-                            <div class="field">
-                                <label for="cart_address" class="text-slate-300 font-medium">Full Address <span
-                                        class="text-red-400">*</span></label>
-                                <textarea pInputTextarea id="cart_address" name="cart_address" autocomplete="street-address" [(ngModel)]="checkoutForm.fullAddress"
-                                    (ngModelChange)="saveFormState()"
-                                    rows="2" placeholder="House, Road, Area..." required #address="ngModel"
-                                    class="w-full premium-input"></textarea>
-                                <small class="p-error"
-                                    *ngIf="address.invalid && (address.dirty || address.touched)">Full
-                                    Address is
-                                    required.</small>
-                            </div>
-
-                            <button pButton label="Proceed to Payment" icon="pi pi-arrow-right" aria-label="Proceed to Payment"
-                                class="premium-btn-primary w-full mt-3" (click)="proceedToPayment()"
-                                [loading]="loading()" *ngIf="!showPaymentSection"></button>
-                        </div>
-                    </div>
-
-                    <!-- Payment Section (shown after form validation, replaces shipping form) -->
-                    <div *ngIf="showPaymentSection" id="payment-section" class="glass-card p-4 payment-appear">
-
-                        <!-- Shipping Summary -->
-                        <div class="bg-white-alpha-5 border-round-xl p-3 mb-4 border-1 border-white-alpha-10">
-                            <div class="flex justify-content-between align-items-center mb-2">
-                                <span class="font-bold text-white flex align-items-center gap-2">
-                                    <i class="pi pi-truck text-blue-400" aria-hidden="true"></i> Shipping To
-                                </span>
-                                <button pButton label="Edit" icon="pi pi-pencil" aria-label="Edit shipping details"
-                                    class="p-button-text p-button-sm text-blue-400"
-                                    (click)="showPaymentSection = false"></button>
-                            </div>
-                            <div class="text-slate-300 text-sm line-height-3 break-word">
-                                <div class="text-white font-medium">{{ checkoutForm.fullName }} &bull; {{
-                                    checkoutForm.phoneNumber }}</div>
-                                <div class="break-word">{{ checkoutForm.fullAddress }}, {{ checkoutForm.subDistrict ?
-                                    checkoutForm.subDistrict + ', ' : '' }}{{ checkoutForm.district }}</div>
-                            </div>
-                        </div>
-
-                        <h2 class="text-xl font-bold mt-0 mb-4 flex align-items-center gap-2 text-white">
-                            <i class="pi pi-wallet text-blue-400" aria-hidden="true"></i> Payment Method
-                        </h2>
-
-                        <div class="grid mb-4">
-                            <div class="col-6">
-                                <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3 cursor-pointer"
-                                    role="button" tabindex="0" [attr.aria-pressed]="selectedPaymentMethod === 'COD'"
-                                    [class.active]="selectedPaymentMethod === 'COD'"
-                                    (click)="selectPaymentMethod('COD')"
-                                    (keydown.enter)="selectPaymentMethod('COD')"
-                                    (keydown.space)="selectPaymentMethod('COD')">
-                                    <div class="bg-primary-reverse-100 p-3 border-circle">
-                                        <i class="pi pi-money-bill text-3xl text-primary" aria-hidden="true"></i>
-                                    </div>
-                                    <div class="font-bold text-white">Cash on Delivery</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="payment-method-card flex flex-column align-items-center justify-content-center gap-3 cursor-pointer"
-                                    role="button" tabindex="0" [attr.aria-pressed]="selectedPaymentMethod === 'bKash'"
-                                    [class.active]="selectedPaymentMethod === 'bKash'"
-                                    (click)="selectPaymentMethod('bKash')"
-                                    (keydown.enter)="selectPaymentMethod('bKash')"
-                                    (keydown.space)="selectPaymentMethod('bKash')">
-                                    <div class="bg-pink-900/20 p-3 border-circle flex align-items-center justify-content-center">
-                                        <img src="assets/bkash-logo.png" alt="bKash Logo" width="30" height="30" loading="lazy" decoding="async">
-                                    </div>
-                                    <div class="font-bold text-white">bKash Payment</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- bKash Details -->
-                        <div *ngIf="selectedPaymentMethod === 'bKash'"
-                            class="payment-appear bkash-payment-card p-4 border-round-2xl mt-4">
-                            
-                            <!-- Highlighted Notice Header -->
-                            <div class="bkash-notice-card mb-4 p-3 md:p-3 border-round-xl">
-                                <div class="flex align-items-center gap-3">
-                                    <div class="bkash-notice-icon-box flex align-items-center justify-content-center border-circle flex-shrink-0">
-                                        <i class="pi pi-bolt text-lg text-blue-400" aria-hidden="true"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="bkash-notice-title font-bold text-blue-400 text-sm md:text-base line-height-2">
-                                            Advance bKash Payment Required
-                                        </div>
-                                        <div class="bkash-notice-sub text-xs text-slate-300 line-height-2 mt-1">
-                                            Payment must be made now in advance to confirm and process your order.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Instructions Title & Justified Steps -->
-                            <div class="mb-4">
-                                <div class="text-white font-semibold mb-3 flex align-items-center gap-2 text-sm md:text-base">
-                                    <i class="pi pi-list-check text-blue-400" aria-hidden="true"></i>
-                                    <span>To pay for your order, <strong class="text-blue-400">PLEASE READ CAREFULLY</strong>:</span>
-                                </div>
-                                
-                                <div class="bkash-steps-list flex flex-column gap-2">
-                                    <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
-                                        <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold" aria-hidden="true">1</span>
-                                        <div class="bkash-step-desc text-justify line-height-3 text-slate-200 text-sm flex-1">
-                                            Open the <strong>bKash App</strong> on your mobile phone (or dial *247#).
-                                        </div>
-                                    </div>
-
-                                    <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
-                                        <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold" aria-hidden="true">2</span>
-                                        <div class="bkash-step-desc text-justify line-height-3 text-slate-200 text-sm flex-1">
-                                            Choose the <strong>Send Money</strong> option from the home screen.
-                                        </div>
-                                    </div>
-
-                                    <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
-                                        <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold" aria-hidden="true">3</span>
-                                        <div class="bkash-step-desc text-justify line-height-3 text-slate-200 text-sm flex-1">
-                                            Enter our official Personal phone number 
-                                            <span class="bkash-number-badge inline-flex align-items-center gap-2 px-2 py-1 border-round-md mx-1">
-                                                <strong class="font-mono text-blue-300 select-all">01834484328</strong>
-                                                <button type="button" class="bkash-copy-btn" (click)="copyBkashNumber('01834484328')" aria-label="Copy bKash personal number" title="Copy Number">
-                                                    <i class="pi pi-copy" aria-hidden="true"></i>
-                                                </button>
-                                            </span>
-                                            <span class="text-xs text-slate-300 font-normal block sm:inline">(this is not our Customer Service number)</span>.
-                                        </div>
-                                    </div>
-
-                                    <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
-                                        <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold" aria-hidden="true">4</span>
-                                        <div class="bkash-step-desc text-justify line-height-3 text-slate-200 text-sm flex-1">
-                                            Enter the exact total amount you will have to pay for your order.
-                                        </div>
-                                    </div>
-
-                                    <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
-                                        <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold" aria-hidden="true">5</span>
-                                        <div class="bkash-step-desc text-justify line-height-3 text-slate-200 text-sm flex-1">
-                                            Enter your bKash PIN and tap &amp; hold to confirm <strong>Send Money</strong>.
-                                        </div>
-                                    </div>
-
-                                    <div class="bkash-step-row flex align-items-start gap-3 p-2 border-round-lg">
-                                        <span class="bkash-step-number flex align-items-center justify-content-center border-circle flex-shrink-0 font-bold" aria-hidden="true">6</span>
-                                        <div class="bkash-step-desc text-justify line-height-3 text-slate-200 text-sm flex-1">
-                                            After successful payment, copy your <strong>Transaction ID (TrxID)</strong> and paste it into the box below, then enter the bKash Phone number used to send the payment.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Form inputs & submit -->
-                            <div class="bkash-form-section p-fluid mt-4">
-                                <div class="field mb-3">
-                                    <label for="cart_bkash_phone" class="font-semibold text-slate-200 block mb-2 text-sm flex align-items-center gap-2">
-                                        <i class="pi pi-phone text-blue-400" aria-hidden="true"></i>
-                                        <span>Your bKash Phone Number</span>
-                                    </label>
-                                    <input pInputText id="cart_bkash_phone" name="cart_bkash_phone" autocomplete="tel" [(ngModel)]="bkashPhone" placeholder="e.g. 017XXXXXXXX" maxlength="11"
-                                        class="w-full py-3 bkash-input">
-                                </div>
-                                <div class="field mb-4">
-                                    <label for="cart_bkash_trx" class="font-semibold text-slate-200 block mb-2 text-sm flex align-items-center gap-2">
-                                        <i class="pi pi-hashtag text-blue-400" aria-hidden="true"></i>
-                                        <span>Transaction ID (TrxID)</span>
-                                    </label>
-                                    <input pInputText id="cart_bkash_trx" name="cart_bkash_trx" autocomplete="off" [(ngModel)]="bkashTrxId" placeholder="e.g. BCD123XYZ9"
-                                        class="w-full py-3 uppercase-input bkash-input">
-                                </div>
-                                <button pButton label="Complete Payment" icon="pi pi-shield" aria-label="Complete bKash Payment"
-                                    class="premium-btn-primary bkash-submit-btn w-full py-3 text-base font-bold shadow-3" (click)="submitBkashPayment()"
-                                    [disabled]="!bkashPhone || !bkashTrxId" [loading]="loading()"></button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- COD Confirmation Dialog -->
-<p-dialog [(visible)]="displayCodConfirmModal" [modal]="true" [style]="{width: 'min(92vw, 410px)'}"
-    [closable]="false" [showHeader]="false" [draggable]="false" [resizable]="false"
-    styleClass="cod-confirm-modal" (onHide)="cancelCOD()">
-    <div class="cod-modal-card">
-        <button type="button" class="cod-close-btn" (click)="cancelCOD()" aria-label="Close dialog">
-            <i class="pi pi-times text-xs" aria-hidden="true"></i>
+      <!-- Empty Cart State -->
+      <div *ngIf="cartService.cart().length === 0" class="empty-cart-card text-center py-7 px-4 border-round-2xl my-4">
+        <i class="pi pi-shopping-bag text-6xl mb-3 text-400"></i>
+        <h2 class="empty-title mb-2">Your cart is empty</h2>
+        <p class="empty-sub mb-4">Discover our authentic handmade creations and fill your space with tradition.</p>
+        <button type="button" class="btn-shop-now" (click)="goBack()">
+          Explore Collection
         </button>
+      </div>
 
-        <div class="cod-icon-circle">
-            <i class="pi pi-truck" aria-hidden="true"></i>
+      <!-- Cart + Checkout Grid -->
+      <div *ngIf="cartService.cart().length > 0" class="grid">
+
+        <!-- Left Column: Items Table + Order Note + Shipping Details -->
+        <div class="col-12 lg:col-8">
+
+          <!-- Card 1: Your Items Table -->
+          <div class="artisanal-card p-3 md:p-4 mb-4">
+            <h2 class="section-card-title mb-3">
+              Your Items ({{ cartService.totalItems() }})
+            </h2>
+
+            <!-- Desktop Items Table -->
+            <div class="cart-table-wrapper overflow-x-auto">
+              <table class="cart-table w-full">
+                <thead>
+                  <tr>
+                    <th class="text-left py-2 font-bold text-xs uppercase text-600">Product</th>
+                    <th class="text-center py-2 font-bold text-xs uppercase text-600">Price</th>
+                    <th class="text-center py-2 font-bold text-xs uppercase text-600">Qty</th>
+                    <th class="text-right py-2 font-bold text-xs uppercase text-600">Total</th>
+                    <th class="py-2 w-2rem"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of cartService.cart()" class="cart-table-row">
+                    <!-- Product Info -->
+                    <td class="py-3">
+                      <div class="flex align-items-center gap-3">
+                        <img [src]="item.product.imageUrl" [alt]="item.product.name" class="cart-item-thumb border-round-lg" />
+                        <div class="cart-item-info">
+                          <h4 class="cart-item-name font-bold mb-1">{{ item.product.name }}</h4>
+                          <span class="cart-item-stock text-xs text-green-700">✓ In Stock</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Unit Price -->
+                    <td class="text-center py-3">
+                      <span class="item-unit-price font-semibold">
+                        ৳{{ (item.product.effective_price || item.product.price) | number:'1.0-0' }}
+                      </span>
+                    </td>
+
+                    <!-- Quantity Control -->
+                    <td class="text-center py-3">
+                      <div class="cart-qty-pill inline-flex align-items-center">
+                        <button type="button" class="qty-btn" (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1">
+                          <i class="pi pi-minus"></i>
+                        </button>
+                        <span class="qty-val">{{ item.quantity }}</span>
+                        <button type="button" class="qty-btn" (click)="updateQuantity(item, 1)">
+                          <i class="pi pi-plus"></i>
+                        </button>
+                      </div>
+                    </td>
+
+                    <!-- Total -->
+                    <td class="text-right py-3">
+                      <span class="item-subtotal-price font-bold">
+                        ৳{{ cartService.getItemSubtotal(item) | number:'1.0-0' }}
+                      </span>
+                    </td>
+
+                    <!-- Remove -->
+                    <td class="text-right py-3">
+                      <button type="button" class="cart-remove-btn" (click)="removeItem(item)" title="Remove item">
+                        <i class="pi pi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Order Note Box -->
+            <div class="order-note-block mt-4 pt-3 border-top-1 border-200">
+              <label for="order_notes" class="font-bold text-sm block mb-2 text-800">
+                Order Note <span class="text-500 font-normal">(Optional)</span>
+              </label>
+              <textarea id="order_notes" [(ngModel)]="checkoutForm.additionalInfo" (ngModelChange)="saveFormState()"
+                        rows="2" class="order-note-input w-full"
+                        placeholder="Special instructions for packaging, gift note, or delivery..."></textarea>
+            </div>
+          </div>
+
+          <!-- Free Delivery / Assurance Notice Banner -->
+          <div class="artisanal-notice-banner mb-4 p-3 border-round-xl flex align-items-center gap-3">
+            <i class="pi pi-truck text-2xl banner-icon flex-shrink-0"></i>
+            <div class="banner-text text-sm">
+              <strong>Safe Fragile Packaging Guarantee:</strong> Every item is double-boxed with shock-absorbent cushioning to ensure pristine nationwide arrival.
+            </div>
+          </div>
+
+          <!-- Card 2: Shipping Details Form (Shown when payment section is inactive) -->
+          <div *ngIf="!showPaymentSection" class="artisanal-card p-3 md:p-4 mb-4">
+            <h2 class="section-card-title mb-3">
+              Shipping Details
+            </h2>
+
+            <div class="shipping-form-grid grid">
+              <!-- Full Name -->
+              <div class="col-12 md:col-6 field mb-3">
+                <label for="cart_fullname" class="form-field-label">Full Name <span class="req">*</span></label>
+                <input type="text" id="cart_fullname" [(ngModel)]="checkoutForm.fullName" (ngModelChange)="saveFormState()"
+                       placeholder="e.g. Tanvir Ahmed" class="artisan-input w-full" required #fullName="ngModel" />
+                <small class="error-msg" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Name is required</small>
+              </div>
+
+              <!-- Phone Number -->
+              <div class="col-12 md:col-6 field mb-3">
+                <label for="cart_phone" class="form-field-label">Phone Number <span class="req">*</span></label>
+                <input type="tel" id="cart_phone" [(ngModel)]="checkoutForm.phoneNumber" (ngModelChange)="saveFormState()"
+                       placeholder="017XXXXXXXX" maxlength="11" class="artisan-input w-full" required #phone="ngModel" />
+                <small class="error-msg" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid 11-digit phone number is required</small>
+              </div>
+
+              <!-- Email Address -->
+              <div class="col-12 md:col-6 field mb-3">
+                <label for="cart_email" class="form-field-label">Email Address <span class="text-500 font-normal">(Optional)</span></label>
+                <input type="email" id="cart_email" [(ngModel)]="checkoutForm.email" (ngModelChange)="saveFormState()"
+                       placeholder="tanvir@example.com" class="artisan-input w-full" #email="ngModel" [pattern]="emailRegex" />
+                <small class="error-msg" *ngIf="email.invalid && (email.dirty || email.touched)">Valid email format required</small>
+              </div>
+
+              <!-- District Dropdown -->
+              <div class="col-12 md:col-6 field mb-3">
+                <label for="cart_district" class="form-field-label">District <span class="req">*</span></label>
+                <p-dropdown inputId="cart_district" [options]="districts" optionLabel="name" optionValue="name"
+                            [(ngModel)]="checkoutForm.district" (onChange)="onDistrictChange($event)"
+                            placeholder="Select District" appendTo="body" [filter]="true" filterBy="name"
+                            styleClass="artisan-dropdown w-full"></p-dropdown>
+              </div>
+
+              <!-- Thana / SubDistrict Dropdown -->
+              <div class="col-12 md:col-6 field mb-3">
+                <label for="cart_subdistrict" class="form-field-label">Thana / Upazila <span class="req" *ngIf="subDistricts.length > 0">*</span></label>
+                <p-dropdown inputId="cart_subdistrict" [options]="subDistricts" [(ngModel)]="checkoutForm.subDistrict"
+                            (onChange)="saveFormState()" placeholder="Select Thana" [disabled]="!subDistricts.length"
+                            appendTo="body" [filter]="true" styleClass="artisan-dropdown w-full"></p-dropdown>
+              </div>
+
+              <!-- Postal Code -->
+              <div class="col-12 md:col-6 field mb-3">
+                <label for="cart_postal" class="form-field-label">Postal Code <span class="text-500 font-normal">(Optional)</span></label>
+                <input type="text" id="cart_postal" [(ngModel)]="checkoutForm.postalCode" (ngModelChange)="saveFormState()"
+                       placeholder="e.g. 1205" maxlength="4" class="artisan-input w-full" />
+              </div>
+
+              <!-- Full Address -->
+              <div class="col-12 field mb-3">
+                <label for="cart_address" class="form-field-label">Delivery Address <span class="req">*</span></label>
+                <textarea id="cart_address" [(ngModel)]="checkoutForm.fullAddress" (ngModelChange)="saveFormState()"
+                          rows="2" placeholder="House number, road number, area / village..."
+                          class="artisan-input w-full" required #address="ngModel"></textarea>
+                <small class="error-msg" *ngIf="address.invalid && (address.dirty || address.touched)">Delivery address is required</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Section (Active after Proceed is clicked) -->
+          <div *ngIf="showPaymentSection" id="payment-section" class="artisanal-card p-3 md:p-4 mb-4">
+            <!-- Shipping Info Summary Header with Edit Button -->
+            <div class="shipping-summary-box p-3 border-round-xl mb-4 flex justify-content-between align-items-center">
+              <div>
+                <span class="font-bold text-sm block text-800">Delivering to: {{ checkoutForm.fullName }} ({{ checkoutForm.phoneNumber }})</span>
+                <span class="text-xs text-600">{{ checkoutForm.fullAddress }}, {{ checkoutForm.subDistrict ? checkoutForm.subDistrict + ', ' : '' }}{{ checkoutForm.district }}</span>
+              </div>
+              <button type="button" class="btn-edit-shipping" (click)="showPaymentSection = false">
+                <i class="pi pi-pencil mr-1"></i> Edit
+              </button>
+            </div>
+
+            <h2 class="section-card-title mb-3">Choose Payment Method</h2>
+
+            <div class="payment-method-selector grid mb-4">
+              <!-- Cash on Delivery -->
+              <div class="col-12 sm:col-6">
+                <div class="payment-choice-card p-3 border-round-xl cursor-pointer flex align-items-center gap-3"
+                     [class.active]="selectedPaymentMethod === 'COD'"
+                     (click)="selectPaymentMethod('COD')">
+                  <div class="choice-icon-box flex align-items-center justify-content-center">
+                    <i class="pi pi-money-bill text-xl"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold mb-1 text-sm">Cash on Delivery</h4>
+                    <span class="text-xs text-600">Pay when you receive the craft</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- bKash Online Payment -->
+              <div class="col-12 sm:col-6">
+                <div class="payment-choice-card p-3 border-round-xl cursor-pointer flex align-items-center gap-3"
+                     [class.active]="selectedPaymentMethod === 'bKash'"
+                     (click)="selectPaymentMethod('bKash')">
+                  <div class="choice-icon-box flex align-items-center justify-content-center">
+                    <i class="pi pi-bolt text-xl text-pink-600"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold mb-1 text-sm">bKash Send Money</h4>
+                    <span class="text-xs text-600">Instant confirmation via TrxID</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- bKash Details Box -->
+            <div *ngIf="selectedPaymentMethod === 'bKash'" class="bkash-instructions-card p-3 border-round-xl mb-4">
+              <div class="bkash-badge-row flex align-items-center justify-content-between mb-3">
+                <span class="font-bold text-sm">Send Money to Personal bKash:</span>
+                <div class="bkash-copy-box flex align-items-center gap-2">
+                  <strong class="font-mono text-base font-bold text-pink-700">01834484328</strong>
+                  <button type="button" class="btn-copy-num" (click)="copyBkashNumber('01834484328')">
+                    <i class="pi pi-copy"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid">
+                <div class="col-12 sm:col-6 field mb-2">
+                  <label class="form-field-label">Sender bKash Phone Number <span class="req">*</span></label>
+                  <input type="tel" [(ngModel)]="bkashPhone" placeholder="01XXXXXXXXX" maxlength="11" class="artisan-input w-full" />
+                </div>
+                <div class="col-12 sm:col-6 field mb-2">
+                  <label class="form-field-label">Transaction ID (TrxID) <span class="req">*</span></label>
+                  <input type="text" [(ngModel)]="bkashTrxId" placeholder="e.g. 9J4K2L8M" class="artisan-input w-full" />
+                </div>
+              </div>
+
+              <button type="button" class="btn-submit-bkash w-full mt-3 font-bold"
+                      [disabled]="loading()"
+                      (click)="submitBkashPayment()">
+                <span *ngIf="!loading()">Submit Payment &amp; Complete Order</span>
+                <span *ngIf="loading()"><i class="pi pi-spin pi-spinner mr-2"></i>Verifying...</span>
+              </button>
+            </div>
+
+            <!-- COD Direct Confirm Box -->
+            <div *ngIf="selectedPaymentMethod === 'COD'" class="cod-confirm-box p-3 border-round-xl mb-4 text-center">
+              <p class="text-sm text-700 mb-3">You will pay <strong>৳{{ getTotalPrice() | number:'1.0-0' }}</strong> in cash upon delivery of your parcel.</p>
+              <button type="button" class="btn-submit-cod w-full font-bold"
+                      [disabled]="loading()"
+                      (click)="confirmCOD()">
+                <span *ngIf="!loading()">Place Cash on Delivery Order</span>
+                <span *ngIf="loading()"><i class="pi pi-spin pi-spinner mr-2"></i>Processing...</span>
+              </button>
+            </div>
+
+          </div>
+
         </div>
 
-        <h3 class="cod-modal-title">Confirm Cash on Delivery?</h3>
+        <!-- Right Column: Order Summary + Help Box -->
+        <div class="col-12 lg:col-4">
+          <div class="cart-sidebar-sticky flex flex-column gap-3">
 
-        <p class="cod-modal-text">
-            Are you sure you want to place your order with <strong>Cash on Delivery</strong>? You will pay when the package arrives at your doorstep.
-        </p>
+            <!-- Order Summary Card -->
+            <div class="artisanal-card summary-card p-3 md:p-4">
+              <h2 class="section-card-title mb-3">Order Summary</h2>
 
-        <div class="cod-modal-actions">
-            <button pButton label="Cancel" aria-label="Cancel Cash on Delivery" class="cod-cancel-btn" (click)="cancelCOD()"></button>
-            <button pButton label="Yes, Place Order" icon="pi pi-check" aria-label="Confirm Cash on Delivery Order" class="premium-btn-primary cod-confirm-btn"
-                [loading]="loading()" (click)="proceedWithCOD()"></button>
+              <div class="summary-line flex justify-content-between mb-2">
+                <span class="summary-label">Subtotal</span>
+                <span class="summary-val font-semibold">৳{{ getSubTotal() | number:'1.0-0' }}</span>
+              </div>
+
+              <div class="summary-line flex justify-content-between mb-2">
+                <span class="summary-label">Delivery Charge ({{ deliveryLocation }})</span>
+                <span class="summary-val font-semibold">৳{{ currentDeliveryCharge | number:'1.0-0' }}</span>
+              </div>
+
+              <div class="summary-total-line flex justify-content-between pt-3 mt-3 border-top-1 border-300">
+                <span class="total-label font-bold text-lg">Total</span>
+                <span class="total-val font-bold text-xl text-primary-color">৳{{ getTotalPrice() | number:'1.0-0' }}</span>
+              </div>
+
+              <!-- Primary Action Button (Proceed to Payment / Checkout) -->
+              <div *ngIf="!showPaymentSection" class="mt-4">
+                <button type="button" class="btn-proceed-checkout w-full font-bold"
+                        (click)="proceedToPayment()">
+                  Proceed to Checkout
+                </button>
+              </div>
+
+              <!-- Trust Badges List -->
+              <div class="summary-trust-list mt-4 pt-3 border-top-1 border-200 flex flex-column gap-2 text-xs text-700">
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-check text-green-700"></i>
+                  <span>100% Handcrafted Guarantee</span>
+                </div>
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-shield text-green-700"></i>
+                  <span>Safe Fragile Packaging</span>
+                </div>
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-truck text-green-700"></i>
+                  <span>Cash on Delivery Available</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Need Help Card -->
+            <div class="artisanal-card need-help-card p-3 md:p-4">
+              <h3 class="help-card-title font-bold mb-2">Need Help?</h3>
+              <p class="help-card-sub text-xs text-600 mb-3">
+                Call or WhatsApp our artisan support team for guidance with your order.
+              </p>
+
+              <div class="help-contact-item flex align-items-center gap-2 mb-2 text-sm">
+                <i class="pi pi-phone text-primary-color"></i>
+                <a href="tel:01675718846" class="contact-link font-semibold">01675-718846</a>
+              </div>
+
+              <div class="help-contact-item flex align-items-center gap-2 mb-2 text-sm">
+                <i class="pi pi-envelope text-primary-color"></i>
+                <a href="mailto:contact@karukolpo.com" class="contact-link">contact@karukolpo.com</a>
+              </div>
+
+              <div class="help-contact-item flex align-items-start gap-2 text-xs text-600">
+                <i class="pi pi-map-marker text-primary-color mt-1"></i>
+                <span>Karukolpo Studio, Dhaka, Bangladesh</span>
+              </div>
+            </div>
+
+          </div>
         </div>
+
+      </div>
+
     </div>
-</p-dialog>
+
+  </div>
+</div>

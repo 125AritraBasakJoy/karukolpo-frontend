@@ -1,249 +1,361 @@
-<div class="container-fluid py-6 px-2 sm:px-4 lg:px-4">
-    @if (loading()) {
-    <div class="product-skeleton-layout py-4">
-        <div class="grid">
-            <div class="col-12 lg:col-4">
-                <p-skeleton width="100%" height="400px" borderRadius="16px" styleClass="mb-3"></p-skeleton>
-                <div class="flex gap-2">
-                    <p-skeleton width="70px" height="70px" borderRadius="12px"></p-skeleton>
-                    <p-skeleton width="70px" height="70px" borderRadius="12px"></p-skeleton>
-                    <p-skeleton width="70px" height="70px" borderRadius="12px"></p-skeleton>
-                </div>
-            </div>
-            <div class="col-12 lg:col-8">
-                <p-skeleton width="60%" height="2rem" styleClass="mb-3"></p-skeleton>
-                <p-skeleton width="30%" height="1.5rem" styleClass="mb-4"></p-skeleton>
-                <p-skeleton width="100%" height="6rem" styleClass="mb-4" borderRadius="12px"></p-skeleton>
-                <p-skeleton width="40%" height="3rem" borderRadius="14px"></p-skeleton>
-            </div>
+<div class="product-page-container">
+  <!-- Loading Skeleton -->
+  <div *ngIf="loading()" class="container max-w-1200 py-6 px-3">
+    <div class="grid">
+      <div class="col-12 lg:col-5">
+        <p-skeleton width="100%" height="450px" borderRadius="16px" styleClass="mb-3"></p-skeleton>
+        <div class="flex gap-2">
+          <p-skeleton width="80px" height="80px" borderRadius="12px"></p-skeleton>
+          <p-skeleton width="80px" height="80px" borderRadius="12px"></p-skeleton>
+          <p-skeleton width="80px" height="80px" borderRadius="12px"></p-skeleton>
         </div>
+      </div>
+      <div class="col-12 lg:col-7 lg:pl-5">
+        <p-skeleton width="30%" height="1.5rem" styleClass="mb-2"></p-skeleton>
+        <p-skeleton width="70%" height="2.5rem" styleClass="mb-3"></p-skeleton>
+        <p-skeleton width="40%" height="2rem" styleClass="mb-4"></p-skeleton>
+        <p-skeleton width="100%" height="6rem" styleClass="mb-4" borderRadius="12px"></p-skeleton>
+        <p-skeleton width="50%" height="3rem" borderRadius="12px"></p-skeleton>
+      </div>
     </div>
-    }
+  </div>
 
-    @if (!loading() && product()) {
-    <nav class="breadcrumb-container">
-        <ul class="breadcrumb-list">
-            <li><a routerLink="/">Home</a><span class="separator">/</span></li>
-            <li><a routerLink="/all-products">Products</a><span class="separator">/</span></li>
-            <li class="active">{{ product()!.name }}</li>
-        </ul>
+  <div *ngIf="!loading() && product()" class="container max-w-1200 py-4 px-3 md:px-4">
+    <!-- Breadcrumb Bar -->
+    <nav class="artisan-breadcrumbs mb-4" aria-label="Breadcrumb">
+      <a routerLink="/" class="breadcrumb-item">Home</a>
+      <span class="breadcrumb-separator">›</span>
+      <a [routerLink]="['/category', categorySlug()]" class="breadcrumb-item">{{ categoryName() }}</a>
+      <span class="breadcrumb-separator">›</span>
+      <span class="breadcrumb-current">{{ product()!.name }}</span>
     </nav>
 
-    <div class="product-main-layout">
-        <div class="grid">
-            <!-- Left Column: Product Gallery -->
-            <div class="col-12 lg:col-4">
-                <div class="product-gallery-modern flex flex-column gap-3">
-                    <!-- Main Image Viewer with Zoom -->
-                    <div class="main-image-viewport border-round-xl overflow-hidden shadow-2 relative cursor-zoom-in"
-                         (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)"
-                         (click)="showGalleria(activeImageIndex())">
-                        <img [src]="images()[activeImageIndex()]" [alt]="product()!.name" 
-                             class="main-product-image">
-                        
-                        <div class="zoom-hint-overlay absolute bottom-0 left-0 w-full py-2 text-center text-xs opacity-60">
-                            <i class="pi pi-search-plus mr-1"></i> Click for zoom in
-                        </div>
-                        
-                        @if (isOutOfStock()) {
-                           <div class="absolute top-0 right-0 m-2 z-3">
-                               <span class="oos-badge">Out of Stock</span>
-                           </div>
-                        }
-                    </div>
+    <!-- Main Product Showcase Grid -->
+    <div class="grid mb-6">
+      <!-- Left: Interactive Gallery -->
+      <div class="col-12 lg:col-5">
+        <div class="gallery-wrapper">
+          <!-- Main Hero Image Viewport -->
+          <div class="main-image-viewport relative" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
+            <!-- Wishlist Heart Button Top Right -->
+            <button type="button" class="product-wishlist-btn" [class.wishlisted]="isWishlisted()"
+                    (click)="toggleWishlist()" [attr.aria-label]="isWishlisted() ? 'Remove from wishlist' : 'Add to wishlist'">
+              <i class="pi" [ngClass]="isWishlisted() ? 'pi-heart-fill' : 'pi-heart'"></i>
+            </button>
 
-                    <!-- Premium Dedicated Thumbnails Carousel -->
-                    @if (images().length > 1) {
-                    <div class="thumbnails-carousel-wrapper mt-4">
-                        <p-carousel [value]="images()" [numVisible]="5" [numScroll]="1" [circular]="true"
-                                    [responsiveOptions]="responsiveOptions" [showIndicators]="false"
-                                    [showNavigators]="true">
-                            <ng-template let-img pTemplate="item">
-                                <div class="px-2">
-                                    <div class="thumbnail-card-premium border-2 border-transparent border-round-xl overflow-hidden cursor-pointer transition-all transition-duration-400"
-                                         [class.thumbnail-active]="images().indexOf(img) === activeImageIndex()"
-                                         (click)="activeImageIndex.set(images().indexOf(img))">
-                                        <img [src]="img" [alt]="product()!.name + ' view'" 
-                                             class="w-full h-full object-cover">
-                                    </div>
-                                </div>
-                            </ng-template>
-                        </p-carousel>
-                    </div>
-                    }
+            <!-- Navigation Arrows Overlaid -->
+            <button type="button" class="gallery-nav-btn prev" *ngIf="images().length > 1" (click)="prevImage($event)" aria-label="Previous image">
+              <i class="pi pi-chevron-left"></i>
+            </button>
+            <button type="button" class="gallery-nav-btn next" *ngIf="images().length > 1" (click)="nextImage($event)" aria-label="Next image">
+              <i class="pi pi-chevron-right"></i>
+            </button>
 
-                    <!-- Hidden Galleria for Fullscreen Zoom Experience -->
-                    <p-galleria [value]="images()" [visible]="displayGalleria()" (visibleChange)="displayGalleria.set($event)"
-                                [activeIndex]="activeImageIndex()" (activeIndexChange)="activeImageIndex.set($event)"
-                                [showThumbnails]="false" [showItemNavigators]="true" [showThumbnailNavigators]="false" [fullScreen]="true"
-                                [circular]="true" [responsiveOptions]="responsiveOptions"
-                                [containerStyle]="{'max-width': '850px'}">
-                        <ng-template pTemplate="item" let-item>
-                            <img [src]="item" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)"
-                                style="width: 100%; max-height: 80vh; object-fit: contain; cursor: grab;" />
-                        </ng-template>
-                        <ng-template pTemplate="thumbnail" let-item>
-                            <div class="grid grid-nogutter justify-content-center">
-                                <img [src]="item" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" />
-                            </div>
-                        </ng-template>
-                    </p-galleria>
-                </div>
+            <!-- Main Image -->
+            <img [src]="images()[activeImageIndex()]" [alt]="product()!.name"
+                 class="main-image cursor-pointer"
+                 (click)="showGalleria(activeImageIndex())">
+
+            <!-- Zoom Pill Hint -->
+            <div class="zoom-indicator-pill" (click)="showGalleria(activeImageIndex())">
+              <i class="pi pi-search-plus mr-1"></i> Click to enlarge
             </div>
+          </div>
 
-            <!-- Right Column: Professional Buy Block & Info -->
-            <div class="col-12 lg:col-8 lg:pl-4">
-                <div class="buy-block" lang="bn">
-                    <div class="flex align-items-center justify-content-between">
-                        <h1 class="product-title" lang="bn">{{ product()!.name }}</h1>
-                    </div>
-
-                    <div class="price-container flex align-items-center flex-wrap gap-3">
-                        @if (product()?.effective_price && (product()?.effective_price || 0) < (product()?.price || 0)) {
-                            <span class="price-tag">{{ product()?.effective_price | currency:'BDT':'৳' }}</span>
-                            <span class="old-price line-through text-slate-500 font-semibold text-lg">{{ product()?.price | currency:'BDT':'৳' }}</span>
-                            <span class="discount-badge">
-                                Flat ৳{{ product()?.discount_value | number:'1.0-0' }} OFF
-                            </span>
-                        } @else {
-                            <span class="price-tag">{{ product()?.price | currency:'BDT':'৳' }}</span>
-                        }
-                    </div>
-
-                    <div class="info-section">
-                        <div class="section-header">
-                            <i class="pi pi-info-circle"></i>
-                            <span>Description</span>
-                        </div>
-                        <div class="rich-description" [innerHTML]="product()!.description | safeHtml" lang="bn"></div>
-                    </div>
-
-                    @if (!isOutOfStock()) {
-                    <div class="buy-now-actions-container mt-6">
-                        <div class="quantity-row flex align-items-center mb-4">
-                            <span class="label text-xs uppercase letter-spacing-1 mr-3 opacity-50">Quantity</span>
-                            <div class="premium-qty-selector">
-                                <button class="qty-btn" (click)="decrementQuantity()" [disabled]="quantity() <= 1">
-                                    <i class="pi pi-minus"></i>
-                                </button>
-                                <span class="qty-display">{{ quantity() }}</span>
-                                <button class="qty-btn" (click)="incrementQuantity()">
-                                    <i class="pi pi-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="action-buttons-grid">
-                            <button pButton label="Add to Cart" icon="pi pi-shopping-cart"
-                                class="p-button-outlined premium-btn-secondary" (click)="addToCart()"></button>
-                            <button pButton label="Buy Now" icon="pi pi-bolt" 
-                                class="premium-btn-primary" (click)="buyNow()"></button>
-                        </div>
-                    </div>
-                    }
-
-                    <div class="trust-footer">
-                        <div class="trust-item">
-                            <div class="icon-box"><i class="pi pi-truck"></i></div>
-                            <div class="text-box">
-                                <span class="title">Fast Shipping</span>
-                                <span class="sub">Nationwide delivery</span>
-                            </div>
-                        </div>
-                        <div class="trust-item">
-                            <div class="icon-box"><i class="pi pi-verified"></i></div>
-                            <div class="text-box">
-                                <span class="title">Authentic</span>
-                                <span class="sub">100% genuine handmade</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          <!-- Thumbnails Strip -->
+          <div class="thumbnails-strip mt-3 flex gap-2 overflow-x-auto" *ngIf="images().length > 1">
+            <div *ngFor="let img of images(); let idx = index"
+                 class="thumbnail-item cursor-pointer"
+                 [class.active]="idx === activeImageIndex()"
+                 (click)="activeImageIndex.set(idx)">
+              <img [src]="img" [alt]="product()!.name + ' thumbnail ' + (idx + 1)" class="thumbnail-img">
             </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Right: Product Purchase Details -->
+      <div class="col-12 lg:col-7 lg:pl-5">
+        <div class="product-info-panel">
+          <!-- Badges Row -->
+          <div class="badges-row flex align-items-center gap-2 mb-2">
+            <span *ngIf="savings() > 0" class="discount-badge">
+              {{ savingsPercentage() }}% OFF
+            </span>
+            <span *ngIf="!isOutOfStock()" class="in-stock-badge">
+              <span class="dot"></span> In Stock
+            </span>
+            <span *ngIf="isOutOfStock()" class="oos-badge">
+              Out of Stock
+            </span>
+          </div>
+
+          <!-- Title -->
+          <h1 class="product-main-title font-semibold mb-1">{{ product()!.name }}</h1>
+
+          <!-- Collection Tagline -->
+          <p class="collection-tagline mb-3">{{ categoryName() }} Collection</p>
+
+          <!-- Price Section -->
+          <div class="product-price-section flex align-items-baseline gap-3 mb-4 flex-wrap">
+            <span class="main-price">{{ (product()?.effective_price ?? product()?.price) | currency:'BDT':'৳':'1.0-0' }}</span>
+            <span *ngIf="savings() > 0" class="original-price line-through text-slate-500">
+              {{ product()?.price | currency:'BDT':'৳':'1.0-0' }}
+            </span>
+            <span *ngIf="savings() > 0" class="savings-tag">
+              You save {{ savings() | currency:'BDT':'৳':'1.0-0' }} ({{ savingsPercentage() }}%)
+            </span>
+          </div>
+
+          <!-- Short Bengali Description -->
+          <div class="product-short-summary mb-4">
+            <div *ngIf="product()!.description" class="summary-text" [innerHTML]="product()!.description | safeHtml"></div>
+            <p *ngIf="!product()!.description" class="summary-text">
+              ঐতিহ্যবাহী মাটির তৈরি হস্তশিল্প — ঘর সাজানোর অথবা পূজার জন্য একটি বিশেষ শিল্পকর্ম। হাতে খোদাই করা নকশা এবং প্রাকৃতিক লাল মাটির উষ্ণ রঙ এই সৃষ্টিকে অনন্য করে তুলেছে।
+            </p>
+          </div>
+
+          <!-- Quantity & Action Buttons -->
+          <div *ngIf="!isOutOfStock()" class="purchase-controls mb-4">
+            <div class="flex align-items-center gap-3 mb-4">
+              <span class="quantity-label">Quantity</span>
+              <div class="artisan-qty-picker">
+                <button type="button" class="qty-btn" (click)="decrementQuantity()" [disabled]="quantity() <= 1">
+                  <i class="pi pi-minus"></i>
+                </button>
+                <span class="qty-value">{{ quantity() }}</span>
+                <button type="button" class="qty-btn" (click)="incrementQuantity()">
+                  <i class="pi pi-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Primary Buttons -->
+            <div class="action-buttons-flex flex flex-column sm:flex-row gap-3">
+              <button type="button" class="btn-add-to-cart flex-1 flex align-items-center justify-content-center gap-2" (click)="addToCart()">
+                <i class="pi pi-shopping-bag"></i>
+                <span>Add to Cart</span>
+              </button>
+              <button type="button" class="btn-buy-now flex-1 flex align-items-center justify-content-center gap-2" (click)="buyNow()">
+                <i class="pi pi-bolt"></i>
+                <span>Buy Now</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Add to Wishlist Link -->
+          <div class="wishlist-link-row mb-4">
+            <button type="button" class="wishlist-inline-btn" (click)="toggleWishlist()">
+              <i class="pi mr-2" [ngClass]="isWishlisted() ? 'pi-heart-fill text-red-500' : 'pi-heart'"></i>
+              <span>{{ isWishlisted() ? 'Added to Wishlist' : 'Add to Wishlist' }}</span>
+            </button>
+          </div>
+
+          <!-- 4 Trust Badges Row -->
+          <div class="trust-pillars-grid grid">
+            <div class="col-6 sm:col-3 py-2">
+              <div class="trust-pillar-card flex flex-column align-items-center text-center p-2">
+                <i class="pi pi-heart-fill pillar-icon"></i>
+                <span class="pillar-title">Handcrafted</span>
+                <span class="pillar-sub">by local artisans</span>
+              </div>
+            </div>
+            <div class="col-6 sm:col-3 py-2">
+              <div class="trust-pillar-card flex flex-column align-items-center text-center p-2">
+                <i class="pi pi-check-circle pillar-icon"></i>
+                <span class="pillar-title">Authentic</span>
+                <span class="pillar-sub">terracotta craft</span>
+              </div>
+            </div>
+            <div class="col-6 sm:col-3 py-2">
+              <div class="trust-pillar-card flex flex-column align-items-center text-center p-2">
+                <i class="pi pi-shield pillar-icon"></i>
+                <span class="pillar-title">Secure</span>
+                <span class="pillar-sub">protective packaging</span>
+              </div>
+            </div>
+            <div class="col-6 sm:col-3 py-2">
+              <div class="trust-pillar-card flex flex-column align-items-center text-center p-2">
+                <i class="pi pi-truck pillar-icon"></i>
+                <span class="pillar-title">Nationwide</span>
+                <span class="pillar-sub">doorstep delivery</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    }
 
-    <!-- Fallback for null product -->
-    @if (!loading() && !product()) {
-    <div class="text-center py-8">
-        <i class="pi pi-exclamation-circle text-6xl text-600 mb-3"></i>
-        <h2 class="text-2xl text-600">Product not found</h2>
-        <button pButton label="Return Home" icon="pi pi-home" routerLink="/" class="mt-4"></button>
+    <!-- Product Tabbed Information Section -->
+    <div class="product-tabs-card mb-6">
+      <div class="tabs-header-bar flex border-bottom-1 surface-border">
+        <button type="button" class="tab-btn" [class.active]="activeTab() === 'about'" (click)="selectTab('about')">
+          About
+        </button>
+        <button type="button" class="tab-btn" [class.active]="activeTab() === 'details'" (click)="selectTab('details')">
+          Product Details
+        </button>
+        <button type="button" class="tab-btn" [class.active]="activeTab() === 'care'" (click)="selectTab('care')">
+          Care Instructions
+        </button>
+        <button type="button" class="tab-btn" [class.active]="activeTab() === 'shipping'" (click)="selectTab('shipping')">
+          Shipping & Delivery
+        </button>
+      </div>
+
+      <div class="tab-body-content p-4">
+        <!-- Tab: About -->
+        <div *ngIf="activeTab() === 'about'" class="tab-pane">
+          <p class="tab-narrative mb-4">
+            ঐতিহ্যবাহী মাটির তৈরি এই শিল্পকর্মটি গ্রামীণ বাংলার কুম্ভকারদের দক্ষ হাতের নিখুঁত ছোঁয়ায় গড়ে উঠেছে। প্রতিটি প্রতিমা ও পাত্র তৈরিতে ব্যবহার করা হয়েছে খাঁটি মাটি, যা রোদে শুকিয়ে নিখুঁত আগুনে পুড়িয়ে প্রস্তুত করা হয়েছে। ঘরে নান্দনিক সৌন্দর্য ও বাংলার আবহ তৈরি করতে এটি অনন্য।
+          </p>
+
+          <div class="specs-table-wrapper">
+            <table class="specs-table">
+              <tbody>
+                <tr>
+                  <td class="spec-label">Material</td>
+                  <td class="spec-value">Natural Terracotta (মাটি)</td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Color</td>
+                  <td class="spec-value">Earthy Terracotta Red & Natural Clay Tone</td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Origin</td>
+                  <td class="spec-value">Tangail & Rural Artisan Villages, Bangladesh</td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Craft Type</td>
+                  <td class="spec-value">100% Hand-molded and Kiln-fired</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab: Product Details -->
+        <div *ngIf="activeTab() === 'details'" class="tab-pane">
+          <div class="specs-table-wrapper">
+            <table class="specs-table">
+              <tbody>
+                <tr>
+                  <td class="spec-label">Product Code</td>
+                  <td class="spec-value">{{ product()!.code || 'KK-' + product()!.id }}</td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Category</td>
+                  <td class="spec-value">{{ categoryName() }}</td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Dimensions</td>
+                  <td class="spec-value">Approx. 15 cm (H) x 20 cm (W)</td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Weight</td>
+                  <td class="spec-value">~700 g (Approx.)</td>
+                </tr>
+                <tr>
+                  <td class="spec-label">Availability</td>
+                  <td class="spec-value">{{ product()!.isInStock ? 'In Stock (Ready to dispatch)' : 'Made to Order' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab: Care Instructions -->
+        <div *ngIf="activeTab() === 'care'" class="tab-pane">
+          <ul class="care-list">
+            <li><i class="pi pi-check text-green-600 mr-2"></i> Wipe gently with a soft, clean and dry cloth.</li>
+            <li><i class="pi pi-check text-green-600 mr-2"></i> Avoid washing directly under running water or soaking.</li>
+            <li><i class="pi pi-check text-green-600 mr-2"></i> Keep in a dry, ventilated indoor place away from damp environments.</li>
+            <li><i class="pi pi-check text-green-600 mr-2"></i> Terracotta is naturally fragile, so handle with loving care.</li>
+          </ul>
+        </div>
+
+        <!-- Tab: Shipping & Delivery -->
+        <div *ngIf="activeTab() === 'shipping'" class="tab-pane">
+          <div class="shipping-info-grid grid">
+            <div class="col-12 md:col-6">
+              <h4 class="font-bold mb-2">Delivery Timelines</h4>
+              <p class="text-sm line-height-3 text-600 mb-3">
+                <strong>Inside Dhaka / Tangail:</strong> 2 - 3 business days.<br>
+                <strong>Outside Dhaka:</strong> 3 - 5 business days across all 64 districts.
+              </p>
+            </div>
+            <div class="col-12 md:col-6">
+              <h4 class="font-bold mb-2">Safe Transit Guarantee</h4>
+              <p class="text-sm line-height-3 text-600 mb-3">
+                Every delicate piece is multi-layered with high-density bubble wrap and shock-absorbing cartons to ensure zero transit breakage.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    }
 
-    <!-- Related Products with @defer -->
-    @if (!loading() && product()) {
-    @defer (on viewport) {
-    <div class="related-products-section">
-        <h2 class="section-title">Related Products</h2>
-        <div class="grid">
-            @for (p of relatedProducts(); track p.id; let index = $index) {
-            <div class="col-6 sm:col-6 md:col-2 px-2 mb-4">
-                <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden" [routerLink]="['/products', p.slug || p.id]">
-                    <div class="product-image-wrapper">
-                        @if (p.imageUrl.startsWith('data:')) {
-                            <img [src]="p.imageUrl" [alt]="p.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;">
-                        } @else {
-                            <img [ngSrc]="p.imageUrl" [alt]="p.name" fill class="product-image"
-                                sizes="(max-width: 767px) 45vw, (max-width: 991px) 25vw, 15vw" [priority]="false">
-                        }
+    <!-- Related Products -->
+    <div class="related-section mt-6" *ngIf="relatedProducts().length > 0">
+      <div class="flex align-items-center justify-content-between mb-4">
+        <h2 class="text-2xl font-bold m-0" style="font-family: 'Playfair Display', serif;">Related Crafts</h2>
+        <a [routerLink]="['/category', categorySlug()]" class="text-primary font-semibold text-sm text-decoration-none">
+          View All in {{ categoryName() }} →
+        </a>
+      </div>
 
-                        <div class="quick-actions-overlay">
-                            <button pButton icon="pi pi-search-plus" label="Details" class="p-button-rounded glass-button"></button>
-                        </div>
+      <div class="grid">
+        <div class="col-6 sm:col-4 md:col-3 px-2 mb-3" *ngFor="let p of relatedProducts()">
+          <div class="premium-product-card flex flex-column h-full relative cursor-pointer" (click)="showProductDetails(p)">
+            <!-- Top Badges -->
+            <div class="absolute top-0 left-0 m-2 z-3" *ngIf="p.discount_value && p.effective_price && p.effective_price < p.price">
+              <span class="discount-badge">
+                Flat ৳{{ p.discount_value | number:'1.0-0' }} OFF
+              </span>
+            </div>
 
-                        @if (p.discount_value && p.effective_price && p.effective_price < p.price) {
-                        <div class="absolute top-0 left-0 m-2 z-3">
-                            <span class="discount-badge">
-                                Flat ৳{{ p.discount_value | number:'1.0-0' }} OFF
-                            </span>
-                        </div>
-                        }
+            <!-- Wishlist Heart -->
+            <button type="button" class="product-wishlist-btn" [class.wishlisted]="wishlistService.isWishlisted(p.id)"
+                    (click)="wishlistService.toggleWishlist(p, $event)" aria-label="Toggle wishlist">
+              <i class="pi" [ngClass]="wishlistService.isWishlisted(p.id) ? 'pi-heart-fill' : 'pi-heart'"></i>
+            </button>
 
-                        @if (!p.isInStock) {
-                        <div class="absolute top-0 right-0 m-2 z-3">
-                            <span class="oos-badge">Out of Stock</span>
-                        </div>
-                        }
-                    </div>
+            <!-- Image -->
+            <div class="product-image-wrapper">
+              <img [src]="p.imageUrl" [alt]="p.name" class="product-image" loading="lazy">
+            </div>
 
-                    <div class="product-info-content p-3 flex-grow-1 flex flex-column">
-                        <div class="product-header-flex">
-                            <h3 class="product-title">{{ p.name }}</h3>
-                            <div class="price-container flex flex-column align-items-end">
-                                @if (p.effective_price && p.effective_price < p.price) {
-                                    <span class="old-price text-xs text-slate-500 line-through mb-1">{{ p.price | currency:'BDT':'৳' }}</span>
-                                    <span class="price-pill discounted">{{ p.effective_price | currency:'BDT':'৳' }}</span>
-                                } @else {
-                                    <span class="price-pill">{{ p.price | currency:'BDT':'৳' }}</span>
-                                }
-                            </div>
-                        </div>
-                        
-                        <div class="mt-auto">
-                            <button pButton [label]="!p.isInStock ? 'View Details' : 'View Product'" icon="pi pi-eye"
-                                class="p-button-sm w-full dark-cart-button"
-                                (click)="showProductDetails(p)"></button>
-                        </div>
-                    </div>
+            <!-- Info -->
+            <div class="product-info-content">
+              <div class="product-header-flex">
+                <h3 class="product-title">{{ p.name }}</h3>
+                <div class="price-container">
+                  <span class="current-price">{{ (p.effective_price ?? p.price) | currency:'BDT':'৳':'1.0-0' }}</span>
+                  <span *ngIf="p.effective_price && p.effective_price < p.price" class="old-price">
+                    {{ p.price | currency:'BDT':'৳':'1.0-0' }}
+                  </span>
                 </div>
+              </div>
+
+              <div class="card-bottom-actions">
+                <button type="button" class="dark-cart-button" (click)="$event.stopPropagation(); showProductDetails(p)">
+                  <i class="pi pi-eye"></i> View Details
+                </button>
+              </div>
             </div>
-            }
+          </div>
         </div>
+      </div>
     </div>
-    } @placeholder {
-    <div class="related-products-section">
-        <h2 class="section-title">Related Products</h2>
-        <div class="grid">
-            @for (i of [1,2,3,4]; track i) {
-            <div class="col-4 sm:col-4 md:col-2">
-                        <p-skeleton width="100%" height="200px" styleClass="border-round-xl opacity-20"></p-skeleton>
-            </div>
-            }
-        </div>
-    </div>
-    }
-    }
+  </div>
+
+  <!-- Hidden Fullscreen Galleria for Zoom -->
+  <p-galleria [value]="images()" [visible]="displayGalleria()" (visibleChange)="displayGalleria.set($event)"
+              [activeIndex]="activeImageIndex()" (activeIndexChange)="activeImageIndex.set($event)"
+              [showThumbnails]="false" [showItemNavigators]="true" [fullScreen]="true" [circular]="true"
+              [containerStyle]="{'max-width': '850px'}">
+    <ng-template pTemplate="item" let-item>
+      <img [src]="item" style="width: 100%; max-height: 85vh; object-fit: contain;" />
+    </ng-template>
+  </p-galleria>
 </div>

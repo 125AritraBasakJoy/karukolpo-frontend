@@ -82,6 +82,16 @@ export class AppComponent implements OnInit {
 
     // Check if current route is admin - using window.location.pathname for initial load robustness
     this.isAdminRoute = window.location.pathname.startsWith('/admin');
+    if (isPlatformBrowser(this.platformId)) {
+      const html = document.querySelector('html');
+      if (html) {
+        if (this.isAdminRoute) {
+          html.classList.add('dark-mode');
+        } else {
+          html.classList.remove('dark-mode');
+        }
+      }
+    }
 
     // Listen to route changes
     this.router.events.pipe(
@@ -141,5 +151,15 @@ export class AppComponent implements OnInit {
   private checkRoute(url: string): void {
     // Hide footer/header on admin routes
     this.isAdminRoute = url.includes('/admin');
+    if (isPlatformBrowser(this.platformId)) {
+      const html = document.querySelector('html');
+      if (html) {
+        if (this.isAdminRoute) {
+          html.classList.add('dark-mode');
+        } else {
+          html.classList.remove('dark-mode');
+        }
+      }
+    }
   }
 }

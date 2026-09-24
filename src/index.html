@@ -47,21 +47,21 @@
 
   <!-- Inline Critical CSS: Zero-flicker shell -->
   <style>
-    :root { --accent-color: #3b82f6; --surface-card: #0f172a; }
-    body { margin: 0; background: #020617; font-family: Inter, sans-serif; }
-    .header-shell { height: 80px; background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; padding: 0 1rem; position: sticky; top: 0; z-index: 1000; }
-    .hero-shell { position: relative; height: calc(100vh - 80px); height: calc(100dvh - 80px); min-height: 480px; width: 100%; overflow: hidden; background: #000; }
+    :root { --accent-color: #B84E29; --surface-card: #FFFFFF; }
+    body { margin: 0; background: #FAF7F2; font-family: 'Inter', 'Hind Siliguri', sans-serif; }
+    .header-shell { height: 80px; background: #FFFFFF; border-bottom: 1px solid #ECE7E0; display: flex; align-items: center; padding: 0 1rem; position: sticky; top: 0; z-index: 1000; }
+    .hero-shell { position: relative; height: calc(100vh - 80px); height: calc(100dvh - 80px); min-height: 480px; width: 100%; overflow: hidden; background: #FAF7F2; }
     .hero-picture { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
     .hero-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-    .hero-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 1; }
+    .hero-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); z-index: 1; }
     .hero-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 2; text-align: center; color: #fff; width: 100%; padding: 0 1rem; box-sizing: border-box; }
-    .hero-title { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 800; margin: 0; line-height: 1.1; }
+    .hero-title { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 800; margin: 0; line-height: 1.1; font-family: 'Playfair Display', serif; }
     .hero-tag { font-size: clamp(1rem, 3vw, 1.25rem); margin-top: 1rem; opacity: 0.9; }
   </style>
 
   <!-- Non-render-blocking fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"></noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&amp;family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"></noscript>
   
   <!-- Structured Data -->
   <script type="application/ld+json">

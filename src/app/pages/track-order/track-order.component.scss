@@ -1,120 +1,310 @@
-.page-wrapper {
-  background-color: var(--surface-ground);
-  color: var(--text-color);
+.track-order-page {
+  background-color: var(--surface-ground, #FAF7F2);
   min-height: 100vh;
-  width: 100%;
-  padding-bottom: 4rem;
 }
 
-.track-order-container {
-  padding: 2rem;
-  max-width: 1000px;
-  margin: 0 auto;
-}
+/* Artisanal Search Card */
+.artisanal-search-card {
+  background: linear-gradient(135deg, #F5ECE0 0%, #EDE2D3 100%);
+  border: 1px solid #E5D9C8;
+  box-shadow: 0 4px 20px rgba(184, 78, 41, 0.04);
 
-.search-card {
-  margin-top: 2rem;
-}
-
-.search-section {
-  text-align: center;
-
-  h1 {
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-}
-
-.premium-input {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 14px !important;
-  padding: 1rem 1.5rem !important;
-  color: white !important;
-  font-size: 1.1rem !important;
-  transition: all 0.3s ease !important;
-
-  &:focus {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-color: var(--accent-color) !important;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15) !important;
-  }
-
-  &::placeholder {
-    color: #64748b !important;
-  }
-}
-
-.premium-card {
-  background: #0f172a !important;
-  backdrop-filter: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 28px !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-  overflow: hidden;
-
-  ::ng-deep .p-card-body {
-    padding: 3rem !important;
-  }
-}
-
-.info-group {
-  h4 {
-    margin-top: 0;
-    text-transform: uppercase;
+  .track-badge {
+    background: rgba(184, 78, 41, 0.1);
+    color: #B84E29;
+    border: 1px solid rgba(184, 78, 41, 0.2);
+    padding: 3px 12px;
+    border-radius: 9999px;
     font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    opacity: 0.8;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .track-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #26221F;
+    letter-spacing: -0.01em;
+  }
+
+  .track-subtitle {
+    font-size: 0.95rem;
+    color: #6C5F54;
+    line-height: 1.5;
+  }
+
+  .search-hero-content {
+    max-width: 580px;
+    margin: 0 auto;
+  }
+
+  .search-input-group {
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 
-.info-content {
-  p {
-    line-height: 1.6;
-  }
+.search-phone-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9C8E80;
+  font-size: 0.95rem;
+  pointer-events: none;
 }
 
-.items-list {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-  }
-}
-
-.item-row {
+.artisan-track-input {
+  background: #FFFFFF !important;
+  border: 1px solid #E5DACB !important;
+  border-radius: 9999px !important;
+  padding: 0.75rem 1rem 0.75rem 2.6rem !important;
+  font-size: 0.95rem !important;
+  color: #26221F !important;
+  outline: none;
   transition: all 0.2s ease;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.03);
-    padding-left: 0.5rem;
+  &::placeholder {
+    color: #A39688;
+  }
+
+  &:focus {
+    border-color: #B84E29 !important;
+    box-shadow: 0 0 0 3px rgba(184, 78, 41, 0.12) !important;
   }
 }
 
-.item-badge {
-  min-width: 2.5rem;
-  text-align: center;
+.btn-track-submit {
+  background: #B84E29;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.75rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(184, 78, 41, 0.25);
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #A03F1E;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-back-home {
+  background: transparent;
+  border: none;
+  color: #6C5F54;
+  font-size: 0.88rem;
   font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #B84E29;
+  }
 }
 
-@media screen and (max-width: 768px) {
-  .track-order-container {
-    padding: 1rem;
+/* Order Details Card */
+.order-details-card {
+  background: #FFFFFF;
+  border: 1px solid #EDE4D8;
+  box-shadow: 0 4px 24px rgba(42, 37, 33, 0.05);
+
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: capitalize;
+
+    &.status-pending {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FCD34D;
+    }
+
+    &.status-confirmed {
+      background: #E0E7FF;
+      color: #3730A3;
+      border: 1px solid #C7D2FE;
+    }
+
+    &.status-shipping {
+      background: #DBEAFE;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+    }
+
+    &.status-delivered {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    &.status-cancelled {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+    }
   }
 
-  .premium-card ::ng-deep .p-card-body {
-    padding: 1.5rem !important;
+  .info-block {
+    background: #FAF7F2;
+    border: 1px solid #EDE4D8;
+
+    .info-block-heading {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #26221F;
+      margin: 0;
+
+      i {
+        color: #B84E29;
+      }
+    }
   }
 
-  .search-section h1 {
-    font-size: 2.5rem !important;
+  .payment-method-pill {
+    background: #EAE2D5;
+    color: #4A423A;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+
+  .text-primary {
+    color: #B84E29 !important;
+  }
+
+  /* Track Items */
+  .track-items-list {
+    .track-item-row {
+      &:hover {
+        background: #F5EFE6;
+      }
+    }
+
+    .track-item-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #FAF7F2;
+      border: 1px solid #EDE4D8;
+    }
+
+    .item-qty-badge {
+      background: #1A3B2B;
+      color: #FFFFFF;
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .item-product-name {
+      color: #26221F;
+    }
+  }
+
+  /* Buttons */
+  .btn-cancel-order {
+    background: transparent;
+    border: 1px solid #F87171;
+    color: #DC2626;
+    padding: 0.65rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #FEE2E2;
+    }
+  }
+
+  .btn-back-shop {
+    background: #1A3B2B;
+    color: #FFFFFF;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #12281D;
+    }
+  }
+}
+
+/* Cancel Dialog */
+::ng-deep .artisan-cancel-dialog.p-dialog {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15) !important;
+
+  .p-dialog-header {
+    background: #FAF7F2 !important;
+    border-bottom: 1px solid #EDE4D8 !important;
+    padding: 1rem 1.25rem !important;
+
+    .p-dialog-title {
+      font-family: 'Playfair Display', Georgia, serif !important;
+      font-size: 1.2rem !important;
+      color: #26221F !important;
+    }
+  }
+
+  .p-dialog-content {
+    background: #FFFFFF !important;
+    padding: 1.25rem !important;
+  }
+}
+
+.btn-dialog-dismiss {
+  background: transparent;
+  border: 1px solid #D5C9BC;
+  color: #6C5F54;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #FAF7F2;
+  }
+}
+
+.btn-dialog-confirm {
+  background: #DC2626;
+  color: #FFFFFF;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #B91C1C;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }

@@ -8,6 +8,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductService, ProductQueryOptions } from '../../core/services/product/product.service';
 import { CartService } from '../../core/services/cart/cart.service';
 import { CategoryService } from '../../core/services/category/category.service';
+import { WishlistService } from '../../core/services/wishlist/wishlist.service';
 import { Product } from '../../models/product.model';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -17,6 +18,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
+import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-all-products',
@@ -24,16 +26,14 @@ import { DividerModule } from 'primeng/divider';
     imports: [
         CommonModule, 
         ButtonModule, 
-        TooltipModule, 
-        TagModule, 
-        SkeletonModule, 
-        ToastModule, 
-        DropdownModule, 
-        InputTextModule, 
-        DividerModule,
         FormsModule,
-        CurrencyPipe, 
-        NgOptimizedImage
+        TooltipModule,
+        TagModule,
+        SkeletonModule,
+        ToastModule,
+        DropdownModule,
+        InputTextModule,
+        DividerModule
     ],
     templateUrl: './all-products.component.html',
     styleUrls: ['./all-products.component.scss'],
@@ -41,15 +41,16 @@ import { DividerModule } from 'primeng/divider';
 })
 export class AllProductsComponent implements OnInit, OnDestroy {
     products = signal<Product[]>([]);
+    allCatalogProducts = signal<Product[]>([]);
     loading = signal<boolean>(true);
     totalCount = signal<number>(0);
     
-    // Server-side Filtering and Sorting State
+    // Server-side & Client-side Filtering State
     searchQuery = signal<string>('');
     selectedCategoryId = signal<string | null>(null);
     sortOrder = signal<string>('newest');
     filterType = signal<string | null>(null);
-    inStockOnly = signal<boolean>(false);
+    selectedAvailability = signal<'all' | 'in_stock' | 'out_of_stock'>('all');
     selectedPriceRange = signal<string>('all');
     
     categories = this.categoryService.categories;
@@ -66,10 +67,17 @@ export class AllProductsComponent implements OnInit, OnDestroy {
 
     priceRangeOptions = [
         { label: 'All Prices', value: 'all' },
-        { label: 'Under ৳500', value: 'under-500' },
-        { label: '৳500 - ৳1,000', value: '500-1000' },
-        { label: '৳1,000 - ৳2,500', value: '1000-2500' },
-        { label: '৳2,500+', value: '2500-above' }
+        { label: 'Under ৳ 300', value: 'under-300' },
+        { label: '৳ 300 - ৳ 600', value: '300-600' },
+        { label: '৳ 600 - ৳ 1,000', value: '600-1000' },
+        { label: '৳ 1,000 - ৳ 2,000', value: '1000-2000' },
+        { label: 'Above ৳ 2,000', value: '2000-above' }
+    ];
+
+    availabilityOptions = [
+        { label: 'All Availability', value: 'all' },
+        { label: 'In Stock', value: 'in_stock' },
+        { label: 'Out of Stock', value: 'out_of_stock' }
     ];
 
     hasActiveFilters = computed(() => {
@@ -77,7 +85,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
             this.searchQuery() ||
             this.selectedCategoryId() ||
             this.sortOrder() !== 'newest' ||
-            this.inStockOnly() ||
+            this.selectedAvailability() !== 'all' ||
             this.selectedPriceRange() !== 'all'
         );
     });
@@ -87,7 +95,9 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private productService: ProductService,
         public cartService: CartService,
-        private categoryService: CategoryService,
+        public categoryService: CategoryService,
+        public wishlistService: WishlistService,
+        private messageService: MessageService,
         private titleService: Title,
         private metaService: Meta,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -111,6 +121,12 @@ export class AllProductsComponent implements OnInit, OnDestroy {
                 this.filterType.set(params['filter']);
             } else {
                 this.filterType.set(null);
+            }
+            if (params['q']) {
+                this.searchQuery.set(params['q']);
+            }
+            if (params['category']) {
+                this.selectedCategoryId.set(params['category']);
             }
             this.updateSeo();
             this.fetchProducts();
@@ -143,18 +159,24 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         this.fetchProducts();
     }
 
-    toggleInStockOnly() {
-        this.inStockOnly.set(!this.inStockOnly());
+    isCategorySelected(catId: any): boolean {
+        if (!catId && !this.selectedCategoryId()) return true;
+        return String(this.selectedCategoryId()) === String(catId);
+    }
+
+    setAvailability(avail: any) {
+        this.selectedAvailability.set(avail as 'all' | 'in_stock' | 'out_of_stock');
         this.fetchProducts();
     }
 
     private getPriceBounds(): { min?: number; max?: number } {
         const range = this.selectedPriceRange();
         switch (range) {
-            case 'under-500': return { max: 500 };
-            case '500-1000': return { min: 500, max: 1000 };
-            case '1000-2500': return { min: 1000, max: 2500 };
-            case '2500-above': return { min: 2500 };
+            case 'under-300': return { max: 300 };
+            case '300-600': return { min: 300, max: 600 };
+            case '600-1000': return { min: 600, max: 1000 };
+            case '1000-2000': return { min: 1000, max: 2000 };
+            case '2000-above': return { min: 2000 };
             default: return {};
         }
     }
@@ -166,8 +188,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         if (filter === 'hot-deals') {
             this.productService.getHotDeals().subscribe({
                 next: (items) => {
-                    this.products.set(items);
-                    this.totalCount.set(items.length);
+                    this.applyClientSideFilters(items);
                     this.loading.set(false);
                 },
                 error: (err) => {
@@ -181,8 +202,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         if (filter === 'best-selling') {
             this.productService.getBestSellers().subscribe({
                 next: (items) => {
-                    this.products.set(items);
-                    this.totalCount.set(items.length);
+                    this.applyClientSideFilters(items);
                     this.loading.set(false);
                 },
                 error: (err) => {
@@ -194,6 +214,10 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         }
 
         const priceBounds = this.getPriceBounds();
+        const inStockFilter = this.selectedAvailability() === 'in_stock' 
+            ? true 
+            : (this.selectedAvailability() === 'out_of_stock' ? false : undefined);
+
         const options: ProductQueryOptions = {
             skip: 0,
             limit: 100,
@@ -201,7 +225,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
             categoryId: this.selectedCategoryId() || undefined,
             minPrice: priceBounds.min,
             maxPrice: priceBounds.max,
-            inStock: this.inStockOnly() ? true : undefined,
+            inStock: inStockFilter,
             sort: this.sortOrder()
         };
 
@@ -218,6 +242,24 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         });
     }
 
+    private applyClientSideFilters(items: Product[]) {
+        let filtered = [...items];
+        if (this.searchQuery()) {
+            const q = this.searchQuery().toLowerCase().trim();
+            filtered = filtered.filter(p => p.name.toLowerCase().includes(q));
+        }
+        if (this.selectedCategoryId()) {
+            filtered = filtered.filter(p => String(p.categoryId) === String(this.selectedCategoryId()));
+        }
+        if (this.selectedAvailability() === 'in_stock') {
+            filtered = filtered.filter(p => p.isInStock);
+        } else if (this.selectedAvailability() === 'out_of_stock') {
+            filtered = filtered.filter(p => !p.isInStock);
+        }
+        this.products.set(filtered);
+        this.totalCount.set(filtered.length);
+    }
+
     updateSeo() {
         const filter = this.filterType();
         if (filter === 'hot-deals') {
@@ -227,42 +269,43 @@ export class AllProductsComponent implements OnInit, OnDestroy {
             this.titleService.setTitle('Best Selling | Karukolpo');
             this.metaService.updateTag({ name: 'description', content: 'Shop our best-selling authentic Bangladeshi handcrafted items.' });
         } else {
-            this.titleService.setTitle('Our Collections | Karukolpo');
-            this.metaService.updateTag({ name: 'description', content: 'Explore our full collection of authentic Bangladeshi handcrafted items, from traditional Shora to modern home decor.' });
+            this.titleService.setTitle('All Products | Karukolpo');
+            this.metaService.updateTag({ name: 'description', content: 'Explore our complete collection of authentic Bangladeshi handicrafts, terracotta and traditional pieces.' });
         }
     }
 
     getPageTitle(): string {
         const filter = this.filterType();
-        if (filter === 'hot-deals') {
-            return 'Hot Deals';
-        } else if (filter === 'best-selling') {
-            return 'Best Selling';
-        }
-        return 'Our Collections';
+        if (filter === 'hot-deals') return 'Hot Deals';
+        if (filter === 'best-selling') return 'Best Selling';
+        return 'All Products';
     }
 
     showProductDetails(product: Product) {
         this.router.navigate(['/products', product.slug || product.id]);
     }
 
-    addToCart(product: Product) {
+    quickAddToCart(product: Product, event: Event) {
+        event.stopPropagation();
+        event.preventDefault();
         this.cartService.addToCart(product);
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Added to Cart',
+            detail: `"${product.name}" added to your shopping bag!`,
+            life: 2500
+        });
     }
 
     isOutOfStock(product: Product): boolean {
         return !product.isInStock;
     }
 
-    goBack() {
-        this.router.navigate(['/']);
-    }
-
     clearFilters() {
         this.searchQuery.set('');
         this.selectedCategoryId.set(null);
         this.sortOrder.set('newest');
-        this.inStockOnly.set(false);
+        this.selectedAvailability.set('all');
         this.selectedPriceRange.set('all');
         this.fetchProducts();
     }

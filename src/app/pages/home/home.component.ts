@@ -29,6 +29,7 @@ import { SiteConfigService } from '../../core/services/site-config/site-config.s
 import { CategoryService } from '../../core/services/category/category.service';
 import { Category } from '../../models/category.model';
 import { CartService } from '../../core/services/cart/cart.service';
+import { WishlistService } from '../../core/services/wishlist/wishlist.service';
 import { DividerModule } from 'primeng/divider';
 import { HomeCheckoutModalsComponent } from './home-checkout-modals.component';
 
@@ -42,7 +43,6 @@ import { HomeCheckoutModalsComponent } from './home-checkout-modals.component';
         TextareaModule,
         ToastModule,
         DividerModule,
-        CurrencyPipe,
         NgOptimizedImage,
         RouterModule,
         HomeCheckoutModalsComponent
@@ -142,10 +142,32 @@ export class HomeComponent implements OnInit, OnDestroy {
         private deliveryService: DeliveryService,
         private categoryService: CategoryService,
         public cartService: CartService,
+        public wishlistService: WishlistService,
         private route: ActivatedRoute,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
     ) {
+    }
+
+    quickAddToCart(event: Event, product: Product) {
+        event.stopPropagation();
+        if (this.isOutOfStock(product)) return;
+        this.cartService.addToCart(product);
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Added to Cart',
+            detail: `${product.name} added to your cart`,
+            life: 2500
+        });
+    }
+
+    toggleWishlist(event: Event, product: Product) {
+        event.stopPropagation();
+        this.wishlistService.toggleWishlist(product);
+    }
+
+    getProductCategoryName(product: Product): string {
+        return product.categories?.[0]?.name || 'Handmade Craft';
     }
 
     // Replaces confirmPayment and integration into placeOrder

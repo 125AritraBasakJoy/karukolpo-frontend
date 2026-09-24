@@ -622,7 +622,7 @@ export class ProductService {
 
   public getImageUrl(url: string | null | undefined): string {
     if (!url) {
-      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%231e293b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2364748b" font-family="system-ui, sans-serif" font-size="14" font-weight="500">No Image</text></svg>';
+      return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="%23FAF7F2"/><rect x="15" y="15" width="270" height="270" rx="12" fill="none" stroke="%23EDE4D8" stroke-width="1.5" stroke-dasharray="6,4"/><g transform="translate(150,115)" text-anchor="middle"><path d="M-20,30 C-24,20 -28,-5 -15,-20 C-10,-26 10,-26 15,-20 C28,-5 24,20 20,30 Z M-10,-24 L10,-24" fill="none" stroke="%23B84E29" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/><circle cx="0" cy="5" r="4" fill="%23B84E29" opacity="0.6"/></g><text x="50%" y="180" dominant-baseline="middle" text-anchor="middle" fill="%2326221F" font-family="Georgia,serif" font-size="14" font-weight="600" letter-spacing="0.5">KaruKolpo</text><text x="50%" y="202" dominant-baseline="middle" text-anchor="middle" fill="%238C7E72" font-family="system-ui,sans-serif" font-size="11" font-weight="500">Handcrafted Craft</text></svg>';
     }
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
       return url;

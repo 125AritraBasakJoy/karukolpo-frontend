@@ -1,23 +1,136 @@
-<div class="header-glass flex justify-content-between align-items-center pl-1 pr-4">
-  <a class="flex align-items-center gap-2 cursor-pointer h-full text-decoration-none" routerLink="/" aria-label="Karukolpo Home">
-    <img ngSrc="assets/logo.webp" alt="Karukolpo Logo" class="header-logo" width="90" height="61" priority />
-  </a>
+<header class="site-header">
+  <div class="header-container flex align-items-center justify-content-between">
+    <!-- Brand Logo Area -->
+    <a class="brand-link flex align-items-center gap-2 cursor-pointer text-decoration-none" routerLink="/" (click)="closeAllMenus()" aria-label="Karukolpo Home">
+      <img ngSrc="assets/logo.webp" alt="Karukolpo Logo" class="brand-logo" width="46" height="46" priority />
+      <div class="brand-text-group flex flex-column">
+        <span class="brand-name">KaruKolpo</span>
+        <span class="brand-sub">HANDMADE IN BANGLADESH</span>
+      </div>
+    </a>
 
-  <div class="flex align-items-center gap-2 sm:gap-3">
-    <button pButton label="Track Order" icon="pi pi-search"
-      aria-label="Track your order"
-      class="p-button-text header-btn hidden sm:inline-flex"
-      routerLink="/track-order"></button>
+    <!-- Desktop Center Navigation -->
+    <nav class="desktop-nav hidden lg:flex align-items-center gap-4">
+      <!-- Shop Dropdown -->
+      <div class="nav-dropdown-wrapper relative">
+        <button type="button" class="nav-item-btn flex align-items-center gap-1" (click)="toggleShopMenu($event)">
+          <span>Shop</span>
+          <i class="pi pi-chevron-down text-xs chevron" [class.rotate-180]="isShopMenuOpen()"></i>
+        </button>
+        <div class="dropdown-menu-card" *ngIf="isShopMenuOpen()">
+          <a routerLink="/all-products" class="dropdown-item" (click)="closeAllMenus()">
+            <i class="pi pi-th-large mr-2"></i> All Products
+          </a>
+          <a routerLink="/all-products" [queryParams]="{ filter: 'best-selling' }" class="dropdown-item" (click)="closeAllMenus()">
+            <i class="pi pi-star mr-2"></i> Best Sellers
+          </a>
+          <a routerLink="/all-products" [queryParams]="{ filter: 'hot-deals' }" class="dropdown-item" (click)="closeAllMenus()">
+            <i class="pi pi-bolt mr-2"></i> Hot Deals
+          </a>
+        </div>
+      </div>
 
-    <div class="relative flex align-items-center">
-      <button pButton icon="pi pi-shopping-cart"
-        aria-label="Open shopping cart"
-        class="p-button-rounded p-button-text header-cart-btn"
-        (click)="openCart()">
+      <!-- Collections / Categories Dropdown -->
+      <div class="nav-dropdown-wrapper relative">
+        <button type="button" class="nav-item-btn flex align-items-center gap-1" (click)="toggleCollectionsMenu($event)">
+          <span>Collections</span>
+          <i class="pi pi-chevron-down text-xs chevron" [class.rotate-180]="isCollectionsMenuOpen()"></i>
+        </button>
+        <div class="dropdown-menu-card collections-menu" *ngIf="isCollectionsMenuOpen()">
+          <a routerLink="/all-products" class="dropdown-item font-semibold border-bottom-1 surface-border mb-1" (click)="closeAllMenus()">
+            All Collections
+          </a>
+          <a *ngFor="let cat of categoryService.categories()" [routerLink]="['/category', cat.slug || cat.id]" class="dropdown-item" (click)="closeAllMenus()">
+            {{ cat.name }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Our Story -->
+      <a routerLink="/about" class="nav-link" (click)="closeAllMenus()">Our Story</a>
+
+      <!-- Journal -->
+      <a routerLink="/about" fragment="journal" class="nav-link" (click)="closeAllMenus()">Journal</a>
+    </nav>
+
+    <!-- Search Input Pill (Desktop & Tablet) -->
+    <div class="header-search-wrapper hidden md:flex align-items-center">
+      <form (submit)="onSearchSubmit(); $event.preventDefault();" class="search-form w-full flex align-items-center">
+        <i class="pi pi-search search-icon" (click)="onSearchSubmit()"></i>
+        <input type="text" [(ngModel)]="searchQuery" name="searchQuery"
+               placeholder="Search for handmade crafts..."
+               class="search-input" />
+      </form>
+    </div>
+
+    <!-- Right Actions Group -->
+    <div class="header-actions flex align-items-center gap-2 sm:gap-3">
+      <!-- Track Order Button -->
+      <a routerLink="/track-order" class="track-order-btn hidden sm:flex align-items-center gap-2 text-decoration-none">
+        <i class="pi pi-box track-icon"></i>
+        <span>Track Order</span>
+      </a>
+
+      <!-- User Account Icon (Optional from mock) -->
+      <button type="button" class="action-icon-btn hidden sm:flex align-items-center justify-content-center"
+              aria-label="User Account" pTooltip="Customer Account" tooltipPosition="bottom">
+        <i class="pi pi-user"></i>
       </button>
-      <span *ngIf="cartService.totalItems() > 0" class="cart-badge-new" aria-live="polite">
-        {{ cartService.totalItems() }}
-      </span>
+
+      <!-- Cart Button with Terracotta Pill Badge -->
+      <button type="button" class="header-cart-btn relative flex align-items-center justify-content-center"
+              (click)="openCart()" aria-label="Shopping Cart">
+        <i class="pi pi-shopping-bag"></i>
+        <span class="cart-pill-badge" *ngIf="cartService.totalItems() >= 0">
+          {{ cartService.totalItems() }}
+        </span>
+      </button>
+
+      <!-- Mobile Hamburger Menu Button -->
+      <button type="button" class="mobile-menu-toggle lg:hidden flex align-items-center justify-content-center"
+              (click)="toggleMobileMenu()" aria-label="Toggle menu">
+        <i class="pi" [ngClass]="isMobileMenuOpen() ? 'pi-times' : 'pi-bars'"></i>
+      </button>
     </div>
   </div>
-</div>
+
+  <!-- Mobile Drawer / Dropdown Menu -->
+  <div class="mobile-nav-drawer lg:hidden" *ngIf="isMobileMenuOpen()">
+    <div class="mobile-search-box p-3 border-bottom-1 surface-border">
+      <form (submit)="onSearchSubmit(); $event.preventDefault();" class="search-form flex align-items-center w-full">
+        <i class="pi pi-search search-icon" (click)="onSearchSubmit()"></i>
+        <input type="text" [(ngModel)]="searchQuery" name="searchQueryMobile"
+               placeholder="Search for handmade crafts..." class="search-input w-full" />
+      </form>
+    </div>
+
+    <div class="mobile-nav-links p-3 flex flex-column gap-2">
+      <a routerLink="/all-products" class="mobile-nav-link" (click)="closeAllMenus()">
+        <i class="pi pi-th-large mr-2"></i> All Products
+      </a>
+      
+      <div class="mobile-section-header">Collections</div>
+      <div class="mobile-categories-grid grid">
+        <div class="col-6 py-1" *ngFor="let cat of categoryService.categories()">
+          <a [routerLink]="['/category', cat.slug || cat.id]" class="mobile-cat-pill" (click)="closeAllMenus()">
+            {{ cat.name }}
+          </a>
+        </div>
+      </div>
+
+      <div class="mobile-section-header mt-2">Discover</div>
+      <a routerLink="/all-products" [queryParams]="{ filter: 'best-selling' }" class="mobile-nav-link" (click)="closeAllMenus()">
+        <i class="pi pi-star mr-2"></i> Best Sellers
+      </a>
+      <a routerLink="/all-products" [queryParams]="{ filter: 'hot-deals' }" class="mobile-nav-link" (click)="closeAllMenus()">
+        <i class="pi pi-bolt mr-2"></i> Hot Deals
+      </a>
+      <a routerLink="/about" class="mobile-nav-link" (click)="closeAllMenus()">
+        <i class="pi pi-book mr-2"></i> Our Story
+      </a>
+      <a routerLink="/track-order" class="mobile-nav-link" (click)="closeAllMenus()">
+        <i class="pi pi-box mr-2"></i> Track Order
+      </a>
+    </div>
+  </div>
+</header>

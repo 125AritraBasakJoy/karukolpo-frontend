@@ -1,102 +1,142 @@
-<div class="container py-6 px-4">
-    <!-- Header -->
-    <div class="flex align-items-center mb-6 gap-3">
-        <button pButton icon="pi pi-arrow-left" class="back-btn-pill" (click)="goBack()"></button>
-        <div>
-            <h1 class="text-4xl font-bold m-0">{{ category()?.name || 'Category' }}</h1>
-            <p class="text-600 m-0">Discover our collection in {{ category()?.name }}</p>
+<div class="category-products-page">
+  <div class="container max-w-1320 py-4 px-3 md:px-4">
+    <!-- Breadcrumb Nav -->
+    <nav class="breadcrumb-nav mb-3 flex align-items-center gap-2 text-sm">
+      <a routerLink="/" class="crumb-link">Home</a>
+      <span class="crumb-sep">/</span>
+      <a routerLink="/all-products" class="crumb-link">Collections</a>
+      <span class="crumb-sep">/</span>
+      <span class="crumb-current">{{ category()?.name || 'Collection' }}</span>
+    </nav>
+
+    <!-- Category Hero Banner Card -->
+    <div class="category-hero-banner mb-4 p-4 md:p-5 border-round-2xl relative overflow-hidden">
+      <div class="banner-content relative z-2">
+        <h1 class="banner-title mb-2">{{ category()?.name || 'Collection' }}</h1>
+        <p class="banner-subtitle mb-3">{{ getCategorySubtitle() }}</p>
+        <div class="banner-badges flex flex-wrap align-items-center gap-3">
+          <span class="banner-badge">✦ 100% Handcrafted</span>
+          <span class="banner-badge">✦ Sacred & Authentic</span>
+          <span class="banner-badge">✦ Safe Fragile Packaging</span>
         </div>
+      </div>
+      <div class="banner-artistic-overlay absolute top-0 right-0 h-full w-4 hidden md:block"></div>
+    </div>
+
+    <!-- Filter & Sort Bar -->
+    <div class="filter-bar-card mb-4 p-3 border-round-xl flex flex-wrap align-items-center justify-content-between gap-3">
+      <!-- Search Input -->
+      <div class="search-box flex-1 min-w-15rem">
+        <div class="search-input-inner relative">
+          <i class="pi pi-search search-icon"></i>
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchInput($event)"
+                 placeholder="Search in this collection..." class="filter-search-input w-full" />
+        </div>
+      </div>
+
+      <!-- Quick Filter Dropdowns -->
+      <div class="filter-dropdowns flex flex-wrap align-items-center gap-2">
+        <p-dropdown [options]="priceRangeOptions" [ngModel]="selectedPriceRange()"
+                    (ngModelChange)="onPriceRangeChange($event)" optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="compact-filter-dropdown"></p-dropdown>
+
+        <p-dropdown [options]="sortOptions" [ngModel]="sortOrder()"
+                    (ngModelChange)="onSortChange($event)" optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="compact-filter-dropdown"></p-dropdown>
+
+        <button *ngIf="hasActiveFilters()" type="button" class="clear-filters-btn" (click)="clearFilters()" title="Reset Filters">
+          <i class="pi pi-filter-slash"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Products Count Header -->
+    <div class="products-grid-header flex align-items-center justify-content-between mb-3 px-1">
+      <span class="products-count-text font-medium">{{ filteredProducts().length }} crafts found</span>
+      <div class="flex align-items-center gap-2">
+        <span class="text-xs text-600 hidden sm:inline">Sort:</span>
+        <span class="font-bold text-sm text-900">{{ sortOrder() === 'newest' ? 'Newest' : (sortOrder() === 'price_asc' ? 'Price: Low to High' : 'Featured') }}</span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading()" class="grid">
+      <div *ngFor="let i of [1,2,3,4,5,6,7,8]" class="col-6 sm:col-4 lg:col-3 px-2 mb-3">
+        <div class="p-3 border-round-xl surface-card border-1 surface-border">
+          <p-skeleton width="100%" height="180px" borderRadius="12px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="70%" height="1rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="40%" height="1.2rem"></p-skeleton>
+        </div>
+      </div>
     </div>
 
     <!-- Products Grid -->
-    @if (loading()) {
-    <div class="grid">
-        @for (i of [1,2,3,4,5,6,7,8]; track i) {
-        <div class="col-12 sm:col-6 md:col-4 lg:col-3">
-            <div class="p-4 border-1 surface-border surface-card border-round">
-                <p-skeleton width="100%" height="200px" styleClass="mb-2"></p-skeleton>
-                <p-skeleton width="50%" styleClass="mb-2"></p-skeleton>
-                <p-skeleton width="25%" styleClass="mb-2"></p-skeleton>
+    <div *ngIf="!loading() && filteredProducts().length > 0" class="grid">
+      <div *ngFor="let product of filteredProducts()" class="col-6 sm:col-4 lg:col-3 px-2 mb-3">
+        <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
+             (click)="showProductDetails(product)">
+          <!-- Discount Badge Top Left -->
+          <div *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
+               class="absolute top-0 left-0 m-2 z-3">
+            <span class="discount-badge">
+              Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
+            </span>
+          </div>
+
+          <!-- Wishlist Heart Button Top Right -->
+          <button type="button" class="product-wishlist-btn"
+                  [class.active]="wishlistService.isInWishlist(product.id)"
+                  (click)="toggleWishlist($event, product)"
+                  title="Save to wishlist">
+            <i [class]="wishlistService.isInWishlist(product.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"></i>
+          </button>
+
+          <!-- Out of Stock Badge -->
+          <div *ngIf="isOutOfStock(product)" class="absolute top-0 right-0 m-2 mr-6 z-3">
+            <span class="oos-badge">Sold Out</span>
+          </div>
+
+          <!-- Product Image Wrapper -->
+          <div class="product-img-box relative overflow-hidden">
+            <img [src]="product.imageUrl" [alt]="product.name" class="artisan-product-img" loading="lazy" />
+          </div>
+
+          <!-- Product Meta Info -->
+          <div class="product-meta p-3 flex flex-column flex-grow-1">
+            <h3 class="product-name mb-1">{{ product.name }}</h3>
+            <span class="product-category-sub mb-2">{{ category()?.name || 'Handmade Craft' }}</span>
+
+            <div class="product-bottom-row mt-auto flex align-items-center justify-content-between pt-2">
+              <div class="product-price-block flex flex-column">
+                <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
+                      class="product-regular-price text-xs line-through">
+                  ৳{{ product.price | number:'1.0-0' }}
+                </span>
+                <span class="product-current-price font-bold">
+                  ৳{{ (product.effective_price || product.price) | number:'1.0-0' }}
+                </span>
+              </div>
+
+              <button type="button" class="artisan-cart-btn quick-cart-btn"
+                      [disabled]="isOutOfStock(product)"
+                      (click)="quickAddToCart($event, product)"
+                      title="Add to Cart" aria-label="Add to cart">
+                <i class="pi pi-shopping-bag"></i>
+              </button>
             </div>
+          </div>
         </div>
-        }
+      </div>
     </div>
-    }
-
-    @if (!loading() && products().length > 0) {
-    <div class="grid">
-        @for (product of products(); track product.id; let index = $index) {
-        <div class="col-6 sm:col-6 md:col-4 lg:col-3 px-2 mb-4">
-            <div class="product-card premium-product-card surface-card flex flex-column h-full relative overflow-hidden">
-                @if (product.discount_value && product.effective_price && product.effective_price < product.price) {
-                <div class="absolute top-0 left-0 m-3 z-3">
-                    <span class="discount-badge">
-                        Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
-                    </span>
-                </div>
-                }
-
-                @if (isOutOfStock(product)) {
-                <div class="absolute top-0 right-0 m-3 z-3">
-                    <span class="oos-badge">Out of Stock</span>
-                </div>
-                }
-
-                <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                    @if (product.imageUrl.startsWith('data:')) {
-                        <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;">
-                    } @else {
-                        <img [ngSrc]="product.imageUrl" [alt]="product.name" fill class="product-image"
-                            sizes="(max-width: 767px) 45vw, (max-width: 991px) 30vw, 22vw"
-                            [priority]="index < 4">
-                    }
-
-                        <div class="quick-actions-overlay flex flex-column align-items-center justify-content-center gap-3">
-                            <button pButton icon="pi pi-eye" label="View"
-                                class="p-button-rounded p-button-sm glass-pill-button px-4"
-                                (click)="showProductDetails(product)"></button>
-                        </div>
-                </div>
-
-                <div class="product-info-content p-3 flex-grow-1 flex flex-column">
-                    <div class="product-header-flex">
-                        <h3 class="product-title">{{ product.name }}</h3>
-                        <div class="price-container flex flex-column align-items-end">
-                            @if (product.effective_price && product.effective_price < product.price) {
-                                <span class="old-price text-xs text-slate-500 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
-                                <span class="price-pill discounted">{{ product.effective_price | currency:'BDT':'৳' }}</span>
-                            } @else {
-                                <span class="price-pill">{{ product.price | currency:'BDT':'৳' }}</span>
-                            }
-                        </div>
-                    </div>
-                    
-
-                    <div class="mt-auto">
-                        @if (!isOutOfStock(product)) {
-                        <button pButton label="View" icon="pi pi-eye"
-                            class="p-button-sm w-full dark-cart-button"
-                            (click)="$event.stopPropagation(); showProductDetails(product)"></button>
-                        } @else {
-                        <button pButton label="View" icon="pi pi-eye"
-                            class="p-button-secondary p-button-sm w-full border-round-lg"
-                            (click)="$event.stopPropagation(); showProductDetails(product)"></button>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-        }
-    </div>
-    }
 
     <!-- Empty State -->
-    @if (!loading() && products().length === 0) {
-    <div class="text-center py-8">
-        <i class="pi pi-box text-6xl text-400 mb-3"></i>
-        <h2 class="text-2xl text-600">No products found in this category</h2>
-        <button pButton label="View All Products" icon="pi pi-home" routerLink="/" fragment="products"
-            class="mt-4"></button>
+    <div *ngIf="!loading() && filteredProducts().length === 0" class="empty-state-card text-center py-6 px-4 border-round-2xl my-4">
+      <i class="pi pi-compass text-5xl mb-3 text-400"></i>
+      <h3 class="mb-2">No Crafts Found</h3>
+      <p class="mb-4">We couldn't find any items matching your selected criteria in this collection.</p>
+      <button type="button" class="btn-reset-filters" (click)="clearFilters()">
+        Reset Filters
+      </button>
     </div>
-    }
+  </div>
 </div>

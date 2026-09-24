@@ -9,13 +9,21 @@
         </picture>
         <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
         <div class="z-2 hero-content-box px-3">
-            <h1 class="hero-main-title font-bold mb-2">Karukolpo</h1>
-            <p class="hero-sub-tagline">{{ landingPageTagline() }}</p>
+            <span class="hero-brand-pill mb-3 inline-block">HANDMADE IN BANGLADESH</span>
+            <h1 class="hero-main-title font-bold mb-2">Made by Hand.<br>Rooted in Bangladesh.</h1>
+            <p class="hero-sub-tagline mb-3">Every piece tells a story of heritage, sculpted by master rural artisans using age-old terracotta, clay, and brass traditions.</p>
             <div class="flex flex-column sm:flex-row gap-2 sm:gap-3 justify-content-center mt-3 sm:mt-4 px-3">
-                <button pButton label="Shop Now" icon="pi pi-shopping-bag" class="p-button-lg glass-button hero-cta-btn"
-                    aria-label="Shop our full collection of products" routerLink="/all-products"></button>
-                <button pButton label="About Us" icon="pi pi-info-circle" class="p-button-lg glass-button hero-cta-btn"
+                <button pButton label="Explore Collection" icon="pi pi-arrow-right" iconPos="right" class="p-button-lg hero-btn-primary"
+                    aria-label="Explore collection" routerLink="/all-products"></button>
+                <button pButton label="Our Story" icon="pi pi-compass" class="p-button-lg hero-btn-secondary"
                     aria-label="Learn more about our heritage and artisans" (click)="goToAboutUs()"></button>
+            </div>
+            <!-- 4 Trust Badges on Hero -->
+            <div class="hero-features-bar flex flex-wrap justify-content-center gap-3 sm:gap-4 mt-4">
+                <span class="hero-feature-item">✦ 100% Handcrafted</span>
+                <span class="hero-feature-item">✦ Authentic Artisanal Work</span>
+                <span class="hero-feature-item">✦ Safe Fragile Packaging</span>
+                <span class="hero-feature-item">✦ Delivered Nationwide</span>
             </div>
         </div>
         <!-- Scroll Down Indicator -->
@@ -91,54 +99,56 @@
                 <div class="product-swipe-container" #bestSellingList>
                     @for (product of bestSelling(); track product.id) {
                     <div class="swipe-card-wrapper px-2">
-                        <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
-                            <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                                @if (product.imageUrl.startsWith('data:')) {
-                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;" decoding="async">
-                                } @else {
-                                    <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
-                                        sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                        loading="lazy" decoding="async" style="object-fit: cover;" class="product-image">
-                                }
-
-                                <div class="quick-actions-overlay">
-                                    <button pButton icon="pi pi-search-plus" label="Details" aria-label="View product details"
-                                        class="p-button-rounded glass-button"></button>
-                                </div>
-
-                                @if (product.discount_value && product.effective_price && product.effective_price < product.price) {
-                                <div class="absolute top-0 left-0 m-2 z-3">
-                                    <span class="discount-badge">
-                                        Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
-                                    </span>
-                                </div>
-                                }
-
-                                @if (isOutOfStock(product)) {
-                                <div class="absolute top-0 right-0 m-2 z-3">
-                                    <span class="oos-badge">Out of Stock</span>
-                                </div>
-                                }
+                        <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
+                             (click)="showProductDetails(product)">
+                            <!-- Discount Badge Top Left -->
+                            <div *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
+                                 class="absolute top-0 left-0 m-2 z-3">
+                                <span class="discount-badge">
+                                    Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
+                                </span>
                             </div>
 
-                            <div class="product-info-home p-3 flex-grow-1 flex flex-column">
-                                <div class="product-header-flex">
-                                    <h3 class="product-title">{{ product.name }}</h3>
-                                    <div class="price-container flex flex-column align-items-end">
-                                        @if (product.effective_price && product.effective_price < product.price) {
-                                            <span class="old-price text-xs text-slate-400 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
-                                            <span class="price-pill discounted">{{ product.effective_price | currency:'BDT':'৳' }}</span>
-                                        } @else {
-                                            <span class="price-pill">{{ product.price | currency:'BDT':'৳' }}</span>
-                                        }
-                                    </div>
-                                </div>
+                            <!-- Wishlist Heart Button Top Right -->
+                            <button type="button" class="product-wishlist-btn"
+                                    [class.active]="wishlistService.isInWishlist(product.id)"
+                                    (click)="toggleWishlist($event, product)"
+                                    title="Save to wishlist">
+                                <i [class]="wishlistService.isInWishlist(product.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"></i>
+                            </button>
 
-                                <div class="mt-auto">
-                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'"
-                                        [attr.aria-label]="(isOutOfStock(product) ? 'View details for ' : 'View product ') + product.name"
-                                        icon="pi pi-eye" class="p-button-sm w-full dark-cart-button"
-                                        (click)="showProductDetails(product)"></button>
+                            <!-- Out of Stock Badge -->
+                            <div *ngIf="isOutOfStock(product)" class="absolute top-0 right-0 m-2 mr-6 z-3">
+                                <span class="oos-badge">Sold Out</span>
+                            </div>
+
+                            <!-- Product Image Wrapper -->
+                            <div class="product-img-box relative overflow-hidden">
+                                <img [src]="product.imageUrl" [alt]="product.name" class="artisan-product-img" loading="lazy" />
+                            </div>
+
+                            <!-- Product Meta Info -->
+                            <div class="product-meta p-3 flex flex-column flex-grow-1">
+                                <h3 class="product-name mb-1">{{ product.name }}</h3>
+                                <span class="product-category-sub mb-2">{{ getProductCategoryName(product) }}</span>
+
+                                <div class="product-bottom-row mt-auto flex align-items-center justify-content-between pt-2">
+                                    <div class="product-price-block flex flex-column">
+                                        <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
+                                              class="product-regular-price text-xs line-through">
+                                            ৳{{ product.price | number:'1.0-0' }}
+                                        </span>
+                                        <span class="product-current-price font-bold">
+                                            ৳{{ (product.effective_price || product.price) | number:'1.0-0' }}
+                                        </span>
+                                    </div>
+
+                                    <button type="button" class="artisan-cart-btn quick-cart-btn"
+                                            [disabled]="isOutOfStock(product)"
+                                            (click)="quickAddToCart($event, product)"
+                                            title="Add to Cart" aria-label="Add to cart">
+                                        <i class="pi pi-shopping-bag"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -210,54 +220,56 @@
                 <div class="product-swipe-container" #hotDealsList>
                     @for (product of hotDeals(); track product.id) {
                     <div class="swipe-card-wrapper px-2">
-                        <div class="product-card premium-product-card flex flex-column h-full relative overflow-hidden">
-                            <div class="product-image-wrapper cursor-pointer" (click)="showProductDetails(product)">
-                                @if (product.imageUrl.startsWith('data:')) {
-                                    <img [src]="product.imageUrl" [alt]="product.name" class="product-image" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; object-fit: cover;" decoding="async">
-                                } @else {
-                                    <img [ngSrc]="product.imageUrl" [alt]="product.name" fill
-                                        sizes="(max-width: 767px) 95vw, (max-width: 991px) 45vw, (max-width: 1191px) 30vw, 15vw"
-                                        loading="lazy" decoding="async" style="object-fit: cover;" class="product-image">
-                                }
-
-                                <div class="quick-actions-overlay">
-                                    <button pButton icon="pi pi-search-plus" label="Details" aria-label="View product details"
-                                        class="p-button-rounded glass-button"></button>
-                                </div>
-
-                                @if (product.discount_value && product.effective_price && product.effective_price < product.price) {
-                                <div class="absolute top-0 left-0 m-2 z-3">
-                                    <span class="discount-badge">
-                                        Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
-                                    </span>
-                                </div>
-                                }
-
-                                @if (isOutOfStock(product)) {
-                                <div class="absolute top-0 right-0 m-2 z-3">
-                                    <span class="oos-badge">Out of Stock</span>
-                                </div>
-                                }
+                        <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
+                             (click)="showProductDetails(product)">
+                            <!-- Discount Badge Top Left -->
+                            <div *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
+                                 class="absolute top-0 left-0 m-2 z-3">
+                                <span class="discount-badge">
+                                    Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
+                                </span>
                             </div>
 
-                            <div class="product-info-home p-3 flex-grow-1 flex flex-column">
-                                <div class="product-header-flex">
-                                    <h3 class="product-title">{{ product.name }}</h3>
-                                    <div class="price-container flex flex-column align-items-end">
-                                        @if (product.effective_price && product.effective_price < product.price) {
-                                            <span class="old-price text-xs text-slate-400 line-through mb-1">{{ product.price | currency:'BDT':'৳' }}</span>
-                                            <span class="price-pill discounted">{{ product.effective_price | currency:'BDT':'৳' }}</span>
-                                        } @else {
-                                            <span class="price-pill">{{ product.price | currency:'BDT':'৳' }}</span>
-                                        }
-                                    </div>
-                                </div>
+                            <!-- Wishlist Heart Button Top Right -->
+                            <button type="button" class="product-wishlist-btn"
+                                    [class.active]="wishlistService.isInWishlist(product.id)"
+                                    (click)="toggleWishlist($event, product)"
+                                    title="Save to wishlist">
+                                <i [class]="wishlistService.isInWishlist(product.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"></i>
+                            </button>
 
-                                <div class="mt-auto">
-                                    <button pButton [label]="isOutOfStock(product) ? 'View Details' : 'View Product'"
-                                        [attr.aria-label]="(isOutOfStock(product) ? 'View details for ' : 'View product ') + product.name"
-                                        icon="pi pi-eye" class="p-button-sm w-full dark-cart-button"
-                                        (click)="showProductDetails(product)"></button>
+                            <!-- Out of Stock Badge -->
+                            <div *ngIf="isOutOfStock(product)" class="absolute top-0 right-0 m-2 mr-6 z-3">
+                                <span class="oos-badge">Sold Out</span>
+                            </div>
+
+                            <!-- Product Image Wrapper -->
+                            <div class="product-img-box relative overflow-hidden">
+                                <img [src]="product.imageUrl" [alt]="product.name" class="artisan-product-img" loading="lazy" />
+                            </div>
+
+                            <!-- Product Meta Info -->
+                            <div class="product-meta p-3 flex flex-column flex-grow-1">
+                                <h3 class="product-name mb-1">{{ product.name }}</h3>
+                                <span class="product-category-sub mb-2">{{ getProductCategoryName(product) }}</span>
+
+                                <div class="product-bottom-row mt-auto flex align-items-center justify-content-between pt-2">
+                                    <div class="product-price-block flex flex-column">
+                                        <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
+                                              class="product-regular-price text-xs line-through">
+                                            ৳{{ product.price | number:'1.0-0' }}
+                                        </span>
+                                        <span class="product-current-price font-bold">
+                                            ৳{{ (product.effective_price || product.price) | number:'1.0-0' }}
+                                        </span>
+                                    </div>
+
+                                    <button type="button" class="artisan-cart-btn quick-cart-btn"
+                                            [disabled]="isOutOfStock(product)"
+                                            (click)="quickAddToCart($event, product)"
+                                            title="Add to Cart" aria-label="Add to cart">
+                                        <i class="pi pi-shopping-bag"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -313,29 +325,26 @@
                 </div>
             </p-divider>
             <div class="grid align-items-center">
-                <div class="col-12 md:col-4 mb-4 md:mb-0">
-                    <div class="crafted-image-wrapper" style="aspect-ratio: 4/3; position: relative;">
-                        <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Artisan weaving traditional fabrics"
-                            sizes="(max-width: 768px) 90vw, 33vw" loading="lazy" decoding="async"
-                            class="border-round-xl shadow-4 crafted-image">
+                <div class="col-12 md:col-5 mb-4 md:mb-0">
+                    <div class="crafted-image-wrapper border-round-2xl overflow-hidden shadow-2" style="aspect-ratio: 4/3; position: relative;">
+                        <img [ngSrc]="'assets/artisan-weaving.webp'" fill alt="Rural artisan shaping pottery in Bangladesh"
+                            sizes="(max-width: 768px) 90vw, 40vw" loading="lazy" decoding="async"
+                            class="crafted-image">
                     </div>
                 </div>
-                <div class="col-12 md:col-8 md:pl-6">
+                <div class="col-12 md:col-7 md:pl-5">
                     <div class="crafted-content">
-                        <h3 class="text-3xl md:text-4xl font-bold mb-4">Crafted by Hands, Not Machines
-                        </h3>
-                        <p class="text-lg text-slate-300 mb-4 line-height-3">
-                            Karukolpo was born from a deep passion for Bangladesh's rich cultural heritage. We believe
-                            that every handcrafted item tells a story – a story of tradition, skill, and dedication
-                            passed down through generations.
+                        <span class="heritage-kicker text-xs uppercase tracking-wider font-bold mb-2 block" style="color: #B84E29;">Rooted in Heritage &amp; Tradition</span>
+                        <h3 class="text-3xl md:text-4xl font-bold mb-3" style="font-family: 'Playfair Display', Georgia, serif; color: #26221F;">Crafted by Hands, Not Machines</h3>
+                        <p class="text-base mb-3 line-height-3" style="color: #5C5248;">
+                            Karukolpo was born from a deep reverence for Bangladesh's folk art tradition. We collaborate directly with hereditary potters, weavers, and metalworkers in remote artisan villages, bringing authentic masterpieces to homes across the nation.
                         </p>
-                        <p class="text-lg text-slate-300 mb-5 line-height-3">
-                            Every product you purchase directly supports local craftspeople and their families, helping
-                            to sustain their livelihoods and keep ancient traditions alive.
+                        <p class="text-base mb-4 line-height-3" style="color: #5C5248;">
+                            Every piece you welcome into your home directly supports rural craft families, keeping ancient techniques, sacred forms, and living culture thriving for future generations.
                         </p>
-                        <button pButton label="Learn Our Story" icon="pi pi-arrow-right" pButton iconPos="right"
+                        <button pButton label="Discover Our Story" icon="pi pi-arrow-right" iconPos="right"
                             aria-label="Learn more about our heritage"
-                            class="p-button-lg p-button-primary p-button-rounded shadow-3 transition-all transition-duration-300"
+                            class="p-button-lg hero-btn-primary"
                             (click)="goToAboutUs()"></button>
                     </div>
                 </div>

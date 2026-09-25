@@ -58,7 +58,7 @@
                     <div class="field">
                         <label for="field_fullname">Full Name <span class="text-red-500">*</span></label>
                         <input pInputText id="field_fullname" name="field_fullname" autocomplete="off" [(ngModel)]="checkoutForm.fullName"
-                            placeholder="Enter your name" required class="w-full" #fullName="ngModel">
+                            required class="w-full" #fullName="ngModel">
                         @if (fullName.invalid && (fullName.dirty || fullName.touched)) {
                         <small class="p-error">Full Name is
                             required.</small>
@@ -78,7 +78,7 @@
                     <div class="field">
                         <label for="field_email">Email</label>
                         <input pInputText id="field_email" name="field_email" autocomplete="off" [(ngModel)]="checkoutForm.email"
-                            placeholder="example@email.com" email class="w-full" #email="ngModel">
+                            email class="w-full" #email="ngModel">
                         @if (email.invalid && (email.dirty || email.touched)) {
                         <small class="p-error">Valid Email is
                             required.</small>

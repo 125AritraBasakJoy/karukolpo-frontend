@@ -252,9 +252,7 @@ html.dark-mode {
 .p-inputtext,
 .p-inputnumber-input,
 .p-password-input,
-.p-inputtextarea,
-input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
-textarea {
+.p-inputtextarea {
     background: var(--surface-card) !important;
     border: 1px solid var(--surface-border) !important;
     border-radius: 12px !important;
@@ -304,6 +302,43 @@ textarea {
         transition: background-color 5000s ease-in-out 0s !important;
         caret-color: var(--accent-color) !important;
     }
+}
+
+/* Global Search Input Icon Clearance (Ensures text/placeholder never overlaps search icon) */
+.search-form .search-input,
+.search-input-inner .filter-search-input,
+.search-input,
+.filter-search-input {
+    padding-left: 2.85rem !important;
+    padding-inline-start: 2.85rem !important;
+}
+
+.search-form .search-icon,
+.search-input-inner .search-icon {
+    position: absolute !important;
+    left: 14px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+}
+
+/* Global Customer Autofill Styles (Eliminates browser default blue/grey highlight) */
+.artisan-input:-webkit-autofill,
+.artisan-input:-webkit-autofill:hover,
+.artisan-input:-webkit-autofill:active {
+    -webkit-text-fill-color: #26221F !important;
+    -webkit-box-shadow: 0 0 0px 1000px #FAF7F2 inset !important;
+    box-shadow: 0 0 0px 1000px #FAF7F2 inset !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+    caret-color: #B84E29 !important;
+}
+
+.artisan-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #26221F !important;
+    -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
+    box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
+    caret-color: #B84E29 !important;
 }
 
 /* Global Cursor Normalization */

@@ -1,48 +1,50 @@
 /* =========================================================
    Invoice Component Styles
-   Customer-facing ORDER DETAILS (dark themed)
+   Customer-facing ORDER DETAILS (Artisanal Warm Theme)
    PDF is generated programmatically via jsPDF — no DOM needed
    ========================================================= */
 
 .order-details-view {
-    max-width: 600px;
+    max-width: 620px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 1rem 16px 3rem;
 }
 
 .order-details-card {
-    max-width: 600px;
+    max-width: 620px;
     margin: 0 auto;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #FFFFFF;
+    border: 1px solid #ECE7E0;
     border-radius: 24px;
-    padding: 2.5rem;
+    padding: 2.5rem 2.25rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 12px 36px rgba(42, 37, 33, 0.07);
 }
 
 /* Logo */
 .od-logo-section {
     text-align: center;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .od-logo {
-    width: 80px;
+    width: 68px;
     height: auto;
-    filter: invert(1);
-    mix-blend-mode: screen;
+    display: block;
+    margin: 0 auto;
+    filter: none;
+    mix-blend-mode: normal;
 }
 
 /* Title */
 .od-title {
     text-align: center;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 3px;
-    color: #94a3b8;
-    margin: 0 0 28px 0;
+    letter-spacing: 2.5px;
+    color: #26221F;
+    margin: 0 0 24px 0;
     text-transform: uppercase;
 }
 
@@ -51,14 +53,14 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 14px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 13px 0;
+    border-top: 1px solid #EDE4D8;
 }
 
 .od-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #706861;
     text-transform: uppercase;
     letter-spacing: 1px;
     display: block;
@@ -68,18 +70,20 @@
 .od-value {
     font-size: 15px;
     font-weight: 600;
-    color: #e2e8f0;
+    color: #26221F;
 }
 
 .od-order-id {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 800;
-    color: #60a5fa;
+    color: #B84E29;
+    letter-spacing: 0.5px;
 }
 
 .od-customer-name {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
+    color: #26221F;
 }
 
 .od-text-right {
@@ -88,16 +92,16 @@
 
 /* Address */
 .od-address-section {
-    padding: 14px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 13px 0;
+    border-top: 1px solid #EDE4D8;
 }
 
 .od-address-text {
-    font-size: 13px;
-    color: #94a3b8;
+    font-size: 13.5px;
+    color: #4A423A;
     line-height: 1.6;
     margin-top: 4px;
-    word-break: break-all !important;
+    word-break: break-word !important;
     overflow-wrap: break-word !important;
 }
 
@@ -105,28 +109,33 @@
 .od-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    margin-top: 18px;
 }
 
 .od-table thead tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1.5px solid #EDE4D8;
 }
 
 .od-table th {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 700;
-    color: #64748b;
+    color: #706861;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    padding: 8px 0;
+    padding: 10px 0;
     text-align: left;
 }
 
 .od-table td {
     padding: 12px 0;
-    font-size: 13px;
-    color: #cbd5e1;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 13.5px;
+    color: #26221F;
+    border-bottom: 1px solid #F3ECE2;
+}
+
+.od-table td.od-col-name {
+    font-weight: 600;
+    color: #26221F;
 }
 
 .od-col-qty,
@@ -142,10 +151,13 @@
 }
 
 @media (max-width: 480px) {
+    .order-details-card {
+        padding: 1.75rem 1.25rem;
+    }
 
     .od-table td,
     .od-table th {
-        font-size: 11px;
+        font-size: 11.5px;
     }
 
     .od-col-qty {
@@ -160,9 +172,9 @@
 
 /* Totals */
 .od-totals {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1.5px solid #EDE4D8;
 }
 
 .od-total-row {
@@ -170,25 +182,42 @@
     justify-content: space-between;
     padding: 6px 0;
     font-size: 13px;
-    color: #64748b;
+    color: #6C5F54;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+
+    span:last-child {
+        color: #26221F;
+        font-weight: 600;
+    }
+}
+
+.od-total-row.od-discount-row {
+    color: #B84E29 !important;
+    font-weight: 600;
+
+    span:last-child {
+        color: #B84E29 !important;
+        font-weight: 700;
+    }
 }
 
 .od-grand-total-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
+    margin-top: 14px;
     padding-top: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1.5px solid #EDE4D8;
 }
 
 .od-grand-total-row span:first-child {
     font-size: 14px;
     font-weight: 800;
-    color: #94a3b8;
+    color: #26221F;
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 
     @media (max-width: 380px) {
         font-size: 12px;
@@ -198,31 +227,31 @@
 .od-grand-total-value {
     font-size: 24px;
     font-weight: 800;
-    color: var(--accent-color);
+    color: #B84E29 !important;
     white-space: nowrap;
     line-height: 1.2;
 
     @media (max-width: 576px) {
-        font-size: 18px;
+        font-size: 20px;
     }
 
     @media (max-width: 380px) {
-        font-size: 16px;
+        font-size: 18px;
     }
 }
 
 /* Payment method */
 .od-payment-row {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid #EDE4D8;
     text-align: center;
 }
 
 .od-payment-value {
     font-size: 15px;
     font-weight: 700;
-    color: #60a5fa;
+    color: #0E3B27;
     margin-left: 8px;
 }
 
@@ -231,7 +260,7 @@
     display: flex;
     justify-content: center;
     gap: 14px;
-    margin-top: 28px;
+    margin-top: 24px;
     padding-bottom: 20px;
 }
 
@@ -241,7 +270,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 14px 32px;
+    padding: 13px 28px;
     border-radius: 12px;
     font-size: 15px;
     font-weight: 600;
@@ -251,33 +280,32 @@
 }
 
 .btn-download-invoice {
-    background: #0f172a;
-    color: #e2e8f0;
-    border: 1.5px solid #334155;
+    background: #B84E29;
+    color: #FFFFFF;
+    border: 1.5px solid #B84E29;
+    box-shadow: 0 4px 14px rgba(184, 78, 41, 0.22);
 
     &:hover {
-        background: #1e293b;
-        border-color: #475569;
+        background: #9E3E1C;
+        border-color: #9E3E1C;
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 20px rgba(184, 78, 41, 0.32);
     }
 }
 
 .btn-continue-shopping {
-    background: #ffffff;
-    color: #0f172a;
-    border: 1.5px solid #e2e8f0;
+    background: #FFFFFF;
+    color: #26221F;
+    border: 1.5px solid #EDE4D8;
+    box-shadow: 0 2px 8px rgba(42, 37, 33, 0.04);
 
     &:hover {
-        background: #f1f5f9;
+        background: #FAF7F2;
+        border-color: #B84E29;
+        color: #B84E29;
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 14px rgba(42, 37, 33, 0.08);
     }
-}
-
-.od-total-row.od-discount-row {
-    color: #ef4444 !important;
-    font-weight: 600;
 }
 
 /* === RESPONSIVE === */
@@ -289,5 +317,36 @@
     .btn-download-invoice,
     .btn-continue-shopping {
         width: 100%;
+    }
+}
+
+/* Dark mode fallback if viewed under admin dark mode */
+:host-context(html.dark-mode),
+:host-context(.dark-mode) {
+    .order-details-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    .od-title, .od-value, .od-customer-name, .od-table td, .od-table td.od-col-name, .od-total-row span:last-child, .od-grand-total-row span:first-child {
+        color: #f1f5f9;
+    }
+    .od-label, .od-table th, .od-total-row {
+        color: #94a3b8;
+    }
+    .od-address-text {
+        color: #cbd5e1;
+    }
+    .od-info-row, .od-address-section, .od-table thead tr, .od-table td, .od-totals, .od-grand-total-row, .od-payment-row {
+        border-color: #334155;
+    }
+    .btn-continue-shopping {
+        background: #0f172a;
+        color: #f1f5f9;
+        border-color: #334155;
+        &:hover {
+            background: #1e293b;
+            color: #ffffff;
+            border-color: #475569;
+        }
     }
 }

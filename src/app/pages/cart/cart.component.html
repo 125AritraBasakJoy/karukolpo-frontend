@@ -132,8 +132,8 @@
               <!-- Full Name -->
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_fullname" class="form-field-label">Full Name <span class="req">*</span></label>
-                <input type="text" id="cart_fullname" [(ngModel)]="checkoutForm.fullName" (ngModelChange)="saveFormState()"
-                       placeholder="e.g. Tanvir Ahmed" class="artisan-input w-full" required #fullName="ngModel" />
+                <input type="text" id="cart_fullname" [(ngModel)]="checkoutForm.fullName" (ngModelChange)="onFullNameChange($event)"
+                       (blur)="$any($event.target).scrollLeft = 0" class="artisan-input w-full" required #fullName="ngModel" />
                 <small class="error-msg" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Name is required</small>
               </div>
 
@@ -149,7 +149,7 @@
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_email" class="form-field-label">Email Address <span class="text-500 font-normal">(Optional)</span></label>
                 <input type="email" id="cart_email" [(ngModel)]="checkoutForm.email" (ngModelChange)="saveFormState()"
-                       placeholder="tanvir@example.com" class="artisan-input w-full" #email="ngModel" [pattern]="emailRegex" />
+                       class="artisan-input w-full" #email="ngModel" [pattern]="emailRegex" />
                 <small class="error-msg" *ngIf="email.invalid && (email.dirty || email.touched)">Valid email format required</small>
               </div>
 
@@ -174,7 +174,7 @@
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_postal" class="form-field-label">Postal Code <span class="text-500 font-normal">(Optional)</span></label>
                 <input type="text" id="cart_postal" [(ngModel)]="checkoutForm.postalCode" (ngModelChange)="saveFormState()"
-                       placeholder="e.g. 1205" maxlength="4" class="artisan-input w-full" />
+                       maxlength="4" class="artisan-input w-full" />
               </div>
 
               <!-- Full Address -->
@@ -336,19 +336,19 @@
                 Call or WhatsApp our artisan support team for guidance with your order.
               </p>
 
-              <div class="help-contact-item flex align-items-center gap-2 mb-2 text-sm">
-                <i class="pi pi-phone text-primary-color"></i>
+              <div class="help-contact-item flex align-items-center gap-2 mb-2">
+                <span class="help-icon-wrap"><i class="pi pi-phone"></i></span>
                 <a href="tel:01675718846" class="contact-link font-semibold">01675-718846</a>
               </div>
 
-              <div class="help-contact-item flex align-items-center gap-2 mb-2 text-sm">
-                <i class="pi pi-envelope text-primary-color"></i>
+              <div class="help-contact-item flex align-items-center gap-2 mb-2">
+                <span class="help-icon-wrap"><i class="pi pi-envelope"></i></span>
                 <a href="mailto:contact@karukolpo.com" class="contact-link">contact@karukolpo.com</a>
               </div>
 
-              <div class="help-contact-item flex align-items-start gap-2 text-xs text-600">
-                <i class="pi pi-map-marker text-primary-color mt-1"></i>
-                <span>Karukolpo Studio, Dhaka, Bangladesh</span>
+              <div class="help-contact-item flex align-items-center gap-2">
+                <span class="help-icon-wrap"><i class="pi pi-map-marker"></i></span>
+                <span class="contact-address-text">Pathrail, Tangail-1912, Bangladesh.</span>
               </div>
             </div>
 

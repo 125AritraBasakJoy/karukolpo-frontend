@@ -175,19 +175,43 @@
 }
 
 .artisan-input {
-  background: #FAF7F2;
-  border: 1px solid #E5DACB;
-  border-radius: 8px;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.9rem;
-  color: #26221F;
-  outline: none;
+  background: #FAF7F2 !important;
+  border: 1px solid #E5DACB !important;
+  border-radius: 8px !important;
+  padding: 0.65rem 0.85rem !important;
+  font-size: 0.9rem !important;
+  color: #26221F !important;
+  outline: none !important;
   transition: all 0.2s;
+  text-align: left !important;
+  direction: ltr !important;
+  text-indent: 0 !important;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  box-sizing: border-box !important;
 
   &:focus {
-    border-color: #B84E29;
-    background: #FFFFFF;
-    box-shadow: 0 0 0 3px rgba(184, 78, 41, 0.1);
+    border-color: #B84E29 !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(184, 78, 41, 0.1) !important;
+  }
+
+  /* Browser Autofill styling to match warm artisanal theme */
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:active {
+    -webkit-text-fill-color: #26221F !important;
+    -webkit-box-shadow: 0 0 0px 1000px #FAF7F2 inset !important;
+    box-shadow: 0 0 0px 1000px #FAF7F2 inset !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+    caret-color: #B84E29 !important;
+  }
+
+  &:-webkit-autofill:focus {
+    -webkit-text-fill-color: #26221F !important;
+    -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
+    box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
+    caret-color: #B84E29 !important;
   }
 }
 
@@ -378,14 +402,50 @@
     color: #26221F;
   }
 
-  .contact-link {
-    color: #26221F;
-    text-decoration: none;
-    transition: color 0.2s;
+  .help-contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.88rem;
+    color: #38312B;
+    margin-bottom: 0.55rem;
 
-    &:hover {
-      color: #B84E29;
-      text-decoration: underline;
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .help-icon-wrap {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #26221F;
+
+      i {
+        font-size: 0.95rem;
+        line-height: 1;
+      }
+    }
+
+    .contact-link {
+      color: #26221F;
+      text-decoration: none;
+      transition: color 0.2s;
+      font-size: 0.88rem;
+      line-height: 1.4;
+
+      &:hover {
+        color: #B84E29;
+        text-decoration: underline;
+      }
+    }
+
+    .contact-address-text {
+      color: #38312B;
+      font-size: 0.88rem;
+      line-height: 1.4;
     }
   }
 }

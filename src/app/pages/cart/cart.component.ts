@@ -114,28 +114,25 @@ export class CartComponent implements OnInit, OnDestroy {
                     const elapsed = Date.now() - parsed.timestamp;
                     if (elapsed < this.CHECKOUT_DRAFT_TTL) {
                         this.checkoutForm = parsed.data;
+                        if (this.checkoutForm.fullName) {
+                            this.checkoutForm.fullName = this.checkoutForm.fullName.trimStart();
+                        }
                         if (this.checkoutForm.district) {
                             this.loadSubDistricts(this.checkoutForm.district);
                         }
-                        this.scheduleDraftClear(this.CHECKOUT_DRAFT_TTL - elapsed);
                     } else {
-                        this.clearCheckoutDraft(true);
+                        localStorage.removeItem('karukolpo_checkout_draft');
                     }
                 } catch (e) {
-                    this.clearCheckoutDraft(true);
+                    localStorage.removeItem('karukolpo_checkout_draft');
                 }
             }
         }
     }
 
-    private scheduleDraftClear(delay: number) {
-        if (this.draftClearTimer) {
-            clearTimeout(this.draftClearTimer);
-        }
-        this.draftClearTimer = setTimeout(() => {
-            this.draftClearTimer = null;
-            this.clearCheckoutDraft(true);
-        }, delay);
+    onFullNameChange(val: string) {
+        this.checkoutForm.fullName = (val || '').replace(/^\s+/, '');
+        this.saveFormState();
     }
 
     saveFormState() {
@@ -145,7 +142,6 @@ export class CartComponent implements OnInit, OnDestroy {
                 timestamp: Date.now()
             };
             localStorage.setItem('karukolpo_checkout_draft', JSON.stringify(payload));
-            this.scheduleDraftClear(this.CHECKOUT_DRAFT_TTL);
         }
     }
 

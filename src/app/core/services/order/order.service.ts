@@ -273,9 +273,10 @@ export class OrderService {
    * GET /orders/order-number/{order_number}
    */
   trackOrderByNumber(orderNumber: string, phone?: string): Observable<Order> {
-    let url = API_ENDPOINTS.ORDERS.TRACK_BY_NUMBER(orderNumber);
+    const cleanNo = (orderNumber || '').trim().replace(/^#/, '');
+    let url = API_ENDPOINTS.ORDERS.TRACK_BY_NUMBER(cleanNo);
     if (phone) {
-      url += `?phone=${encodeURIComponent(phone)}`;
+      url += `?phone=${encodeURIComponent(phone.trim())}`;
     }
     return this.apiService.get<any>(url).pipe(
       map(order => this.mapBackendOrder(order))
@@ -544,10 +545,10 @@ export class OrderService {
       email: backendOrder.address?.email || backendOrder.email || '',
       phoneNumber: backendOrder.address?.phone || backendOrder.phoneNumber || backendOrder.phone || '',
       district: backendOrder.address?.district || backendOrder.district || '',
-      subDistrict: backendOrder.address?.subdistrict || backendOrder.subDistrict || '',
-      postalCode: backendOrder.address?.postal_code || backendOrder.address?.additional_info || backendOrder.postalCode || '',
-      fullAddress: backendOrder.address?.address_line || backendOrder.fullAddress || backendOrder.address || '',
-      additionalInfo: backendOrder.address?.additional_info || backendOrder.additionalInfo || '',
+      subDistrict: backendOrder.address?.subdistrict || backendOrder.address?.subDistrict || backendOrder.subDistrict || '',
+      postalCode: backendOrder.address?.postal_code || backendOrder.address?.postalCode || backendOrder.postalCode || '',
+      fullAddress: backendOrder.address?.address_line || backendOrder.address?.address || backendOrder.fullAddress || (typeof backendOrder.address === 'string' ? backendOrder.address : '') || '',
+      additionalInfo: backendOrder.address?.additional_info || backendOrder.address?.additionalInfo || backendOrder.additionalInfo || '',
       items: (backendOrder.items || []).map((item: any) => {
         const itemPrice = (item.unit_price !== undefined && item.unit_price !== null)
           ? parseFloat(item.unit_price)

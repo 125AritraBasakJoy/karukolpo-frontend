@@ -113,43 +113,105 @@ export class InvoiceComponent {
         });
     }
 
-    /** Helper to render Bengali/Unicode text as a high-quality data URL via Browser Canvas */
-    private renderTextAsImage(text: string, options: { fontSize: number; color: string; bold?: boolean }): { data: string; w: number; h: number } {
+    /** Helper to render Bengali/Unicode text as a high-quality data URL via Browser Canvas with word-wrapping */
+    private renderTextAsImage(
+        text: string,
+        options: { fontSize: number; color: string; bold?: boolean; maxWidthMm?: number }
+    ): { data: string; wMm: number; hMm: number } {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d')!;
-        
-        // Increase resolution for better PDF quality (oversample)
-        const scale = 4; 
-        const fontSize = options.fontSize * scale;
-        ctx.font = `${options.bold ? 'bold' : 'normal'} ${fontSize}px "Inter", "Segoe UI", "Tahoma", "Noto Sans Bengali", sans-serif`;
-        
-        // Measure text
-        const metrics = ctx.measureText(text);
-        const padding = 4 * scale;
-        canvas.width = metrics.width + padding * 2;
-        canvas.height = (fontSize * 1.5) + padding; // Extra height for Bengali ascenders/descenders
 
-        // Re-set font after canvas resize
-        ctx.font = `${options.bold ? 'bold' : 'normal'} ${fontSize}px "Inter", "Segoe UI", "Tahoma", "Noto Sans Bengali", sans-serif`;
-        ctx.textBaseline = 'middle';
+        // 1mm = 3.7795 px at 96 DPI
+        // 4x scale factor for sharp print-quality PDF rasterization
+        const scale = 4;
+        const mmToPx = 3.7795 * scale;
+
+        // Font size: in pt. pt to px is pt * (96 / 72) = pt * 1.333
+        const fontSizePx = Math.round(options.fontSize * 1.333 * scale);
+        const lineHeightPx = Math.round(fontSizePx * 1.45);
+        const fontStr = `${options.bold ? 'bold' : 'normal'} ${fontSizePx}px "Noto Sans Bengali", "Hind Siliguri", "Inter", sans-serif`;
+        ctx.font = fontStr;
+
+        const maxCanvasWidth = options.maxWidthMm ? options.maxWidthMm * mmToPx : 0;
+
+        // Word wrap lines
+        const words = (text || '').trim().split(/\s+/);
+        const lines: string[] = [];
+        let currentLine = '';
+
+        if (!maxCanvasWidth) {
+            lines.push(text || '');
+        } else {
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                const testLine = currentLine ? `${currentLine} ${word}` : word;
+                const testWidth = ctx.measureText(testLine).width;
+
+                if (testWidth > maxCanvasWidth && currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            if (currentLine) {
+                lines.push(currentLine);
+            }
+        }
+
+        if (lines.length === 0) {
+            lines.push('');
+        }
+
+        // Measure maximum line width among wrapped lines
+        let measuredMaxLineWidth = 0;
+        for (const line of lines) {
+            const w = ctx.measureText(line).width;
+            if (w > measuredMaxLineWidth) {
+                measuredMaxLineWidth = w;
+            }
+        }
+
+        const paddingX = Math.round(2 * scale);
+        const paddingY = Math.round(2 * scale);
+
+        canvas.width = Math.ceil(measuredMaxLineWidth + paddingX * 2);
+        canvas.height = Math.ceil(lines.length * lineHeightPx + paddingY * 2);
+
+        // Re-apply context properties after canvas resize
+        ctx.font = fontStr;
         ctx.fillStyle = options.color;
-        
-        // Draw
-        ctx.fillText(text, padding, canvas.height / 2);
-        
+        ctx.textBaseline = 'top';
+
+        // Draw each line
+        for (let i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], paddingX, paddingY + (i * lineHeightPx));
+        }
+
+        const wMm = Number((canvas.width / mmToPx).toFixed(2));
+        const hMm = Number((canvas.height / mmToPx).toFixed(2));
+
         return {
             data: canvas.toDataURL('image/png', 1.0),
-            w: canvas.width,
-            h: canvas.height
+            wMm,
+            hMm
         };
     }
 
     private hasBengali(text: string): boolean {
+        if (!text) return false;
         return /[\u0980-\u09FF]/.test(text);
     }
 
-
     async downloadReceipt(customData?: any): Promise<void> {
+        if (typeof document !== 'undefined' && (document as any).fonts?.ready) {
+            try {
+                await (document as any).fonts.ready;
+            } catch (e) {
+                // proceed if font loading promise fails
+            }
+        }
+
         if (customData) {
             this.orderedItems = customData.items || [];
             this.orderFormSnapshot = customData.snapshot || {};
@@ -300,9 +362,24 @@ export class InvoiceComponent {
         const custName = this.orderFormSnapshot.fullName || '—';
         const custPhone = this.orderFormSnapshot.phoneNumber || '';
         const custEmail = this.orderFormSnapshot.email || '';
-        text(forceBreak(custName), cardX[1] + 4, bodyY, { size: 9, color: black, bold: true, maxW: cardW - 8 });
-        if (custPhone) text(`Phone: ${custPhone}`, cardX[1] + 4, bodyY + 5, { size: 8, color: midGray });
-        if (custEmail) text(`Email: ${custEmail}`, cardX[1] + 4, bodyY + 10, { size: 8, color: midGray, maxW: cardW - 8 });
+
+        let billToY = bodyY;
+        if (this.hasBengali(custName)) {
+            const nameImg = this.renderTextAsImage(custName, { fontSize: 9.5, color: '#0f172a', bold: true, maxWidthMm: cardW - 8 });
+            pdf.addImage(nameImg.data, 'PNG', cardX[1] + 4, billToY - 1, nameImg.wMm, nameImg.hMm, undefined, 'FAST');
+            billToY += nameImg.hMm + 1.5;
+        } else {
+            text(forceBreak(custName), cardX[1] + 4, billToY, { size: 9, color: black, bold: true, maxW: cardW - 8 });
+            billToY += 5;
+        }
+
+        if (custPhone) {
+            text(`Phone: ${custPhone}`, cardX[1] + 4, billToY, { size: 8, color: midGray });
+            billToY += 4.5;
+        }
+        if (custEmail) {
+            text(`Email: ${custEmail}`, cardX[1] + 4, billToY, { size: 8, color: midGray, maxW: cardW - 8 });
+        }
 
         // Shipping Address
         const addr = this.orderFormSnapshot.fullAddress || '—';
@@ -312,7 +389,13 @@ export class InvoiceComponent {
 
         // Combine into one flow for better wrapping
         const combinedAddr = [addr, subDist, dist, postal ? `Postal Code: ${postal}` : ''].filter(s => !!s).join(', ');
-        text(forceBreak(combinedAddr), cardX[2] + 4, bodyY, { size: 8, color: midGray, maxW: cardW - 8 });
+
+        if (this.hasBengali(combinedAddr)) {
+            const addrImg = this.renderTextAsImage(combinedAddr, { fontSize: 8, color: '#64748b', maxWidthMm: cardW - 8 });
+            pdf.addImage(addrImg.data, 'PNG', cardX[2] + 4, bodyY - 1, addrImg.wMm, addrImg.hMm, undefined, 'FAST');
+        } else {
+            text(forceBreak(combinedAddr), cardX[2] + 4, bodyY, { size: 8, color: midGray, maxW: cardW - 8 });
+        }
 
         y += cardH + 8;
 
@@ -321,11 +404,11 @@ export class InvoiceComponent {
         // =====================
         const tableBody = (this.orderedItems || []).map((item: any) => {
             const name = item.product?.name || item.product?.code || `Product ID: ${item.product?.id || 'Unknown'}`;
-            
-            // If name has Bengali, we'll replace the text with empty string in the data 
-            // and draw the image in didDrawCell instead.
-            const displayName = this.hasBengali(name) ? '' : name;
-            const nameImageData = this.hasBengali(name) ? this.renderTextAsImage(name, { fontSize: 11, color: '#1e293b', bold: true }) : null;
+            const isBengali = this.hasBengali(name);
+
+            // Available width for product name column is ~66mm
+            const nameImageData = isBengali ? this.renderTextAsImage(name, { fontSize: 9.5, color: '#1e293b', bold: true, maxWidthMm: 66 }) : null;
+            const displayName = isBengali ? '' : name;
 
             const qty = item.quantity || 0;
             const price = item.price_at_purchase ?? item.price ?? item.product?.effective_price ?? item.product?.price ?? 0;
@@ -335,9 +418,9 @@ export class InvoiceComponent {
                 { 
                     content: displayName, 
                     nameImage: nameImageData ? nameImageData.data : null,
-                    imageW: nameImageData ? nameImageData.w : 0,
-                    imageH: nameImageData ? nameImageData.h : 0
-                }, // Custom cell data
+                    imageW: nameImageData ? nameImageData.wMm : 0,
+                    imageH: nameImageData ? nameImageData.hMm : 0
+                },
                 qty.toString(), 
                 `BDT ${price.toLocaleString()}`, 
                 `BDT ${lineTotal.toLocaleString()}`
@@ -373,25 +456,19 @@ export class InvoiceComponent {
             },
             alternateRowStyles: { fillColor: [255, 255, 255] },
             theme: 'grid',
+            didParseCell: (data: any) => {
+                if (data.column.index === 0 && data.cell.raw && data.cell.raw.imageH) {
+                    data.cell.styles.minCellHeight = Math.max(12, data.cell.raw.imageH + 6);
+                }
+            },
             didDrawCell: (data: any) => {
                 // If it's the product column and we have a generated image
                 if (data.column.index === 0 && data.cell.raw && data.cell.raw.nameImage) {
                     const cell = data.cell;
                     const raw = cell.raw;
                     const padding = 4;
-                    
-                    // Preserve aspect ratio
-                    const targetH = 6; // Height in mm
-                    const ratio = raw.imageW / raw.imageH;
-                    let targetW = targetH * ratio;
-                    
-                    // Constraint to column width
-                    const maxW = cell.width - padding * 2;
-                    if (targetW > maxW) {
-                        targetW = maxW;
-                    }
-                    
-                    pdf.addImage(raw.nameImage, 'PNG', cell.x + padding, cell.y + (cell.height - targetH) / 2, targetW, targetH, undefined, 'FAST');
+                    const yOffset = (cell.height - raw.imageH) / 2;
+                    pdf.addImage(raw.nameImage, 'PNG', cell.x + padding, cell.y + Math.max(2, yOffset), raw.imageW, raw.imageH, undefined, 'FAST');
                 }
             }
         });

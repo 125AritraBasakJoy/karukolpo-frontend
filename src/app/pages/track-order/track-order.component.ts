@@ -110,7 +110,8 @@ export class TrackOrderComponent {
           const mostRecent = sorted[0];
 
           // Fetch the FULL order details using the order_number and phone to populate ID, items, and address
-          this.orderService.trackOrderByNumber(mostRecent.orderNumber || '', normalizedPhone).subscribe({
+          const orderNo = (mostRecent.orderNumber || mostRecent.id || '').trim().replace(/^#/, '');
+          this.orderService.trackOrderByNumber(orderNo, normalizedPhone).subscribe({
             next: (fullOrder) => {
               this.resolveProductNames(fullOrder).subscribe(resolvedOrder => {
                 this.order.set(resolvedOrder);
@@ -285,6 +286,62 @@ export class TrackOrderComponent {
         });
       }
     });
+  }
+
+  getCustomerName(): string {
+    const o = this.order();
+    return o?.address?.full_name || o?.fullName || 'Customer';
+  }
+
+  getCustomerPhone(): string {
+    const o = this.order();
+    return o?.address?.phone || o?.phoneNumber || '';
+  }
+
+  getStreetAddress(): string {
+    const o = this.order();
+    return o?.address?.address_line || o?.fullAddress || '';
+  }
+
+  getLocationDetails(): string {
+    const o = this.order();
+    if (!o) return '';
+    const subDistrict = o.address?.subdistrict || o.subDistrict || '';
+    const district = o.address?.district || o.district || '';
+    const postal = o.address?.postal_code || o.postalCode || '';
+
+    const parts: string[] = [];
+    if (subDistrict) parts.push(subDistrict);
+    if (district) {
+      if (postal) {
+        parts.push(`${district} - ${postal}`);
+      } else {
+        parts.push(district);
+      }
+    } else if (postal) {
+      parts.push(postal);
+    }
+    return parts.join(', ');
+  }
+
+  getAdditionalInfo(): string {
+    const o = this.order();
+    return o?.address?.additional_info || o?.additionalInfo || '';
+  }
+
+  getFullAddress(): string {
+    const o = this.order();
+    if (!o) return '';
+    const street = this.getStreetAddress();
+    const location = this.getLocationDetails();
+    const note = this.getAdditionalInfo();
+
+    const parts = [street, location].filter(Boolean);
+    let full = parts.join(', ');
+    if (note) {
+      full += full ? ` (${note})` : note;
+    }
+    return full || 'No address provided';
   }
 
   goBack() {

@@ -34,7 +34,10 @@ export interface Order {
     district: string;
     subdistrict: string;
     address_line: string;
-    additional_info: string;
+    additional_info?: string | null;
+    email?: string | null;
+    postal_code?: string | null;
+    address?: string | null;
   };
   payments?: {
     id: string;

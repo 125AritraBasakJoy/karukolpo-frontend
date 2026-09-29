@@ -72,10 +72,22 @@
                 <i class="pi pi-user"></i> Shipping Details
               </h4>
               <div class="info-content border-left-2 border-blue-500 pl-3">
-                <p class="font-bold m-0 mb-1 text-white">{{ order()?.fullName }}</p>
-                <p class="m-0 text-slate-400">{{ order()?.phoneNumber }}</p>
-                <p class="m-0 text-slate-400 mt-2 break-word">{{ order()?.fullAddress }}</p>
-                <p class="m-0 text-slate-400">{{ order()?.district }} - {{ order()?.postalCode }}</p>
+                <p class="font-bold m-0 mb-1 text-white">{{ getCustomerName() }}</p>
+                <p class="m-0 text-slate-400 mb-2">{{ getCustomerPhone() }}</p>
+                <div class="mt-2 text-slate-300">
+                  <p class="m-0 font-medium text-white break-word" *ngIf="getStreetAddress()">
+                    {{ getStreetAddress() }}
+                  </p>
+                  <p class="m-0 text-slate-400 text-sm mt-1" *ngIf="getLocationDetails()">
+                    {{ getLocationDetails() }}
+                  </p>
+                  <p class="m-0 text-slate-400 text-xs mt-1.5 italic" *ngIf="getAdditionalInfo()">
+                    Note: {{ getAdditionalInfo() }}
+                  </p>
+                  <p class="m-0 text-slate-400 break-word" *ngIf="!getStreetAddress() && !getLocationDetails()">
+                    {{ getFullAddress() }}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

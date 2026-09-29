@@ -787,13 +787,13 @@ export class OrdersComponent implements OnInit {
         const invoiceData = {
           items: finalOrder.items || [],
           snapshot: {
-            fullName: finalOrder.address?.full_name || finalOrder.fullName,
-            phoneNumber: finalOrder.address?.phone || finalOrder.phoneNumber,
-            fullAddress: finalOrder.address?.address_line || finalOrder.fullAddress,
-            subDistrict: finalOrder.address?.subdistrict || finalOrder.subDistrict,
-            district: finalOrder.address?.district || finalOrder.district,
-            postalCode: finalOrder.postalCode || '',
-            email: finalOrder.email || ''
+            fullName: finalOrder.address?.full_name || finalOrder.fullName || '',
+            phoneNumber: finalOrder.address?.phone || finalOrder.phoneNumber || '',
+            fullAddress: finalOrder.address?.address_line || finalOrder.address?.address || finalOrder.fullAddress || '',
+            subDistrict: finalOrder.address?.subdistrict || finalOrder.subDistrict || '',
+            district: finalOrder.address?.district || finalOrder.district || '',
+            postalCode: finalOrder.address?.postal_code || finalOrder.postalCode || '',
+            email: finalOrder.address?.email || finalOrder.email || ''
           },
           method: finalOrder.paymentMethod || 'COD',
           deliveryCharge: finalOrder.deliveryCharge || 0,

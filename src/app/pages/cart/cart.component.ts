@@ -100,49 +100,17 @@ export class CartComponent implements OnInit, OnDestroy {
     ngOnInit() {
         if (isPlatformBrowser(this.platformId)) {
             window.scrollTo(0, 0);
+            localStorage.removeItem('karukolpo_checkout_draft');
         }
         this.cartService.handleAbandonedCart();
-        this.loadCheckoutDraft();
-    }
-
-    loadCheckoutDraft() {
-        if (isPlatformBrowser(this.platformId)) {
-            const saved = localStorage.getItem('karukolpo_checkout_draft');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    const elapsed = Date.now() - parsed.timestamp;
-                    if (elapsed < this.CHECKOUT_DRAFT_TTL) {
-                        this.checkoutForm = parsed.data;
-                        if (this.checkoutForm.fullName) {
-                            this.checkoutForm.fullName = this.checkoutForm.fullName.trimStart();
-                        }
-                        if (this.checkoutForm.district) {
-                            this.loadSubDistricts(this.checkoutForm.district);
-                        }
-                    } else {
-                        localStorage.removeItem('karukolpo_checkout_draft');
-                    }
-                } catch (e) {
-                    localStorage.removeItem('karukolpo_checkout_draft');
-                }
-            }
-        }
     }
 
     onFullNameChange(val: string) {
         this.checkoutForm.fullName = (val || '').replace(/^\s+/, '');
-        this.saveFormState();
     }
 
     saveFormState() {
-        if (isPlatformBrowser(this.platformId)) {
-            const payload = {
-                data: this.checkoutForm,
-                timestamp: Date.now()
-            };
-            localStorage.setItem('karukolpo_checkout_draft', JSON.stringify(payload));
-        }
+        // Form state retained in-memory
     }
 
     clearCheckoutDraft(clearCart: boolean = false) {

@@ -142,7 +142,10 @@
   color: #26221F;
   outline: none;
   resize: vertical;
-  transition: border-color 0.2s;
+  &::placeholder {
+    color: #8C837B;
+    opacity: 1;
+  }
 
   &:focus {
     border-color: #B84E29;
@@ -175,12 +178,14 @@
 }
 
 .artisan-input {
+  color-scheme: light !important;
   background: #FAF7F2 !important;
   border: 1px solid #E5DACB !important;
   border-radius: 8px !important;
   padding: 0.65rem 0.85rem !important;
   font-size: 0.9rem !important;
   color: #26221F !important;
+  -webkit-text-fill-color: #26221F !important;
   outline: none !important;
   transition: all 0.2s;
   text-align: left !important;
@@ -190,28 +195,42 @@
   word-spacing: normal !important;
   box-sizing: border-box !important;
 
+  &::placeholder,
+  &::-webkit-input-placeholder,
+  &::-moz-placeholder,
+  &:-ms-input-placeholder {
+    color: #8C837B !important;
+    opacity: 1 !important;
+  }
+
   &:focus {
     border-color: #B84E29 !important;
     background: #FFFFFF !important;
+    color: #26221F !important;
+    -webkit-text-fill-color: #26221F !important;
     box-shadow: 0 0 0 3px rgba(184, 78, 41, 0.1) !important;
   }
 
   /* Browser Autofill styling to match warm artisanal theme */
   &:-webkit-autofill,
   &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
   &:-webkit-autofill:active {
+    color-scheme: light !important;
+    color: #26221F !important;
     -webkit-text-fill-color: #26221F !important;
+    caret-color: #B84E29 !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+  }
+
+  &:-webkit-autofill {
     -webkit-box-shadow: 0 0 0px 1000px #FAF7F2 inset !important;
     box-shadow: 0 0 0px 1000px #FAF7F2 inset !important;
-    transition: background-color 5000s ease-in-out 0s !important;
-    caret-color: #B84E29 !important;
   }
 
   &:-webkit-autofill:focus {
-    -webkit-text-fill-color: #26221F !important;
     -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
     box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
-    caret-color: #B84E29 !important;
   }
 }
 
@@ -231,6 +250,10 @@
     padding: 0.65rem 0.85rem !important;
     font-size: 0.9rem !important;
     color: #26221F !important;
+
+    &.p-placeholder {
+      color: #8C837B !important;
+    }
   }
 
   &.p-focus {

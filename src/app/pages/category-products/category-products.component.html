@@ -75,11 +75,14 @@
       <div *ngFor="let product of filteredProducts()" class="col-6 sm:col-4 lg:col-3 px-2 mb-3">
         <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
              (click)="showProductDetails(product)">
-          <!-- Discount Badge Top Left -->
-          <div *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
-               class="absolute top-0 left-0 m-2 z-3">
-            <span class="discount-badge">
+          <!-- Badges Column Top Left -->
+          <div class="product-badges-stack absolute top-0 left-0 m-2 z-3 flex flex-column gap-1 align-items-start pointer-events-none">
+            <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
+                  class="discount-badge">
               Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
+            </span>
+            <span *ngIf="isOutOfStock(product)" class="oos-badge">
+              Sold Out
             </span>
           </div>
 
@@ -90,11 +93,6 @@
                   title="Save to wishlist">
             <i [class]="wishlistService.isInWishlist(product.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"></i>
           </button>
-
-          <!-- Out of Stock Badge -->
-          <div *ngIf="isOutOfStock(product)" class="absolute top-0 right-0 m-2 mr-6 z-3">
-            <span class="oos-badge">Sold Out</span>
-          </div>
 
           <!-- Product Image Wrapper -->
           <div class="product-img-box relative overflow-hidden">

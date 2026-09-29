@@ -110,7 +110,7 @@
               </label>
               <textarea id="order_notes" [(ngModel)]="checkoutForm.additionalInfo" (ngModelChange)="saveFormState()"
                         rows="2" class="order-note-input w-full"
-                        placeholder="Special instructions for packaging, gift note, or delivery..."></textarea>
+                        placeholder="Enter order notes or delivery instructions (optional)"></textarea>
             </div>
           </div>
 
@@ -132,23 +132,28 @@
               <!-- Full Name -->
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_fullname" class="form-field-label">Full Name <span class="req">*</span></label>
-                <input type="text" id="cart_fullname" [(ngModel)]="checkoutForm.fullName" (ngModelChange)="onFullNameChange($event)"
-                       (blur)="$any($event.target).scrollLeft = 0" class="artisan-input w-full" required #fullName="ngModel" />
+                <input type="text" id="cart_fullname" name="fullName" autocomplete="name" spellcheck="false"
+                       [(ngModel)]="checkoutForm.fullName" (ngModelChange)="onFullNameChange($event)"
+                       (blur)="$any($event.target).scrollLeft = 0" class="artisan-input w-full"
+                       placeholder="Enter your name" required #fullName="ngModel" />
                 <small class="error-msg" *ngIf="fullName.invalid && (fullName.dirty || fullName.touched)">Name is required</small>
               </div>
 
               <!-- Phone Number -->
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_phone" class="form-field-label">Phone Number <span class="req">*</span></label>
-                <input type="tel" id="cart_phone" [(ngModel)]="checkoutForm.phoneNumber" (ngModelChange)="saveFormState()"
-                       placeholder="017XXXXXXXX" maxlength="11" class="artisan-input w-full" required #phone="ngModel" />
+                <input type="tel" id="cart_phone" name="phoneNumber" autocomplete="tel" spellcheck="false"
+                       [(ngModel)]="checkoutForm.phoneNumber" (ngModelChange)="saveFormState()"
+                       placeholder="Enter your phone number" maxlength="11" class="artisan-input w-full" required #phone="ngModel" />
                 <small class="error-msg" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid 11-digit phone number is required</small>
               </div>
 
               <!-- Email Address -->
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_email" class="form-field-label">Email Address <span class="text-500 font-normal">(Optional)</span></label>
-                <input type="email" id="cart_email" [(ngModel)]="checkoutForm.email" (ngModelChange)="saveFormState()"
+                <input type="email" id="cart_email" name="email" autocomplete="email" spellcheck="false"
+                       [(ngModel)]="checkoutForm.email" (ngModelChange)="saveFormState()"
+                       placeholder="Enter your email address"
                        class="artisan-input w-full" #email="ngModel" [pattern]="emailRegex" />
                 <small class="error-msg" *ngIf="email.invalid && (email.dirty || email.touched)">Valid email format required</small>
               </div>
@@ -173,15 +178,17 @@
               <!-- Postal Code -->
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_postal" class="form-field-label">Postal Code <span class="text-500 font-normal">(Optional)</span></label>
-                <input type="text" id="cart_postal" [(ngModel)]="checkoutForm.postalCode" (ngModelChange)="saveFormState()"
-                       maxlength="4" class="artisan-input w-full" />
+                <input type="text" id="cart_postal" name="postalCode" autocomplete="postal-code" spellcheck="false"
+                       [(ngModel)]="checkoutForm.postalCode" (ngModelChange)="saveFormState()"
+                       placeholder="Enter postal code" maxlength="4" class="artisan-input w-full" />
               </div>
 
               <!-- Full Address -->
               <div class="col-12 field mb-3">
                 <label for="cart_address" class="form-field-label">Delivery Address <span class="req">*</span></label>
-                <textarea id="cart_address" [(ngModel)]="checkoutForm.fullAddress" (ngModelChange)="saveFormState()"
-                          rows="2" placeholder="House number, road number, area / village..."
+                <textarea id="cart_address" name="fullAddress" autocomplete="street-address" spellcheck="false"
+                          [(ngModel)]="checkoutForm.fullAddress" (ngModelChange)="saveFormState()"
+                          rows="2" placeholder="Enter your full delivery address (house, road, area...)"
                           class="artisan-input w-full" required #address="ngModel"></textarea>
                 <small class="error-msg" *ngIf="address.invalid && (address.dirty || address.touched)">Delivery address is required</small>
               </div>
@@ -250,11 +257,11 @@
               <div class="grid">
                 <div class="col-12 sm:col-6 field mb-2">
                   <label class="form-field-label">Sender bKash Phone Number <span class="req">*</span></label>
-                  <input type="tel" [(ngModel)]="bkashPhone" placeholder="01XXXXXXXXX" maxlength="11" class="artisan-input w-full" />
+                  <input type="tel" [(ngModel)]="bkashPhone" placeholder="Enter bKash phone number" maxlength="11" class="artisan-input w-full" />
                 </div>
                 <div class="col-12 sm:col-6 field mb-2">
                   <label class="form-field-label">Transaction ID (TrxID) <span class="req">*</span></label>
-                  <input type="text" [(ngModel)]="bkashTrxId" placeholder="e.g. 9J4K2L8M" class="artisan-input w-full" />
+                  <input type="text" [(ngModel)]="bkashTrxId" placeholder="Enter transaction ID (TrxID)" class="artisan-input w-full" />
                 </div>
               </div>
 

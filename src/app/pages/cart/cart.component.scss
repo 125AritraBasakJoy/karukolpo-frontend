@@ -143,8 +143,21 @@
   outline: none;
   resize: vertical;
   &::placeholder {
-    color: #8C837B;
-    opacity: 1;
+    color: #8C837B !important;
+    -webkit-text-fill-color: #8C837B !important;
+    opacity: 1 !important;
+  }
+  &::-webkit-input-placeholder {
+    color: #8C837B !important;
+    -webkit-text-fill-color: #8C837B !important;
+    opacity: 1 !important;
+  }
+  &::-moz-placeholder {
+    color: #8C837B !important;
+    opacity: 1 !important;
+  }
+  &:-ms-input-placeholder {
+    color: #8C837B !important;
   }
 
   &:focus {
@@ -185,7 +198,6 @@
   padding: 0.65rem 0.85rem !important;
   font-size: 0.9rem !important;
   color: #26221F !important;
-  -webkit-text-fill-color: #26221F !important;
   outline: none !important;
   transition: all 0.2s;
   text-align: left !important;
@@ -195,19 +207,31 @@
   word-spacing: normal !important;
   box-sizing: border-box !important;
 
-  &::placeholder,
-  &::-webkit-input-placeholder,
-  &::-moz-placeholder,
-  &:-ms-input-placeholder {
+  &::placeholder {
+    color: #8C837B !important;
+    -webkit-text-fill-color: #8C837B !important;
+    opacity: 1 !important;
+  }
+
+  &::-webkit-input-placeholder {
+    color: #8C837B !important;
+    -webkit-text-fill-color: #8C837B !important;
+    opacity: 1 !important;
+  }
+
+  &::-moz-placeholder {
     color: #8C837B !important;
     opacity: 1 !important;
+  }
+
+  &:-ms-input-placeholder {
+    color: #8C837B !important;
   }
 
   &:focus {
     border-color: #B84E29 !important;
     background: #FFFFFF !important;
     color: #26221F !important;
-    -webkit-text-fill-color: #26221F !important;
     box-shadow: 0 0 0 3px rgba(184, 78, 41, 0.1) !important;
   }
 

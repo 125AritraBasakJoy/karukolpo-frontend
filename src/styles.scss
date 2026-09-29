@@ -328,14 +328,26 @@ html.dark-mode {
 .artisan-input {
     color-scheme: light !important;
     color: #26221F !important;
-    -webkit-text-fill-color: #26221F !important;
 
-    &::placeholder,
-    &::-webkit-input-placeholder,
-    &::-moz-placeholder,
-    &:-ms-input-placeholder {
+    &::placeholder {
+        color: #8C837B !important;
+        -webkit-text-fill-color: #8C837B !important;
+        opacity: 1 !important;
+    }
+
+    &::-webkit-input-placeholder {
+        color: #8C837B !important;
+        -webkit-text-fill-color: #8C837B !important;
+        opacity: 1 !important;
+    }
+
+    &::-moz-placeholder {
         color: #8C837B !important;
         opacity: 1 !important;
+    }
+
+    &:-ms-input-placeholder {
+        color: #8C837B !important;
     }
 }
 

@@ -225,29 +225,32 @@ export class InvoiceComponent {
 
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageW = pdf.internal.pageSize.getWidth();    // 210
+        const pageH = pdf.internal.pageSize.getHeight();   // 297
         const margin = 20;
         const contentW = pageW - margin * 2;               // 170
-        let y = 12; // current Y cursor — starts higher for logo
+        let y = 14; // current Y cursor
 
-        // ---- Colors ----
-        const darkNavy: [number, number, number] = [30, 41, 59];       // #1e293b
-        const midGray: [number, number, number] = [100, 116, 139];     // #64748b
-        const lightGray: [number, number, number] = [148, 163, 184];   // #94a3b8
-        const black: [number, number, number] = [15, 23, 42];          // #0f172a
-        const blue: [number, number, number] = [37, 99, 235];          // #2563eb
-        const green: [number, number, number] = [22, 163, 74];         // #16a34a
-        const red: [number, number, number] = [220, 38, 38];           // #dc2626
-        const tableBg: [number, number, number] = [241, 245, 249];     // #f1f5f9
-        const borderColor: [number, number, number] = [226, 232, 240]; // #e2e8f0
+        // ---- Artisanal Warm Theme Palette ----
+        const terracotta: [number, number, number] = [184, 78, 41];       // #B84E29 (Primary Brand Accent)
+        const darkTerracotta: [number, number, number] = [158, 62, 28];   // #9E3E1C (Deep Terracotta)
+        const warmCharcoal: [number, number, number] = [38, 34, 31];      // #26221F (Primary Text)
+        const warmDark: [number, number, number] = [56, 49, 43];          // #38312B (Headings)
+        const warmMuted: [number, number, number] = [112, 104, 97];       // #706861 (Secondary Text)
+        const lightMuted: [number, number, number] = [140, 131, 123];     // #8C837B (Subdued Labels)
+        const warmCream: [number, number, number] = [250, 247, 242];      // #FAF7F2 (Card & Box Fill)
+        const tableHeadBg: [number, number, number] = [245, 240, 233];    // #F5F0E9 (Table Header Fill)
+        const tableAltBg: [number, number, number] = [253, 251, 249];     // #FDFBF9 (Alternate Row Fill)
+        const borderColor: [number, number, number] = [232, 223, 213];    // #E8DFD5 (Warm Line & Border)
+        const green: [number, number, number] = [46, 125, 50];            // #2E7D32 (Paid Status)
 
         // ---- Helper: draw text ----
         const text = (
             str: string, x: number, yPos: number,
-            opts: { size?: number; color?: [number, number, number]; bold?: boolean; align?: 'left' | 'center' | 'right'; maxW?: number } = {}
+            opts: { size?: number; color?: [number, number, number]; bold?: boolean; align?: 'left' | 'center' | 'right'; maxW?: number; font?: 'helvetica' | 'times' } = {}
         ) => {
             pdf.setFontSize(opts.size || 10);
-            pdf.setTextColor(...(opts.color || black));
-            pdf.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+            pdf.setTextColor(...(opts.color || warmCharcoal));
+            pdf.setFont(opts.font || 'helvetica', opts.bold ? 'bold' : 'normal');
             pdf.text(str, x, yPos, { align: opts.align || 'left', maxWidth: opts.maxW });
         };
 
@@ -272,39 +275,46 @@ export class InvoiceComponent {
         // =====================
         //  HEADER: Invoice No + Order ID (right side)
         // =====================
-        text('INVOICE NO', pageW - margin, y, { size: 7, color: midGray, align: 'right' });
+        text('INVOICE NO', pageW - margin, y, { size: 7.5, color: lightMuted, bold: true, align: 'right' });
         y += 5;
-        text(this.invoiceNumber, pageW - margin, y, { size: 14, color: darkNavy, bold: true, align: 'right' });
+        text(this.invoiceNumber, pageW - margin, y, { size: 13, color: warmCharcoal, bold: true, align: 'right' });
         y += 6;
-        text('ORDER NUMBER', pageW - margin, y, { size: 7, color: midGray, align: 'right' });
+        text('ORDER NUMBER', pageW - margin, y, { size: 7.5, color: lightMuted, bold: true, align: 'right' });
         y += 5;
-        text(`${this.placedOrderNumber || this.placedOrderId}`, pageW - margin, y, { size: 16, color: darkNavy, bold: true, align: 'right' });
+        text(`${this.placedOrderNumber || this.placedOrderId}`, pageW - margin, y, { size: 15, color: terracotta, bold: true, align: 'right' });
 
         // =====================
         //  TITLE: INVOICE (positioned below the logo)
         // =====================
-        y = 50;
-        text('INVOICE', margin, y, { size: 28, color: black, bold: true });
-        y += 6;
-        hLine(y, borderColor, 0.8);
+        y = 48;
+        pdf.setFontSize(26);
+        pdf.setTextColor(...warmCharcoal);
+        pdf.setFont('times', 'bold');
+        pdf.text('INVOICE', margin, y);
+
+        y += 5;
+        hLine(y, borderColor, 0.6);
+        // Terracotta accent bar
+        pdf.setFillColor(...terracotta);
+        pdf.rect(margin, y - 0.5, 30, 1.2, 'F');
         y += 8;
 
         // =====================
         //  DATE / PAYMENT ROW
         // =====================
-        text('DATE ISSUED:', margin, y, { size: 7, color: lightGray });
-        text(this.formattedDate, margin + 22, y, { size: 10, color: black, bold: true });
+        text('DATE ISSUED:', margin, y, { size: 7.5, color: lightMuted, bold: true });
+        text(this.formattedDate, margin + 24, y, { size: 9.5, color: warmCharcoal, bold: true });
 
-        text('PAYMENT METHOD:', pageW - margin - 65, y, { size: 7, color: lightGray });
-        text(this.paymentMethodDisplay, pageW - margin, y, { size: 10, color: blue, bold: true, align: 'right' });
+        text('PAYMENT METHOD:', pageW - margin - 65, y, { size: 7.5, color: lightMuted, bold: true });
+        text(this.paymentMethodDisplay, pageW - margin, y, { size: 9.5, color: terracotta, bold: true, align: 'right' });
 
         y += 6;
-        text('ORDER TIME:', margin, y, { size: 7, color: lightGray });
-        text(this.formattedTime, margin + 22, y, { size: 10, color: black, bold: true });
+        text('ORDER TIME:', margin, y, { size: 7.5, color: lightMuted, bold: true });
+        text(this.formattedTime, margin + 24, y, { size: 9.5, color: warmCharcoal, bold: true });
 
-        text('PAYMENT STATUS:', pageW - margin - 65, y, { size: 7, color: lightGray });
-        const statusColor = this.paymentStatus === 'Paid' ? green : black;
-        text(this.paymentStatus, pageW - margin, y, { size: 10, color: statusColor, bold: true, align: 'right' });
+        text('PAYMENT STATUS:', pageW - margin - 65, y, { size: 7.5, color: lightMuted, bold: true });
+        const statusColor = this.paymentStatus === 'Paid' ? green : warmCharcoal;
+        text(this.paymentStatus, pageW - margin, y, { size: 9.5, color: statusColor, bold: true, align: 'right' });
         y += 10;
 
         // =====================
@@ -312,26 +322,30 @@ export class InvoiceComponent {
         // =====================
         const cardW = (contentW - 8) / 3; // 3 cards with 4mm gaps
         const cardX = [margin, margin + cardW + 4, margin + (cardW + 4) * 2];
-        const cardH = 45;
-        const headerH = 7;
+        const cardH = 46;
+        const headerH = 7.5;
 
         // Draw card backgrounds and headers
         for (let i = 0; i < 3; i++) {
-            // Border
+            // Fill card background with warm cream and stroke border
+            pdf.setFillColor(...warmCream);
             pdf.setDrawColor(...borderColor);
             pdf.setLineWidth(0.4);
-            pdf.roundedRect(cardX[i], y, cardW, cardH, 1.5, 1.5, 'S');
+            pdf.roundedRect(cardX[i], y, cardW, cardH, 2, 2, 'FD');
 
-            // Header bar
-            pdf.setFillColor(...darkNavy);
-            // Top rounded rect for header (clip with rect)
+            // Draw terracotta header bar
+            pdf.setFillColor(...terracotta);
             pdf.rect(cardX[i], y, cardW, headerH, 'F');
-            // Round only top corners by drawing over bottom of header
+
+            // Re-stroke outer rounded border
+            pdf.setDrawColor(...borderColor);
+            pdf.setLineWidth(0.4);
+            pdf.roundedRect(cardX[i], y, cardW, cardH, 2, 2, 'S');
         }
 
         const headers = ['SELLER', 'BILL TO', 'SHIPPING ADDRESS'];
         for (let i = 0; i < 3; i++) {
-            text(headers[i], cardX[i] + 4, y + 5, { size: 7, color: [255, 255, 255], bold: true });
+            text(headers[i], cardX[i] + 4, y + 5.2, { size: 7.5, color: [255, 255, 255], bold: true });
         }
 
         // Helper to force-break extremely long words for PDF
@@ -352,11 +366,11 @@ export class InvoiceComponent {
         const bodyY = y + headerH + 5;
 
         // Seller
-        text('Karukolpo', cardX[0] + 4, bodyY, { size: 9, color: black, bold: true });
-        text('Pathrail, Tangail-1912,', cardX[0] + 4, bodyY + 5, { size: 8, color: midGray });
-        text('Bangladesh.', cardX[0] + 4, bodyY + 9, { size: 8, color: midGray });
-        text('Phone: 01675-718846', cardX[0] + 4, bodyY + 20, { size: 8, color: midGray });
-        text('Email: support@karukolpo.com', cardX[0] + 4, bodyY + 24, { size: 8, color: midGray });
+        text('Karukolpo', cardX[0] + 4, bodyY, { size: 9.5, color: warmCharcoal, bold: true });
+        text('Pathrail, Tangail-1912,', cardX[0] + 4, bodyY + 5, { size: 8, color: warmMuted });
+        text('Bangladesh.', cardX[0] + 4, bodyY + 9, { size: 8, color: warmMuted });
+        text('Phone: 01675-718846', cardX[0] + 4, bodyY + 20, { size: 8, color: warmMuted });
+        text('Email: contact@karukolpocrafts.com', cardX[0] + 4, bodyY + 24, { size: 8, color: warmMuted });
 
         // Bill To
         const custName = this.orderFormSnapshot.fullName || '—';
@@ -365,20 +379,20 @@ export class InvoiceComponent {
 
         let billToY = bodyY;
         if (this.hasBengali(custName)) {
-            const nameImg = this.renderTextAsImage(custName, { fontSize: 9.5, color: '#0f172a', bold: true, maxWidthMm: cardW - 8 });
+            const nameImg = this.renderTextAsImage(custName, { fontSize: 9.5, color: '#26221F', bold: true, maxWidthMm: cardW - 8 });
             pdf.addImage(nameImg.data, 'PNG', cardX[1] + 4, billToY - 1, nameImg.wMm, nameImg.hMm, undefined, 'FAST');
             billToY += nameImg.hMm + 1.5;
         } else {
-            text(forceBreak(custName), cardX[1] + 4, billToY, { size: 9, color: black, bold: true, maxW: cardW - 8 });
+            text(forceBreak(custName), cardX[1] + 4, billToY, { size: 9.5, color: warmCharcoal, bold: true, maxW: cardW - 8 });
             billToY += 5;
         }
 
         if (custPhone) {
-            text(`Phone: ${custPhone}`, cardX[1] + 4, billToY, { size: 8, color: midGray });
+            text(`Phone: ${custPhone}`, cardX[1] + 4, billToY, { size: 8, color: warmMuted });
             billToY += 4.5;
         }
         if (custEmail) {
-            text(`Email: ${custEmail}`, cardX[1] + 4, billToY, { size: 8, color: midGray, maxW: cardW - 8 });
+            text(`Email: ${custEmail}`, cardX[1] + 4, billToY, { size: 8, color: warmMuted, maxW: cardW - 8 });
         }
 
         // Shipping Address
@@ -391,10 +405,10 @@ export class InvoiceComponent {
         const combinedAddr = [addr, subDist, dist, postal ? `Postal Code: ${postal}` : ''].filter(s => !!s).join(', ');
 
         if (this.hasBengali(combinedAddr)) {
-            const addrImg = this.renderTextAsImage(combinedAddr, { fontSize: 8, color: '#64748b', maxWidthMm: cardW - 8 });
+            const addrImg = this.renderTextAsImage(combinedAddr, { fontSize: 8, color: '#706861', maxWidthMm: cardW - 8 });
             pdf.addImage(addrImg.data, 'PNG', cardX[2] + 4, bodyY - 1, addrImg.wMm, addrImg.hMm, undefined, 'FAST');
         } else {
-            text(forceBreak(combinedAddr), cardX[2] + 4, bodyY, { size: 8, color: midGray, maxW: cardW - 8 });
+            text(forceBreak(combinedAddr), cardX[2] + 4, bodyY, { size: 8, color: warmMuted, maxW: cardW - 8 });
         }
 
         y += cardH + 8;
@@ -407,7 +421,7 @@ export class InvoiceComponent {
             const isBengali = this.hasBengali(name);
 
             // Available width for product name column is ~66mm
-            const nameImageData = isBengali ? this.renderTextAsImage(name, { fontSize: 9.5, color: '#1e293b', bold: true, maxWidthMm: 66 }) : null;
+            const nameImageData = isBengali ? this.renderTextAsImage(name, { fontSize: 9.5, color: '#26221F', bold: true, maxWidthMm: 66 }) : null;
             const displayName = isBengali ? '' : name;
 
             const qty = item.quantity || 0;
@@ -434,27 +448,27 @@ export class InvoiceComponent {
             body: tableBody,
             styles: {
                 fontSize: 9,
-                cellPadding: 4,
-                textColor: [51, 65, 85],
-                lineColor: tableBg,
+                cellPadding: 4.5,
+                textColor: warmCharcoal,
+                lineColor: borderColor,
                 lineWidth: 0.3,
                 minCellHeight: 12
             },
             headStyles: {
-                fillColor: tableBg,
-                textColor: [71, 85, 105],
+                fillColor: tableHeadBg,
+                textColor: warmDark,
                 fontStyle: 'bold',
-                fontSize: 7,
-                cellPadding: 3,
+                fontSize: 7.5,
+                cellPadding: 3.5,
                 halign: 'left'
             },
             columnStyles: {
-                0: { cellWidth: 'auto' },
+                0: { cellWidth: 'auto', fontStyle: 'bold' },
                 1: { halign: 'center', cellWidth: 25 },
                 2: { halign: 'center', cellWidth: 35 },
-                3: { halign: 'center', cellWidth: 35 }
+                3: { halign: 'center', cellWidth: 35, fontStyle: 'bold' }
             },
-            alternateRowStyles: { fillColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: tableAltBg },
             theme: 'grid',
             didParseCell: (data: any) => {
                 if (data.column.index === 0 && data.cell.raw && data.cell.raw.imageH) {
@@ -479,24 +493,24 @@ export class InvoiceComponent {
         //  FOOTER: Notes + Totals
         // =====================
         const notesX = margin;
-        const totalsX = margin + contentW - 70;
-        const totalsW = 70;
+        const totalsX = margin + contentW - 72;
+        const totalsW = 72;
 
         // Notes
-        text('NOTES:', notesX, y, { size: 7, color: lightGray, bold: true });
+        text('NOTES & POLICIES:', notesX, y, { size: 7.5, color: lightMuted, bold: true });
         const notes = [
-            '• This is a system-generated invoice.',
-            '• No signature required.',
-            '• For support, contact support@karukolpo.com'
+            '• Official system-generated invoice from Karukolpo.',
+            '• 100% authentic handcrafted & handloom guarantee.',
+            '• For queries or assistance, contact support@karukolpocrafts.com'
         ];
         notes.forEach((note, i) => {
-            text(note, notesX, y + 5 + (i * 4.5), { size: 8, color: midGray });
+            text(note, notesX, y + 5 + (i * 4.5), { size: 8, color: warmMuted });
         });
 
         // Totals
         const totRow = (label: string, value: string, yPos: number, opts: { bold?: boolean; color?: [number, number, number] } = {}) => {
-            text(label, totalsX, yPos, { size: 9, color: opts.color || midGray });
-            text(value, totalsX + totalsW, yPos, { size: 9, color: opts.color || midGray, align: 'right', bold: opts.bold });
+            text(label, totalsX, yPos, { size: 9, color: opts.color || warmMuted });
+            text(value, totalsX + totalsW, yPos, { size: 9, color: opts.color || warmCharcoal, align: 'right', bold: opts.bold ?? true });
         };
 
         let currentY = y;
@@ -505,29 +519,42 @@ export class InvoiceComponent {
         totRow('Delivery Fee:', `BDT ${this.orderDeliveryCharge.toLocaleString()}`, currentY);
         if (this.discount > 0) {
             currentY += 6;
-            totRow('Discount:', `- BDT ${this.discount.toLocaleString()}`, currentY, { color: [220, 38, 38] }); // red color
+            totRow('Discount:', `- BDT ${this.discount.toLocaleString()}`, currentY, { color: terracotta, bold: true });
         }
 
         // Grand Total
         y = currentY + 10;
-        hLine(y, borderColor, 0.8);
+        hLine(y, borderColor, 0.6);
         y += 7;
 
-        text('GRAND TOTAL', totalsX, y, { size: 13, color: darkNavy, bold: true });
-        text(`BDT ${this.grandTotal.toLocaleString()}`, totalsX + totalsW, y, { size: 20, color: darkNavy, bold: true, align: 'right' });
+        text('GRAND TOTAL', totalsX, y, { size: 12, color: warmCharcoal, bold: true });
+        text(`BDT ${this.grandTotal.toLocaleString()}`, totalsX + totalsW, y, { size: 18, color: terracotta, bold: true, align: 'right' });
 
-        // Amount Due Box
+        // Amount Due Box (Artisanal redesign)
         y += 12;
-        const boxX = totalsX - 5;
-        const boxW = totalsW + 10;
-        const boxH = 18;
-        pdf.setDrawColor(...darkNavy);
-        pdf.setLineWidth(0.6);
-        pdf.roundedRect(boxX, y, boxW, boxH, 2, 2, 'S');
+        const boxX = totalsX - 4;
+        const boxW = totalsW + 8;
+        const boxH = 19;
+        
+        pdf.setFillColor(...warmCream);
+        pdf.setDrawColor(...terracotta);
+        pdf.setLineWidth(0.8);
+        pdf.roundedRect(boxX, y, boxW, boxH, 2.5, 2.5, 'FD');
 
-        text('AMOUNT DUE', boxX + boxW / 2, y + 6, { size: 7, color: lightGray, align: 'center' });
+        text('AMOUNT DUE', boxX + boxW / 2, y + 6, { size: 7.5, color: warmMuted, bold: true, align: 'center' });
         const amountDue = this.paymentStatus === 'Paid' ? 0 : this.grandTotal;
-        text(`BDT ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 13, { size: 16, color: blue, bold: true, align: 'center' });
+        const amountColor = amountDue === 0 ? green : terracotta;
+        text(`BDT ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 13.5, { size: 15, color: amountColor, bold: true, align: 'center' });
+
+        // Page Bottom Brand Footer
+        const footerY = pageH - 12;
+        hLine(footerY, borderColor, 0.4);
+        text(
+            'Thank you for celebrating Bengal’s traditional craftsmanship • www.karukolpocrafts.com',
+            pageW / 2,
+            footerY + 4.5,
+            { size: 7.5, color: lightMuted, align: 'center' }
+        );
 
         // =====================
         //  SAVE

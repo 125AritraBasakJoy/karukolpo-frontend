@@ -29,11 +29,9 @@ interface SaleItemRow {
 }
 
 const PAYMENT_METHODS = [
-  { label: 'Cash', value: 'cash' },
-  { label: 'bKash', value: 'bkash' },
-  { label: 'Nagad', value: 'nagad' },
-  { label: 'Bank', value: 'bank' },
-  { label: 'Other', value: 'other' }
+  { label: 'Cash (Stall)', value: 'cash' },
+  { label: 'COD', value: 'cod' },
+  { label: 'bKash', value: 'bkash' }
 ];
 
 @Component({
@@ -78,6 +76,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   fulfillment: 'handover' | 'delivery' | null = null;
   paymentMethod = 'cash';
   soldAt: Date = new Date();
+  readonly maxDate: Date = new Date();
 
   get currentDate(): Date {
     return new Date();
@@ -92,20 +91,13 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   get paymentMethods() {
     if (this.fulfillment === 'delivery') {
       return [
-        { label: 'Cash on Delivery', value: 'cod' },
-        { label: 'Cash', value: 'cash' },
-        { label: 'bKash', value: 'bkash' },
-        { label: 'Nagad', value: 'nagad' },
-        { label: 'Bank', value: 'bank' },
-        { label: 'Other', value: 'other' }
+        { label: 'Cash on Delivery (COD)', value: 'cod' },
+        { label: 'bKash', value: 'bkash' }
       ];
     }
     return [
-      { label: 'Cash', value: 'cash' },
-      { label: 'bKash', value: 'bkash' },
-      { label: 'Nagad', value: 'nagad' },
-      { label: 'Bank', value: 'bank' },
-      { label: 'Other', value: 'other' }
+      { label: 'Cash (Stall)', value: 'cash' },
+      { label: 'bKash', value: 'bkash' }
     ];
   }
 
@@ -113,7 +105,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     this.fulfillment = choice;
     if (choice === 'delivery') {
       this.paymentMethod = 'cod';
-    } else if (this.paymentMethod === 'cod') {
+    } else {
       this.paymentMethod = 'cash';
     }
   }

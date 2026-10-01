@@ -45,7 +45,7 @@ import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } fr
   providers: [ConfirmationService],
   templateUrl: './orders.component.html',
   standalone: true,
-  styleUrls: ['./orders.component.scss']
+  styleUrls: ['./orders.component.scss', '../admin-styles.scss']
 })
 export class OrdersComponent implements OnInit {
   @ViewChild('adminInvoice') adminInvoice!: InvoiceComponent;

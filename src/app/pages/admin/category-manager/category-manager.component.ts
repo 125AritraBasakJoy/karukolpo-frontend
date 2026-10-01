@@ -47,7 +47,7 @@ import { SlugService, SlugSuggestionResponse, slugifyLocal, isValidBackendSlug }
     ],
     providers: [ConfirmationService],
     templateUrl: './category-manager.component.html',
-    styleUrls: ['./category-manager.component.scss']
+    styleUrls: ['./category-manager.component.scss', '../admin-styles.scss']
 })
 export class CategoryManagerComponent implements OnInit {
     categoryDialog: boolean = false;

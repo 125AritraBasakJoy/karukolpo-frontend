@@ -27,7 +27,26 @@
                                     [(ngModel)]="item.product_id" [ngModelOptions]="{ standalone: true }"
                                     (onChange)="onProductSelect(item, $event.value)" placeholder="Select product"
                                     [filter]="true" filterBy="name" [showClear]="true" styleClass="w-full"
-                                    inputStyleClass="premium-input" appendTo="body"></p-dropdown>
+                                    inputStyleClass="premium-input" appendTo="body">
+                                    <ng-template pTemplate="selectedItem" let-selected>
+                                        <div *ngIf="selected" class="flex align-items-center justify-content-between w-full">
+                                            <span class="font-medium text-white truncate">{{ selected.name }}</span>
+                                        </div>
+                                    </ng-template>
+                                    <ng-template pTemplate="item" let-prod>
+                                        <div class="flex align-items-center justify-content-between w-full py-1">
+                                            <div class="flex flex-column min-w-0 pr-2">
+                                                <span class="font-medium text-white text-sm truncate">{{ prod.name }}</span>
+                                            </div>
+                                            <div class="flex flex-column align-items-end flex-shrink-0">
+                                                <span class="text-primary font-bold text-xs">{{ (prod.effective_price || prod.price) | currency:'BDT':'৳' }}</span>
+                                                <span *ngIf="prod.effective_price && prod.effective_price < prod.price" class="text-xs line-through text-slate-500">
+                                                    {{ prod.price | currency:'BDT':'৳' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </ng-template>
+                                </p-dropdown>
                             </div>
                             <div class="col-3 md:col-2">
                                 <div class="field-label-wrapper">
@@ -155,7 +174,7 @@
                         <i class="pi pi-calendar"></i> Sale Date & Time
                     </label>
                     <p-calendar [(ngModel)]="soldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy"
-                        placeholder="Select date & time..." hourFormat="12" [defaultDate]="currentDate"
+                        placeholder="Select date & time..." hourFormat="12" [defaultDate]="currentDate" [maxDate]="maxDate"
                         styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
                 </div>
                 <div class="field col-12 sm:col-6 lg:col-3">

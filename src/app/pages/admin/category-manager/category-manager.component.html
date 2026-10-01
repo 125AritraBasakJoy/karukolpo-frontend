@@ -38,7 +38,7 @@
                 <tr>
                     <th style="min-width:15rem">Category Name</th>
                     <th>URL Identifier</th>
-                    <th style="width: 150px" class="text-center">Actions</th>
+                    <th style="width: 10rem; min-width: 10rem" class="text-center actions-col-header">Actions</th>
                 </tr>
             </ng-template>
 
@@ -55,16 +55,16 @@
                     <td>
                         <code class="slug-tag">{{category.slug || 'no-identifier'}}</code>
                     </td>
-                    <td>
-                        <div class="flex justify-content-center gap-2">
-                            <button pButton pRipple icon="pi pi-eye"
-                                class="p-button-rounded p-button-text action-btn info-btn"
+                    <td class="text-center actions-col-cell">
+                        <div class="actions-cell">
+                            <button pButton icon="pi pi-eye"
+                                class="action-btn view-btn"
                                 (click)="viewProducts(category)" pTooltip="View Products" tooltipPosition="top"></button>
-                            <button pButton pRipple icon="pi pi-pencil"
-                                class="p-button-rounded p-button-text action-btn success-btn"
+                            <button pButton icon="pi pi-pencil"
+                                class="action-btn edit-btn"
                                 (click)="editCategory(category)" pTooltip="Edit Category" tooltipPosition="top"></button>
-                            <button pButton pRipple icon="pi pi-trash"
-                                class="p-button-rounded p-button-text action-btn danger-btn"
+                            <button pButton icon="pi pi-trash"
+                                class="action-btn void-btn"
                                 (click)="deleteCategory(category)" pTooltip="Delete Category" tooltipPosition="top"></button>
                         </div>
                     </td>

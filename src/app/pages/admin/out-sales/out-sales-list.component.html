@@ -76,33 +76,57 @@
         </button>
     </div>
 
+    <!-- Bulk Action Bar for Awaiting Delivery Sales -->
+    <div *ngIf="selectedSales.length > 0" class="bulk-action-bar border-round-xl p-3 mb-3 flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-2">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-check-square text-emerald-400 text-lg"></i>
+            <span class="text-white font-medium text-sm">
+                <strong>{{ selectedSales.length }}</strong> sale(s) selected
+            </span>
+        </div>
+        <div class="flex align-items-center gap-2 w-full sm:w-auto justify-content-end">
+            <button pButton label="Mark Delivered" icon="pi pi-check"
+                class="p-button-success p-button-sm font-semibold"
+                (click)="confirmBulkMarkDelivered()"></button>
+            <button pButton label="Clear Selection" icon="pi pi-times"
+                class="p-button-text p-button-secondary p-button-sm"
+                (click)="selectedSales = []"></button>
+        </div>
+    </div>
+
     <!-- Data Table Card -->
     <div class="glass-card p-3 sm:p-4 border-round-2xl">
         @if (loading()) {
         <div class="overflow-hidden overflow-x-auto">
-            <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '60rem' }">
+            <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '82rem' }">
                 <ng-template pTemplate="header">
                     <tr>
-                        <th>Sale ID / #</th>
-                        <th>Customer</th>
-                        <th>Date & Time</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Payment</th>
-                        <th>Status</th>
-                        <th class="text-center">Actions</th>
+                        <th style="width: 3.25rem"><p-skeleton width="1.5rem"></p-skeleton></th>
+                        <th style="min-width: 7.5rem">Sale ID / #</th>
+                        <th style="min-width: 7rem">Source</th>
+                        <th style="min-width: 10rem">Customer</th>
+                        <th style="min-width: 8.5rem">Date & Time</th>
+                        <th style="min-width: 5.5rem">Items</th>
+                        <th style="min-width: 7rem">Total</th>
+                        <th style="min-width: 7.5rem">Payment</th>
+                        <th style="min-width: 7.5rem">Status</th>
+                        <th class="text-center actions-col-header">Actions</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body">
                     <tr>
-                        <td><p-skeleton width="8rem"></p-skeleton></td>
-                        <td><p-skeleton width="10rem"></p-skeleton></td>
-                        <td><p-skeleton width="9rem"></p-skeleton></td>
-                        <td><p-skeleton width="5rem"></p-skeleton></td>
+                        <td><p-skeleton width="1.5rem"></p-skeleton></td>
                         <td><p-skeleton width="6rem"></p-skeleton></td>
-                        <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
-                        <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
-                        <td class="text-center"><p-skeleton shape="circle" size="2rem" styleClass="mx-auto"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="8.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="7.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="4rem"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem" borderRadius="16px"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem" borderRadius="16px"></p-skeleton></td>
+                        <td class="text-center actions-col-cell">
+                            <p-skeleton width="9rem" height="2.25rem" borderRadius="9999px" styleClass="mx-auto"></p-skeleton>
+                        </td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -112,31 +136,44 @@
         @else {
         <div class="overflow-hidden overflow-x-auto custom-scrollbar">
             <p-table [value]="filteredSales()" [paginator]="true" [rows]="10"
+                [(selection)]="selectedSales" dataKey="id"
                 [rowsPerPageOptions]="[10, 25, 50]" [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} offline sales"
-                [tableStyle]="{'min-width': '68rem'}" styleClass="premium-table-v2">
+                [tableStyle]="{'min-width': '82rem'}" styleClass="premium-table-v2">
 
                 <ng-template pTemplate="header">
                     <tr>
-                        <th>Sale ID / #</th>
-                        <th>Customer</th>
-                        <th>Date & Time</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Payment</th>
-                        <th>Status</th>
-                        <th class="text-center">Actions</th>
+                        <th style="width: 3.25rem">
+                            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                        </th>
+                        <th style="min-width: 7.5rem">Sale ID / #</th>
+                        <th style="min-width: 7rem">Source</th>
+                        <th style="min-width: 10rem">Customer</th>
+                        <th style="min-width: 8.5rem">Date & Time</th>
+                        <th style="min-width: 5.5rem">Items</th>
+                        <th style="min-width: 7rem">Total</th>
+                        <th style="min-width: 7.5rem">Payment</th>
+                        <th style="min-width: 7.5rem">Status</th>
+                        <th class="text-center actions-col-header">Actions</th>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="body" let-sale>
                     <tr>
                         <td>
+                            <p-tableCheckbox [value]="sale"></p-tableCheckbox>
+                        </td>
+                        <td>
                             <span class="id-tag">{{ sale.orderNumber || sale.id }}</span>
-                            <div *ngIf="sale.source" class="text-xs text-slate-400 mt-1 flex align-items-center gap-1">
-                                <i class="pi pi-store text-xs text-slate-500"></i>
+                        </td>
+                        <td>
+                            <div *ngIf="sale.source; else noSource" class="source-tag">
+                                <i class="pi pi-store text-xs text-blue-400"></i>
                                 <span>{{ sale.source }}</span>
                             </div>
+                            <ng-template #noSource>
+                                <span class="text-xs text-slate-500 italic">—</span>
+                            </ng-template>
                         </td>
                         <td>
                             <div class="font-medium text-white">{{ sale.fullName || 'Walk-in Customer' }}</div>
@@ -163,58 +200,39 @@
                             </div>
                         </td>
                         <td>
-                            <p-tag [value]="sale.paymentMethod || 'Cash'" severity="info" [rounded]="true"
+                            <p-tag [value]="getPaymentMethodLabel(sale.paymentMethod)" severity="info" [rounded]="true"
                                 styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
                         <td>
                             <p-tag [value]="getStatusInfo(sale).label" [severity]="getStatusInfo(sale).severity" [rounded]="true"
                                 styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
-                        <td class="text-center">
-                            <div class="flex justify-content-center gap-1 sm:gap-2 flex-wrap">
+                        <td class="text-center actions-col-cell">
+                            <div class="actions-cell">
                                 <!-- Thermal Receipt (available on all sales) -->
                                 <button pButton icon="pi pi-receipt"
-                                    class="action-btn p-button-rounded p-button-text success-btn"
-                                    (click)="openThermalInvoice(sale)" pTooltip="Thermal Receipt (58mm)" tooltipPosition="top"></button>
+                                    class="action-btn receipt-btn"
+                                    (click)="openThermalInvoice(sale)"
+                                    pTooltip="Thermal Receipt (58mm)" tooltipPosition="top"></button>
 
-                                <!-- Mark Delivered (Awaiting delivery: cod_processing / paid) -->
-                                <button *ngIf="isAwaitingDelivery(sale)" pButton icon="pi pi-check"
-                                    class="action-btn p-button-rounded p-button-text success-btn"
-                                    (click)="confirmMarkDelivered(sale)" pTooltip="Mark Delivered" tooltipPosition="top"></button>
-
-                                <!-- Cancel refused/returned (Awaiting delivery: cod_processing / paid) -->
-                                <button *ngIf="isAwaitingDelivery(sale)" pButton icon="pi pi-ban"
-                                    class="action-btn p-button-rounded p-button-text danger-btn"
-                                    (click)="openCancelModal(sale)" pTooltip="Cancel (Refused / Returned)" tooltipPosition="top"></button>
-
-                                <!-- Change Type (completed sales) -->
-                                <button *ngIf="isCompletedSale(sale)" pButton icon="pi pi-sync"
-                                    class="action-btn p-button-rounded p-button-text info-btn"
-                                    (click)="openClassifyModal(sale)" [pTooltip]="needsReview(sale) ? 'Review & Classify' : 'Change Type'" tooltipPosition="top"></button>
+                                <!-- Change Type / Classify (hidden on cancelled) -->
+                                <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-sync"
+                                    class="action-btn classify-btn"
+                                    (click)="openClassifyModal(sale)"
+                                    [pTooltip]="needsReview(sale) ? 'Review & Classify' : 'Change Type'" tooltipPosition="top"></button>
 
                                 <!-- Edit (hidden on cancelled) -->
                                 <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-pencil"
-                                    class="action-btn p-button-rounded p-button-text info-btn"
-                                    (click)="openEditModal(sale)" pTooltip="Edit Sale" tooltipPosition="top"></button>
+                                    class="action-btn edit-btn"
+                                    (click)="openEditModal(sale)"
+                                    pTooltip="Edit Sale" tooltipPosition="top"></button>
 
                                 <!-- Void (hidden on cancelled) -->
                                 <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-trash"
                                     [loading]="voidingSaleId() === sale.id"
-                                    class="action-btn p-button-rounded p-button-text danger-btn"
-                                    (click)="confirmVoidSale(sale)" pTooltip="Void Sale" tooltipPosition="top"></button>
-                            </div>
-
-                            <!-- Quick review action buttons when review is needed -->
-                            <div *ngIf="needsReview(sale)" class="review-actions-bar flex align-items-center justify-content-center gap-1 mt-2">
-                                <button pButton label="Handed over"
-                                    class="quick-review-btn p-button-xs p-button-outlined p-button-success"
-                                    (click)="quickClassifyHandover(sale)"></button>
-                                <button pButton label="Delivered"
-                                    class="quick-review-btn p-button-xs p-button-outlined p-button-info"
-                                    (click)="openClassifyModal(sale, 'delivered')"></button>
-                                <button pButton label="Still on way"
-                                    class="quick-review-btn p-button-xs p-button-outlined p-button-warning"
-                                    (click)="openClassifyModal(sale, 'awaiting')"></button>
+                                    class="action-btn void-btn"
+                                    (click)="confirmVoidSale(sale)"
+                                    pTooltip="Void Sale" tooltipPosition="top"></button>
                             </div>
                         </td>
                     </tr>
@@ -222,7 +240,7 @@
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="8" class="text-center p-5 text-slate-400">
+                        <td colspan="10" class="text-center p-5 text-slate-400">
                             <i class="pi pi-inbox text-3xl mb-2 block"></i>
                             No offline sales found.
                         </td>
@@ -270,6 +288,16 @@
                 <p class="text-xs text-slate-400 m-0">Walk-in or stall sale. Completed at sale time.</p>
             </div>
 
+            <!-- Payment dropdown for Handed over now -->
+            <div *ngIf="classifyChoice === 'handover'" class="p-3 border-round-xl bg-slate-900 border-1 border-slate-800 ml-2 mb-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                    Payment Method <span class="text-red-400">*</span>
+                </label>
+                <p-dropdown [options]="handoverPaymentMethods" optionLabel="label" optionValue="value"
+                    [(ngModel)]="classifyHandoverPaymentMethod" appendTo="body" styleClass="w-full"
+                    inputStyleClass="premium-input"></p-dropdown>
+            </div>
+
             <!-- 2. Delivered to customer -->
             <div class="fulfillment-card cursor-pointer p-3 border-round-xl transition-all"
                 [class.active]="classifyChoice === 'delivered'"
@@ -284,12 +312,20 @@
                 <p class="text-xs text-slate-400 m-0">Parcel already successfully reached the customer.</p>
             </div>
 
-            <!-- Delivered on (Date Picker) for Delivered -->
+            <!-- Delivered on & Payment Method for Delivered -->
             <div *ngIf="classifyChoice === 'delivered'" class="p-3 border-round-xl bg-slate-900 border-1 border-slate-800 ml-2 mb-2">
+                <div class="field mb-3">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                        Payment Method <span class="text-red-400">*</span>
+                    </label>
+                    <p-dropdown [options]="deliveredPaymentMethods" optionLabel="label" optionValue="value"
+                        [(ngModel)]="classifyDeliveredPaymentMethod" appendTo="body" styleClass="w-full"
+                        inputStyleClass="premium-input"></p-dropdown>
+                </div>
                 <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
                     Delivered on (Optional):
                 </label>
-                <p-calendar [(ngModel)]="classifyDeliveredAt" [showTime]="true" [showIcon]="true"
+                <p-calendar [(ngModel)]="classifyDeliveredAt" [showTime]="true" [showIcon]="true" [maxDate]="maxDate"
                     dateFormat="dd/mm/yy" hourFormat="12" placeholder="Keep existing completion time"
                     appendTo="body" styleClass="w-full premium-calendar" inputStyleClass="w-full"></p-calendar>
                 <span class="text-xs text-slate-500 mt-1 block">Leave blank to retain the current recorded completion date.</span>
@@ -315,7 +351,7 @@
                     <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">
                         Payment Method <span class="text-red-400">*</span>
                     </label>
-                    <p-dropdown [options]="classifyPaymentMethods" optionLabel="label" optionValue="value"
+                    <p-dropdown [options]="awaitingPaymentMethods" optionLabel="label" optionValue="value"
                         [(ngModel)]="classifyPaymentMethod" appendTo="body" styleClass="w-full"
                         inputStyleClass="premium-input"></p-dropdown>
                 </div>
@@ -365,6 +401,50 @@
                 (onClick)="classifyDialogVisible.set(false)"></p-button>
             <p-button label="Confirm Classification" icon="pi pi-check" [loading]="savingClassification()"
                 styleClass="p-button-primary" (onClick)="submitClassification()"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Mark Delivered Dialog (Single & Bulk) -->
+<p-dialog [(visible)]="markDeliveredModalVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(90vw, 480px)' }" styleClass="premium-dialog" [draggable]="false" [resizable]="false">
+    <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-check-circle text-emerald-400 text-xl"></i>
+            <h3 class="m-0 text-white font-bold text-lg">Mark as Delivered</h3>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2">
+        <div class="p-3 border-round-xl mb-3 bg-slate-900 border-1 border-slate-800">
+            <div *ngIf="targetDeliverySales().length === 1" class="text-sm text-slate-200">
+                Mark sale <span class="font-bold text-white">#{{ targetDeliverySales()[0]?.orderNumber || targetDeliverySales()[0]?.id }}</span> ({{ targetDeliverySales()[0]?.fullName || 'Customer' }}) as delivered?
+            </div>
+            <div *ngIf="targetDeliverySales().length > 1" class="text-sm text-slate-200">
+                Mark <span class="font-bold text-emerald-400">{{ targetDeliverySales().length }} sales</span> as delivered?
+            </div>
+            <div class="text-xs text-slate-400 mt-1">
+                Selected orders will be marked delivered and completed.
+            </div>
+        </div>
+
+        <div class="field mb-3">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Delivered on (Optional):
+            </label>
+            <p-calendar [(ngModel)]="markDeliveredAt" [showTime]="true" [showIcon]="true" [maxDate]="maxDate"
+                dateFormat="dd/mm/yy" hourFormat="12" placeholder="Now (Current time)"
+                appendTo="body" styleClass="w-full premium-calendar" inputStyleClass="w-full"></p-calendar>
+            <span class="text-xs text-slate-500 mt-1 block">Leave blank to mark as delivered right now.</span>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <p-button label="Cancel" styleClass="p-button-text p-button-secondary"
+                (onClick)="markDeliveredModalVisible.set(false)"></p-button>
+            <p-button label="Confirm Delivered" icon="pi pi-check" [loading]="submittingMarkDelivered()"
+                styleClass="p-button-success" (onClick)="submitMarkDelivered()"></p-button>
         </div>
     </ng-template>
 </p-dialog>
@@ -438,19 +518,17 @@
                             <label class="text-xs text-slate-400 block mb-1">Product</label>
                             <p-dropdown [options]="products()" optionLabel="name" optionValue="id"
                                 [(ngModel)]="item.product_id" (onChange)="onProductSelect(item, $event.value)"
-                                [filter]="true" filterBy="name,code" placeholder="Select product…"
+                                [filter]="true" filterBy="name" placeholder="Select product…"
                                 appendTo="body" styleClass="w-full" [disabled]="productsLoading()">
                                 <ng-template pTemplate="selectedItem" let-selected>
                                     <div *ngIf="selected" class="flex align-items-center justify-content-between w-full">
-                                        <span class="font-medium text-white truncate mr-2">{{ selected.name }}</span>
-                                        <span class="text-xs text-slate-400 font-mono">({{ selected.code || 'No code' }})</span>
+                                        <span class="font-medium text-white truncate">{{ selected.name }}</span>
                                     </div>
                                 </ng-template>
                                 <ng-template pTemplate="item" let-prod>
                                     <div class="flex align-items-center justify-content-between w-full py-1">
                                         <div class="flex flex-column min-w-0 pr-2">
                                             <span class="font-medium text-white text-sm truncate">{{ prod.name }}</span>
-                                            <span class="text-xs text-slate-400 font-mono">{{ prod.code }}</span>
                                         </div>
                                         <div class="flex flex-column align-items-end flex-shrink-0">
                                             <span class="text-primary font-bold text-xs">{{ (prod.effective_price || prod.price) | currency:'BDT':'৳' }}</span>
@@ -509,7 +587,7 @@
                 <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
                     <i class="pi pi-calendar"></i> Sale Date & Time
                 </label>
-                <p-calendar [(ngModel)]="editSoldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy"
+                <p-calendar [(ngModel)]="editSoldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy" [maxDate]="maxDate"
                     placeholder="Select date & time..." hourFormat="12"
                     styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
             </div>

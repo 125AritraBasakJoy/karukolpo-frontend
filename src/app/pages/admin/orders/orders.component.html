@@ -45,8 +45,9 @@
                         <th>Customer</th>
                         <th>Date and Time</th>
                         <th>Total</th>
-                        <th>Payment</th>                        <th>Status</th>
-                        <th>Actions</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th class="text-center actions-col-header" style="width: 11.5rem; min-width: 11.5rem">Actions</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body">
@@ -62,11 +63,8 @@
                         <td><p-skeleton width="6rem"></p-skeleton></td>
                         <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
                         <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
-                        <td>
-                            <div class="flex gap-2">
-                                <p-skeleton shape="circle" size="2.5rem"></p-skeleton>
-                                <p-skeleton shape="circle" size="2.5rem"></p-skeleton>
-                            </div>
+                        <td class="text-center actions-col-cell">
+                            <p-skeleton width="8.5rem" height="2.25rem" borderRadius="9999px" styleClass="mx-auto"></p-skeleton>
                         </td>
                     </tr>
                 </ng-template>
@@ -76,7 +74,7 @@
 
         @else {
         <div class="border-round-2xl overflow-hidden overflow-x-auto custom-scrollbar">
-            <p-table [value]="orders()" [tableStyle]="{'min-width': '60rem'}" [paginator]="true" [(rows)]="rows" [(first)]="first"
+            <p-table [value]="orders()" [tableStyle]="{'min-width': '64rem'}" [paginator]="true" [(rows)]="rows" [(first)]="first"
                 [rowsPerPageOptions]="[10, 25, 50, 100]" [lazy]="true" (onLazyLoad)="loadOrders($event)"
                 [totalRecords]="totalRecords()" [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [paginatorDropdownAppendTo]="'self'"
@@ -90,7 +88,7 @@
                         <th>Total</th>
                         <th>Payment</th>
                         <th>Status</th>
-                        <th class="text-center">Actions</th>
+                        <th class="text-center actions-col-header" style="width: 11.5rem; min-width: 11.5rem">Actions</th>
                     </tr>
                 </ng-template>
 
@@ -120,36 +118,36 @@
                             <p-tag [value]="order.status" [severity]="getSeverity(order.status)"
                                 styleClass="text-sm font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
-                        <td class="text-center">
-                            <div class="flex justify-content-center gap-2">
+                        <td class="text-center actions-col-cell">
+                            <div class="actions-cell">
                                 <button pButton icon="pi pi-eye"
-                                    class="action-btn p-button-rounded p-button-text p-button-secondary info-btn"
+                                    class="action-btn view-btn"
                                     (click)="viewOrder(order)" pTooltip="View Details" tooltipPosition="top"></button>
 
                                 <button pButton type="button" icon="pi pi-download"
                                     [loading]="downloadingOrderId() === (order.id || '').toString()"
-                                    class="action-btn p-button-rounded p-button-text p-button-info info-btn"
+                                    class="action-btn download-btn"
                                     (click)="$event.preventDefault(); $event.stopPropagation(); downloadAdminInvoice(order)"
                                     pTooltip="Download Invoice" tooltipPosition="top"></button>
 
                                 <!-- Status Actions -->
                                 @if (order.status === 'Pending' && order.paymentMethod?.toLowerCase() !== 'bkash') {
                                 <button pButton icon="pi pi-check"
-                                    class="action-btn p-button-rounded p-button-text p-button-success success-btn"
+                                    class="action-btn deliver-btn"
                                     (click)="updateStatus(order, 'Confirmed')" pTooltip="Confirm Order"
                                     tooltipPosition="top"></button>
                                 }
 
                                 @if (order.status === 'Confirmed') {
                                 <button pButton icon="pi pi-check-circle"
-                                    class="action-btn p-button-rounded p-button-text p-button-success success-btn"
+                                    class="action-btn deliver-btn"
                                     (click)="updateStatus(order, 'Completed')" pTooltip="Mark Complete"
                                     tooltipPosition="top"></button>
                                 }
 
                                 @if (order.status === 'Pending') {
                                 <button pButton icon="pi pi-times"
-                                    class="action-btn p-button-rounded p-button-text p-button-danger danger-btn"
+                                    class="action-btn cancel-btn"
                                     (click)="updateStatus(order, 'Cancelled')" pTooltip="Cancel Order"
                                     tooltipPosition="top"></button>
                                 }

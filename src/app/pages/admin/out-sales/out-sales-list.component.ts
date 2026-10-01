@@ -22,7 +22,8 @@ import { Product } from '../../../models/product.model';
 import { Order } from '../../../models/order.model';
 import { District, districts } from '../../../data/bangladesh-data';
 import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/thermal-invoice.component';
-import { finalize } from 'rxjs/operators';
+import { finalize, catchError, tap } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
 
 interface SaleItemRow {
   product_id: string | null;
@@ -33,12 +34,14 @@ interface SaleItemRow {
   regular_price?: number | null;
 }
 
-const PAYMENT_METHODS = [
-  { label: 'Cash', value: 'cash' },
-  { label: 'bKash', value: 'bkash' },
-  { label: 'Nagad', value: 'nagad' },
-  { label: 'Bank', value: 'bank' },
-  { label: 'Other', value: 'other' }
+const HANDOVER_PAYMENT_METHODS = [
+  { label: 'Cash (Stall)', value: 'cash' },
+  { label: 'bKash', value: 'bkash' }
+];
+
+const DELIVERY_PAYMENT_METHODS = [
+  { label: 'Cash on Delivery (COD)', value: 'cod' },
+  { label: 'bKash', value: 'bkash' }
 ];
 
 export type OutSalesFilterType = 'all' | 'awaiting' | 'review' | 'delivered' | 'handover' | 'cancelled';
@@ -100,6 +103,8 @@ export class OutSalesListComponent implements OnInit {
   classifyChoice: 'handover' | 'delivered' | 'awaiting' = 'handover';
   classifyDeliveredAt: Date | null = null;
   classifyPaymentMethod: string = 'cod';
+  classifyHandoverPaymentMethod: string | null = null;
+  classifyDeliveredPaymentMethod: string | null = null;
   classifyCustomer = {
     name: '',
     phone: '',
@@ -110,6 +115,13 @@ export class OutSalesListComponent implements OnInit {
   classifySubDistricts: string[] = [];
   savingClassification = signal<boolean>(false);
 
+  // Mark Delivered Modal State (Single & Bulk)
+  markDeliveredModalVisible = signal<boolean>(false);
+  targetDeliverySales = signal<Order[]>([]);
+  markDeliveredAt: Date | null = null;
+  submittingMarkDelivered = signal<boolean>(false);
+  selectedSales: Order[] = [];
+
   // Cancel Order Modal State
   cancelDialogVisible = signal<boolean>(false);
   cancellingSale = signal<Order | null>(null);
@@ -119,15 +131,10 @@ export class OutSalesListComponent implements OnInit {
   // Products & Dropdowns for Edit Modal
   products = signal<Product[]>([]);
   productsLoading = signal<boolean>(false);
-  readonly basePaymentMethods = PAYMENT_METHODS;
-  readonly classifyPaymentMethods = [
-    { label: 'Cash on Delivery (COD)', value: 'cod' },
-    { label: 'bKash', value: 'bkash' },
-    { label: 'Nagad', value: 'nagad' },
-    { label: 'Bank', value: 'bank' },
-    { label: 'Cash paid in advance', value: 'cash' },
-    { label: 'Other', value: 'other' }
-  ];
+  readonly handoverPaymentMethods = HANDOVER_PAYMENT_METHODS;
+  readonly deliveredPaymentMethods = DELIVERY_PAYMENT_METHODS;
+  readonly awaitingPaymentMethods = DELIVERY_PAYMENT_METHODS;
+  readonly maxDate: Date = new Date();
 
   districts: District[] = districts;
   subDistricts: string[] = [];
@@ -149,12 +156,9 @@ export class OutSalesListComponent implements OnInit {
 
   get editPaymentMethods() {
     if (this.editingSale()?.fulfillment === 'delivery') {
-      return [
-        { label: 'Cash on Delivery', value: 'cod' },
-        ...PAYMENT_METHODS
-      ];
+      return DELIVERY_PAYMENT_METHODS;
     }
-    return PAYMENT_METHODS;
+    return HANDOVER_PAYMENT_METHODS;
   }
 
   private isBrowser(): boolean {
@@ -255,7 +259,7 @@ export class OutSalesListComponent implements OnInit {
   }
 
   getStatusInfo(sale: Order): { label: string; severity: 'secondary' | 'danger' | 'warning' | 'success' | 'info' } {
-    const raw = (sale.rawStatus || sale.status || '').toLowerCase();
+    const raw = (sale.rawStatus || sale.status || '').toLowerCase().trim();
     const fulfillment = sale.fulfillment || 'unreviewed';
     const isVoided = !!sale.isVoided;
 
@@ -284,6 +288,15 @@ export class OutSalesListComponent implements OnInit {
       return { label: 'Pending', severity: 'warning' };
     }
     return { label: sale.status || 'Confirmed', severity: 'info' };
+  }
+
+  getPaymentMethodLabel(method?: string | null): string {
+    if (!method) return 'Cash (Stall)';
+    const m = method.toLowerCase().trim();
+    if (m === 'cash') return 'Cash (Stall)';
+    if (m === 'cod') return 'COD';
+    if (m === 'bkash') return 'bKash';
+    return method;
   }
 
   isAwaitingDelivery(sale?: Order | null): boolean {
@@ -353,8 +366,10 @@ export class OutSalesListComponent implements OnInit {
         const statusInfo = this.getStatusInfo(sale);
         const derivedStatus = statusInfo.label.toLowerCase();
         const fulfillment = (sale.fulfillment || '').toLowerCase();
+        const source = (sale.source || (sale as any).utm_source || '').toLowerCase();
 
         return orderNo.includes(q) ||
+          source.includes(q) ||
           customer.includes(q) ||
           phone.includes(q) ||
           payment.includes(q) ||
@@ -387,35 +402,102 @@ export class OutSalesListComponent implements OnInit {
     return sale.totalAmount != null ? sale.totalAmount : 0;
   }
 
-  // ===== ROW ACTION: MARK DELIVERED =====
+  // ===== ROW ACTION & BULK ACTION: MARK DELIVERED =====
   confirmMarkDelivered(sale: Order) {
     if (!sale || !sale.id) return;
+    this.targetDeliverySales.set([sale]);
+    this.markDeliveredAt = null;
+    this.markDeliveredModalVisible.set(true);
+  }
 
-    this.confirmationService.confirm({
-      message: `Mark offline delivery sale #${sale.orderNumber || sale.id} as Delivered? This will complete the order and realize revenue.`,
-      header: 'Confirm Delivery',
-      icon: 'pi pi-check-circle',
-      acceptLabel: 'Mark Delivered',
-      rejectLabel: 'Cancel',
-      acceptButtonStyleClass: 'p-button-success',
-      rejectButtonStyleClass: 'p-button-text p-button-secondary',
-      accept: () => {
-        this.orderService.adminCompleteOrder(sale.id!).subscribe({
-          next: () => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Delivered',
-              detail: 'Sale marked as delivered successfully.'
-            });
-            this.loadSales();
-          },
-          error: (err) => {
-            console.error('Failed to mark delivered', err);
-            const detail = err.error?.detail || err.message || 'Failed to complete delivery order.';
-            this.messageService.add({ severity: 'error', summary: 'Error', detail });
-          }
+  confirmBulkMarkDelivered() {
+    if (!this.selectedSales.length) return;
+    this.targetDeliverySales.set([...this.selectedSales]);
+    this.markDeliveredAt = null;
+    this.markDeliveredModalVisible.set(true);
+  }
+
+  submitMarkDelivered() {
+    const targets = this.targetDeliverySales();
+    if (!targets.length) return;
+
+    this.submittingMarkDelivered.set(true);
+    const deliveredAtIso = this.markDeliveredAt ? new Date(this.markDeliveredAt).toISOString() : undefined;
+
+    if (targets.length === 1) {
+      const sale = targets[0];
+      if (!sale.id) return;
+      const request$ = deliveredAtIso
+        ? this.outSalesService.setFulfillment(sale.id, { fulfillment: 'delivery', delivered: true, delivered_at: deliveredAtIso })
+        : (this.isAwaitingDelivery(sale)
+            ? this.orderService.adminCompleteOrder(sale.id)
+            : this.outSalesService.setFulfillment(sale.id, { fulfillment: 'delivery', delivered: true }));
+
+      request$.pipe(
+        finalize(() => this.submittingMarkDelivered.set(false))
+      ).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Delivered',
+            detail: `Sale #${sale.orderNumber || sale.id} marked as delivered.`
+          });
+          this.markDeliveredModalVisible.set(false);
+          this.selectedSales = this.selectedSales.filter(s => s.id !== sale.id);
+          this.loadSales();
+        },
+        error: (err) => {
+          console.error('Failed to mark delivered', err);
+          const detail = err.error?.detail || err.message || 'Failed to complete delivery sale.';
+          this.messageService.add({ severity: 'error', summary: 'Delivery Failed', detail });
+        }
+      });
+      return;
+    }
+
+    // Bulk delivery execution
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    const calls = targets.filter(sale => !!sale.id).map(sale => {
+      const obs$ = deliveredAtIso
+        ? this.outSalesService.setFulfillment(sale.id!, { fulfillment: 'delivery', delivered: true, delivered_at: deliveredAtIso })
+        : (this.isAwaitingDelivery(sale)
+            ? this.orderService.adminCompleteOrder(sale.id!)
+            : this.outSalesService.setFulfillment(sale.id!, { fulfillment: 'delivery', delivered: true }));
+
+      return obs$.pipe(
+        tap(() => successCount++),
+        catchError((err) => {
+          failCount++;
+          const msg = err.error?.detail || err.message || 'Failed';
+          errors.push(`#${sale.orderNumber || sale.id}: ${msg}`);
+          return of(null);
+        })
+      );
+    });
+
+    forkJoin(calls).pipe(
+      finalize(() => this.submittingMarkDelivered.set(false))
+    ).subscribe(() => {
+      if (successCount > 0) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Bulk Delivery Complete',
+          detail: `${successCount} sale(s) marked as delivered.`
         });
       }
+      if (failCount > 0) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Some Deliveries Failed',
+          detail: `${failCount} failed: ${errors.slice(0, 3).join(', ')}`
+        });
+      }
+      this.markDeliveredModalVisible.set(false);
+      this.selectedSales = [];
+      this.loadSales();
     });
   }
 
@@ -457,7 +539,21 @@ export class OutSalesListComponent implements OnInit {
     this.classifyingSale.set(sale);
     this.classifyChoice = choice || (sale.fulfillment === 'delivery' ? 'delivered' : 'handover');
     this.classifyDeliveredAt = sale.completedAt ? new Date(sale.completedAt) : null;
-    this.classifyPaymentMethod = (sale.paymentMethod || 'cod').toLowerCase();
+
+    const currentMethod = (sale.paymentMethod || '').toLowerCase().trim();
+    if (currentMethod === 'cash' || currentMethod === 'bkash') {
+      this.classifyHandoverPaymentMethod = currentMethod;
+    } else {
+      this.classifyHandoverPaymentMethod = 'cash';
+    }
+
+    if (currentMethod === 'cod' || currentMethod === 'bkash') {
+      this.classifyDeliveredPaymentMethod = currentMethod;
+      this.classifyPaymentMethod = currentMethod;
+    } else {
+      this.classifyDeliveredPaymentMethod = 'cod';
+      this.classifyPaymentMethod = 'cod';
+    }
 
     const address = sale.address;
     this.classifyCustomer = {
@@ -494,7 +590,12 @@ export class OutSalesListComponent implements OnInit {
 
   quickClassifyHandover(sale: Order) {
     if (!sale || !sale.id) return;
-    this.outSalesService.setFulfillment(sale.id, { fulfillment: 'handover' }).subscribe({
+    const currentMethod = (sale.paymentMethod || '').toLowerCase().trim();
+    const payload: any = { fulfillment: 'handover' };
+    if (currentMethod !== 'bkash') {
+      payload.payment_method = 'cash';
+    }
+    this.outSalesService.setFulfillment(sale.id, payload).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
@@ -518,7 +619,19 @@ export class OutSalesListComponent implements OnInit {
     this.savingClassification.set(true);
 
     if (this.classifyChoice === 'handover') {
-      this.outSalesService.setFulfillment(sale.id, { fulfillment: 'handover' }).pipe(
+      if (!this.classifyHandoverPaymentMethod) {
+        this.savingClassification.set(false);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Missing Payment Method',
+          detail: 'Please select a payment method for the store handover.'
+        });
+        return;
+      }
+      this.outSalesService.setFulfillment(sale.id, {
+        fulfillment: 'handover',
+        payment_method: this.classifyHandoverPaymentMethod
+      }).pipe(
         finalize(() => this.savingClassification.set(false))
       ).subscribe({
         next: () => {
@@ -540,9 +653,19 @@ export class OutSalesListComponent implements OnInit {
     }
 
     if (this.classifyChoice === 'delivered') {
+      if (!this.classifyDeliveredPaymentMethod) {
+        this.savingClassification.set(false);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Missing Payment Method',
+          detail: 'Please select a payment method for the delivery sale.'
+        });
+        return;
+      }
       const body: any = {
         fulfillment: 'delivery',
-        delivered: true
+        delivered: true,
+        payment_method: this.classifyDeliveredPaymentMethod
       };
       if (this.classifyDeliveredAt) {
         body.delivered_at = new Date(this.classifyDeliveredAt).toISOString();
@@ -570,6 +693,15 @@ export class OutSalesListComponent implements OnInit {
     }
 
     if (this.classifyChoice === 'awaiting') {
+      if (!this.classifyPaymentMethod) {
+        this.savingClassification.set(false);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Missing Payment Method',
+          detail: 'Please select a payment method (COD or bKash).'
+        });
+        return;
+      }
       if (!this.classifyCustomer.name?.trim() || !this.classifyCustomer.phone?.trim() || !this.classifyCustomer.address_line?.trim()) {
         this.savingClassification.set(false);
         this.messageService.add({
@@ -634,6 +766,11 @@ export class OutSalesListComponent implements OnInit {
     }
 
     this.editPaymentMethod = (sale.paymentMethod || 'cash').toLowerCase();
+    if (sale.fulfillment === 'delivery' && this.editPaymentMethod === 'cash') {
+      this.editPaymentMethod = 'cod';
+    } else if (sale.fulfillment === 'handover' && this.editPaymentMethod === 'cod') {
+      this.editPaymentMethod = 'cash';
+    }
     this.editSoldAt = sale.orderDate ? new Date(sale.orderDate) : new Date();
     this.editDeliveryCharge = sale.deliveryCharge || 0;
     this.editSource = sale.source || (sale as any).utm_source || '';

@@ -114,6 +114,10 @@
         <span class="font-bold">Tk. {{ grandTotalDisplay | number:'1.0-2' }}</span>
       </div>
 
+      <div *ngIf="isCod" class="meta-row font-bold text-center mt-1" style="font-size: 13px;">
+        Amount due on delivery: ৳{{ grandTotalDisplay | number:'1.0-2' }}
+      </div>
+
       <div class="thermal-divider">--------------------------------</div>
     </div>
 

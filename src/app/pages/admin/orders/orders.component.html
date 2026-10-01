@@ -208,7 +208,14 @@
                     [class]="'pi text-2xl ' + (selectedOrder()!.status === 'Completed' ? 'pi-check-circle text-green-400' : 'pi-clock text-blue-400')"></i>
                 <div class="flex flex-column">
                     <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-0.5">Current Status</span>
-                    <span class="text-lg md:text-xl font-bold">{{ selectedOrder()!.status }}</span>
+                    <div class="flex align-items-center gap-2 flex-wrap">
+                        <span class="text-lg md:text-xl font-bold">{{ selectedOrder()!.status }}</span>
+                        @if (selectedOrder()!.channel === 'offline' && selectedOrder()!.fulfillment) {
+                        <span class="fulfillment-pill" [ngClass]="selectedOrder()!.fulfillment || 'unreviewed'">
+                            {{ getFulfillmentLabel(selectedOrder()!.fulfillment) }}
+                        </span>
+                        }
+                    </div>
                 </div>
             </div>
             <div class="text-left md:text-right">
@@ -386,7 +393,7 @@
                         style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08);">
                         <div class="flex align-items-center justify-content-between gap-2 mb-3 pb-3 border-bottom-1 border-white-alpha-10">
                             <div class="flex align-items-center gap-2">
-                                <div class="flex align-items-center justify-content-center border-round-lg"
+                                <div class="flex align-items-center justify-content-center border-round-lg flex-shrink-0"
                                     style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.15);">
                                     <i class="pi pi-user text-blue-400 text-sm"></i>
                                 </div>
@@ -534,7 +541,8 @@
                 (click)="displayOrderDialog.set(false)"></button>
 
             @if (selectedOrder()!.paymentMethod?.toLowerCase() === 'bkash' &&
-            !isPaymentConfirmed(selectedOrder()!.paymentStatus)) {
+            !isPaymentConfirmed(selectedOrder()!.paymentStatus) &&
+            selectedOrder()!.channel !== 'offline') {
             <button pButton label="Verify Payment" icon="pi pi-check-circle"
                 class="premium-btn-primary bg-blue-500 border-none hover:bg-blue-600"
                 (click)="adminConfirmPayment(selectedOrder()!)"></button>

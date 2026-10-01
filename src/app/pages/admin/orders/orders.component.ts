@@ -531,6 +531,12 @@ export class OrdersComponent implements OnInit {
     }
   }
 
+  getFulfillmentLabel(fulfillment?: string | null): string {
+    if (fulfillment === 'handover') return 'Handover';
+    if (fulfillment === 'delivery') return 'Delivery';
+    return 'Needs review';
+  }
+
   getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
     switch (status) {
       case 'Confirmed':

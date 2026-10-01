@@ -342,3 +342,97 @@
         }
     }
 }
+
+.review-banner {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.06) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.08);
+
+    .review-badge-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(245, 158, 11, 0.2);
+    }
+}
+
+.filter-chips-wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .filter-chip-btn {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #94a3b8;
+        padding: 0.45rem 0.9rem;
+        border-radius: 9999px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        &.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.12);
+        }
+
+        .chip-count {
+            background: rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 12px;
+            margin-left: 0.25rem;
+        }
+
+        .chip-badge-warn {
+            background: rgba(245, 158, 11, 0.25);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.1rem 0.4rem;
+            border-radius: 12px;
+            margin-left: 0.25rem;
+        }
+    }
+}
+
+.fulfillment-card {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    user-select: none;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    &.active {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 0 14px rgba(59, 130, 246, 0.12);
+    }
+}
+
+.quick-review-btn {
+    font-size: 0.6875rem !important;
+    padding: 0.2rem 0.5rem !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+}

@@ -75,6 +75,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   isPrintingThermal = signal<boolean>(false);
 
   items: SaleItemRow[] = [];
+  fulfillment: 'handover' | 'delivery' | null = null;
   paymentMethod = 'cash';
   soldAt: Date = new Date();
 
@@ -88,7 +89,46 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   districts: District[] = districts;
   subDistricts: string[] = [];
 
-  readonly paymentMethods = PAYMENT_METHODS;
+  get paymentMethods() {
+    if (this.fulfillment === 'delivery') {
+      return [
+        { label: 'Cash on Delivery', value: 'cod' },
+        { label: 'Cash', value: 'cash' },
+        { label: 'bKash', value: 'bkash' },
+        { label: 'Nagad', value: 'nagad' },
+        { label: 'Bank', value: 'bank' },
+        { label: 'Other', value: 'other' }
+      ];
+    }
+    return [
+      { label: 'Cash', value: 'cash' },
+      { label: 'bKash', value: 'bkash' },
+      { label: 'Nagad', value: 'nagad' },
+      { label: 'Bank', value: 'bank' },
+      { label: 'Other', value: 'other' }
+    ];
+  }
+
+  selectFulfillment(choice: 'handover' | 'delivery') {
+    this.fulfillment = choice;
+    if (choice === 'delivery') {
+      this.paymentMethod = 'cod';
+    } else if (this.paymentMethod === 'cod') {
+      this.paymentMethod = 'cash';
+    }
+  }
+
+  onSourceChange() {
+    if (!this.source) return;
+    const s = this.source.toLowerCase().trim();
+    if (!this.fulfillment) {
+      if (s.includes('stall') || s.includes('shop') || s.includes('walk') || s.includes('outlet')) {
+        this.selectFulfillment('handover');
+      } else if (s.includes('facebook') || s.includes('fb') || s.includes('whatsapp') || s.includes('wa') || s.includes('insta') || s.includes('messenger') || s.includes('courier')) {
+        this.selectFulfillment('delivery');
+      }
+    }
+  }
 
   constructor(
     private outSalesService: OutSalesService,
@@ -171,6 +211,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
 
   resetForm() {
     this.items = [this.newRow()];
+    this.fulfillment = null;
     this.paymentMethod = 'cash';
     this.soldAt = new Date();
     this.deliveryCharge = 0;
@@ -284,8 +325,17 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   isFormValid(): boolean {
+    if (!this.fulfillment) return false;
     if (!this.items.length) return false;
-    return this.items.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0);
+    const itemsValid = this.items.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0);
+    if (!itemsValid) return false;
+
+    if (this.fulfillment === 'delivery') {
+      if (!this.customer.name?.trim() || !this.customer.phone?.trim() || !this.customer.address_line?.trim()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private extractErrorDetail(err: any): string {
@@ -319,9 +369,19 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    if (!this.isFormValid()) {
+    if (!this.fulfillment) {
+      this.messageService.add({ severity: 'warn', summary: 'Missing fulfillment', detail: 'Please choose whether the sale was handed over now or needs delivery.' });
+      return;
+    }
+    if (!this.items.length || !this.items.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0)) {
       this.messageService.add({ severity: 'warn', summary: 'Incomplete', detail: 'Each line needs a product, quantity and unit price.' });
       return;
+    }
+    if (this.fulfillment === 'delivery') {
+      if (!this.customer.name?.trim() || !this.customer.phone?.trim() || !this.customer.address_line?.trim()) {
+        this.messageService.add({ severity: 'warn', summary: 'Missing delivery info', detail: 'Delivery sales require customer name, phone, and address line.' });
+        return;
+      }
     }
     this.saving.set(true);
 
@@ -357,6 +417,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       district: this.customer.district || '',
       subDistrict: this.customer.subdistrict || '',
       fullAddress: this.customer.address_line || '',
+      fulfillment: this.fulfillment,
       paymentMethod: this.paymentMethod,
       orderDate: this.soldAt ? new Date(this.soldAt) : new Date(),
       deliveryCharge: this.deliveryCharge || 0,
@@ -373,12 +434,9 @@ export class OutSalesComponent implements OnInit, OnDestroy {
         product_id: item.product_id!,
         quantity: item.quantity,
         unit_price: item.unit_price || 0,
-        price: item.unit_price || 0,
-        price_at_purchase: item.unit_price || 0,
         unit_cost: item.unit_cost ?? null
       })),
-      total: this.grandTotal,
-      total_amount: this.grandTotal,
+      fulfillment: this.fulfillment,
       payment_method: this.paymentMethod,
       sold_at: this.soldAt ? new Date(this.soldAt).toISOString() : null,
       delivery_charge: this.deliveryCharge || 0,
@@ -397,7 +455,10 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       finalize(() => this.saving.set(false))
     ).subscribe({
       next: (createdSale) => {
-        this.messageService.add({ life: 3000, severity: 'success', summary: 'Sale Recorded', detail: 'Offline sale has been recorded successfully.' });
+        const detailMsg = this.fulfillment === 'delivery'
+          ? 'Sale recorded — awaiting delivery'
+          : 'Offline sale has been recorded successfully.';
+        this.messageService.add({ life: 3000, severity: 'success', summary: 'Sale Recorded', detail: detailMsg });
         
         // Merge backend response with our rich form snapshot
         const mergedData = {

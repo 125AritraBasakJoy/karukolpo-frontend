@@ -9,4 +9,5 @@ export const OUT_SALES_API = {
     CREATE: BASE,
     UPDATE: (saleId: string) => `${BASE}/${saleId}`,
     VOID: (saleId: string) => `${BASE}/${saleId}`,
+    FULFILLMENT: (saleId: string) => `${BASE}/${saleId}/fulfillment`,
 } as const;

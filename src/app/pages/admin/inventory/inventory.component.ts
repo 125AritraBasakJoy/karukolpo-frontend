@@ -93,7 +93,7 @@ function matchesBilingualProduct(product: Product, query: string): boolean {
   ],
   providers: [ConfirmationService],
   templateUrl: './inventory.component.html',
-  styleUrls: ['./inventory.component.scss']
+  styleUrls: ['./inventory.component.scss', '../admin-styles.scss']
 })
 export class InventoryComponent implements OnInit {
   products = signal<Product[]>([]);

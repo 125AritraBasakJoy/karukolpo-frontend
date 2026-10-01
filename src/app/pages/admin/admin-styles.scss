@@ -390,7 +390,50 @@
 /* ─────────────────────────────────────────────────────────────────
    PREMIUM CHECKBOX — GLOBAL ADMIN OVERRIDE (PrimeNG 19+)
    ───────────────────────────────────────────────────────────────── */
-.admin-layout {
+.admin-layout,
+.out-sales-list-container {
+    .p-checkbox {
+        position: relative !important;
+
+        .p-checkbox-input,
+        input[type="checkbox"] {
+            cursor: pointer !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            opacity: 0 !important;
+            z-index: 1 !important;
+            outline: 0 none !important;
+            border: none !important;
+            background: transparent !important;
+        }
+
+        &.p-checkbox-disabled,
+        &.p-disabled,
+        &:has(.p-checkbox-input:disabled),
+        &:has(input[type="checkbox"]:disabled) {
+            opacity: 0.35 !important;
+            cursor: not-allowed !important;
+
+            .p-checkbox-box {
+                cursor: not-allowed !important;
+                border-color: rgba(148, 163, 184, 0.2) !important;
+                background: rgba(255, 255, 255, 0.01) !important;
+            }
+
+            .p-checkbox-input,
+            input[type="checkbox"] {
+                cursor: not-allowed !important;
+            }
+        }
+    }
+
     /* Base checkbox box */
     .p-checkbox .p-checkbox-box,
     .p-checkbox-box {
@@ -546,6 +589,165 @@
             &:hover {
                 background: rgba(255, 255, 255, 0.15);
             }
+        }
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   GLOBAL ACTIONS COLUMN & FLOATING ACTION PILL
+   ───────────────────────────────────────────────────────────────── */
+.actions-col-header,
+.actions-col-cell {
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+.actions-cell {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+    padding: 0.28rem 0.55rem !important;
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+    backdrop-filter: blur(10px) !important;
+    white-space: nowrap !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover {
+        background: rgba(24, 34, 60, 0.92) !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 16px rgba(59, 130, 246, 0.15) !important;
+        transform: translateY(-1px) !important;
+    }
+}
+
+.action-btn {
+    width: 2rem !important;
+    height: 2rem !important;
+    min-width: 2rem !important;
+    max-width: 2rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+
+    .pi, .p-button-icon {
+        font-size: 0.9rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        display: inline-block !important;
+    }
+
+    /* Emerald: Receipt, Download */
+    &.receipt-btn,
+    &.download-btn {
+        color: #22c55e !important;
+        &:hover {
+            background: rgba(34, 197, 94, 0.2) !important;
+            border-color: rgba(34, 197, 94, 0.45) !important;
+            color: #4ade80 !important;
+            transform: translateY(-1px) scale(1.08) !important;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35) !important;
+        }
+        &:active {
+            transform: translateY(0) scale(1) !important;
+        }
+    }
+
+    /* Green: Deliver, Complete, Confirm, Success */
+    &.deliver-btn,
+    &.success-btn,
+    &.complete-btn {
+        color: #10b981 !important;
+        &:hover {
+            background: rgba(16, 185, 129, 0.25) !important;
+            border-color: rgba(16, 185, 129, 0.5) !important;
+            color: #34d399 !important;
+            transform: translateY(-1px) scale(1.08) !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35) !important;
+        }
+        &:active {
+            transform: translateY(0) scale(1) !important;
+        }
+    }
+
+    /* Rose: Cancel, Refuse */
+    &.cancel-btn {
+        color: #fb7185 !important;
+        &:hover {
+            background: rgba(244, 63, 94, 0.2) !important;
+            border-color: rgba(244, 63, 94, 0.45) !important;
+            color: #fda4af !important;
+            transform: translateY(-1px) scale(1.08) !important;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.35) !important;
+        }
+        &:active {
+            transform: translateY(0) scale(1) !important;
+        }
+    }
+
+    /* Cyan / Electric Sky: Classify, View, Inventory, Info */
+    &.classify-btn,
+    &.view-btn,
+    &.inventory-btn,
+    &.info-btn {
+        color: #0ea5e9 !important;
+        &:hover {
+            background: rgba(14, 165, 233, 0.2) !important;
+            border-color: rgba(14, 165, 233, 0.45) !important;
+            color: #38bdf8 !important;
+            transform: translateY(-1px) scale(1.08) !important;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35) !important;
+        }
+        &:active {
+            transform: translateY(0) scale(1) !important;
+        }
+    }
+
+    /* Vibrant Purple / Violet: Edit */
+    &.edit-btn {
+        color: #a855f7 !important;
+        &:hover {
+            background: rgba(168, 85, 247, 0.2) !important;
+            border-color: rgba(168, 85, 247, 0.45) !important;
+            color: #c084fc !important;
+            transform: translateY(-1px) scale(1.08) !important;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.35) !important;
+        }
+        &:active {
+            transform: translateY(0) scale(1) !important;
+        }
+    }
+
+    /* Coral / Red: Void, Delete, Danger */
+    &.void-btn,
+    &.delete-btn,
+    &.danger-btn {
+        color: #f43f5e !important;
+        &:hover {
+            background: rgba(244, 63, 94, 0.22) !important;
+            border-color: rgba(244, 63, 94, 0.5) !important;
+            color: #fb7185 !important;
+            transform: translateY(-1px) scale(1.08) !important;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.35) !important;
+        }
+        &:active {
+            transform: translateY(0) scale(1) !important;
         }
     }
 }

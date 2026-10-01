@@ -49,4 +49,9 @@ export interface Order {
   created_at?: string;
   channel?: 'online' | 'offline' | string;
   note?: string;
+  source?: string | null;
+  fulfillment?: 'handover' | 'delivery' | 'unreviewed';
+  rawStatus?: string;
+  isVoided?: boolean;
+  completedAt?: string | null;
 }

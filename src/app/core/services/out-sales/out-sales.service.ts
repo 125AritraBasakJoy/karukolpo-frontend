@@ -23,7 +23,8 @@ export interface OfflineSaleCustomer {
 
 export interface OfflineSaleCreate {
     items: OfflineSaleItem[];
-    payment_method?: string;
+    fulfillment?: 'handover' | 'delivery';
+    payment_method?: 'cod' | 'cash' | 'bkash' | 'nagad' | 'bank' | 'other' | string;
     sold_at?: string | null;
     delivery_charge?: number | null;
     customer?: OfflineSaleCustomer | null;
@@ -33,7 +34,7 @@ export interface OfflineSaleCreate {
 
 export interface OfflineSaleUpdate {
     items?: OfflineSaleItem[];
-    payment_method?: string;
+    payment_method?: 'cod' | 'cash' | 'bkash' | 'nagad' | 'bank' | 'other' | string;
     sold_at?: string | null;
     delivery_charge?: number | null;
     customer?: OfflineSaleCustomer | null;
@@ -52,10 +53,18 @@ export class OutSalesService {
 
     /**
      * List offline sales, newest first, paginated.
-     * GET /admin/sales?skip&limit
+     * Optional status and fulfillment query filters.
+     * GET /admin/sales?skip&limit[&status=...][&fulfillment=...]
      */
-    listSales(skip = 0, limit = 100): Observable<Order[]> {
-        return this.apiService.get<any[]>(`${OUT_SALES_API.LIST}?skip=${skip}&limit=${limit}`).pipe(
+    listSales(skip = 0, limit = 100, status?: string, fulfillment?: string): Observable<Order[]> {
+        let url = `${OUT_SALES_API.LIST}?skip=${skip}&limit=${limit}`;
+        if (status) {
+            url += `&status=${encodeURIComponent(status)}`;
+        }
+        if (fulfillment) {
+            url += `&fulfillment=${encodeURIComponent(fulfillment)}`;
+        }
+        return this.apiService.get<any[]>(url).pipe(
             map(sales => sales.map(sale => this.orderService.mapBackendOrder(sale)))
         );
     }
@@ -76,6 +85,21 @@ export class OutSalesService {
      */
     updateSale(saleId: string, payload: OfflineSaleUpdate): Observable<Order> {
         return this.apiService.patch<any>(OUT_SALES_API.UPDATE(saleId), payload).pipe(
+            map(sale => this.orderService.mapBackendOrder(sale))
+        );
+    }
+
+    /**
+     * Classify or re-classify the fulfillment of a sale.
+     * POST /admin/sales/{sale_id}/fulfillment
+     */
+    setFulfillment(saleId: string, body: {
+        fulfillment: 'handover' | 'delivery';
+        delivered?: boolean;
+        delivered_at?: string | null;
+        payment_method?: string;
+    }): Observable<Order> {
+        return this.apiService.post<any>(OUT_SALES_API.FULFILLMENT(saleId), body).pipe(
             map(sale => this.orderService.mapBackendOrder(sale))
         );
     }

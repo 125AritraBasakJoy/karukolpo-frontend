@@ -184,4 +184,35 @@
     }
 }
 
+.fulfillment-card {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    user-select: none;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    &.active {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 0 16px rgba(59, 130, 246, 0.15);
+
+        .fulfillment-icon {
+            background: rgba(59, 130, 246, 0.25);
+            color: #60a5fa;
+        }
+    }
+
+    .fulfillment-icon {
+        width: 32px;
+        height: 32px;
+        background: rgba(255, 255, 255, 0.06);
+        color: #94a3b8;
+        transition: all 0.2s ease;
+    }
+}
+
 

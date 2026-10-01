@@ -6,14 +6,14 @@
                 <i class="pi pi-receipt text-primary"></i>
                 Edit Out Sales
             </h1>
-            <p class="text-slate-400 m-0 text-sm">View, edit, or void offline sales recorded outside the website.</p>
+            <p class="text-slate-400 m-0 text-sm">View, track delivery, classify, or void offline sales recorded outside the website.</p>
         </div>
 
         <div class="flex align-items-center gap-2 w-full md:w-auto">
             <!-- Search Bar -->
             <div class="search-wrapper flex-grow-1 md:flex-grow-0">
                 <i class="pi pi-search search-icon"></i>
-                <input type="text" pInputText placeholder="Search Sale #, Customer, Phone..."
+                <input type="text" pInputText placeholder="Search Sale #, Customer, Status..."
                     [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" class="search-input w-full" />
                 @if (searchQuery()) {
                 <i class="pi pi-times clear-icon" (click)="clearSearch()"></i>
@@ -26,33 +26,107 @@
         </div>
     </div>
 
+    <!-- Review Queue Banner -->
+    <div *ngIf="reviewCount() > 0" class="review-banner p-3 sm:p-4 border-round-xl mb-4 flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-3">
+        <div class="flex align-items-center gap-3">
+            <div class="review-badge-icon flex align-items-center justify-content-center border-round-lg flex-shrink-0">
+                <i class="pi pi-exclamation-triangle text-amber-400 text-lg"></i>
+            </div>
+            <div>
+                <div class="text-white font-bold text-sm sm:text-base flex align-items-center gap-2">
+                    <span>{{ reviewCount() }} out-sales need review</span>
+                    <span class="chip-badge-warn">{{ reviewCount() }}</span>
+                </div>
+                <div class="text-slate-400 text-xs mt-0.5">
+                    Tell us whether each was handed over, delivered, or is still on its way.
+                </div>
+            </div>
+        </div>
+        <p-button label="Review Queue" icon="pi pi-arrow-right" iconPos="right"
+            (onClick)="setFilter('review')"
+            styleClass="p-button-warning p-button-sm font-semibold border-round-lg w-full sm:w-auto"></p-button>
+    </div>
+
+    <!-- Filter Chips Bar -->
+    <div class="filter-chips-wrapper flex align-items-center gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar">
+        <button type="button" class="filter-chip-btn" [class.active]="selectedFilter() === 'all'" (click)="setFilter('all')">
+            <span>All</span>
+            <span class="chip-count">{{ sales().length }}</span>
+        </button>
+        <button type="button" class="filter-chip-btn" [class.active]="selectedFilter() === 'awaiting'" (click)="setFilter('awaiting')">
+            <i class="pi pi-truck text-xs mr-1 text-amber-400"></i>
+            <span>Awaiting delivery</span>
+        </button>
+        <button type="button" class="filter-chip-btn" [class.active]="selectedFilter() === 'review'" (click)="setFilter('review')">
+            <i class="pi pi-info-circle text-xs mr-1 text-blue-400"></i>
+            <span>Needs review</span>
+            <span *ngIf="reviewCount() > 0" class="chip-badge-warn">{{ reviewCount() }}</span>
+        </button>
+        <button type="button" class="filter-chip-btn" [class.active]="selectedFilter() === 'delivered'" (click)="setFilter('delivered')">
+            <i class="pi pi-check-circle text-xs mr-1 text-emerald-400"></i>
+            <span>Delivered</span>
+        </button>
+        <button type="button" class="filter-chip-btn" [class.active]="selectedFilter() === 'handover'" (click)="setFilter('handover')">
+            <i class="pi pi-box text-xs mr-1 text-teal-400"></i>
+            <span>Handed over</span>
+        </button>
+        <button type="button" class="filter-chip-btn" [class.active]="selectedFilter() === 'cancelled'" (click)="setFilter('cancelled')">
+            <i class="pi pi-ban text-xs mr-1 text-red-400"></i>
+            <span>Cancelled</span>
+        </button>
+    </div>
+
+    <!-- Bulk Action Bar for Awaiting Delivery Sales -->
+    <div *ngIf="selectedSales.length > 0" class="bulk-action-bar border-round-xl p-3 mb-3 flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-2">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-check-square text-emerald-400 text-lg"></i>
+            <span class="text-white font-medium text-sm">
+                <strong>{{ selectedSales.length }}</strong> sale(s) selected
+            </span>
+        </div>
+        <div class="flex align-items-center gap-2 w-full sm:w-auto justify-content-end">
+            <button pButton label="Mark Delivered" icon="pi pi-check"
+                class="p-button-success p-button-sm font-semibold"
+                (click)="confirmBulkMarkDelivered()"></button>
+            <button pButton label="Clear Selection" icon="pi pi-times"
+                class="p-button-text p-button-secondary p-button-sm"
+                (click)="selectedSales = []"></button>
+        </div>
+    </div>
+
     <!-- Data Table Card -->
     <div class="glass-card p-3 sm:p-4 border-round-2xl">
         @if (loading()) {
         <div class="overflow-hidden overflow-x-auto">
-            <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '60rem' }">
+            <p-table [value]="[1,2,3,4,5]" [tableStyle]="{ 'min-width': '82rem' }">
                 <ng-template pTemplate="header">
                     <tr>
-                        <th>Sale ID / #</th>
-                        <th>Customer</th>
-                        <th>Date & Time</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Payment</th>
-                        <th>Status</th>
-                        <th class="text-center">Actions</th>
+                        <th style="width: 3.25rem"><p-skeleton width="1.5rem"></p-skeleton></th>
+                        <th style="min-width: 7.5rem">Sale ID / #</th>
+                        <th style="min-width: 7rem">Source</th>
+                        <th style="min-width: 10rem">Customer</th>
+                        <th style="min-width: 8.5rem">Date & Time</th>
+                        <th style="min-width: 5.5rem">Items</th>
+                        <th style="min-width: 7rem">Total</th>
+                        <th style="min-width: 7.5rem">Payment</th>
+                        <th style="min-width: 7.5rem">Status</th>
+                        <th class="text-center actions-col-header">Actions</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body">
                     <tr>
-                        <td><p-skeleton width="8rem"></p-skeleton></td>
-                        <td><p-skeleton width="10rem"></p-skeleton></td>
-                        <td><p-skeleton width="9rem"></p-skeleton></td>
-                        <td><p-skeleton width="5rem"></p-skeleton></td>
+                        <td><p-skeleton width="1.5rem"></p-skeleton></td>
                         <td><p-skeleton width="6rem"></p-skeleton></td>
-                        <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
-                        <td><p-skeleton width="6rem" borderRadius="16px"></p-skeleton></td>
-                        <td class="text-center"><p-skeleton shape="circle" size="2rem" styleClass="mx-auto"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="8.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="7.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="4rem"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem" borderRadius="16px"></p-skeleton></td>
+                        <td><p-skeleton width="5.5rem" borderRadius="16px"></p-skeleton></td>
+                        <td class="text-center actions-col-cell">
+                            <p-skeleton width="9rem" height="2.25rem" borderRadius="9999px" styleClass="mx-auto"></p-skeleton>
+                        </td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -62,27 +136,44 @@
         @else {
         <div class="overflow-hidden overflow-x-auto custom-scrollbar">
             <p-table [value]="filteredSales()" [paginator]="true" [rows]="10"
+                [(selection)]="selectedSales" dataKey="id"
                 [rowsPerPageOptions]="[10, 25, 50]" [showCurrentPageReport]="true"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} offline sales"
-                [tableStyle]="{'min-width': '65rem'}" styleClass="premium-table-v2">
+                [tableStyle]="{'min-width': '82rem'}" styleClass="premium-table-v2">
 
                 <ng-template pTemplate="header">
                     <tr>
-                        <th>Sale ID / #</th>
-                        <th>Customer</th>
-                        <th>Date & Time</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Payment</th>
-                        <th>Status</th>
-                        <th class="text-center">Actions</th>
+                        <th style="width: 3.25rem">
+                            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                        </th>
+                        <th style="min-width: 7.5rem">Sale ID / #</th>
+                        <th style="min-width: 7rem">Source</th>
+                        <th style="min-width: 10rem">Customer</th>
+                        <th style="min-width: 8.5rem">Date & Time</th>
+                        <th style="min-width: 5.5rem">Items</th>
+                        <th style="min-width: 7rem">Total</th>
+                        <th style="min-width: 7.5rem">Payment</th>
+                        <th style="min-width: 7.5rem">Status</th>
+                        <th class="text-center actions-col-header">Actions</th>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="body" let-sale>
                     <tr>
                         <td>
+                            <p-tableCheckbox [value]="sale"></p-tableCheckbox>
+                        </td>
+                        <td>
                             <span class="id-tag">{{ sale.orderNumber || sale.id }}</span>
+                        </td>
+                        <td>
+                            <div *ngIf="sale.source; else noSource" class="source-tag">
+                                <i class="pi pi-store text-xs text-blue-400"></i>
+                                <span>{{ sale.source }}</span>
+                            </div>
+                            <ng-template #noSource>
+                                <span class="text-xs text-slate-500 italic">—</span>
+                            </ng-template>
                         </td>
                         <td>
                             <div class="font-medium text-white">{{ sale.fullName || 'Walk-in Customer' }}</div>
@@ -109,27 +200,39 @@
                             </div>
                         </td>
                         <td>
-                            <p-tag [value]="sale.paymentMethod || 'Cash'" severity="info" [rounded]="true"
+                            <p-tag [value]="getPaymentMethodLabel(sale.paymentMethod)" severity="info" [rounded]="true"
                                 styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
                         <td>
-                            <p-tag [value]="sale.status || 'Confirmed'" [severity]="getSeverity(sale.status)" [rounded]="true"
+                            <p-tag [value]="getStatusInfo(sale).label" [severity]="getStatusInfo(sale).severity" [rounded]="true"
                                 styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
-                        <td class="text-center">
-                            <div class="flex justify-content-center gap-2">
+                        <td class="text-center actions-col-cell">
+                            <div class="actions-cell">
+                                <!-- Thermal Receipt (available on all sales) -->
                                 <button pButton icon="pi pi-receipt"
-                                    class="action-btn p-button-rounded p-button-text success-btn"
-                                    (click)="openThermalInvoice(sale)" pTooltip="Thermal Receipt (58mm)" tooltipPosition="top"></button>
+                                    class="action-btn receipt-btn"
+                                    (click)="openThermalInvoice(sale)"
+                                    pTooltip="Thermal Receipt (58mm)" tooltipPosition="top"></button>
 
-                                <button pButton icon="pi pi-pencil"
-                                    class="action-btn p-button-rounded p-button-text info-btn"
-                                    (click)="openEditModal(sale)" pTooltip="Edit Sale" tooltipPosition="top"></button>
+                                <!-- Change Type / Classify (hidden on cancelled) -->
+                                <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-sync"
+                                    class="action-btn classify-btn"
+                                    (click)="openClassifyModal(sale)"
+                                    [pTooltip]="needsReview(sale) ? 'Review & Classify' : 'Change Type'" tooltipPosition="top"></button>
 
-                                <button pButton icon="pi pi-trash"
+                                <!-- Edit (hidden on cancelled) -->
+                                <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-pencil"
+                                    class="action-btn edit-btn"
+                                    (click)="openEditModal(sale)"
+                                    pTooltip="Edit Sale" tooltipPosition="top"></button>
+
+                                <!-- Void (hidden on cancelled) -->
+                                <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-trash"
                                     [loading]="voidingSaleId() === sale.id"
-                                    class="action-btn p-button-rounded p-button-text danger-btn"
-                                    (click)="confirmVoidSale(sale)" pTooltip="Void Sale" tooltipPosition="top"></button>
+                                    class="action-btn void-btn"
+                                    (click)="confirmVoidSale(sale)"
+                                    pTooltip="Void Sale" tooltipPosition="top"></button>
                             </div>
                         </td>
                     </tr>
@@ -137,7 +240,7 @@
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="8" class="text-center p-5 text-slate-400">
+                        <td colspan="10" class="text-center p-5 text-slate-400">
                             <i class="pi pi-inbox text-3xl mb-2 block"></i>
                             No offline sales found.
                         </td>
@@ -149,6 +252,239 @@
     </div>
 </div>
 
+<!-- Classify / Change Type Dialog -->
+<p-dialog [(visible)]="classifyDialogVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(95vw, 620px)', maxHeight: '90vh' }" styleClass="premium-dialog" [draggable]="false" [resizable]="false">
+    <ng-template pTemplate="header">
+        <div class="flex flex-column">
+            <div class="flex align-items-center gap-2">
+                <i class="pi pi-compass text-primary text-xl"></i>
+                <h3 class="m-0 text-white font-bold text-lg">Classify Sale Fulfillment</h3>
+            </div>
+            <span class="text-xs text-slate-400 mt-1">
+                Sale #{{ classifyingSale()?.orderNumber || classifyingSale()?.id }}
+            </span>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2">
+        <div class="text-xs text-slate-400 mb-3">
+            Select how this order reached or will reach the customer:
+        </div>
+
+        <!-- 3 Mode Cards -->
+        <div class="flex flex-column gap-2 mb-3">
+            <!-- 1. Handed over now -->
+            <div class="fulfillment-card cursor-pointer p-3 border-round-xl transition-all"
+                [class.active]="classifyChoice === 'handover'"
+                (click)="classifyChoice = 'handover'">
+                <div class="flex align-items-center justify-content-between mb-1">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-box text-base text-teal-400"></i>
+                        <span class="font-bold text-white text-sm">Handed over now</span>
+                    </div>
+                    <i class="pi text-base" [ngClass]="classifyChoice === 'handover' ? 'pi-check-circle text-teal-400' : 'pi-circle text-slate-600'"></i>
+                </div>
+                <p class="text-xs text-slate-400 m-0">Walk-in or stall sale. Completed at sale time.</p>
+            </div>
+
+            <!-- Payment dropdown for Handed over now -->
+            <div *ngIf="classifyChoice === 'handover'" class="p-3 border-round-xl bg-slate-900 border-1 border-slate-800 ml-2 mb-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                    Payment Method <span class="text-red-400">*</span>
+                </label>
+                <p-dropdown [options]="handoverPaymentMethods" optionLabel="label" optionValue="value"
+                    [(ngModel)]="classifyHandoverPaymentMethod" appendTo="body" styleClass="w-full"
+                    inputStyleClass="premium-input"></p-dropdown>
+            </div>
+
+            <!-- 2. Delivered to customer -->
+            <div class="fulfillment-card cursor-pointer p-3 border-round-xl transition-all"
+                [class.active]="classifyChoice === 'delivered'"
+                (click)="classifyChoice = 'delivered'">
+                <div class="flex align-items-center justify-content-between mb-1">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-check-circle text-base text-emerald-400"></i>
+                        <span class="font-bold text-white text-sm">Delivered to customer</span>
+                    </div>
+                    <i class="pi text-base" [ngClass]="classifyChoice === 'delivered' ? 'pi-check-circle text-emerald-400' : 'pi-circle text-slate-600'"></i>
+                </div>
+                <p class="text-xs text-slate-400 m-0">Parcel already successfully reached the customer.</p>
+            </div>
+
+            <!-- Delivered on & Payment Method for Delivered -->
+            <div *ngIf="classifyChoice === 'delivered'" class="p-3 border-round-xl bg-slate-900 border-1 border-slate-800 ml-2 mb-2">
+                <div class="field mb-3">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                        Payment Method <span class="text-red-400">*</span>
+                    </label>
+                    <p-dropdown [options]="deliveredPaymentMethods" optionLabel="label" optionValue="value"
+                        [(ngModel)]="classifyDeliveredPaymentMethod" appendTo="body" styleClass="w-full"
+                        inputStyleClass="premium-input"></p-dropdown>
+                </div>
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                    Delivered on (Optional):
+                </label>
+                <p-calendar [(ngModel)]="classifyDeliveredAt" [showTime]="true" [showIcon]="true" [maxDate]="maxDate"
+                    dateFormat="dd/mm/yy" hourFormat="12" placeholder="Keep existing completion time"
+                    appendTo="body" styleClass="w-full premium-calendar" inputStyleClass="w-full"></p-calendar>
+                <span class="text-xs text-slate-500 mt-1 block">Leave blank to retain the current recorded completion date.</span>
+            </div>
+
+            <!-- 3. Still on its way -->
+            <div class="fulfillment-card cursor-pointer p-3 border-round-xl transition-all"
+                [class.active]="classifyChoice === 'awaiting'"
+                (click)="classifyChoice = 'awaiting'">
+                <div class="flex align-items-center justify-content-between mb-1">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-truck text-base text-amber-400"></i>
+                        <span class="font-bold text-white text-sm">Still on its way</span>
+                    </div>
+                    <i class="pi text-base" [ngClass]="classifyChoice === 'awaiting' ? 'pi-check-circle text-amber-400' : 'pi-circle text-slate-600'"></i>
+                </div>
+                <p class="text-xs text-slate-400 m-0">Parcel is currently in transit with courier. Moves to Awaiting delivery.</p>
+            </div>
+
+            <!-- Form for Still on its way -->
+            <div *ngIf="classifyChoice === 'awaiting'" class="p-3 border-round-xl bg-slate-900 border-1 border-slate-800 ml-2">
+                <div class="field mb-3">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">
+                        Payment Method <span class="text-red-400">*</span>
+                    </label>
+                    <p-dropdown [options]="awaitingPaymentMethods" optionLabel="label" optionValue="value"
+                        [(ngModel)]="classifyPaymentMethod" appendTo="body" styleClass="w-full"
+                        inputStyleClass="premium-input"></p-dropdown>
+                </div>
+
+                <div class="field mb-3">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">
+                        Customer Name <span class="text-red-400">*</span>
+                    </label>
+                    <input pInputText [(ngModel)]="classifyCustomer.name" placeholder="Full name" class="w-full premium-input" />
+                </div>
+
+                <div class="field mb-3">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">
+                        Customer Phone <span class="text-red-400">*</span>
+                    </label>
+                    <input pInputText [(ngModel)]="classifyCustomer.phone" placeholder="Phone number" class="w-full premium-input" />
+                </div>
+
+                <div class="grid mb-2">
+                    <div class="field col-6">
+                        <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">District</label>
+                        <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
+                            [(ngModel)]="classifyCustomer.district" (onChange)="onClassifyDistrictChange($event)"
+                            placeholder="District" appendTo="body" styleClass="w-full" [filter]="true" filterBy="name" [showClear]="true"></p-dropdown>
+                    </div>
+                    <div class="field col-6">
+                        <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Sub-district</label>
+                        <p-dropdown [options]="classifySubDistricts" [(ngModel)]="classifyCustomer.subdistrict"
+                            placeholder="Sub-district" [disabled]="!classifySubDistricts.length" appendTo="body" styleClass="w-full" [filter]="true" [showClear]="true"></p-dropdown>
+                    </div>
+                </div>
+
+                <div class="field mb-1">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">
+                        Address Line <span class="text-red-400">*</span>
+                    </label>
+                    <textarea pInputTextarea [(ngModel)]="classifyCustomer.address_line" rows="2"
+                        placeholder="House, Road, Area, etc." class="w-full premium-input"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <p-button label="Cancel" styleClass="p-button-text p-button-secondary"
+                (onClick)="classifyDialogVisible.set(false)"></p-button>
+            <p-button label="Confirm Classification" icon="pi pi-check" [loading]="savingClassification()"
+                styleClass="p-button-primary" (onClick)="submitClassification()"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Mark Delivered Dialog (Single & Bulk) -->
+<p-dialog [(visible)]="markDeliveredModalVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(90vw, 480px)' }" styleClass="premium-dialog" [draggable]="false" [resizable]="false">
+    <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-check-circle text-emerald-400 text-xl"></i>
+            <h3 class="m-0 text-white font-bold text-lg">Mark as Delivered</h3>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2">
+        <div class="p-3 border-round-xl mb-3 bg-slate-900 border-1 border-slate-800">
+            <div *ngIf="targetDeliverySales().length === 1" class="text-sm text-slate-200">
+                Mark sale <span class="font-bold text-white">#{{ targetDeliverySales()[0]?.orderNumber || targetDeliverySales()[0]?.id }}</span> ({{ targetDeliverySales()[0]?.fullName || 'Customer' }}) as delivered?
+            </div>
+            <div *ngIf="targetDeliverySales().length > 1" class="text-sm text-slate-200">
+                Mark <span class="font-bold text-emerald-400">{{ targetDeliverySales().length }} sales</span> as delivered?
+            </div>
+            <div class="text-xs text-slate-400 mt-1">
+                Selected orders will be marked delivered and completed.
+            </div>
+        </div>
+
+        <div class="field mb-3">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Delivered on (Optional):
+            </label>
+            <p-calendar [(ngModel)]="markDeliveredAt" [showTime]="true" [showIcon]="true" [maxDate]="maxDate"
+                dateFormat="dd/mm/yy" hourFormat="12" placeholder="Now (Current time)"
+                appendTo="body" styleClass="w-full premium-calendar" inputStyleClass="w-full"></p-calendar>
+            <span class="text-xs text-slate-500 mt-1 block">Leave blank to mark as delivered right now.</span>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <p-button label="Cancel" styleClass="p-button-text p-button-secondary"
+                (onClick)="markDeliveredModalVisible.set(false)"></p-button>
+            <p-button label="Confirm Delivered" icon="pi pi-check" [loading]="submittingMarkDelivered()"
+                styleClass="p-button-success" (onClick)="submitMarkDelivered()"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Cancel Delivery Sale Dialog (Refused / Returned) -->
+<p-dialog [(visible)]="cancelDialogVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(90vw, 480px)' }" styleClass="premium-dialog" [draggable]="false" [resizable]="false">
+    <ng-template pTemplate="header">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-ban text-red-400 text-xl"></i>
+            <h3 class="m-0 text-white font-bold text-lg">Cancel Delivery Sale</h3>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2">
+        <div class="p-3 border-round-xl mb-3" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25);">
+            <div class="text-xs text-red-200 line-height-3">
+                <strong>Restocks inventory:</strong> This records a genuine order cancellation/return and restocks all deducted items (unlike <em>Void</em>, which is only for mistyped records).
+            </div>
+        </div>
+
+        <div class="field mb-3">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Cancellation Reason
+            </label>
+            <input pInputText [(ngModel)]="cancelReason" placeholder="e.g. Customer refused the parcel"
+                class="w-full premium-input" />
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <p-button label="Keep Order" styleClass="p-button-text p-button-secondary"
+                (onClick)="cancelDialogVisible.set(false)"></p-button>
+            <p-button label="Cancel Order" icon="pi pi-ban" [loading]="cancelling()"
+                styleClass="p-button-danger" (onClick)="submitCancelSale()"></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
 <!-- Edit Offline Sale Dialog -->
 <p-dialog [(visible)]="editDialogVisible" [modal]="true" [dismissableMask]="true"
     [style]="{ width: 'min(95vw, 950px)', maxHeight: '90vh' }"
@@ -158,84 +494,84 @@
         <div class="flex flex-column">
             <h2 class="text-xl font-bold m-0 text-white flex align-items-center gap-2">
                 <i class="pi pi-pencil text-primary"></i>
-                Edit Out Sale
+                Edit Offline Sale #{{ editingSale()?.orderNumber || editingSale()?.id }}
             </h2>
-            <p class="text-slate-400 m-0 text-xs mt-1">
-                Correct recorded offline sale details. Item differences will automatically update inventory.
-            </p>
+            <p class="text-slate-400 m-0 text-xs mt-1">Update items, pricing, or customer delivery info.</p>
         </div>
     </ng-template>
 
-    <div class="edit-modal-content pt-2">
-        <!-- Line items -->
-        <div class="field mb-4">
+    <div class="p-fluid py-2">
+        <!-- Products Table -->
+        <div class="mb-4">
             <div class="flex align-items-center justify-content-between mb-2">
-                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Items</label>
-                <button type="button" pButton label="Add Item" icon="pi pi-plus"
-                    styleClass="premium-btn-primary p-button-sm" (click)="addItem()"></button>
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Line Items</label>
+                <button pButton icon="pi pi-plus" label="Add Line"
+                    class="p-button-sm p-button-outlined p-button-primary" (click)="addItem()"></button>
             </div>
 
             <div class="flex flex-column gap-2">
-                @for (item of editItems; track $index) {
-                <div class="sale-item-row p-2 sm:p-3 border-round-xl border-1 border-slate-700 mb-2">
-                    <div class="grid align-items-start">
-                        <div class="col-12 md:col-5">
-                            <div class="field-label-wrapper">
-                                <label class="field-label">Product</label>
-                            </div>
+                <div *ngFor="let item of editItems; let i = index"
+                    class="sale-item-row p-3 border-round-xl border-1 border-slate-800">
+                    <div class="grid align-items-center">
+                        <!-- Product Selection -->
+                        <div class="field col-12 lg:col-5 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Product</label>
                             <p-dropdown [options]="products()" optionLabel="name" optionValue="id"
-                                [(ngModel)]="item.product_id" [ngModelOptions]="{ standalone: true }"
-                                (onChange)="onProductSelect(item, $event.value)" placeholder="Select product"
-                                [filter]="true" filterBy="name" [showClear]="true" styleClass="w-full"
-                                inputStyleClass="premium-input" appendTo="body"></p-dropdown>
+                                [(ngModel)]="item.product_id" (onChange)="onProductSelect(item, $event.value)"
+                                [filter]="true" filterBy="name" placeholder="Select product…"
+                                appendTo="body" styleClass="w-full" [disabled]="productsLoading()">
+                                <ng-template pTemplate="selectedItem" let-selected>
+                                    <div *ngIf="selected" class="flex align-items-center justify-content-between w-full">
+                                        <span class="font-medium text-white truncate">{{ selected.name }}</span>
+                                    </div>
+                                </ng-template>
+                                <ng-template pTemplate="item" let-prod>
+                                    <div class="flex align-items-center justify-content-between w-full py-1">
+                                        <div class="flex flex-column min-w-0 pr-2">
+                                            <span class="font-medium text-white text-sm truncate">{{ prod.name }}</span>
+                                        </div>
+                                        <div class="flex flex-column align-items-end flex-shrink-0">
+                                            <span class="text-primary font-bold text-xs">{{ (prod.effective_price || prod.price) | currency:'BDT':'৳' }}</span>
+                                            <span *ngIf="prod.effective_price && prod.effective_price < prod.price" class="text-xs line-through text-slate-500">
+                                                {{ prod.price | currency:'BDT':'৳' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </p-dropdown>
                         </div>
-                        <div class="col-3 md:col-2">
-                            <div class="field-label-wrapper">
-                                <label class="field-label">Qty</label>
-                            </div>
+
+                        <!-- Quantity -->
+                        <div class="field col-6 sm:col-3 lg:col-2 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Qty</label>
                             <p-inputNumber [(ngModel)]="item.quantity" [min]="1" mode="decimal"
-                                styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                                [showButtons]="true" styleClass="w-full"
+                                inputStyleClass="w-full premium-input text-center"></p-inputNumber>
                         </div>
-                        <div class="col-7 md:col-4">
-                            <div class="field-label-wrapper flex align-items-center justify-content-between">
-                                <label class="field-label">Unit Price</label>
-                                <span *ngIf="getItemDiscount(item) > 0" class="discount-label-pill">
-                                    <i class="pi pi-tag text-xs"></i> ON SALE
-                                </span>
-                            </div>
+
+                        <!-- Unit Price -->
+                        <div class="field col-6 sm:col-4 lg:col-2 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Unit Price</label>
                             <p-inputNumber [(ngModel)]="item.unit_price" [min]="0" mode="decimal"
                                 styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
                         </div>
-                        <div class="col-2 md:col-1 flex flex-column align-items-end">
-                            <div class="field-label-wrapper select-none opacity-0" aria-hidden="true">
-                                <span class="field-label">&nbsp;</span>
-                            </div>
-                            <div class="delete-btn-wrapper flex align-items-center justify-content-center">
-                                <button type="button" pButton pRipple icon="pi pi-times"
-                                    class="p-button-rounded p-button-text action-btn danger-btn"
-                                    (click)="removeItem($index)" pTooltip="Remove item" tooltipPosition="top"></button>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Full-width Discount Callout Banner -->
-                    <div *ngIf="getItemDiscount(item) > 0" class="discount-callout-bar mt-2 px-3 py-2 border-round-lg flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div class="flex align-items-center gap-2 text-xs">
-                            <span class="discount-icon-circle"><i class="pi pi-bolt"></i></span>
-                            <span class="text-slate-300 font-medium">Regular:</span>
-                            <span class="font-mono text-slate-400 line-through">{{ getItemRegularPrice(item) | currency:'BDT':'৳' }}</span>
-                            <i class="pi pi-arrow-right text-xs text-slate-500"></i>
-                            <span class="text-slate-300 font-medium">Sale:</span>
-                            <span class="font-bold text-white font-mono">{{ getItemEffectivePrice(item) | currency:'BDT':'৳' }}</span>
+                        <!-- Line Total -->
+                        <div class="field col-8 sm:col-3 lg:col-2 m-0">
+                            <label class="text-xs text-slate-400 block mb-1">Line Total</label>
+                            <div class="font-mono font-bold text-white text-base pt-2">
+                                {{ ((item.unit_price || 0) * (item.quantity || 0)) | currency:'BDT':'৳' }}
+                            </div>
                         </div>
-                        <div class="text-xs font-semibold text-emerald-300 bg-emerald-950/80 border-1 border-emerald-800/80 px-2 py-1 border-round-md flex align-items-center gap-1">
-                            <i class="pi pi-sparkles text-xs"></i>
-                            <span>Save {{ getItemDiscount(item) | currency:'BDT':'৳' }} / unit</span>
-                            <span *ngIf="(item.quantity || 1) > 1" class="text-emerald-200 font-normal"> (Save {{ (getItemDiscount(item) * (item.quantity || 1)) | currency:'BDT':'৳' }} total)</span>
+
+                        <!-- Remove Button -->
+                        <div class="col-4 sm:col-2 lg:col-1 text-right m-0">
+                            <button pButton icon="pi pi-trash"
+                                class="p-button-rounded p-button-text p-button-danger"
+                                (click)="removeItem(i)" [disabled]="editItems.length === 1"></button>
                         </div>
                     </div>
                 </div>
-                }
             </div>
         </div>
 
@@ -243,7 +579,7 @@
         <div class="grid mb-4">
             <div class="field col-12 sm:col-6 lg:col-3">
                 <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Payment Method</label>
-                <p-dropdown [options]="paymentMethods" optionLabel="label" optionValue="value"
+                <p-dropdown [options]="editPaymentMethods" optionLabel="label" optionValue="value"
                     [(ngModel)]="editPaymentMethod" [ngModelOptions]="{ standalone: true }" styleClass="w-full"
                     inputStyleClass="premium-input" appendTo="body"></p-dropdown>
             </div>
@@ -251,7 +587,7 @@
                 <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
                     <i class="pi pi-calendar"></i> Sale Date & Time
                 </label>
-                <p-calendar [(ngModel)]="editSoldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy"
+                <p-calendar [(ngModel)]="editSoldAt" [showTime]="true" [showIcon]="true" dateFormat="dd/mm/yy" [maxDate]="maxDate"
                     placeholder="Select date & time..." hourFormat="12"
                     styleClass="w-full premium-calendar" inputStyleClass="w-full" appendTo="body"></p-calendar>
             </div>
@@ -269,34 +605,52 @@
             </div>
         </div>
 
-        <!-- Customer -->
+        <!-- Customer / Delivery Details -->
         <div class="field mb-4">
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Customer (Optional)</label>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex align-items-center gap-2">
+                <span>{{ isAwaitingDelivery(editingSale()) ? 'Delivery Details (Required for Courier)' : 'Customer Details (Optional)' }}</span>
+                <span *ngIf="isAwaitingDelivery(editingSale())" class="text-red-400 font-bold">*</span>
+            </label>
             <div class="grid">
                 <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1" *ngIf="isAwaitingDelivery(editingSale())">
+                        Full Name <span class="text-red-400">*</span>
+                    </label>
                     <input pInputText [(ngModel)]="editCustomer.name" name="editCustName" placeholder="Full name"
-                        class="w-full premium-input">
+                        class="w-full premium-input" [class.border-red-500]="isAwaitingDelivery(editingSale()) && !editCustomer.name.trim()">
                 </div>
                 <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1" *ngIf="isAwaitingDelivery(editingSale())">
+                        Phone Number <span class="text-red-400">*</span>
+                    </label>
                     <input pInputText [(ngModel)]="editCustomer.phone" name="editCustPhone" placeholder="Phone"
-                        class="w-full premium-input">
+                        class="w-full premium-input" [class.border-red-500]="isAwaitingDelivery(editingSale()) && !editCustomer.phone.trim()">
                 </div>
                 <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1" *ngIf="isAwaitingDelivery(editingSale())">
+                        District
+                    </label>
                     <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
                         [(ngModel)]="editCustomer.district" [ngModelOptions]="{ standalone: true }"
                         (onChange)="onDistrictChange($event)" placeholder="District" appendTo="body"
                         styleClass="w-full" [filter]="true" filterBy="name" [showClear]="true"></p-dropdown>
                 </div>
                 <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1" *ngIf="isAwaitingDelivery(editingSale())">
+                        Sub-district
+                    </label>
                     <p-dropdown [options]="subDistricts" [(ngModel)]="editCustomer.subdistrict"
                         [ngModelOptions]="{ standalone: true }" placeholder="Sub-district"
                         [disabled]="!subDistricts.length" appendTo="body" styleClass="w-full"
                         [filter]="true" [showClear]="true"></p-dropdown>
                 </div>
                 <div class="field col-12">
+                    <label class="text-xs text-slate-400 block mb-1" *ngIf="isAwaitingDelivery(editingSale())">
+                        Address Line <span class="text-red-400">*</span>
+                    </label>
                     <textarea pInputTextarea [(ngModel)]="editCustomer.address_line" name="editCustAddress" rows="2"
                         placeholder="Address Line (House, Road, Area, etc.)" maxlength="300"
-                        class="w-full premium-input"></textarea>
+                        class="w-full premium-input" [class.border-red-500]="isAwaitingDelivery(editingSale()) && !editCustomer.address_line.trim()"></textarea>
                 </div>
             </div>
         </div>
@@ -346,66 +700,59 @@
                 </div>
             </div>
 
-            <div class="my-3 border-top-1 border-dashed border-slate-800"></div>
-
-            <div class="grand-total-banner p-3 border-round-xl flex align-items-center justify-content-between">
-                <div class="flex flex-column">
-                    <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Total Payable</span>
-                    <span class="text-2xl font-black text-white tracking-tight">{{ grandTotal | currency:'BDT':'৳' }}</span>
-                </div>
-                <div *ngIf="totalDiscount > 0" class="text-right">
-                    <span class="savings-tag">
-                        <i class="pi pi-sparkles text-xs mr-1"></i>Saved {{ totalDiscount | currency:'BDT':'৳' }}
+            <div class="grand-total-banner flex align-items-center justify-content-between p-3 border-round-xl">
+                <div>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider block">Grand Total</span>
+                    <span class="text-xs text-emerald-400 font-medium" *ngIf="totalDiscount > 0">
+                        Savings: {{ totalDiscount | currency:'BDT':'৳' }}
                     </span>
                 </div>
+                <div class="text-xl font-bold font-mono text-white">
+                    {{ grandTotal | currency:'BDT':'৳' }}
+                </div>
             </div>
         </div>
     </div>
 
     <ng-template pTemplate="footer">
-        <div class="flex justify-content-end gap-2 w-full pt-3 border-top-1 border-slate-800">
-            <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary"
-                (click)="editDialogVisible.set(false)"></button>
-            <button pButton label="Update Sale" icon="pi pi-check" [loading]="saving()"
-                (click)="saveEditedSale()" class="premium-btn-primary"></button>
+        <div class="flex justify-content-end gap-2">
+            <p-button label="Cancel" styleClass="p-button-text p-button-secondary"
+                (onClick)="editDialogVisible.set(false)"></p-button>
+            <p-button label="Update Sale" icon="pi pi-check" [loading]="saving()"
+                styleClass="p-button-primary" (onClick)="saveEditedSale()"></p-button>
         </div>
     </ng-template>
 </p-dialog>
 
-<!-- Confirmation Dialog for Void -->
-<p-confirmDialog></p-confirmDialog>
+<!-- Thermal Invoice Preview Modal -->
+<p-dialog [(visible)]="thermalPreviewModalVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(95vw, 420px)' }" styleClass="premium-dialog thermal-modal" [draggable]="false"
+    [resizable]="false">
 
-<!-- Themed Thermal Receipt Preview Modal -->
-<p-dialog [(visible)]="thermalPreviewModalVisible" [modal]="true" [style]="{ width: 'min(95vw, 480px)' }"
-    styleClass="premium-dialog thermal-preview-dialog" appendTo="body" [draggable]="false" [resizable]="false"
-    (onHide)="closeThermalPreview()">
     <ng-template pTemplate="header">
-        <div class="flex align-items-center justify-content-between w-full pr-4">
-            <div class="flex align-items-center gap-2">
-                <i class="pi pi-receipt text-primary text-lg"></i>
-                <span class="font-bold text-base text-white">Thermal Receipt (58mm)</span>
-            </div>
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-receipt text-primary"></i>
+            <h3 class="m-0 text-white font-bold text-base">Receipt (58mm POS)</h3>
         </div>
     </ng-template>
 
-    <div class="thermal-dialog-body p-1 flex justify-content-center">
-        <app-thermal-invoice #thermalInvoice [order]="selectedSaleForInvoice()"></app-thermal-invoice>
+    <div class="thermal-dialog-body flex flex-column align-items-center py-2">
+        <div class="receipt-paper-holder p-2 border-round-xl">
+            <app-thermal-invoice #thermalInvoice [order]="selectedSaleForInvoice()"></app-thermal-invoice>
+        </div>
     </div>
 
     <ng-template pTemplate="footer">
-        <div class="thermal-modal-footer flex align-items-center justify-content-end gap-2 w-full">
-            <button type="button" class="btn-thermal btn-download" (click)="onDownloadThermalInvoice()" [disabled]="isDownloadingThermal()">
-                <i class="pi" [ngClass]="isDownloadingThermal() ? 'pi-spin pi-spinner' : 'pi-download'"></i>
-                <span>{{ isDownloadingThermal() ? 'Downloading...' : 'Download' }}</span>
-            </button>
-            <button type="button" class="btn-thermal btn-bluetooth" (click)="onPrintBluetoothThermalInvoice()" title="Direct Bluetooth print to thermal printer (pairs only once)" [disabled]="isPrintingThermal()">
-                <i class="pi" [ngClass]="isPrintingThermal() ? 'pi-spin pi-spinner' : 'pi-bolt'"></i>
-                <span>{{ isPrintingThermal() ? 'Printing...' : 'Bluetooth Print' }}</span>
-            </button>
-            <button type="button" class="btn-thermal btn-print" [disabled]="true" title="Browser print is disabled">
-                <i class="pi pi-print"></i>
-                <span>Browser Print</span>
-            </button>
+        <div class="flex flex-column sm:flex-row gap-2 w-full justify-content-between align-items-center">
+            <button pButton icon="pi pi-download" label="Save Receipt"
+                class="p-button-outlined p-button-secondary p-button-sm w-full sm:w-auto"
+                [loading]="isDownloadingThermal()" (click)="onDownloadThermalInvoice()"></button>
+
+            <button pButton icon="pi pi-print" label="Print"
+                class="p-button-primary p-button-sm w-full sm:w-auto" [loading]="isPrintingThermal()"
+                (click)="onPrintBluetoothThermalInvoice()"></button>
         </div>
     </ng-template>
 </p-dialog>
+
+<p-confirmDialog appendTo="body" styleClass="premium-confirm-dialog"></p-confirmDialog>

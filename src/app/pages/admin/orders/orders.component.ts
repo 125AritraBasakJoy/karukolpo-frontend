@@ -45,7 +45,7 @@ import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } fr
   providers: [ConfirmationService],
   templateUrl: './orders.component.html',
   standalone: true,
-  styleUrls: ['./orders.component.scss']
+  styleUrls: ['./orders.component.scss', '../admin-styles.scss']
 })
 export class OrdersComponent implements OnInit {
   @ViewChild('adminInvoice') adminInvoice!: InvoiceComponent;
@@ -529,6 +529,12 @@ export class OrdersComponent implements OnInit {
         }
       });
     }
+  }
+
+  getFulfillmentLabel(fulfillment?: string | null): string {
+    if (fulfillment === 'handover') return 'Handover';
+    if (fulfillment === 'delivery') return 'Delivery';
+    return 'Needs review';
   }
 
   getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {

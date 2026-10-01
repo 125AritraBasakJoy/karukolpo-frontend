@@ -321,18 +321,11 @@ export class OrderService {
   /**
    * Admin: Cancel Order
    * Uses PATCH /admin/orders/{id}/cancel
-   * Using admin endpoint to allow cancelling confirmed orders (which customer endpoint rejects with 400)
    */
-  adminCancelOrder(id: number | string): Observable<Order> {
-    // Try admin cancel endpoint first
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(id), {}).pipe(
-      tap(() => this.clearCache()),
-      map(order => this.mapBackendOrder(order)),
-      catchError((err: any) => {
-        console.warn('Admin Cancel Order Failed. Trying Customer Cancel Endpoint as fallback.', err);
-        // Fallback to customer cancel endpoint
-        return this.cancelOrder(id);
-      })
+  adminCancelOrder(id: number | string, reason?: string): Observable<any> {
+    const body = reason ? { reason } : {};
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(id), body).pipe(
+      tap(() => this.clearCache())
     );
   }
 
@@ -615,7 +608,12 @@ export class OrderService {
       payments: backendOrder.payments || backendOrder.payment,
       created_at: backendOrder.created_at,
       channel: backendOrder.channel || 'online',
-      note: backendOrder.note || undefined
+      note: backendOrder.note || undefined,
+      source: backendOrder.source ?? null,
+      fulfillment: backendOrder.fulfillment ?? 'delivery',
+      rawStatus: backendOrder.status,
+      isVoided: !!backendOrder.is_voided,
+      completedAt: backendOrder.completed_at ?? null
     };
   }
 

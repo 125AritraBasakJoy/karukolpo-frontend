@@ -75,6 +75,7 @@ export type OutSalesFilterType = 'all' | 'awaiting' | 'review' | 'delivered' | '
 })
 export class OutSalesListComponent implements OnInit {
   @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
+  @ViewChild('classifyCalendar') classifyCalendar?: Calendar;
   @ViewChild('thermalInvoice') thermalInvoice?: ThermalInvoiceComponent;
 
   // Sales Table State
@@ -134,7 +135,7 @@ export class OutSalesListComponent implements OnInit {
   readonly handoverPaymentMethods = HANDOVER_PAYMENT_METHODS;
   readonly deliveredPaymentMethods = DELIVERY_PAYMENT_METHODS;
   readonly awaitingPaymentMethods = DELIVERY_PAYMENT_METHODS;
-  readonly maxDate: Date = new Date();
+  maxDate: Date = new Date();
 
   districts: District[] = districts;
   subDistricts: string[] = [];
@@ -405,6 +406,8 @@ export class OutSalesListComponent implements OnInit {
   // ===== ROW ACTION & BULK ACTION: MARK DELIVERED =====
   confirmMarkDelivered(sale: Order) {
     if (!sale || !sale.id) return;
+    this.closeAllCalendarOverlays();
+    this.maxDate = new Date();
     this.targetDeliverySales.set([sale]);
     this.markDeliveredAt = null;
     this.markDeliveredModalVisible.set(true);
@@ -412,6 +415,8 @@ export class OutSalesListComponent implements OnInit {
 
   confirmBulkMarkDelivered() {
     if (!this.selectedSales.length) return;
+    this.closeAllCalendarOverlays();
+    this.maxDate = new Date();
     this.targetDeliverySales.set([...this.selectedSales]);
     this.markDeliveredAt = null;
     this.markDeliveredModalVisible.set(true);
@@ -421,8 +426,21 @@ export class OutSalesListComponent implements OnInit {
     const targets = this.targetDeliverySales();
     if (!targets.length) return;
 
+    let deliveredAtIso: string | undefined;
+    if (this.markDeliveredAt) {
+      const parsed = this.safeParseDate(this.markDeliveredAt);
+      if (!parsed) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Invalid Date',
+          detail: 'Please enter a valid delivered date and time or leave blank.'
+        });
+        return;
+      }
+      deliveredAtIso = parsed.toISOString();
+    }
+
     this.submittingMarkDelivered.set(true);
-    const deliveredAtIso = this.markDeliveredAt ? new Date(this.markDeliveredAt).toISOString() : undefined;
 
     if (targets.length === 1) {
       const sale = targets[0];
@@ -535,10 +553,62 @@ export class OutSalesListComponent implements OnInit {
   }
 
   // ===== ROW ACTION & REVIEW QUEUE: CLASSIFY / CHANGE TYPE =====
+  private safeParseDate(value: unknown): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) {
+      return isNaN(value.getTime()) ? null : value;
+    }
+    const parsed = new Date(value as string | number);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private closeAllCalendarOverlays() {
+    if (this.classifyCalendar?.overlayVisible) {
+      try {
+        this.classifyCalendar.hideOverlay();
+      } catch {
+        // no-op
+      }
+    }
+    if (this.calendars) {
+      this.calendars.forEach(cal => {
+        if (cal?.overlayVisible) {
+          try {
+            cal.hideOverlay();
+          } catch {
+            // no-op
+          }
+        }
+      });
+    }
+  }
+
+  onSelectClassifyChoice(choice: 'handover' | 'delivered' | 'awaiting') {
+    if (this.classifyChoice !== choice) {
+      this.closeAllCalendarOverlays();
+      this.classifyChoice = choice;
+    }
+  }
+
+  closeClassifyDialog() {
+    this.closeAllCalendarOverlays();
+    this.classifyDialogVisible.set(false);
+  }
+
+  onClassifyDialogHide() {
+    this.closeAllCalendarOverlays();
+    if (!this.savingClassification()) {
+      this.classifyingSale.set(null);
+    }
+  }
+
   openClassifyModal(sale: Order, choice?: 'handover' | 'delivered' | 'awaiting') {
+    this.closeAllCalendarOverlays();
+    this.maxDate = new Date();
+    this.savingClassification.set(false);
     this.classifyingSale.set(sale);
     this.classifyChoice = choice || (sale.fulfillment === 'delivery' ? 'delivered' : 'handover');
-    this.classifyDeliveredAt = sale.completedAt ? new Date(sale.completedAt) : null;
+    this.classifyDeliveredAt = this.safeParseDate(sale.completedAt);
 
     const currentMethod = (sale.paymentMethod || '').toLowerCase().trim();
     if (currentMethod === 'cash' || currentMethod === 'bkash') {
@@ -640,7 +710,7 @@ export class OutSalesListComponent implements OnInit {
             summary: 'Classified',
             detail: 'Sale marked as Handed Over.'
           });
-          this.classifyDialogVisible.set(false);
+          this.closeClassifyDialog();
           this.loadSales();
           this.loadReviewQueueCount();
         },
@@ -662,13 +732,29 @@ export class OutSalesListComponent implements OnInit {
         });
         return;
       }
+
+      let deliveredAtIso: string | undefined;
+      if (this.classifyDeliveredAt) {
+        const parsed = this.safeParseDate(this.classifyDeliveredAt);
+        if (!parsed) {
+          this.savingClassification.set(false);
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Invalid Date',
+            detail: 'Please enter a valid completion date and time or clear the field.'
+          });
+          return;
+        }
+        deliveredAtIso = parsed.toISOString();
+      }
+
       const body: any = {
         fulfillment: 'delivery',
         delivered: true,
         payment_method: this.classifyDeliveredPaymentMethod
       };
-      if (this.classifyDeliveredAt) {
-        body.delivered_at = new Date(this.classifyDeliveredAt).toISOString();
+      if (deliveredAtIso) {
+        body.delivered_at = deliveredAtIso;
       }
 
       this.outSalesService.setFulfillment(sale.id, body).pipe(
@@ -680,7 +766,7 @@ export class OutSalesListComponent implements OnInit {
             summary: 'Classified',
             detail: 'Sale marked as Delivered.'
           });
-          this.classifyDialogVisible.set(false);
+          this.closeClassifyDialog();
           this.loadSales();
           this.loadReviewQueueCount();
         },
@@ -736,7 +822,7 @@ export class OutSalesListComponent implements OnInit {
                 summary: 'Sale Reclassified',
                 detail: 'Sale moved to Awaiting Delivery.'
               });
-              this.classifyDialogVisible.set(false);
+              this.closeClassifyDialog();
               this.loadSales();
               this.loadReviewQueueCount();
             },
@@ -757,6 +843,8 @@ export class OutSalesListComponent implements OnInit {
 
   // ===== EDIT MODAL LOGIC =====
   openEditModal(sale: Order) {
+    this.closeAllCalendarOverlays();
+    this.maxDate = new Date();
     this.editingSale.set(sale);
 
     this.syncEditItems(sale);
@@ -771,7 +859,7 @@ export class OutSalesListComponent implements OnInit {
     } else if (sale.fulfillment === 'handover' && this.editPaymentMethod === 'cod') {
       this.editPaymentMethod = 'cash';
     }
-    this.editSoldAt = sale.orderDate ? new Date(sale.orderDate) : new Date();
+    this.editSoldAt = this.safeParseDate(sale.orderDate) || new Date();
     this.editDeliveryCharge = sale.deliveryCharge || 0;
     this.editSource = sale.source || (sale as any).utm_source || '';
     this.editNote = sale.note || '';
@@ -959,6 +1047,20 @@ export class OutSalesListComponent implements OnInit {
       return;
     }
 
+    let soldAtIso: string | null = null;
+    if (this.editSoldAt) {
+      const parsed = this.safeParseDate(this.editSoldAt);
+      if (!parsed) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Invalid Date',
+          detail: 'Please enter a valid sale date and time.'
+        });
+        return;
+      }
+      soldAtIso = parsed.toISOString();
+    }
+
     this.saving.set(true);
 
     const hasCustomerInfo = this.editCustomer.name || this.editCustomer.phone || this.editCustomer.district || this.editCustomer.subdistrict || this.editCustomer.address_line;
@@ -971,7 +1073,7 @@ export class OutSalesListComponent implements OnInit {
         unit_cost: item.unit_cost ?? null
       })),
       payment_method: this.editPaymentMethod,
-      sold_at: this.editSoldAt ? new Date(this.editSoldAt).toISOString() : null,
+      sold_at: soldAtIso,
       delivery_charge: this.editDeliveryCharge || 0,
       customer: hasCustomerInfo ? {
         name: this.editCustomer.name || null,

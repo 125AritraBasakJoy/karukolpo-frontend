@@ -1336,11 +1336,12 @@ html.dark-mode .premium-product-card {
         }
     }
 
+    &.active,
     &.wishlisted {
         background: #FFFFFF;
-        border-color: #C25B38;
+        border-color: #B84E29;
         i {
-            color: #C25B38;
+            color: #B84E29;
         }
     }
 }

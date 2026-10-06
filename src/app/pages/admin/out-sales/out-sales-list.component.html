@@ -254,7 +254,8 @@
 
 <!-- Classify / Change Type Dialog -->
 <p-dialog [(visible)]="classifyDialogVisible" [modal]="true" [dismissableMask]="true"
-    [style]="{ width: 'min(95vw, 620px)', maxHeight: '90vh' }" styleClass="premium-dialog" [draggable]="false" [resizable]="false">
+    [style]="{ width: 'min(95vw, 620px)', maxHeight: '90vh' }" styleClass="premium-dialog" [draggable]="false" [resizable]="false"
+    (onHide)="onClassifyDialogHide()">
     <ng-template pTemplate="header">
         <div class="flex flex-column">
             <div class="flex align-items-center gap-2">
@@ -277,7 +278,7 @@
             <!-- 1. Handed over now -->
             <div class="fulfillment-card cursor-pointer p-3 border-round-xl transition-all"
                 [class.active]="classifyChoice === 'handover'"
-                (click)="classifyChoice = 'handover'">
+                (click)="onSelectClassifyChoice('handover')">
                 <div class="flex align-items-center justify-content-between mb-1">
                     <div class="flex align-items-center gap-2">
                         <i class="pi pi-box text-base text-teal-400"></i>
@@ -301,7 +302,7 @@
             <!-- 2. Delivered to customer -->
             <div class="fulfillment-card cursor-pointer p-3 border-round-xl transition-all"
                 [class.active]="classifyChoice === 'delivered'"
-                (click)="classifyChoice = 'delivered'">
+                (click)="onSelectClassifyChoice('delivered')">
                 <div class="flex align-items-center justify-content-between mb-1">
                     <div class="flex align-items-center gap-2">
                         <i class="pi pi-check-circle text-base text-emerald-400"></i>
@@ -325,7 +326,7 @@
                 <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
                     Delivered on (Optional):
                 </label>
-                <p-calendar [(ngModel)]="classifyDeliveredAt" [showTime]="true" [showIcon]="true" [maxDate]="maxDate"
+                <p-calendar #classifyCalendar [(ngModel)]="classifyDeliveredAt" [showTime]="true" [showIcon]="true" [maxDate]="maxDate"
                     dateFormat="dd/mm/yy" hourFormat="12" placeholder="Keep existing completion time"
                     appendTo="body" styleClass="w-full premium-calendar" inputStyleClass="w-full"></p-calendar>
                 <span class="text-xs text-slate-500 mt-1 block">Leave blank to retain the current recorded completion date.</span>
@@ -334,7 +335,7 @@
             <!-- 3. Still on its way -->
             <div class="fulfillment-card cursor-pointer p-3 border-round-xl transition-all"
                 [class.active]="classifyChoice === 'awaiting'"
-                (click)="classifyChoice = 'awaiting'">
+                (click)="onSelectClassifyChoice('awaiting')">
                 <div class="flex align-items-center justify-content-between mb-1">
                     <div class="flex align-items-center gap-2">
                         <i class="pi pi-truck text-base text-amber-400"></i>
@@ -398,7 +399,7 @@
     <ng-template pTemplate="footer">
         <div class="flex justify-content-end gap-2">
             <p-button label="Cancel" styleClass="p-button-text p-button-secondary"
-                (onClick)="classifyDialogVisible.set(false)"></p-button>
+                (onClick)="closeClassifyDialog()"></p-button>
             <p-button label="Confirm Classification" icon="pi pi-check" [loading]="savingClassification()"
                 styleClass="p-button-primary" (onClick)="submitClassification()"></p-button>
         </div>

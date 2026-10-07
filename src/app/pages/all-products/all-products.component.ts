@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, ChangeDetectionStrategy, Inject, PLATFORM_ID, computed, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { Title, Meta } from '@angular/platform-browser';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -18,7 +18,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
-import { MessageService } from 'primeng/api';
+import { DrawerModule } from 'primeng/drawer';
+import { MessageService, SharedModule } from 'primeng/api';
 
 @Component({
     selector: 'app-all-products',
@@ -33,7 +34,9 @@ import { MessageService } from 'primeng/api';
         ToastModule,
         DropdownModule,
         InputTextModule,
-        DividerModule
+        DividerModule,
+        DrawerModule,
+        SharedModule
     ],
     templateUrl: './all-products.component.html',
     styleUrls: ['./all-products.component.scss'],
@@ -89,6 +92,31 @@ export class AllProductsComponent implements OnInit, OnDestroy {
             this.selectedPriceRange() !== 'all'
         );
     });
+
+    // Mobile Bottom Sheet Filter State
+    isMobileFilterOpen = signal<boolean>(false);
+    draftCategoryId = signal<string | null>(null);
+    draftPriceRange = signal<string>('all');
+    draftAvailability = signal<'all' | 'in_stock' | 'out_of_stock'>('all');
+    draftSortOrder = signal<string>('newest');
+
+    activeDrawerFilterCount = computed(() => {
+        let count = 0;
+        if (this.selectedCategoryId() !== null) count++;
+        if (this.selectedPriceRange() !== 'all') count++;
+        if (this.selectedAvailability() !== 'all') count++;
+        if (this.sortOrder() !== 'newest') count++;
+        return count;
+    });
+
+    @ViewChild('filterTriggerBtn') filterTriggerBtn?: ElementRef<HTMLButtonElement>;
+
+    @HostListener('window:resize')
+    onWindowResize() {
+        if (isPlatformBrowser(this.platformId) && window.innerWidth >= 768 && this.isMobileFilterOpen()) {
+            this.isMobileFilterOpen.set(false);
+        }
+    }
 
     constructor(
         private router: Router,
@@ -301,12 +329,51 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         return !product.isInStock;
     }
 
+    openMobileFilters() {
+        this.draftCategoryId.set(this.selectedCategoryId());
+        this.draftPriceRange.set(this.selectedPriceRange());
+        this.draftAvailability.set(this.selectedAvailability());
+        this.draftSortOrder.set(this.sortOrder());
+        this.isMobileFilterOpen.set(true);
+    }
+
+    resetDraftFilters() {
+        this.draftCategoryId.set(null);
+        this.draftPriceRange.set('all');
+        this.draftAvailability.set('all');
+        this.draftSortOrder.set('newest');
+    }
+
+    applyMobileFilters() {
+        this.selectedCategoryId.set(this.draftCategoryId());
+        this.selectedPriceRange.set(this.draftPriceRange());
+        this.selectedAvailability.set(this.draftAvailability());
+        this.sortOrder.set(this.draftSortOrder());
+        this.isMobileFilterOpen.set(false);
+        this.fetchProducts();
+        if (isPlatformBrowser(this.platformId)) {
+            setTimeout(() => {
+                this.filterTriggerBtn?.nativeElement?.focus();
+            }, 50);
+        }
+    }
+
+    onFilterDrawerHide() {
+        this.isMobileFilterOpen.set(false);
+        if (isPlatformBrowser(this.platformId)) {
+            setTimeout(() => {
+                this.filterTriggerBtn?.nativeElement?.focus();
+            }, 50);
+        }
+    }
+
     clearFilters() {
         this.searchQuery.set('');
         this.selectedCategoryId.set(null);
         this.sortOrder.set('newest');
         this.selectedAvailability.set('all');
         this.selectedPriceRange.set('all');
+        this.resetDraftFilters();
         this.fetchProducts();
     }
 }

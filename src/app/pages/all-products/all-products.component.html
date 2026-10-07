@@ -25,8 +25,8 @@
         </div>
       </div>
 
-      <!-- Quick Filter Dropdowns -->
-      <div class="filter-dropdowns flex flex-wrap align-items-center gap-2">
+      <!-- Quick Filter Dropdowns (Desktop / Tablet >= 768px) -->
+      <div class="filter-dropdowns hidden md:flex flex-wrap align-items-center gap-2">
         <!-- Category Dropdown (Mobile/Compact) -->
         <p-dropdown [options]="categories()" [ngModel]="selectedCategoryId()"
                     (ngModelChange)="onCategoryChange($event)" optionLabel="name" optionValue="id"
@@ -157,6 +157,9 @@
               <!-- Product Image -->
               <div class="product-image-wrapper">
                 <img [src]="product.imageUrl" [alt]="product.name" class="product-image" loading="lazy">
+                <span *ngIf="isOutOfStock(product)" class="oos-badge image-oos-badge">
+                  Out of Stock
+                </span>
               </div>
 
               <!-- Product Body -->
@@ -172,16 +175,13 @@
                 </div>
 
                 <!-- Card Bottom Row: Stock status & Green Cart Icon Button -->
-                <div class="card-bottom-actions flex align-items-center justify-content-between mt-auto">
-                  <span *ngIf="!isOutOfStock(product)" class="in-stock-badge">
+                <div *ngIf="!isOutOfStock(product)" class="card-bottom-actions flex align-items-center justify-content-between mt-auto">
+                  <span class="in-stock-badge">
                     <span class="dot"></span> In Stock
-                  </span>
-                  <span *ngIf="isOutOfStock(product)" class="oos-badge">
-                    Out of Stock
                   </span>
 
                   <!-- Deep Green Cart Button from mockup -->
-                  <button *ngIf="!isOutOfStock(product)" type="button" class="artisan-cart-btn"
+                  <button type="button" class="artisan-cart-btn"
                           (click)="quickAddToCart(product, $event)" title="Add to Cart" aria-label="Add to cart">
                     <i class="pi pi-shopping-bag"></i>
                   </button>
@@ -192,15 +192,81 @@
         </div>
 
         <!-- Empty State -->
-        <div *ngIf="!loading() && products().length === 0" class="empty-state-artisan py-8 text-center surface-card border-round-2xl border-1 surface-border p-6 my-4">
-          <i class="pi pi-search text-5xl text-400 mb-3 block"></i>
-          <h2 class="text-2xl font-bold mb-2">No products found</h2>
-          <p class="text-600 mb-4 max-w-20rem mx-auto">We couldn't find items matching your search and filter criteria. Try adjusting your filters.</p>
-          <button type="button" class="btn-reset-filters p-2 px-4 border-round-lg font-semibold" (click)="clearFilters()">
+        <div *ngIf="!loading() && products().length === 0" class="empty-state-card text-center my-4">
+          <div class="empty-state-icon-circle mx-auto mb-3" aria-hidden="true">
+            <i class="pi pi-search"></i>
+          </div>
+          <h2 class="empty-state-title mb-2">No products found</h2>
+          <p class="empty-state-text mx-auto mb-4">We couldn't find items matching your search and filter criteria. Try adjusting your filters.</p>
+          <button type="button" class="btn-reset-filters font-semibold" (click)="clearFilters()">
             Reset All Filters
           </button>
         </div>
       </main>
     </div>
   </div>
+
+  <!-- Mobile Bottom-Right Floating Filter Button (< 768px) -->
+  <button #filterTriggerBtn type="button" class="mobile-filter-fab md:hidden"
+          (click)="openMobileFilters()" aria-label="Open filter options">
+    <i class="pi pi-sliders-h" aria-hidden="true"></i>
+  </button>
+
+  <!-- Mobile Filter Bottom Sheet (< 768px) -->
+  <p-drawer [(visible)]="isMobileFilterOpen" position="bottom" [modal]="true"
+            [dismissible]="true" [closeOnEscape]="true" [blockScroll]="true"
+            styleClass="mobile-filter-bottom-sheet" (onHide)="onFilterDrawerHide()"
+            appendTo="body">
+    <ng-template pTemplate="header">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-sliders-h text-primary font-bold"></i>
+        <span class="font-bold text-lg text-900">Filters</span>
+        <span *ngIf="activeDrawerFilterCount() > 0" class="sheet-count-pill ml-2">
+          {{ activeDrawerFilterCount() }} active
+        </span>
+      </div>
+    </ng-template>
+
+    <div class="mobile-sheet-content py-2">
+      <div class="field mb-3">
+        <label class="block font-semibold text-sm mb-2 text-800">Category</label>
+        <p-dropdown [options]="categories()" [ngModel]="draftCategoryId()"
+                    (ngModelChange)="draftCategoryId.set($event)" optionLabel="name" optionValue="id"
+                    [showClear]="true" appendTo="body" placeholder="All Categories"
+                    styleClass="w-full full-filter-dropdown"></p-dropdown>
+      </div>
+
+      <div class="field mb-3">
+        <label class="block font-semibold text-sm mb-2 text-800">Price Range</label>
+        <p-dropdown [options]="priceRangeOptions" [ngModel]="draftPriceRange()"
+                    (ngModelChange)="draftPriceRange.set($event)" optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="w-full full-filter-dropdown"></p-dropdown>
+      </div>
+
+      <div class="field mb-3">
+        <label class="block font-semibold text-sm mb-2 text-800">Availability</label>
+        <p-dropdown [options]="availabilityOptions" [ngModel]="draftAvailability()"
+                    (ngModelChange)="draftAvailability.set($event)" optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="w-full full-filter-dropdown"></p-dropdown>
+      </div>
+
+      <div class="field mb-2">
+        <label class="block font-semibold text-sm mb-2 text-800">Sort By</label>
+        <p-dropdown [options]="sortOptions" [ngModel]="draftSortOrder()"
+                    (ngModelChange)="draftSortOrder.set($event)" optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="w-full full-filter-dropdown"></p-dropdown>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="sheet-footer-actions flex align-items-center gap-2 w-full pt-2">
+        <button type="button" class="btn-sheet-reset flex-1 font-semibold" (click)="resetDraftFilters()">
+          Reset
+        </button>
+        <button type="button" class="btn-sheet-apply flex-1 font-semibold" (click)="applyMobileFilters()">
+          Apply Filters
+        </button>
+      </div>
+    </ng-template>
+  </p-drawer>
 </div>

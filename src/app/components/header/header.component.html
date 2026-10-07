@@ -2,7 +2,9 @@
   <div class="header-container flex align-items-center justify-content-between">
     <!-- Brand Logo Area -->
     <a class="brand-link flex align-items-center gap-2 cursor-pointer text-decoration-none" routerLink="/" (click)="closeAllMenus()" aria-label="Karukolpo Home">
-      <img ngSrc="assets/logo.webp" alt="Karukolpo Logo" class="brand-logo" width="46" height="46" priority />
+      <div class="brand-logo-badge flex align-items-center justify-content-center">
+        <img ngSrc="assets/header-logo.webp" alt="Karukolpo Logo" class="brand-logo" width="44" height="44" priority />
+      </div>
       <div class="brand-text-group flex flex-column">
         <span class="brand-name">KaruKolpo</span>
         <span class="brand-sub">HANDMADE IN BANGLADESH</span>
@@ -48,9 +50,6 @@
 
       <!-- Our Story -->
       <a routerLink="/about" class="nav-link" (click)="closeAllMenus()">Our Story</a>
-
-      <!-- Journal -->
-      <a routerLink="/about" fragment="journal" class="nav-link" (click)="closeAllMenus()">Journal</a>
     </nav>
 
     <!-- Search Input Pill (Desktop & Tablet) -->

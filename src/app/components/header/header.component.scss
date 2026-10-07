@@ -24,14 +24,33 @@
 .brand-link {
   transition: opacity 0.2s ease;
   &:hover {
-    opacity: 0.9;
+    opacity: 0.95;
+
+    .brand-logo-badge {
+      background-color: #082618;
+      transform: scale(1.02);
+    }
   }
 }
 
+.brand-logo-badge {
+  width: 44px;
+  height: 44px;
+  background-color: #0E3B27;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(14, 59, 39, 0.18);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
 .brand-logo {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
+  display: block;
 }
 
 .brand-text-group {

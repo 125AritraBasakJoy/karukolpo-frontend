@@ -13,7 +13,6 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { DropdownModule } from 'primeng/dropdown';
-import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-category-products',
@@ -99,7 +98,6 @@ export class CategoryProductsComponent implements OnInit {
         private productService: ProductService,
         public cartService: CartService,
         public wishlistService: WishlistService,
-        private messageService: MessageService,
         private titleService: Title,
         private metaService: Meta,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -211,12 +209,6 @@ export class CategoryProductsComponent implements OnInit {
         event.stopPropagation();
         if (this.isOutOfStock(product)) return;
         this.cartService.addToCart(product);
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Added to Cart',
-            detail: `${product.name} added to your cart`,
-            life: 2500
-        });
     }
 
     toggleWishlist(event: Event, product: Product) {

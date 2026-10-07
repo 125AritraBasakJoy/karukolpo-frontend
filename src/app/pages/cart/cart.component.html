@@ -40,7 +40,7 @@
               Your Items ({{ cartService.totalItems() }})
             </h2>
 
-            <!-- Desktop Items Table -->
+            <!-- Desktop & Mobile Items Table -->
             <div class="cart-table-wrapper overflow-x-auto">
               <table class="cart-table w-full">
                 <thead>
@@ -55,10 +55,10 @@
                 <tbody>
                   <tr *ngFor="let item of cartService.cart()" class="cart-table-row">
                     <!-- Product Info -->
-                    <td class="py-3">
-                      <div class="flex align-items-center gap-3">
-                        <img [src]="item.product.imageUrl" [alt]="item.product.name" class="cart-item-thumb border-round-lg" />
-                        <div class="cart-item-info">
+                    <td class="cell-product py-3">
+                      <div class="cart-product-flex flex align-items-center gap-3">
+                        <img [src]="item.product.imageUrl" [alt]="item.product.name" class="cart-item-thumb border-round-lg flex-shrink-0" />
+                        <div class="cart-item-info min-w-0">
                           <h4 class="cart-item-name font-bold mb-1">{{ item.product.name }}</h4>
                           <span class="cart-item-stock text-xs text-green-700">✓ In Stock</span>
                         </div>
@@ -66,36 +66,39 @@
                     </td>
 
                     <!-- Unit Price -->
-                    <td class="text-center py-3">
+                    <td class="cell-price text-center py-3">
+                      <span class="mobile-cell-label font-medium text-xs text-600">Price:</span>
                       <span class="item-unit-price font-semibold">
                         ৳{{ (item.product.effective_price || item.product.price) | number:'1.0-0' }}
                       </span>
                     </td>
 
                     <!-- Quantity Control -->
-                    <td class="text-center py-3">
+                    <td class="cell-qty text-center py-3">
                       <div class="cart-qty-pill inline-flex align-items-center">
-                        <button type="button" class="qty-btn" (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1">
+                        <button type="button" class="qty-btn" (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1" [attr.aria-label]="'Decrease quantity of ' + item.product.name">
                           <i class="pi pi-minus"></i>
                         </button>
-                        <span class="qty-val">{{ item.quantity }}</span>
-                        <button type="button" class="qty-btn" (click)="updateQuantity(item, 1)">
+                        <span class="qty-val" [attr.aria-label]="'Current quantity: ' + item.quantity">{{ item.quantity }}</span>
+                        <button type="button" class="qty-btn" (click)="updateQuantity(item, 1)" [attr.aria-label]="'Increase quantity of ' + item.product.name">
                           <i class="pi pi-plus"></i>
                         </button>
                       </div>
                     </td>
 
                     <!-- Total -->
-                    <td class="text-right py-3">
+                    <td class="cell-total text-right py-3">
+                      <span class="mobile-cell-label font-medium text-xs text-600">Total:</span>
                       <span class="item-subtotal-price font-bold">
                         ৳{{ cartService.getItemSubtotal(item) | number:'1.0-0' }}
                       </span>
                     </td>
 
                     <!-- Remove -->
-                    <td class="text-right py-3">
-                      <button type="button" class="cart-remove-btn" (click)="removeItem(item)" title="Remove item">
+                    <td class="cell-remove text-right py-3">
+                      <button type="button" class="cart-remove-btn" (click)="removeItem(item)" [title]="'Remove ' + item.product.name" [attr.aria-label]="'Remove ' + item.product.name + ' from cart'">
                         <i class="pi pi-trash"></i>
+                        <span class="remove-text-mobile">Remove</span>
                       </button>
                     </td>
                   </tr>
@@ -198,12 +201,12 @@
           <!-- Payment Section (Active after Proceed is clicked) -->
           <div *ngIf="showPaymentSection" id="payment-section" class="artisanal-card p-3 md:p-4 mb-4">
             <!-- Shipping Info Summary Header with Edit Button -->
-            <div class="shipping-summary-box p-3 border-round-xl mb-4 flex justify-content-between align-items-center">
-              <div>
+            <div class="shipping-summary-box p-3 border-round-xl mb-4 flex justify-content-between align-items-center gap-2 flex-wrap sm:flex-nowrap">
+              <div class="shipping-summary-info min-w-0">
                 <span class="font-bold text-sm block text-800">Delivering to: {{ checkoutForm.fullName }} ({{ checkoutForm.phoneNumber }})</span>
-                <span class="text-xs text-600">{{ checkoutForm.fullAddress }}, {{ checkoutForm.subDistrict ? checkoutForm.subDistrict + ', ' : '' }}{{ checkoutForm.district }}</span>
+                <span class="text-xs text-600 block mt-1 line-height-2">{{ checkoutForm.fullAddress }}, {{ checkoutForm.subDistrict ? checkoutForm.subDistrict + ', ' : '' }}{{ checkoutForm.district }}</span>
               </div>
-              <button type="button" class="btn-edit-shipping" (click)="showPaymentSection = false">
+              <button type="button" class="btn-edit-shipping flex-shrink-0" (click)="showPaymentSection = false">
                 <i class="pi pi-pencil mr-1"></i> Edit
               </button>
             </div>
@@ -244,11 +247,11 @@
 
             <!-- bKash Details Box -->
             <div *ngIf="selectedPaymentMethod === 'bKash'" class="bkash-instructions-card p-3 border-round-xl mb-4">
-              <div class="bkash-badge-row flex align-items-center justify-content-between mb-3">
+              <div class="bkash-badge-row flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                 <span class="font-bold text-sm">Send Money to Personal bKash:</span>
                 <div class="bkash-copy-box flex align-items-center gap-2">
                   <strong class="font-mono text-base font-bold text-pink-700">01834484328</strong>
-                  <button type="button" class="btn-copy-num" (click)="copyBkashNumber('01834484328')">
+                  <button type="button" class="btn-copy-num" (click)="copyBkashNumber('01834484328')" aria-label="Copy bKash Number">
                     <i class="pi pi-copy"></i>
                   </button>
                 </div>

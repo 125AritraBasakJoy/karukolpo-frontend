@@ -1,70 +1,62 @@
 import { Component } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle.component';
 
 @Component({
-    selector: 'app-about',
-    standalone: true,
-    imports: [CommonModule, NgOptimizedImage, RouterModule, CardModule, ButtonModule, ThemeToggleComponent],
-    templateUrl: './about.component.html',
-    styleUrls: ['./about.component.scss']
+  selector: 'app-about',
+  standalone: true,
+  imports: [CommonModule, NgOptimizedImage, RouterModule, ThemeToggleComponent],
+  templateUrl: './about.component.html',
+  styleUrls: ['./about.component.scss']
 })
 export class AboutComponent {
-    stats = [
-        { label: 'Artisan Partners', value: '100+', icon: 'pi pi-users' },
-        { label: 'Handcrafted Products', value: '500+', icon: 'pi pi-box' },
-        { label: 'Happy Customers', value: '10,000+', icon: 'pi pi-heart' },
-        { label: 'Craft Categories', value: '25+', icon: 'pi pi-tags' }
-    ];
-
-    features = [
-        {
-            icon: 'pi pi-check-circle',
-            title: '100% Authentic Handcrafts',
-            description: 'Every piece is crafted by verified traditional artisans from Bangladesh, ensuring genuine heritage quality.'
-        },
-        {
-            icon: 'pi pi-heart',
-            title: 'Empowering Communities',
-            description: 'Your purchases directly sustain the livelihoods of local craft families and preserve ancient art traditions.'
-        },
-        {
-            icon: 'pi pi-shield',
-            title: 'Quality Guaranteed',
-            description: 'Rigorous multi-point quality inspections ensure that every item meets our high standards of excellence.'
-        },
-        {
-            icon: 'pi pi-truck',
-            title: 'Reliable Nationwide Shipping',
-            description: 'Fast, secure packaging and real-time order tracking to your doorstep across Bangladesh.'
-        }
-    ];
-
-    values = [
-        {
-            icon: 'pi pi-sparkles',
-            title: 'Cultural Heritage',
-            description: 'Preserving centurie-old Bangladeshi crafting techniques and keeping traditional art alive for future generations.'
-        },
-        {
-            icon: 'pi pi-star',
-            title: 'Uncompromised Quality',
-            description: 'Hand-selecting raw materials and honoring meticulous attention to detail in every finished craft.'
-        },
-        {
-            icon: 'pi pi-globe',
-            title: 'Sustainable Impact',
-            description: 'Promoting eco-friendly, natural materials and ethical fair-trade practices with local artisan communities.'
-        }
-    ];
-
-    scrollToStory() {
-        const el = document.getElementById('story');
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth' });
-        }
+  craftDisciplines = [
+    {
+      title: 'Protima & Clay Sculpture',
+      subtitle: 'Sacred Clay Art',
+      image: 'assets/categories/protima.webp',
+      alt: 'Handcrafted Durga protima clay sculpture with traditional ornaments',
+      description: 'Sculpted from riverbed clay, straw, and mineral colors by Bengal’s traditional Kumar artisans, each protima embodies centuries of sacred sculptural mastery.'
+    },
+    {
+      title: 'Hand-Painted Folk Shora',
+      subtitle: 'Living Folk Painting',
+      image: 'assets/categories/shora.webp',
+      alt: 'Traditional Bengali hand-painted terracotta Lakshmi shora',
+      description: 'Earthen convex discs painted with sacred deities, floral borders, and folk motifs, preserving the devotional art traditions celebrated in Bengali households.'
+    },
+    {
+      title: 'Terracotta Prodip & Earthenware',
+      subtitle: 'Earth & Fire Craft',
+      image: 'assets/categories/prodip.webp',
+      alt: 'Handcrafted terracotta clay prodip oil lamp',
+      description: 'Wheel-thrown from natural river clay and kiln-fired to a warm terracotta glow, bringing traditional warmth and ritual light into modern homes.'
     }
+  ];
+
+  values = [
+    {
+      icon: 'pi pi-compass',
+      title: 'Cultural Preservation',
+      description: 'Safeguarding Bengal’s sacred clay sculpture, terracotta artistry, and folk painting traditions for generations to come.'
+    },
+    {
+      icon: 'pi pi-heart',
+      title: 'Artisan Dignity & Respect',
+      description: 'Honoring the generational Kumar sculptors and folk artists whose deep dedication and inherited knowledge breathe life into clay.'
+    },
+    {
+      icon: 'pi pi-sparkles',
+      title: 'Natural Earthen Materials',
+      description: 'Celebrating authentic riverbed clay, organic binders, and natural earthenware crafted without harmful synthetic compromises.'
+    }
+  ];
+
+  scrollToStory() {
+    const el = document.getElementById('story');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
 }

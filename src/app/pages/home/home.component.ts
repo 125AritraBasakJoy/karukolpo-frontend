@@ -153,12 +153,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         event.stopPropagation();
         if (this.isOutOfStock(product)) return;
         this.cartService.addToCart(product);
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Added to Cart',
-            detail: `${product.name} added to your cart`,
-            life: 2500
-        });
     }
 
     toggleWishlist(event: Event, product: Product) {

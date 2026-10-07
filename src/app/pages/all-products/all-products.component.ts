@@ -19,7 +19,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
 import { DrawerModule } from 'primeng/drawer';
-import { MessageService, SharedModule } from 'primeng/api';
+import { SharedModule } from 'primeng/api';
 
 @Component({
     selector: 'app-all-products',
@@ -125,7 +125,6 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         public cartService: CartService,
         public categoryService: CategoryService,
         public wishlistService: WishlistService,
-        private messageService: MessageService,
         private titleService: Title,
         private metaService: Meta,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -317,12 +316,6 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         event.stopPropagation();
         event.preventDefault();
         this.cartService.addToCart(product);
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Added to Cart',
-            detail: `"${product.name}" added to your shopping bag!`,
-            life: 2500
-        });
     }
 
     isOutOfStock(product: Product): boolean {

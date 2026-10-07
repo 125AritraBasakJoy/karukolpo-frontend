@@ -189,25 +189,17 @@ export class ProductDetailsComponent implements OnInit {
   addToCart() {
     const p = this.product();
     if (p) {
-      for (let i = 0; i < this.quantity(); i++) {
-        this.cartService.addToCart(p);
-      }
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Cart Updated',
-        detail: `Added ${this.quantity()} "${p.name}" to cart`,
-        life: 2500
-      });
+      this.cartService.addToCart(p, this.quantity());
     }
   }
 
   buyNow() {
     const p = this.product();
     if (p) {
-      for (let i = 0; i < this.quantity(); i++) {
-        this.cartService.addToCart(p);
+      const added = this.cartService.addToCart(p, this.quantity());
+      if (added > 0) {
+        this.router.navigate(['/cart']);
       }
-      this.router.navigate(['/cart']);
     }
   }
 

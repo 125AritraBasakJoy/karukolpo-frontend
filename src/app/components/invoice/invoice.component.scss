@@ -29,10 +29,11 @@
 }
 
 .od-logo {
-    width: 68px;
+    width: 82px;
     height: auto;
     display: block;
     margin: 0 auto;
+    object-fit: contain;
     filter: none;
     mix-blend-mode: normal;
 }

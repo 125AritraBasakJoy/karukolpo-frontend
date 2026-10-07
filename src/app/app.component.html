@@ -6,5 +6,5 @@
     <router-outlet></router-outlet>
   </div>
   <app-footer *ngIf="!isAdminRoute"></app-footer>
-  <p-toast position="top-center"></p-toast>
+  <p-toast [position]="isAdminRoute ? 'top-center' : 'bottom-right'" [styleClass]="isAdminRoute ? 'admin-toast' : 'storefront-toast'" [life]="1000"></p-toast>
 </div>

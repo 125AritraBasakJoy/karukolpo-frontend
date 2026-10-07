@@ -96,43 +96,74 @@ export class CartService {
     }
   }
 
-  addToCart(product: Product) {
-    console.log('CartService: Adding product to cart', product.name);
+  addToCart(product: Product, requestedQuantity: number = 1): number {
+    const qty = Math.max(1, Math.floor(requestedQuantity || 1));
+
     // Check global stock first
     if (this.isOutOfStock(product)) {
-      this.messageService.add({ severity: 'error', summary: 'Out of Stock', detail: 'This product is out of stock' });
-      return;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Out of Stock',
+        detail: 'This product is out of stock',
+        life: 2500
+      });
+      return 0;
     }
 
     const currentCart = this.cart();
     const existingItem = currentCart.find(item => item.product.id === product.id);
+    const currentQty = existingItem ? existingItem.quantity : 0;
+    const isForcedInStock = product.manualStockStatus === 'IN_STOCK';
+    const availableStock = product.stock || 0;
+
+    let acceptedQty = qty;
+    if (!isForcedInStock && availableStock > 0) {
+      const maxAddable = Math.max(0, availableStock - currentQty);
+      if (maxAddable === 0) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Stock Limit',
+          detail: `Cannot add more than ${availableStock} items`,
+          life: 2500
+        });
+        return 0;
+      }
+      if (qty > maxAddable) {
+        acceptedQty = maxAddable;
+      }
+    }
 
     if (existingItem) {
-      const isForcedInStock = product.manualStockStatus === 'IN_STOCK';
-      const availableStock = product.stock || 0;
-
-      // Only enforce limit if we have a positive stock count and not forced
-      if (!isForcedInStock && availableStock > 0 && existingItem.quantity + 1 > availableStock) {
-        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${availableStock} items` });
-        return;
-      }
-      // Create new array reference for signal update
       this.cart.update(items => items.map(item =>
-        item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        item.product.id === product.id ? { ...item, quantity: item.quantity + acceptedQty } : item
       ));
     } else {
-      const isForcedInStock = product.manualStockStatus === 'IN_STOCK';
-      const availableStock = product.stock || 0;
-
-      if (!isForcedInStock && availableStock > 0 && 1 > availableStock) {
-        this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Cannot add more than ${availableStock} items` });
-        return;
-      }
-      this.cart.update(items => [...items, { product, quantity: 1 }]);
+      this.cart.update(items => [...items, { product, quantity: acceptedQty }]);
     }
-    this.messageService.add({ severity: 'success', summary: 'Added to Cart', detail: `${product.name} added to cart` });
-    this.journeyService.track('add_to_cart', { product_id: String(product.id), quantity: 1 });
+
+    this.journeyService.track('add_to_cart', { product_id: String(product.id), quantity: acceptedQty });
     this.saveCart();
+
+    if (acceptedQty < qty) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Stock Limit',
+        detail: `Added ${acceptedQty} items (maximum available is ${availableStock})`,
+        life: 2500
+      });
+    } else {
+      const detail = acceptedQty > 1
+        ? `${acceptedQty} × ${product.name} added to cart`
+        : `${product.name} added to cart`;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Added to Cart',
+        detail,
+        life: 2500
+      });
+    }
+
+    return acceptedQty;
   }
 
   isOutOfStock(product: Product): boolean {
@@ -147,7 +178,12 @@ export class CartService {
 
     // If increasing, check if still in stock (manual status could have changed)
     if (change > 0 && this.isOutOfStock(targetItem.product)) {
-      this.messageService.add({ severity: 'error', summary: 'Out of Stock', detail: 'This product is no longer available' });
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Out of Stock',
+        detail: 'This product is no longer available',
+        life: 2500
+      });
       return;
     }
 
@@ -157,7 +193,12 @@ export class CartService {
     const isForcedInStock = targetItem.product.manualStockStatus === 'IN_STOCK';
     const availableStock = targetItem.product.stock || 0;
     if (change > 0 && !isForcedInStock && availableStock > 0 && newQuantity > availableStock) {
-      this.messageService.add({ severity: 'warn', summary: 'Stock Limit', detail: `Only ${availableStock} items available` });
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Stock Limit',
+        detail: `Only ${availableStock} items available`,
+        life: 2500
+      });
       return;
     }
 

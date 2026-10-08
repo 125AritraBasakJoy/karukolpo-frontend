@@ -1,12 +1,15 @@
 <header class="site-header">
-  <div class="header-container flex align-items-center justify-content-between">
+  <div class="header-container flex align-items-center">
     <!-- Brand Logo Area -->
     <a class="brand-link flex align-items-center cursor-pointer text-decoration-none" routerLink="/" (click)="closeAllMenus()" aria-label="Karukolpo Home">
       <img ngSrc="assets/header-logo.webp" alt="Karukolpo" class="brand-logo" width="505" height="422" priority />
     </a>
 
     <!-- Desktop Center Navigation -->
-    <nav class="desktop-nav hidden lg:flex align-items-center gap-4">
+    <nav class="desktop-nav hidden lg:flex align-items-center">
+      <!-- Home Link -->
+      <a routerLink="/" class="nav-link" (click)="closeAllMenus()">Home</a>
+
       <!-- Shop Dropdown -->
       <div class="nav-dropdown-wrapper relative">
         <button type="button" class="nav-item-btn flex align-items-center gap-1" (click)="toggleShopMenu($event)">
@@ -57,18 +60,12 @@
     </div>
 
     <!-- Right Actions Group -->
-    <div class="header-actions flex align-items-center gap-2 sm:gap-3">
+    <div class="header-actions flex align-items-center">
       <!-- Track Order Button -->
-      <a routerLink="/track-order" class="track-order-btn hidden sm:flex align-items-center gap-2 text-decoration-none">
+      <a routerLink="/track-order" class="track-order-btn hidden sm:flex align-items-center text-decoration-none">
         <i class="pi pi-box track-icon"></i>
         <span>Track Order</span>
       </a>
-
-      <!-- User Account Icon (Optional from mock) -->
-      <button type="button" class="action-icon-btn hidden sm:flex align-items-center justify-content-center"
-              aria-label="User Account" pTooltip="Customer Account" tooltipPosition="bottom">
-        <i class="pi pi-user"></i>
-      </button>
 
       <!-- Cart Button with Terracotta Pill Badge -->
       <button type="button" class="header-cart-btn relative flex align-items-center justify-content-center"
@@ -98,6 +95,9 @@
     </div>
 
     <div class="mobile-nav-links p-3 flex flex-column gap-2">
+      <a routerLink="/" class="mobile-nav-link" (click)="closeAllMenus()">
+        <i class="pi pi-home mr-2"></i> Home
+      </a>
       <a routerLink="/all-products" class="mobile-nav-link" (click)="closeAllMenus()">
         <i class="pi pi-th-large mr-2"></i> All Products
       </a>

@@ -18,11 +18,23 @@
   max-width: 1320px;
   margin: 0 auto;
   padding: 0 1.25rem;
+  gap: 1.5rem;
+
+  @media (max-width: 1200px) {
+    gap: 1rem;
+  }
+
+  @media (max-width: 576px) {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
 }
+
 /* Brand Logo Area */
 .brand-link {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
   line-height: 0;
 
@@ -53,13 +65,18 @@
 
 /* Desktop Navigation */
 .desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
   .nav-item-btn {
     background: transparent;
     border: none;
     color: #4A423D;
     font-size: 0.92rem;
     font-weight: 500;
-    padding: 0.5rem 0.65rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -69,6 +86,11 @@
     &:hover {
       color: #B84E29;
       background: #FAF7F2;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #B84E29;
+      outline-offset: 2px;
     }
 
     .chevron {
@@ -83,13 +105,20 @@
     font-size: 0.92rem;
     font-weight: 500;
     text-decoration: none;
-    padding: 0.5rem 0.65rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 8px;
     transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
 
     &:hover {
       color: #B84E29;
       background: #FAF7F2;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #B84E29;
+      outline-offset: 2px;
     }
   }
 }
@@ -130,6 +159,11 @@
       color: #B84E29;
       padding-left: 1rem;
     }
+
+    &:focus-visible {
+      outline: 2px solid #B84E29;
+      outline-offset: 1px;
+    }
   }
 }
 
@@ -144,12 +178,12 @@
   }
 }
 
-/* Header Search Input Pill */
-.header-search-wrapper,
-.mobile-search-box {
+/* Header Search Input Pill (Desktop & Tablet) */
+.header-search-wrapper {
   flex: 1;
   max-width: 320px;
-  margin: 0 1.5rem;
+  min-width: 0;
+  margin-left: auto;
 
   .search-form {
     position: relative;
@@ -195,6 +229,15 @@
 
 /* Header Actions */
 .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    margin-left: auto;
+  }
+
   .track-order-btn {
     text-decoration: none !important;
     color: #B84E29 !important;
@@ -209,6 +252,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;
 
     span {
       text-decoration: none !important;
@@ -234,22 +278,10 @@
         color: #9C3E1E !important;
       }
     }
-  }
 
-  .action-icon-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: transparent;
-    border: 1px solid transparent;
-    color: #4A423D;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: #FAF7F2;
-      border-color: #ECE7E0;
-      color: #B84E29;
+    &:focus-visible {
+      outline: 2px solid #B84E29;
+      outline-offset: 2px;
     }
   }
 
@@ -275,11 +307,16 @@
       box-shadow: 0 4px 10px rgba(184, 78, 41, 0.12);
     }
 
+    &:focus-visible {
+      outline: 2px solid #B84E29;
+      outline-offset: 2px;
+    }
+
     .cart-pill-badge {
       position: absolute;
       top: -3px;
       right: -3px;
-      background: #B84E29; /* Terracotta Red from images */
+      background: #B84E29;
       color: #FFFFFF;
       min-width: 18px;
       height: 18px;
@@ -303,6 +340,11 @@
     border: 1px solid #E8E2D8;
     color: #26221F;
     cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid #B84E29;
+      outline-offset: 2px;
+    }
   }
 }
 
@@ -311,6 +353,51 @@
   background: #FFFFFF;
   border-top: 1px solid #ECE7E0;
   box-shadow: 0 12px 24px rgba(42, 37, 33, 0.08);
+
+  .mobile-search-box {
+    width: 100%;
+
+    .search-form {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8C837B;
+      font-size: 0.85rem;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.55rem 1rem 0.55rem 2.85rem !important;
+      padding-inline-start: 2.85rem !important;
+      background: #FAF7F2;
+      border: 1px solid #E8E2D8;
+      border-radius: 9999px;
+      font-size: 0.86rem;
+      color: #26221F;
+      outline: none;
+      transition: all 0.2s ease;
+
+      &::placeholder {
+        color: #9C948C;
+      }
+
+      &:focus {
+        background: #FFFFFF;
+        border-color: #B84E29;
+        box-shadow: 0 0 0 3px rgba(184, 78, 41, 0.12);
+      }
+    }
+  }
 
   .mobile-nav-link {
     display: flex;

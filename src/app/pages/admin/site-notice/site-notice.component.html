@@ -108,31 +108,6 @@
           </div>
         </div>
 
-        <!-- Tone Selector -->
-        <div class="field mb-4">
-          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex align-items-center gap-2">
-            <i class="pi pi-palette text-blue-400"></i>
-            Notice Tone & Color
-          </label>
-          <div class="tone-selector-grid">
-            @for (item of toneOptions; track item.value) {
-              <button
-                type="button"
-                class="tone-card-btn"
-                [class.active]="tone === item.value"
-                [attr.data-tone]="item.value"
-                (click)="tone = item.value"
-              >
-                <span class="tone-card-indicator">
-                  <span class="tone-dot" [ngClass]="item.badgeClass"></span>
-                </span>
-                <span class="tone-card-label">{{ item.label }}</span>
-                <i class="pi pi-check active-check" *ngIf="tone === item.value"></i>
-              </button>
-            }
-          </div>
-        </div>
-
         <!-- Scheduling: Starts At & Ends At -->
         <div class="grid mb-4">
           <div class="col-12 md:col-6 field">
@@ -187,10 +162,6 @@
                 Live Storefront Strip Preview
               </span>
             </div>
-            <span class="preview-tone-tag" [attr.data-tone]="tone">
-              <span class="preview-tone-dot"></span>
-              {{ tone | uppercase }} TONE
-            </span>
           </div>
           <div class="preview-marquee-viewport">
             <app-site-notice [preview]="previewNotice"></app-site-notice>

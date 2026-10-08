@@ -97,8 +97,8 @@ export class AppComponent implements OnInit {
     }
 
     // Check if current route is admin - using window.location.pathname for initial load robustness
-    this.isAdminRoute = window.location.pathname.startsWith('/admin');
     if (isPlatformBrowser(this.platformId)) {
+      this.isAdminRoute = window.location.pathname.startsWith('/admin');
       const html = document.querySelector('html');
       if (html) {
         if (this.isAdminRoute) {
@@ -165,8 +165,9 @@ export class AppComponent implements OnInit {
   }
 
   private checkRoute(url: string): void {
-    // Hide footer/header on admin routes
-    this.isAdminRoute = url.includes('/admin');
+    // Hide storefront elements on admin routes based on clean path prefix
+    const path = url.split('?')[0].split('#')[0];
+    this.isAdminRoute = path === '/admin' || path.startsWith('/admin/');
     if (isPlatformBrowser(this.platformId)) {
       const html = document.querySelector('html');
       if (html) {

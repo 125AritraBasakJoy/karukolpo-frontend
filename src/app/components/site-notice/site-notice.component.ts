@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  OnDestroy,
   computed,
   effect,
   inject,
@@ -21,7 +22,7 @@ import { SiteNotice, SiteNoticeService } from '../../core/services/site-notice/s
   templateUrl: './site-notice.component.html',
   styleUrls: ['./site-notice.component.scss'],
 })
-export class SiteNoticeComponent {
+export class SiteNoticeComponent implements OnDestroy {
   private router = inject(Router);
   private noticeService = inject(SiteNoticeService);
   private platformId = inject(PLATFORM_ID);
@@ -36,7 +37,7 @@ export class SiteNoticeComponent {
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
       map(e => e.urlAfterRedirects)
     ),
-    { initialValue: this.router.url }
+    { initialValue: this.router.navigated ? this.router.url : '' }
   );
 
   notice = computed(() => {
@@ -57,5 +58,11 @@ export class SiteNoticeComponent {
       const h = this.notice() ? '38px' : '0px';
       document.documentElement.style.setProperty('--site-notice-h', h);
     });
+  }
+
+  ngOnDestroy(): void {
+    if (isPlatformBrowser(this.platformId) && !this.preview()) {
+      document.documentElement.style.setProperty('--site-notice-h', '0px');
+    }
   }
 }

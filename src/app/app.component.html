@@ -1,7 +1,7 @@
 <div class="app-layout">
   <app-loading></app-loading>
-  <app-site-notice></app-site-notice>
-  <app-site-notice-modal></app-site-notice-modal>
+  <app-site-notice *ngIf="!isAdminRoute"></app-site-notice>
+  <app-site-notice-modal *ngIf="!isAdminRoute"></app-site-notice-modal>
   <app-header *ngIf="!isAdminRoute"></app-header>
   <app-targeted-offer *ngIf="!isAdminRoute"></app-targeted-offer>
   <div class="main-content">

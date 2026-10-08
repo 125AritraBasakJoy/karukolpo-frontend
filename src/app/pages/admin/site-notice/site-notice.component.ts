@@ -7,23 +7,15 @@ import { ButtonModule } from 'primeng/button';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TextareaModule } from 'primeng/textarea';
 import { CalendarModule } from 'primeng/calendar';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import {
   SiteNoticeService,
   SiteNoticeRead,
-  NoticeTone,
   SiteNotice
 } from '../../../core/services';
 import { SiteNoticeComponent } from '../../../components/site-notice/site-notice.component';
-
-interface ToneOption {
-  label: string;
-  value: NoticeTone;
-  badgeClass: string;
-}
 
 @Component({
   selector: 'app-admin-site-notice',
@@ -36,7 +28,6 @@ interface ToneOption {
     ToggleSwitchModule,
     TextareaModule,
     CalendarModule,
-    SelectButtonModule,
     ToastModule,
     ConfirmDialogModule,
     SiteNoticeComponent
@@ -57,24 +48,16 @@ export class AdminSiteNoticeComponent implements OnInit {
   // Form model
   enabled = false;
   message = '';
-  tone: NoticeTone = 'info';
   startsAt: Date | null = null;
   endsAt: Date | null = null;
 
   // Authoritative server state
   serverState: SiteNoticeRead | null = null;
 
-  toneOptions: ToneOption[] = [
-    { label: 'Store Theme (Terracotta)', value: 'info', badgeClass: 'tone-terracotta' },
-    { label: 'Warm Warning', value: 'warning', badgeClass: 'tone-warning' },
-    { label: 'Forest Success', value: 'success', badgeClass: 'tone-success' },
-    { label: 'Urgent Alert', value: 'danger', badgeClass: 'tone-danger' }
-  ];
-
   get previewNotice(): SiteNotice {
     return {
       message: this.message || 'Notice preview message will scroll here...',
-      tone: this.tone,
+      tone: 'info',
       starts_at: null,
       ends_at: null
     };
@@ -135,10 +118,6 @@ export class AdminSiteNoticeComponent implements OnInit {
   private applyState(state: SiteNoticeRead): void {
     this.serverState = state;
     this.enabled = !!state.enabled;
-    this.message = state.message ?? '';
-    this.tone = state.tone ?? 'warning';
-    this.startsAt = this.isoToDhakaDate(state.starts_at);
-    this.endsAt = this.isoToDhakaDate(state.ends_at);
   }
 
   onToggleChange(event: any): void {
@@ -241,7 +220,7 @@ export class AdminSiteNoticeComponent implements OnInit {
     const payload = {
       enabled: true,
       message: collapsedMessage,
-      tone: this.tone,
+      tone: 'info' as const,
       starts_at: startIso,
       ends_at: endIso
     };
@@ -251,8 +230,7 @@ export class AdminSiteNoticeComponent implements OnInit {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: state => {
-          this.serverState = state;
-          this.enabled = !!state.enabled;
+          this.applyState(state);
           this.resetDraftForm();
           this.noticeService.refresh();
           this.messageService.add({
@@ -269,48 +247,18 @@ export class AdminSiteNoticeComponent implements OnInit {
   }
 
   cancelDraft(): void {
-    if (this.serverState) {
-      this.applyState(this.serverState);
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Cancelled',
-        detail: 'Reverted unsaved edits to published state.'
-      });
-    } else {
-      this.loadState();
-    }
+    this.resetDraftForm();
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Cancelled',
+      detail: 'Cleared unsaved draft.'
+    });
   }
 
   private resetDraftForm(): void {
     this.message = '';
-    this.tone = 'info';
     this.startsAt = null;
     this.endsAt = null;
-  }
-
-  /**
-   * Interprets an ISO string in Bangladesh Time (+06:00)
-   * and creates a local Date whose getHours/getDate matches BD wall-clock time
-   */
-  private isoToDhakaDate(iso: string | null): Date | null {
-    if (!iso) return null;
-    const parsed = new Date(iso);
-    if (isNaN(parsed.getTime())) return null;
-
-    // Dhaka is UTC+6
-    const utcMs = parsed.getTime();
-    const bdMs = utcMs + 6 * 3600 * 1000;
-    const bdDate = new Date(bdMs);
-
-    // Create a local Date object matching the year, month, day, hour, minute of BD
-    return new Date(
-      bdDate.getUTCFullYear(),
-      bdDate.getUTCMonth(),
-      bdDate.getUTCDate(),
-      bdDate.getUTCHours(),
-      bdDate.getUTCMinutes(),
-      0
-    );
   }
 
   /**

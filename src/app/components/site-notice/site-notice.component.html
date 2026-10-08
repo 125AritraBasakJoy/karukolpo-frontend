@@ -1,0 +1,32 @@
+@if (notice(); as n) {
+  <aside
+    class="site-notice"
+    [attr.data-tone]="n.tone"
+    tabindex="0"
+    role="region"
+    aria-label="Store announcement"
+  >
+    <div class="site-notice__track" [style.--notice-duration.s]="duration()">
+      <div class="site-notice__group">
+        <span class="site-notice__item">
+          <span class="site-notice__sparkle">✦</span>
+          <span class="site-notice__text">{{ n.message }}</span>
+        </span>
+        <span class="site-notice__item">
+          <span class="site-notice__sparkle">✦</span>
+          <span class="site-notice__text">{{ n.message }}</span>
+        </span>
+      </div>
+      <div class="site-notice__group" aria-hidden="true">
+        <span class="site-notice__item">
+          <span class="site-notice__sparkle">✦</span>
+          <span class="site-notice__text">{{ n.message }}</span>
+        </span>
+        <span class="site-notice__item">
+          <span class="site-notice__sparkle">✦</span>
+          <span class="site-notice__text">{{ n.message }}</span>
+        </span>
+      </div>
+    </div>
+  </aside>
+}

@@ -4,11 +4,16 @@ import { BehaviorSubject, throwError, Observable } from 'rxjs';
 import { catchError, switchMap, filter, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth/auth.service';
 import { environment } from '../../../environments/environment';
+import { SKIP_AUTH_BEARER } from './http-context-tokens';
 
 let isRefreshing = false;
 const refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
+    if (req.context.get(SKIP_AUTH_BEARER)) {
+        return next(req);
+    }
+
     const authService = inject(AuthService);
     const baseUrl = environment.baseUrl;
 

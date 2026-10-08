@@ -752,3 +752,51 @@
     }
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   ADMIN TOGGLE SWITCH (PrimeNG 19+ Electric Blue Theme)
+   ───────────────────────────────────────────────────────────────── */
+.admin-layout,
+.site-notice-admin-container,
+.maintenance-control-container {
+    .p-toggleswitch {
+        --p-toggleswitch-checked-background: #3b82f6 !important;
+        --p-toggleswitch-checked-border-color: #3b82f6 !important;
+        --p-toggleswitch-handle-checked-background: #ffffff !important;
+        --p-toggleswitch-handle-checked-color: #3b82f6 !important;
+
+        .p-toggleswitch-slider {
+            background: #1e293b !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+
+        .p-toggleswitch-handle {
+            background: #94a3b8 !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        &.p-toggleswitch-checked {
+            .p-toggleswitch-slider {
+                background: #3b82f6 !important;
+                border-color: #3b82f6 !important;
+                box-shadow: 0 0 10px rgba(59, 130, 246, 0.4) !important;
+            }
+
+            .p-toggleswitch-handle {
+                background: #ffffff !important;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+            }
+
+            &:hover .p-toggleswitch-slider {
+                background: #2563eb !important;
+                border-color: #2563eb !important;
+            }
+        }
+
+        &:hover:not(.p-disabled):not(.p-toggleswitch-checked) .p-toggleswitch-slider {
+            background: #334155 !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+    }
+}
+

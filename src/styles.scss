@@ -512,7 +512,7 @@ textarea,
 }
 
 /* Global Validation Error Styling */
-.ng-dirty.ng-invalid,
+.ng-dirty.ng-invalid:not(form),
 .p-inputtext.ng-dirty.ng-invalid,
 .p-select.ng-dirty.ng-invalid,
 .p-dropdown.ng-dirty.ng-invalid,

@@ -12,6 +12,9 @@ import { PwaInstallService } from './core/services/pwa/pwa-install.service';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { TargetedOfferComponent } from './components/targeted-offer/targeted-offer.component';
+import { SiteNoticeComponent } from './components/site-notice/site-notice.component';
+import { SiteNoticeModalComponent } from './components/site-notice/site-notice-modal.component';
+import { SiteNoticeService } from './core/services/site-notice/site-notice.service';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { LoadingComponent } from './components/loading/loading.component';
 import { environment } from '../environments/environment';
@@ -19,7 +22,17 @@ import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastModule, FooterComponent, HeaderComponent, TargetedOfferComponent, CommonModule, LoadingComponent],
+  imports: [
+    RouterOutlet,
+    ToastModule,
+    FooterComponent,
+    HeaderComponent,
+    TargetedOfferComponent,
+    SiteNoticeComponent,
+    SiteNoticeModalComponent,
+    CommonModule,
+    LoadingComponent
+  ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
@@ -37,11 +50,14 @@ export class AppComponent implements OnInit {
     private journeyService: JourneyService,
     private maintenanceService: MaintenanceService,
     private pwaInstallService: PwaInstallService,
+    private siteNoticeService: SiteNoticeService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
+      this.siteNoticeService.start();
+
       if (!window.location.pathname.startsWith('/admin')) {
         (window as any).dataLayer = (window as any).dataLayer || [];
         if (typeof (window as any).gtag !== 'function') {

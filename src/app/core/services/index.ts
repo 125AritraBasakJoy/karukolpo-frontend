@@ -23,6 +23,8 @@ export * from './tracking/tracking.service';
 export * from './pwa/pwa-install.service';
 export * from './gtag/gtag.service';
 export * from './offers/offers.service';
+export * from './site-notice/site-notice.service';
+export * from './site-notice/site-notice.api';
 
 // APIs & Helpers
 export * from './api/api-config';
@@ -45,6 +47,7 @@ import { NOTIFICATIONS_API } from './notification/notification.api';
 import { ANALYTICS_API } from './analytics/analytics.api';
 import { MAINTENANCE_API } from './maintenance/maintenance.api';
 import { OUT_SALES_API } from './out-sales/out-sales.api';
+import { SITE_NOTICE_API } from './site-notice/site-notice.api';
 
 export const API_ENDPOINTS = {
     PRODUCTS: PRODUCTS_API,
@@ -56,4 +59,5 @@ export const API_ENDPOINTS = {
     ANALYTICS: ANALYTICS_API,
     MAINTENANCE: MAINTENANCE_API,
     OUT_SALES: OUT_SALES_API,
+    SITE_NOTICE: SITE_NOTICE_API,
 } as const;

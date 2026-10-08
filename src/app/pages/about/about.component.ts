@@ -13,43 +13,43 @@ import { ThemeToggleComponent } from '../../components/theme-toggle/theme-toggle
 export class AboutComponent {
   craftDisciplines = [
     {
-      title: 'Protima & Clay Sculpture',
-      subtitle: 'Sacred Clay Art',
-      image: 'assets/categories/protima.webp',
-      alt: 'Handcrafted Durga protima clay sculpture with traditional ornaments',
-      description: 'Sculpted from riverbed clay, straw, and mineral colors by Bengal’s traditional Kumar artisans, each protima embodies centuries of sacred sculptural mastery.'
+      title: 'Terracotta Prodip',
+      subtitle: 'Earth & Ritual Flame',
+      image: 'assets/about/about-1.webp',
+      alt: 'Handcrafted traditional terracotta clay prodip lamp',
+      description: 'Wheel-thrown and sculpted from natural riverbed soil, each prodip is kiln-fired to a rich earthen tone, bringing authentic ritual warmth and ambient light to festive spaces.'
+    },
+    {
+      title: 'Clay Protima Sculpture',
+      subtitle: 'Sacred Soil Art',
+      image: 'assets/about/about-2.webp',
+      alt: 'Handcrafted Durga and deity clay protima sculpture',
+      description: 'Hand-molded by hereditary Kumar sculptors using pure river clay and natural straw armatures, preserving centuries of sacred devotion and sculptural folk heritage.'
     },
     {
       title: 'Hand-Painted Folk Shora',
-      subtitle: 'Living Folk Painting',
-      image: 'assets/categories/shora.webp',
-      alt: 'Traditional Bengali hand-painted terracotta Lakshmi shora',
-      description: 'Earthen convex discs painted with sacred deities, floral borders, and folk motifs, preserving the devotional art traditions celebrated in Bengali households.'
-    },
-    {
-      title: 'Terracotta Prodip & Earthenware',
-      subtitle: 'Earth & Fire Craft',
-      image: 'assets/categories/prodip.webp',
-      alt: 'Handcrafted terracotta clay prodip oil lamp',
-      description: 'Wheel-thrown from natural river clay and kiln-fired to a warm terracotta glow, bringing traditional warmth and ritual light into modern homes.'
+      subtitle: 'Devotional Earthen Canvas',
+      image: 'assets/about/about-3.webp',
+      alt: 'Traditional Bengali hand-painted terracotta folk shora',
+      description: 'Curved earthen discs crafted from baked soil and painted with living folk deities, Lakshmi motifs, and floral patterns celebrating traditional Bengali household rites.'
     }
   ];
 
   values = [
     {
       icon: 'pi pi-compass',
-      title: 'Cultural Preservation',
-      description: 'Safeguarding Bengal’s sacred clay sculpture, terracotta artistry, and folk painting traditions for generations to come.'
+      title: '100% Pure Natural Soil',
+      description: 'Honoring alluvial river soil and organic earth without synthetic substitutes or harmful chemical binders.'
     },
     {
       icon: 'pi pi-heart',
-      title: 'Artisan Dignity & Respect',
-      description: 'Honoring the generational Kumar sculptors and folk artists whose deep dedication and inherited knowledge breathe life into clay.'
+      title: 'Dignity for Kumar Artisans',
+      description: 'Partnering directly with hereditary potter families and Kumar artisans to sustain generational livelihoods.'
     },
     {
-      icon: 'pi pi-sparkles',
-      title: 'Natural Earthen Materials',
-      description: 'Celebrating authentic riverbed clay, organic binders, and natural earthenware crafted without harmful synthetic compromises.'
+      icon: 'pi pi-sun',
+      title: 'Time-Honored Kiln Firing',
+      description: 'Preserving traditional slow wood-and-mud kiln baking that gives authentic terracotta its signature earthy texture.'
     }
   ];
 

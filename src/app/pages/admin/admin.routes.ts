@@ -53,6 +53,10 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./maintenance-control/maintenance-control.component').then(m => m.MaintenanceControlComponent)
       },
       {
+        path: 'site-notice',
+        loadComponent: () => import('./site-notice/site-notice.component').then(m => m.AdminSiteNoticeComponent)
+      },
+      {
         path: 'out-sales',
         children: [
           { path: '', redirectTo: 'create', pathMatch: 'full' },

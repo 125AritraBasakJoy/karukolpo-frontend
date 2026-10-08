@@ -404,60 +404,65 @@
                     <h2 class="section-heading m-0">Share Your Experience</h2>
                 </div>
             </div>
-        </div>
 
-        <div class="support-section relative w-full overflow-hidden">
-            <!-- Background Image Area (Left side on desktop, full background on mobile) -->
-            <div class="support-bg absolute top-0 left-0 w-full md:w-8 h-full overflow-hidden"
-                style="aspect-ratio: 16/9;">
-                <img ngSrc="assets/handcrafted_heritage_bg.webp" fill
-                    style="object-fit: cover; object-position: left center;" sizes="(max-width: 768px) 100vw, 60vw"
-                    alt="Heritage background showing traditional craft environment" loading="lazy">
-                <!-- Fade gradient to surface-ground -->
-                <div class="absolute top-0 left-0 w-full h-full bg-gradient-fade"></div>
-            </div>
-
-            <div
-                class="container support-content-container relative z-1 py-5 px-3 sm:px-4 flex flex-column md:flex-row align-items-center">
-                <!-- Left Side Content (Empty space to maintain layout for the right side form) -->
-                <div class="col-12 md:col-6 hidden md:block">
-                </div>
-
-                <!-- Right Side Form Card -->
-                <div class="col-12 md:col-6 md:pl-5">
-                    <div class="contact-card p-4 sm:p-5 relative">
-                        <h3 class="contact-card-title text-2xl md:text-3xl font-bold mb-2 mt-0">
-                            Leave us a message</h3>
-                        <p class="contact-card-sub mb-4 line-height-3 text-sm">Whether it's a custom request, feedback, or a
-                            simple hello, we'd love to hear from you. Our team will get back to you shortly.</p>
-
-                        <div class="p-fluid">
-                            <div class="field mb-3 relative">
-                                <label for="contactName"
-                                    class="contact-field-label text-xs font-bold uppercase block mb-1">Your Name</label>
-                                <input pInputText id="contactName" [(ngModel)]="contactForm.name"
-                                    placeholder="Enter your full name" class="w-full contact-input">
-                            </div>
-                            <div class="field mb-3 relative">
-                                <label for="contactInfo"
-                                    class="contact-field-label text-xs font-bold uppercase block mb-1">Phone Number or Email</label>
-                                <input pInputText id="contactInfo" [(ngModel)]="contactForm.contactInfo"
-                                    placeholder="How can we reach you?" class="w-full contact-input">
-                            </div>
-                            <div class="field mb-4 relative">
-                                <label for="contactMessage"
-                                    class="contact-field-label text-xs font-bold uppercase block mb-1">Message</label>
-                                <textarea pInputTextarea id="contactMessage" [(ngModel)]="contactForm.message" rows="3"
-                                    placeholder="Tell us about your inquiry..." class="w-full contact-input"
-                                    style="resize: none;"></textarea>
-                            </div>
-
-                            <button pButton label="SEND MESSAGE" icon="pi pi-send" aria-label="Send contact message"
-                                class="contact-submit-btn p-button-lg w-full font-bold uppercase text-sm border-none"
-                                (click)="submitContactForm()" [loading]="isContactSubmitting"
-                                [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting"></button>
+            <div class="support-section">
+                <div class="support-bg">
+                    <div class="contact-collage" aria-hidden="true">
+                        <div class="contact-collage-item contact-collage-primary">
+                            <img ngSrc="assets/about/about-1.webp" fill
+                                sizes="(max-width: 767px) 100vw, 30vw"
+                                alt="Handcrafted clay prodip lamp" loading="lazy">
+                        </div>
+                        <div class="contact-collage-item contact-collage-secondary">
+                            <img ngSrc="assets/about/about-2.webp" fill
+                                sizes="(max-width: 767px) 50vw, 15vw"
+                                alt="Artisanal terracotta sculpture" loading="lazy">
+                        </div>
+                        <div class="contact-collage-item contact-collage-tertiary">
+                            <img ngSrc="assets/about/about-3.webp" fill
+                                sizes="(max-width: 767px) 50vw, 15vw"
+                                alt="Traditional pottery craftsmanship" loading="lazy">
                         </div>
                     </div>
+                    <div class="contact-welcome">
+                        <span class="contact-image-kicker">Made by hand. Shared with heart.</span>
+                        <h3 class="contact-welcome-title">Every connection<br>has a story.</h3>
+                        <p class="contact-welcome-desc">A piece you love, a custom request, or feedback on your experience — we'd love to hear from you.</p>
+                    </div>
+                </div>
+
+                <div class="contact-card">
+                    <span class="contact-form-kicker">A conversation starts here</span>
+                    <h3 class="contact-card-title text-2xl md:text-3xl font-bold mb-2 mt-0">
+                        Leave us a message</h3>
+                    <p class="contact-card-sub mb-4 line-height-3 text-sm">Whether it's a custom order, feedback, or a simple question, send us a note and we'll reply promptly.</p>
+
+                    <form class="p-fluid" #contactNgForm="ngForm" (ngSubmit)="submitContactForm(contactNgForm)">
+                        <div class="field mb-3 relative">
+                            <label for="contactName"
+                                class="contact-field-label text-xs font-bold uppercase block mb-1">Your Name</label>
+                            <input pInputText id="contactName" name="contactName" autocomplete="name" required [(ngModel)]="contactForm.name"
+                                placeholder="Enter your full name" class="w-full contact-input">
+                        </div>
+                        <div class="field mb-3 relative">
+                            <label for="contactInfo"
+                                class="contact-field-label text-xs font-bold uppercase block mb-1">Phone Number or Email</label>
+                            <input pInputText id="contactInfo" name="contactInfo" required [(ngModel)]="contactForm.contactInfo"
+                                placeholder="How can we reach you?" class="w-full contact-input">
+                        </div>
+                        <div class="field mb-4 relative">
+                            <label for="contactMessage"
+                                class="contact-field-label text-xs font-bold uppercase block mb-1">Message</label>
+                            <textarea pInputTextarea id="contactMessage" name="contactMessage" required [(ngModel)]="contactForm.message" rows="4"
+                                placeholder="Tell us about your inquiry..." class="w-full contact-input"></textarea>
+                        </div>
+
+                        <button pButton type="submit" label="Send Message" icon="pi pi-arrow-right" iconPos="right" aria-label="Send contact message"
+                            class="contact-submit-btn w-full font-bold text-sm"
+                            [loading]="isContactSubmitting"
+                            [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting"></button>
+                        <p class="contact-form-note"><i class="pi pi-heart" aria-hidden="true"></i> Our team will get back to you shortly.</p>
+                    </form>
                 </div>
             </div>
         </div>

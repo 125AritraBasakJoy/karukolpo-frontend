@@ -15,7 +15,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { forkJoin, of } from 'rxjs';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
@@ -186,7 +186,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         // Deprecated
     }
 
-    submitContactForm() {
+    submitContactForm(form?: NgForm) {
         if (!this.contactForm.name || !this.contactForm.contactInfo || !this.contactForm.message) {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Please fill out all fields.' });
             return;
@@ -208,6 +208,9 @@ export class HomeComponent implements OnInit, OnDestroy {
                     contactInfo: '',
                     message: ''
                 };
+                if (form) {
+                    form.resetForm(this.contactForm);
+                }
             },
             error: (err) => {
                 this.isContactSubmitting = false;

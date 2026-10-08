@@ -1,0 +1,27 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="storefront-notice-dialog"
+  (onHide)="onDismiss()"
+  ariaLabel="Store Notice"
+>
+  <ng-template pTemplate="header">
+    <div class="storefront-notice-header">
+      <span class="storefront-notice-eyebrow">KARUKOLPO &middot; A NOTE FROM US</span>
+      <h3 class="storefront-notice-title">Store Notice</h3>
+      <div class="storefront-notice-rule" aria-hidden="true"></div>
+    </div>
+  </ng-template>
+
+  <div class="storefront-notice-body">
+    @for (item of activeNotices(); track $index) {
+      <div class="storefront-notice-item">
+        <p class="storefront-notice-text">{{ item.message }}</p>
+      </div>
+    }
+  </div>
+</p-dialog>

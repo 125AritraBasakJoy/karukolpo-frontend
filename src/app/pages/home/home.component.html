@@ -9,9 +9,7 @@
         </picture>
         <div class="absolute top-0 left-0 w-full h-full bg-black-alpha-50 z-1"></div>
         <div class="z-2 hero-content-box px-3">
-            <span class="hero-brand-pill mb-3 inline-block">HANDMADE IN BANGLADESH</span>
             <h1 class="hero-main-title font-bold mb-2">Made by Hand.<br>Rooted in Bangladesh.</h1>
-            <p class="hero-sub-tagline mb-3">Every piece tells a story of heritage, sculpted by master rural artisans using age-old terracotta, clay, and brass traditions.</p>
             <div class="flex flex-column sm:flex-row gap-2 sm:gap-3 justify-content-center mt-3 sm:mt-4 px-3">
                 <button pButton label="Explore Collection" icon="pi pi-arrow-right" iconPos="right" class="p-button-lg hero-btn-primary"
                     aria-label="Explore collection" routerLink="/all-products"></button>
@@ -46,8 +44,8 @@
             </div>
             <div class="category-grid">
                 @for (cat of categories(); track cat.id) {
-                <div class="landscape-category-card" (click)="selectCategory(cat)" role="button" tabindex="0"
-                     (keydown.enter)="selectCategory(cat)" [attr.aria-label]="'Browse category ' + cat.name">
+                <a [routerLink]="['/category', cat.slug || cat.id]" class="landscape-category-card text-decoration-none"
+                   [attr.aria-label]="'Browse category ' + cat.name">
                     <div class="category-media-box">
                         <img [ngSrc]="getCategoryImage(cat.name)" fill [alt]="cat.name"
                              sizes="(max-width: 767px) 50vw, (max-width: 1199px) 33vw, 16vw" loading="lazy">
@@ -58,7 +56,7 @@
                             <i class="pi pi-arrow-right text-xs"></i>
                         </div>
                     </div>
-                </div>
+                </a>
                 }
             </div>
         </div>
@@ -102,7 +100,7 @@
 
             <div class="swipe-section-wrapper">
                 @if (hotDeals().length > 4) {
-                <button pButton icon="pi pi-chevron-left" aria-label="Previous hot deals"
+                <button type="button" pButton icon="pi pi-chevron-left" aria-label="Previous hot deals"
                     class="swipe-nav-btn prev-btn p-button-rounded" 
                     (click)="scrollLeft(hotDealsList)"></button>
                 }
@@ -113,7 +111,7 @@
                         <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
                              (click)="showProductDetails(product)">
                             <!-- Badges Stack Top Left -->
-                            <div class="product-badges-stack absolute top-0 left-0 m-2 z-3 flex flex-column gap-1 align-items-start pointer-events-none">
+                            <div class="product-badges-stack pointer-events-none">
                                 <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
                                       class="discount-badge">
                                     Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
@@ -122,14 +120,6 @@
                                     Sold Out
                                 </span>
                             </div>
-
-                            <!-- Wishlist Heart Button Top Right -->
-                            <button type="button" class="product-wishlist-btn"
-                                    [class.active]="wishlistService.isInWishlist(product.id)"
-                                    (click)="toggleWishlist($event, product)"
-                                    title="Save to wishlist" aria-label="Save to wishlist">
-                                <i [class]="wishlistService.isInWishlist(product.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" aria-hidden="true"></i>
-                            </button>
 
                             <!-- Product Image Wrapper -->
                             <div class="product-img-box relative overflow-hidden">
@@ -180,7 +170,7 @@
                 </div>
 
                 @if (hotDeals().length > 4) {
-                <button pButton icon="pi pi-chevron-right" aria-label="Next hot deals"
+                <button type="button" pButton icon="pi pi-chevron-right" aria-label="Next hot deals"
                     class="swipe-nav-btn next-btn p-button-rounded" 
                     (click)="scrollRight(hotDealsList)"></button>
                 }
@@ -220,7 +210,7 @@
 
             <div class="swipe-section-wrapper">
                 @if (bestSelling().length > 4) {
-                <button pButton icon="pi pi-chevron-left" aria-label="Previous best selling products"
+                <button type="button" pButton icon="pi pi-chevron-left" aria-label="Previous best selling products"
                     class="swipe-nav-btn prev-btn p-button-rounded" 
                     (click)="scrollLeft(bestSellingList)"></button>
                 }
@@ -231,7 +221,7 @@
                         <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
                              (click)="showProductDetails(product)">
                             <!-- Badges Stack Top Left -->
-                            <div class="product-badges-stack absolute top-0 left-0 m-2 z-3 flex flex-column gap-1 align-items-start pointer-events-none">
+                            <div class="product-badges-stack pointer-events-none">
                                 <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
                                       class="discount-badge">
                                     Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
@@ -240,14 +230,6 @@
                                     Sold Out
                                 </span>
                             </div>
-
-                            <!-- Wishlist Heart Button Top Right -->
-                            <button type="button" class="product-wishlist-btn"
-                                    [class.active]="wishlistService.isInWishlist(product.id)"
-                                    (click)="toggleWishlist($event, product)"
-                                    title="Save to wishlist" aria-label="Save to wishlist">
-                                <i [class]="wishlistService.isInWishlist(product.id) ? 'pi pi-heart-fill' : 'pi pi-heart'" aria-hidden="true"></i>
-                            </button>
 
                             <!-- Product Image Wrapper -->
                             <div class="product-img-box relative overflow-hidden">
@@ -298,7 +280,7 @@
                 </div>
 
                 @if (bestSelling().length > 4) {
-                <button pButton icon="pi pi-chevron-right" aria-label="Next best selling products"
+                <button type="button" pButton icon="pi pi-chevron-right" aria-label="Next best selling products"
                     class="swipe-nav-btn next-btn p-button-rounded" 
                     (click)="scrollRight(bestSellingList)"></button>
                 }
@@ -340,7 +322,6 @@
                 </div>
                 <div class="col-12 md:col-7 md:pl-5">
                     <div class="crafted-content">
-                        <span class="story-kicker font-bold text-xs uppercase tracking-wider block mb-2">Our Story</span>
                         <h3 class="story-title font-bold mb-3">Crafted by People, Inspired by Bangladesh</h3>
                         <p class="story-desc mb-4 line-height-3">
                             At Karukolpo, we collaborate directly with hereditary potters, weavers, and metalworkers across rural Bangladesh. Every piece brings living artisanal heritage and warmth into contemporary homes.
@@ -427,7 +408,6 @@
                     <div class="contact-welcome">
                         <span class="contact-image-kicker">Made by hand. Shared with heart.</span>
                         <h3 class="contact-welcome-title">Every connection<br>has a story.</h3>
-                        <p class="contact-welcome-desc">A piece you love, a custom request, or feedback on your experience — we'd love to hear from you.</p>
                     </div>
                 </div>
 

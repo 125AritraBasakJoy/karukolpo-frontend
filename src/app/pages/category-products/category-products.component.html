@@ -83,7 +83,7 @@
         <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
              (click)="showProductDetails(product)">
           <!-- Badges Column Top Left -->
-          <div class="product-badges-stack absolute top-0 left-0 m-2 z-3 flex flex-column gap-1 align-items-start pointer-events-none">
+          <div class="product-badges-stack pointer-events-none">
             <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
                   class="discount-badge">
               Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
@@ -92,14 +92,6 @@
               Sold Out
             </span>
           </div>
-
-          <!-- Wishlist Heart Button Top Right -->
-          <button type="button" class="product-wishlist-btn"
-                  [class.active]="wishlistService.isInWishlist(product.id)"
-                  (click)="toggleWishlist($event, product)"
-                  title="Save to wishlist">
-            <i [class]="wishlistService.isInWishlist(product.id) ? 'pi pi-heart-fill' : 'pi pi-heart'"></i>
-          </button>
 
           <!-- Product Image Wrapper -->
           <div class="product-img-box relative overflow-hidden">

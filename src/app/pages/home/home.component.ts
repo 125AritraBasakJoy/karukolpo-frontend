@@ -29,7 +29,6 @@ import { SiteConfigService } from '../../core/services/site-config/site-config.s
 import { CategoryService } from '../../core/services/category/category.service';
 import { Category } from '../../models/category.model';
 import { CartService } from '../../core/services/cart/cart.service';
-import { WishlistService } from '../../core/services/wishlist/wishlist.service';
 import { DividerModule } from 'primeng/divider';
 import { HomeCheckoutModalsComponent } from './home-checkout-modals.component';
 
@@ -142,7 +141,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         private deliveryService: DeliveryService,
         private categoryService: CategoryService,
         public cartService: CartService,
-        public wishlistService: WishlistService,
         private route: ActivatedRoute,
         private router: Router,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -153,11 +151,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         event.stopPropagation();
         if (this.isOutOfStock(product)) return;
         this.cartService.addToCart(product);
-    }
-
-    toggleWishlist(event: Event, product: Product) {
-        event.stopPropagation();
-        this.wishlistService.toggleWishlist(product);
     }
 
     getProductCategoryName(product: Product): string {
@@ -347,11 +340,42 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     scrollLeft(element: HTMLElement) {
-        element.scrollBy({ left: -300, behavior: 'smooth' });
+        this.manualScrollStep(element, -1);
     }
 
     scrollRight(element: HTMLElement) {
-        element.scrollBy({ left: 300, behavior: 'smooth' });
+        this.manualScrollStep(element, 1);
+    }
+
+    private manualScrollStep(element: HTMLElement, direction: -1 | 1) {
+        this.stopAutoScroll();
+        this.resumeAutoScrollTimer = setTimeout(() => this.startAutoScroll(), 6000);
+
+        const cards = Array.from(element.querySelectorAll<HTMLElement>('.swipe-card-wrapper'));
+        if (cards.length === 0) {
+            const fallbackStep = Math.max(element.clientWidth * 0.5, 200);
+            element.scrollBy({ left: direction * fallbackStep, behavior: 'smooth' });
+            return;
+        }
+
+        const currentLeft = element.scrollLeft;
+        const tolerance = 4;
+
+        if (direction === 1) {
+            const nextCard = cards.find(card => card.offsetLeft > currentLeft + tolerance);
+            if (nextCard) {
+                element.scrollTo({ left: nextCard.offsetLeft, behavior: 'smooth' });
+            } else {
+                element.scrollTo({ left: element.scrollWidth - element.clientWidth, behavior: 'smooth' });
+            }
+        } else {
+            const prevCard = [...cards].reverse().find(card => card.offsetLeft < currentLeft - tolerance);
+            if (prevCard) {
+                element.scrollTo({ left: prevCard.offsetLeft, behavior: 'smooth' });
+            } else {
+                element.scrollTo({ left: 0, behavior: 'smooth' });
+            }
+        }
     }
 
     private startAutoScroll() {

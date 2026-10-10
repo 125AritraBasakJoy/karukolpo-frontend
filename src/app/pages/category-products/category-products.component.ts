@@ -6,7 +6,6 @@ import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../core/services/category/category.service';
 import { ProductService } from '../../core/services/product/product.service';
 import { CartService } from '../../core/services/cart/cart.service';
-import { WishlistService } from '../../core/services/wishlist/wishlist.service';
 import { Product } from '../../models/product.model';
 import { Category } from '../../models/category.model';
 import { ButtonModule } from 'primeng/button';
@@ -111,7 +110,6 @@ export class CategoryProductsComponent implements OnInit {
         private categoryService: CategoryService,
         private productService: ProductService,
         public cartService: CartService,
-        public wishlistService: WishlistService,
         private titleService: Title,
         private metaService: Meta,
         @Inject(PLATFORM_ID) private platformId: Object
@@ -246,11 +244,6 @@ export class CategoryProductsComponent implements OnInit {
         event.stopPropagation();
         if (this.isOutOfStock(product)) return;
         this.cartService.addToCart(product);
-    }
-
-    toggleWishlist(event: Event, product: Product) {
-        event.stopPropagation();
-        this.wishlistService.toggleWishlist(product);
     }
 
     isOutOfStock(product: Product): boolean {

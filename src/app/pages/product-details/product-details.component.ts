@@ -6,7 +6,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../core/services/product/product.service';
 import { CartService } from '../../core/services/cart/cart.service';
 import { CategoryService } from '../../core/services/category/category.service';
-import { WishlistService } from '../../core/services/wishlist/wishlist.service';
 import { Product } from '../../models/product.model';
 import { ButtonModule } from 'primeng/button';
 import { CarouselModule } from 'primeng/carousel';
@@ -47,7 +46,7 @@ export class ProductDetailsComponent implements OnInit {
   activeImageIndex = signal<number>(0);
   displayGalleria = signal<boolean>(false);
   quantity = signal<number>(1);
-  activeTab = signal<'about' | 'details' | 'care' | 'shipping'>('about');
+  activeTab = signal<'about' | 'care' | 'shipping'>('about');
 
   // Reactive image array
   images = computed(() => {
@@ -98,7 +97,6 @@ export class ProductDetailsComponent implements OnInit {
     private productService: ProductService,
     public cartService: CartService,
     public categoryService: CategoryService,
-    public wishlistService: WishlistService,
     private messageService: MessageService,
     private titleService: Title,
     private metaService: Meta
@@ -203,18 +201,6 @@ export class ProductDetailsComponent implements OnInit {
     }
   }
 
-  toggleWishlist() {
-    const p = this.product();
-    if (p) {
-      this.wishlistService.toggleWishlist(p);
-    }
-  }
-
-  isWishlisted(): boolean {
-    const p = this.product();
-    return p ? this.wishlistService.isWishlisted(p.id) : false;
-  }
-
   incrementQuantity() {
     this.quantity.update(q => q + 1);
   }
@@ -225,7 +211,7 @@ export class ProductDetailsComponent implements OnInit {
     }
   }
 
-  selectTab(tab: 'about' | 'details' | 'care' | 'shipping') {
+  selectTab(tab: 'about' | 'care' | 'shipping') {
     this.activeTab.set(tab);
   }
 

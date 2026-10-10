@@ -37,12 +37,6 @@
         <div class="gallery-wrapper">
           <!-- Main Hero Image Viewport -->
           <div class="main-image-viewport relative" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
-            <!-- Wishlist Heart Button Top Right -->
-            <button type="button" class="product-wishlist-btn" [class.wishlisted]="isWishlisted()"
-                    (click)="toggleWishlist()" [attr.aria-label]="isWishlisted() ? 'Remove from wishlist' : 'Add to wishlist'">
-              <i class="pi" [ngClass]="isWishlisted() ? 'pi-heart-fill' : 'pi-heart'"></i>
-            </button>
-
             <!-- Navigation Arrows Overlaid -->
             <button type="button" class="gallery-nav-btn prev" *ngIf="images().length > 1" (click)="prevImage($event)" aria-label="Previous image">
               <i class="pi pi-chevron-left"></i>
@@ -107,14 +101,6 @@
             </span>
           </div>
 
-          <!-- Short Bengali Description -->
-          <div class="product-short-summary mb-4">
-            <div *ngIf="product()!.description" class="summary-text" [innerHTML]="product()!.description | safeHtml"></div>
-            <p *ngIf="!product()!.description" class="summary-text">
-              ঐতিহ্যবাহী মাটির তৈরি হস্তশিল্প — ঘর সাজানোর অথবা পূজার জন্য একটি বিশেষ শিল্পকর্ম। হাতে খোদাই করা নকশা এবং প্রাকৃতিক লাল মাটির উষ্ণ রঙ এই সৃষ্টিকে অনন্য করে তুলেছে।
-            </p>
-          </div>
-
           <!-- Quantity & Action Buttons -->
           <div *ngIf="!isOutOfStock()" class="purchase-controls mb-4">
             <div class="flex align-items-center gap-3 mb-4">
@@ -141,14 +127,6 @@
                 <span>Buy Now</span>
               </button>
             </div>
-          </div>
-
-          <!-- Add to Wishlist Link -->
-          <div class="wishlist-link-row mb-4">
-            <button type="button" class="wishlist-inline-btn" (click)="toggleWishlist()">
-              <i class="pi mr-2" [ngClass]="isWishlisted() ? 'pi-heart-fill text-red-500' : 'pi-heart'"></i>
-              <span>{{ isWishlisted() ? 'Added to Wishlist' : 'Add to Wishlist' }}</span>
-            </button>
           </div>
 
           <!-- 4 Trust Badges Row -->
@@ -192,9 +170,6 @@
         <button type="button" class="tab-btn" [class.active]="activeTab() === 'about'" (click)="selectTab('about')">
           About
         </button>
-        <button type="button" class="tab-btn" [class.active]="activeTab() === 'details'" (click)="selectTab('details')">
-          Product Details
-        </button>
         <button type="button" class="tab-btn" [class.active]="activeTab() === 'care'" (click)="selectTab('care')">
           Care Instructions
         </button>
@@ -206,62 +181,7 @@
       <div class="tab-body-content p-4">
         <!-- Tab: About -->
         <div *ngIf="activeTab() === 'about'" class="tab-pane">
-          <p class="tab-narrative mb-4">
-            ঐতিহ্যবাহী মাটির তৈরি এই শিল্পকর্মটি গ্রামীণ বাংলার কুম্ভকারদের দক্ষ হাতের নিখুঁত ছোঁয়ায় গড়ে উঠেছে। প্রতিটি প্রতিমা ও পাত্র তৈরিতে ব্যবহার করা হয়েছে খাঁটি মাটি, যা রোদে শুকিয়ে নিখুঁত আগুনে পুড়িয়ে প্রস্তুত করা হয়েছে। ঘরে নান্দনিক সৌন্দর্য ও বাংলার আবহ তৈরি করতে এটি অনন্য।
-          </p>
-
-          <div class="specs-table-wrapper">
-            <table class="specs-table">
-              <tbody>
-                <tr>
-                  <td class="spec-label">Material</td>
-                  <td class="spec-value">Natural Terracotta (মাটি)</td>
-                </tr>
-                <tr>
-                  <td class="spec-label">Color</td>
-                  <td class="spec-value">Earthy Terracotta Red & Natural Clay Tone</td>
-                </tr>
-                <tr>
-                  <td class="spec-label">Origin</td>
-                  <td class="spec-value">Tangail & Rural Artisan Villages, Bangladesh</td>
-                </tr>
-                <tr>
-                  <td class="spec-label">Craft Type</td>
-                  <td class="spec-value">100% Hand-molded and Kiln-fired</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab: Product Details -->
-        <div *ngIf="activeTab() === 'details'" class="tab-pane">
-          <div class="specs-table-wrapper">
-            <table class="specs-table">
-              <tbody>
-                <tr>
-                  <td class="spec-label">Product Code</td>
-                  <td class="spec-value">{{ product()!.code || 'KK-' + product()!.id }}</td>
-                </tr>
-                <tr>
-                  <td class="spec-label">Category</td>
-                  <td class="spec-value">{{ categoryName() }}</td>
-                </tr>
-                <tr>
-                  <td class="spec-label">Dimensions</td>
-                  <td class="spec-value">Approx. 15 cm (H) x 20 cm (W)</td>
-                </tr>
-                <tr>
-                  <td class="spec-label">Weight</td>
-                  <td class="spec-value">~700 g (Approx.)</td>
-                </tr>
-                <tr>
-                  <td class="spec-label">Availability</td>
-                  <td class="spec-value">{{ product()!.isInStock ? 'In Stock (Ready to dispatch)' : 'Made to Order' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div *ngIf="product()?.description" class="tab-narrative product-description-content" [innerHTML]="product()!.description | safeHtml"></div>
         </div>
 
         <!-- Tab: Care Instructions -->
@@ -313,12 +233,6 @@
                 Flat ৳{{ p.discount_value | number:'1.0-0' }} OFF
               </span>
             </div>
-
-            <!-- Wishlist Heart -->
-            <button type="button" class="product-wishlist-btn" [class.wishlisted]="wishlistService.isWishlisted(p.id)"
-                    (click)="wishlistService.toggleWishlist(p, $event)" aria-label="Toggle wishlist">
-              <i class="pi" [ngClass]="wishlistService.isWishlisted(p.id) ? 'pi-heart-fill' : 'pi-heart'"></i>
-            </button>
 
             <!-- Image -->
             <div class="product-image-wrapper">

@@ -383,29 +383,10 @@
 
 /* Order Summary & Right Column Sticky Sidebar */
 .cart-sidebar-sticky {
-  @media (min-width: 992px) {
+  @media (min-width: 992px) and (min-height: 780px) {
     position: sticky;
     top: 86px;
     z-index: 10;
-    max-height: calc(100vh - 96px);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(211, 197, 180, 0.4) transparent;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: rgba(211, 197, 180, 0.4);
-      border-radius: 4px;
-
-      &:hover {
-        background: #B84E29;
-      }
-    }
   }
 }
 

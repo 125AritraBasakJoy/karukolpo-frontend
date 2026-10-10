@@ -115,14 +115,11 @@
           <i class="pi pi-th-large mr-2"></i> All Products
         </a>
 
-        <!-- Categories & Collections Section with Expand/Collapse Header Button -->
+        <!-- Categories Section with Expand/Collapse Header Button -->
         <button type="button" class="mobile-section-header-btn flex align-items-center justify-content-between w-full mt-3 p-link"
                 (click)="toggleCategoriesSection()" [attr.aria-expanded]="isCategoriesSectionExpanded()">
-          <span class="mobile-section-header-title">Categories & Collections</span>
-          <div class="flex align-items-center gap-1">
-            <span class="categories-badge text-xs">{{ categoryService.categories().length }}</span>
-            <i class="pi pi-chevron-down section-chevron text-xs" [class.rotate-180]="isCategoriesSectionExpanded()"></i>
-          </div>
+          <span class="mobile-section-header-title">Categories</span>
+          <i class="pi pi-chevron-down section-chevron text-xs" [class.rotate-180]="isCategoriesSectionExpanded()"></i>
         </button>
 
         <div class="mobile-categories-list flex flex-column gap-1 pl-1" *ngIf="isCategoriesSectionExpanded()">

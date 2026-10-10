@@ -222,20 +222,38 @@
 // ── Categories Section (Landscape Cards) ──────────────────────────
 .categories-section {
   background: var(--surface-ground, #FAF7F2);
+
+  .section-header-row {
+    @media (max-width: 576px) {
+      margin-bottom: 1.25rem !important;
+    }
+  }
+
+  .view-all-link {
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    align-self: flex-end;
+
+    &:focus-visible {
+      outline: 2px solid #B84E29;
+      outline-offset: 2px;
+    }
+  }
 }
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 
   @media (min-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.25rem;
   }
 
   @media (min-width: 1200px) {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 1.15rem;
   }
 }
@@ -243,39 +261,47 @@
 .landscape-category-card {
   background: #FFFFFF;
   border: 1px solid #ECE7E0;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
-  box-shadow: 0 2px 8px rgba(42, 37, 33, 0.04);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+  box-shadow: 0 2px 10px rgba(42, 37, 33, 0.04), 0 1px 3px rgba(42, 37, 33, 0.02);
+  text-decoration: none;
+  position: relative;
 
-  &:hover,
-  &:focus-visible {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(42, 37, 33, 0.09);
-    border-color: #DDD4C8;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(42, 37, 33, 0.08);
+      border-color: #DDD4C8;
 
-    .category-media-box img {
-      transform: scale(1.06);
-    }
+      .category-media-box img {
+        transform: scale(1.03);
+      }
 
-    .category-bottom-bar .category-arrow-circle {
-      background: #B84E29;
-      border-color: #B84E29;
-      color: #FFFFFF;
-      transform: translateX(2px);
-
-      i {
+      .category-bottom-bar .category-arrow-circle {
+        background: #B84E29;
+        border-color: #B84E29;
         color: #FFFFFF;
+        transform: translateX(2px);
+
+        i {
+          color: #FFFFFF;
+        }
       }
     }
   }
 
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(42, 37, 33, 0.06);
+  }
+
   &:focus-visible {
     outline: 2px solid #B84E29;
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   .category-media-box {
@@ -287,30 +313,49 @@
 
     img {
       object-fit: cover;
-      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
   }
 
   .category-bottom-bar {
-    padding: 0.75rem 0.85rem;
+    padding: 0.8rem 0.95rem;
+    min-height: 52px;
     background: #FFFFFF;
     gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @media (min-width: 768px) {
+      padding: 0.9rem 1.05rem;
+      min-height: 56px;
+    }
 
     .category-title {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 600;
+      line-height: 1.25;
       color: #26221F;
+      min-width: 0;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      word-break: break-word;
+
+      @media (min-width: 768px) {
+        font-size: 0.95rem;
+      }
     }
 
     .category-arrow-circle {
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      border: 1px solid #D8CFC4;
-      color: #5C5248;
+      background: #FAF7F2;
+      border: 1px solid #E8E2D8;
+      color: #706861;
       transition: all 0.25s ease;
       flex-shrink: 0;
     }
@@ -318,9 +363,26 @@
 
   &.skeleton-card {
     cursor: default;
+    border-radius: 16px;
     .category-media-box {
       aspect-ratio: 16 / 11;
     }
+    .category-bottom-bar {
+      min-height: 52px;
+      @media (min-width: 768px) {
+        min-height: 56px;
+      }
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landscape-category-card,
+  .landscape-category-card .category-media-box img,
+  .landscape-category-card .category-bottom-bar .category-arrow-circle,
+  .categories-section .view-all-link {
+    transition: none !important;
+    transform: none !important;
   }
 }
 
@@ -340,7 +402,7 @@
     position: absolute;
     z-index: 10;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%) !important;
     background: #FFFFFF !important;
     border: 1px solid #ECE7E0 !important;
     color: #26221F !important;
@@ -351,13 +413,16 @@
     justify-content: center;
     border-radius: 50% !important;
     box-shadow: 0 4px 14px rgba(42, 37, 33, 0.12) !important;
-    transition: all 0.25s ease !important;
+    transition: background-color 0.25s ease,
+                border-color 0.25s ease,
+                color 0.25s ease,
+                box-shadow 0.25s ease !important;
 
     &:hover {
       background: #B84E29 !important;
       border-color: #B84E29 !important;
       color: #FFFFFF !important;
-      transform: translateY(-50%) scale(1.08);
+      transform: translateY(-50%) !important;
       box-shadow: 0 6px 20px rgba(184, 78, 41, 0.35) !important;
     }
 
@@ -569,11 +634,6 @@
   }
 
   .crafted-content {
-    .story-kicker {
-      color: #B84E29;
-      letter-spacing: 0.15em;
-    }
-
     .story-title {
       font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(1.85rem, 3.2vw, 2.45rem);
@@ -711,23 +771,15 @@
     left: 0;
     right: 0;
     z-index: 2;
-    padding: clamp(1.5rem, 3.5vw, 3rem);
+    padding: clamp(1rem, 2.5vw, 1.75rem) clamp(1.5rem, 3.5vw, 3rem);
     color: #FFFDFA;
 
     .contact-welcome-title {
       font-family: 'Playfair Display', Georgia, serif;
       font-size: clamp(1.85rem, 3vw, 2.6rem);
       line-height: 1.15;
-      margin: 0.75rem 0 1rem;
+      margin: 0.75rem 0 0;
       color: #FFFDFA;
-    }
-
-    .contact-welcome-desc {
-      max-width: 360px;
-      line-height: 1.65;
-      margin: 0;
-      color: #EDE3D7;
-      font-size: 0.95rem;
     }
   }
 

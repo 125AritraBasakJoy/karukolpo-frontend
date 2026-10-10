@@ -8,7 +8,6 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductService, ProductQueryOptions } from '../../core/services/product/product.service';
 import { CartService } from '../../core/services/cart/cart.service';
 import { CategoryService } from '../../core/services/category/category.service';
-import { WishlistService } from '../../core/services/wishlist/wishlist.service';
 import { Product } from '../../models/product.model';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -124,7 +123,6 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         private productService: ProductService,
         public cartService: CartService,
         public categoryService: CategoryService,
-        public wishlistService: WishlistService,
         private titleService: Title,
         private metaService: Meta,
         @Inject(PLATFORM_ID) private platformId: Object

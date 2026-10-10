@@ -353,9 +353,23 @@ html.dark-mode {
 
 /* Product Card Badges Stack (Clean vertical placement on top-left) */
 .product-badges-stack {
-    max-width: calc(100% - 46px);
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    max-width: calc(100% - 20px);
     pointer-events: none;
-    z-index: 3;
+
+    @media (min-width: 768px) {
+        top: 12px;
+        left: 12px;
+        gap: 6px;
+        max-width: calc(100% - 24px);
+    }
 }
 
 .artisan-input:-webkit-autofill,
@@ -1060,7 +1074,6 @@ p-tableCheckbox {
     }
 
     button,
-    .product-wishlist-btn,
     .quick-cart-btn {
         cursor: pointer !important;
     }
@@ -1299,49 +1312,6 @@ html.dark-mode .premium-product-card {
 
         &:hover {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-        }
-    }
-}
-
-/* Wishlist Icon Button */
-.product-wishlist-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #ECE7E0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 4;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-
-    i {
-        font-size: 0.9rem;
-        color: #78716C;
-        transition: color 0.2s, transform 0.2s;
-    }
-
-    &:hover {
-        background: #FFFFFF;
-        transform: scale(1.1);
-        border-color: #B84E29;
-        i {
-            color: #B84E29;
-        }
-    }
-
-    &.active,
-    &.wishlisted {
-        background: #FFFFFF;
-        border-color: #B84E29;
-        i {
-            color: #B84E29;
         }
     }
 }
@@ -3388,7 +3358,6 @@ li.p-carousel-indicator button.p-carousel-indicator-button[aria-current="page"] 
         &:hover:not(.p-disabled) {
             background: #B84E29 !important;
             border-color: #B84E29 !important;
-            transform: scale(1.08) !important;
             box-shadow: 0 8px 24px rgba(184, 78, 41, 0.4) !important;
 
             &, i, svg, path, .p-icon {
@@ -4007,3 +3976,68 @@ div.p-datepicker:not(.p-inputwrapper) {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Storefront Product Details - Rich Text Normalization */
+app-product-details .product-description-content {
+    color: var(--text-color) !important;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    word-break: break-word;
+    overflow-wrap: break-word;
+
+    *,
+    *::before,
+    *::after {
+        background-color: transparent !important;
+        background: transparent !important;
+        color: inherit !important;
+    }
+
+    p, ul, ol, div, span, blockquote, h1, h2, h3, h4, h5, h6 {
+        max-width: 100%;
+    }
+
+    p {
+        margin: 0 0 1rem 0;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    ul, ol {
+        margin: 0 0 1rem 1.25rem;
+        padding: 0;
+
+        li {
+            margin-bottom: 0.35rem;
+        }
+    }
+
+    a {
+        color: var(--primary-color) !important;
+        text-decoration: underline;
+
+        &:hover {
+            color: var(--primary-hover) !important;
+        }
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+/* Admin Product Description Editor - Normalize Pasted Inline Styles */
+app-add-product .premium-editor .ql-editor,
+app-edit-product .premium-editor .ql-editor {
+    color: var(--text-color, #f8fafc) !important;
+
+    *:not(.ql-tooltip):not(.ql-action) {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: inherit !important;
+    }
+}
+

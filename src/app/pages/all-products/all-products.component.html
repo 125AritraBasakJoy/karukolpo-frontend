@@ -4,12 +4,7 @@
     <div class="page-hero-banner mb-4 p-4 md:p-5 border-round-2xl relative overflow-hidden">
       <div class="banner-content relative z-2">
         <h1 class="banner-title mb-2">{{ getPageTitle() }}</h1>
-        <p class="banner-subtitle mb-3">Explore our complete collection of authentic Bangladeshi handicrafts.</p>
-        <div class="banner-badges flex flex-wrap align-items-center gap-3">
-          <span class="banner-badge">✦ Handcrafted</span>
-          <span class="banner-badge">✦ Authentic</span>
-          <span class="banner-badge">✦ Delivered Nationwide</span>
-        </div>
+        <p class="banner-subtitle mb-0">Explore our complete collection of authentic Bangladeshi handicrafts.</p>
       </div>
       <div class="banner-artistic-overlay absolute top-0 right-0 h-full w-4 hidden md:block"></div>
     </div>
@@ -113,13 +108,25 @@
 
       <!-- Right Products Grid Area -->
       <main class="col-12 md:col-9">
-        <!-- Products Grid Top Count & Active Sort Bar -->
+        <!-- Products Grid Top Count & Filter / Sort Bar -->
         <div class="products-grid-header flex align-items-center justify-content-between mb-3 px-1">
           <span class="products-count-text font-medium">{{ totalCount() }} products</span>
-          <div class="flex align-items-center gap-2">
+          
+          <!-- Desktop/Tablet Sort Label -->
+          <div class="hidden md:flex align-items-center gap-2">
             <span class="text-xs text-600 hidden sm:inline">Sort by:</span>
             <span class="font-bold text-sm text-900">{{ sortOrder() === 'newest' ? 'Featured / Newest' : (sortOrder() === 'price_asc' ? 'Price: Low to High' : 'Featured') }}</span>
           </div>
+
+          <!-- Mobile Filter Button (replaces Featured / Newest on mobile) -->
+          <button #filterTriggerBtn type="button" class="mobile-filter-header-btn md:hidden flex align-items-center gap-2 p-link font-semibold"
+                  (click)="openMobileFilters()" aria-label="Open filter options">
+            <i class="pi pi-sliders-h text-sm"></i>
+            <span>Filter</span>
+            <span *ngIf="activeDrawerFilterCount() > 0" class="mobile-filter-badge">
+              {{ activeDrawerFilterCount() }}
+            </span>
+          </button>
         </div>
 
         <!-- Skeleton Loading -->
@@ -206,16 +213,10 @@
     </div>
   </div>
 
-  <!-- Mobile Bottom-Right Floating Filter Button (< 768px) -->
-  <button #filterTriggerBtn type="button" class="mobile-filter-fab md:hidden"
-          (click)="openMobileFilters()" aria-label="Open filter options">
-    <i class="pi pi-sliders-h" aria-hidden="true"></i>
-  </button>
-
-  <!-- Mobile Filter Bottom Sheet (< 768px) -->
-  <p-drawer [(visible)]="isMobileFilterOpen" position="bottom" [modal]="true"
+  <!-- Mobile Filter Right Drawer (< 768px) -->
+  <p-drawer [(visible)]="isMobileFilterOpen" position="right" [modal]="true"
             [dismissible]="true" [closeOnEscape]="true" [blockScroll]="true"
-            styleClass="mobile-filter-bottom-sheet" (onHide)="onFilterDrawerHide()"
+            styleClass="mobile-filter-drawer-right" (onHide)="onFilterDrawerHide()"
             appendTo="body">
     <ng-template pTemplate="header">
       <div class="flex align-items-center gap-2">

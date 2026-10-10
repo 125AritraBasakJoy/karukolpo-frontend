@@ -84,46 +84,91 @@
     </div>
   </div>
 
-  <!-- Mobile Drawer / Dropdown Menu -->
-  <div class="mobile-nav-drawer lg:hidden" *ngIf="isMobileMenuOpen()">
-    <div class="mobile-search-box p-3 border-bottom-1 surface-border">
-      <form (submit)="onSearchSubmit(); $event.preventDefault();" class="search-form flex align-items-center w-full">
-        <i class="pi pi-search search-icon" (click)="onSearchSubmit()"></i>
-        <input type="text" [(ngModel)]="searchQuery" name="searchQueryMobile"
-               placeholder="Search for handmade crafts..." class="search-input w-full" />
-      </form>
-    </div>
+  <!-- Mobile Drawer Menu (Right to Left, Full Length) -->
+  <p-drawer [visible]="isMobileMenuOpen()" (visibleChange)="isMobileMenuOpen.set($event)"
+            position="right" [modal]="true" [dismissible]="true" [closeOnEscape]="true" [blockScroll]="true"
+            styleClass="mobile-nav-p-drawer lg:hidden" appendTo="body" (onHide)="closeAllMenus()">
+    <ng-template pTemplate="header">
+      <div class="flex align-items-center justify-content-between w-full pr-2">
+        <a routerLink="/" (click)="closeAllMenus()" class="flex align-items-center text-decoration-none">
+          <img ngSrc="assets/header-logo.webp" alt="Karukolpo" width="140" height="40" class="mobile-drawer-logo" />
+        </a>
+      </div>
+    </ng-template>
 
-    <div class="mobile-nav-links p-3 flex flex-column gap-2">
-      <a routerLink="/" class="mobile-nav-link" (click)="closeAllMenus()">
-        <i class="pi pi-home mr-2"></i> Home
-      </a>
-      <a routerLink="/all-products" class="mobile-nav-link" (click)="closeAllMenus()">
-        <i class="pi pi-th-large mr-2"></i> All Products
-      </a>
-      
-      <div class="mobile-section-header">Collections</div>
-      <div class="mobile-categories-grid grid">
-        <div class="col-6 py-1" *ngFor="let cat of categoryService.categories()">
-          <a [routerLink]="['/category', cat.slug || cat.id]" class="mobile-cat-pill" (click)="closeAllMenus()">
-            {{ cat.name }}
-          </a>
-        </div>
+    <div class="mobile-drawer-body">
+      <!-- Search Box inside Drawer -->
+      <div class="mobile-search-box pb-3 mb-2 border-bottom-1 surface-border">
+        <form (submit)="onSearchSubmit(); $event.preventDefault();" class="search-form flex align-items-center w-full">
+          <i class="pi pi-search search-icon" (click)="onSearchSubmit()"></i>
+          <input type="text" [(ngModel)]="searchQuery" name="searchQueryMobile"
+                 placeholder="Search for handmade crafts..." class="search-input w-full" />
+        </form>
       </div>
 
-      <div class="mobile-section-header mt-2">Discover</div>
-      <a routerLink="/all-products" [queryParams]="{ filter: 'best-selling' }" class="mobile-nav-link" (click)="closeAllMenus()">
-        <i class="pi pi-star mr-2"></i> Best Sellers
-      </a>
-      <a routerLink="/all-products" [queryParams]="{ filter: 'hot-deals' }" class="mobile-nav-link" (click)="closeAllMenus()">
-        <i class="pi pi-bolt mr-2"></i> Hot Deals
-      </a>
-      <a routerLink="/about" class="mobile-nav-link" (click)="closeAllMenus()">
-        <i class="pi pi-book mr-2"></i> Our Story
-      </a>
-      <a routerLink="/track-order" class="mobile-nav-link" (click)="closeAllMenus()">
-        <i class="pi pi-box mr-2"></i> Track Order
-      </a>
+      <!-- Navigation Links -->
+      <div class="mobile-nav-links flex flex-column gap-1">
+        <a routerLink="/" class="mobile-nav-link" (click)="closeAllMenus()">
+          <i class="pi pi-home mr-2"></i> Home
+        </a>
+        <a routerLink="/all-products" class="mobile-nav-link" (click)="closeAllMenus()">
+          <i class="pi pi-th-large mr-2"></i> All Products
+        </a>
+
+        <!-- Categories & Collections Section with Expand/Collapse Header Button -->
+        <button type="button" class="mobile-section-header-btn flex align-items-center justify-content-between w-full mt-3 p-link"
+                (click)="toggleCategoriesSection()" [attr.aria-expanded]="isCategoriesSectionExpanded()">
+          <span class="mobile-section-header-title">Categories & Collections</span>
+          <div class="flex align-items-center gap-1">
+            <span class="categories-badge text-xs">{{ categoryService.categories().length }}</span>
+            <i class="pi pi-chevron-down section-chevron text-xs" [class.rotate-180]="isCategoriesSectionExpanded()"></i>
+          </div>
+        </button>
+
+        <div class="mobile-categories-list flex flex-column gap-1 pl-1" *ngIf="isCategoriesSectionExpanded()">
+          <div *ngFor="let cat of categoryService.categories()" class="mobile-category-item">
+            <!-- Category Header row -->
+            <div class="flex align-items-center justify-content-between mobile-cat-row">
+              <a [routerLink]="['/category', cat.slug || cat.id]" class="mobile-nav-link flex-1" (click)="closeAllMenus()">
+                <i class="pi pi-tag mr-2 text-primary"></i>
+                <span>{{ cat.name }}</span>
+              </a>
+              <button *ngIf="cat.children && cat.children.length > 0" type="button"
+                      class="cat-expand-btn p-link flex align-items-center justify-content-center"
+                      (click)="toggleCategoryExpand(cat.id, $event)"
+                      [attr.aria-label]="'Toggle subcategories for ' + cat.name">
+                <i class="pi pi-chevron-down expand-icon" [class.rotate-180]="isCategoryExpanded(cat.id)"></i>
+              </button>
+            </div>
+
+            <!-- Expandable Subcategories / Children Menu -->
+            <div *ngIf="cat.children && cat.children.length > 0 && isCategoryExpanded(cat.id)" class="mobile-subcat-list pl-4 py-1 flex flex-column gap-1">
+              <a *ngFor="let child of cat.children"
+                 [routerLink]="['/category', child.slug || child.id]"
+                 class="mobile-subcat-link"
+                 (click)="closeAllMenus()">
+                <i class="pi pi-angle-right mr-1 text-xs"></i>
+                <span>{{ child.name }}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discover Section -->
+        <div class="mobile-section-header mt-3">Discover</div>
+        <a routerLink="/all-products" [queryParams]="{ filter: 'best-selling' }" class="mobile-nav-link" (click)="closeAllMenus()">
+          <i class="pi pi-star mr-2"></i> Best Sellers
+        </a>
+        <a routerLink="/all-products" [queryParams]="{ filter: 'hot-deals' }" class="mobile-nav-link" (click)="closeAllMenus()">
+          <i class="pi pi-bolt mr-2"></i> Hot Deals
+        </a>
+        <a routerLink="/about" class="mobile-nav-link" (click)="closeAllMenus()">
+          <i class="pi pi-book mr-2"></i> Our Story
+        </a>
+        <a routerLink="/track-order" class="mobile-nav-link" (click)="closeAllMenus()">
+          <i class="pi pi-box mr-2"></i> Track Order
+        </a>
+      </div>
     </div>
-  </div>
+  </p-drawer>
 </header>

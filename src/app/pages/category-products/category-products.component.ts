@@ -13,6 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { DropdownModule } from 'primeng/dropdown';
+import { DrawerModule } from 'primeng/drawer';
 
 @Component({
     selector: 'app-category-products',
@@ -24,6 +25,7 @@ import { DropdownModule } from 'primeng/dropdown';
         SkeletonModule,
         ToastModule,
         DropdownModule,
+        DrawerModule,
         RouterLink
     ],
     templateUrl: './category-products.component.html',
@@ -39,6 +41,18 @@ export class CategoryProductsComponent implements OnInit {
     searchQuery = signal<string>('');
     selectedPriceRange = signal<string>('all');
     sortOrder = signal<string>('featured');
+
+    // Mobile right-drawer state
+    isMobileFilterOpen = signal<boolean>(false);
+    draftPriceRange = signal<string>('all');
+    draftSortOrder = signal<string>('featured');
+
+    activeDrawerFilterCount = computed(() => {
+        let count = 0;
+        if (this.selectedPriceRange() !== 'all') count++;
+        if (this.sortOrder() !== 'featured') count++;
+        return count;
+    });
 
     priceRangeOptions = [
         { label: 'All Prices', value: 'all' },
@@ -195,6 +209,29 @@ export class CategoryProductsComponent implements OnInit {
         this.searchQuery.set('');
         this.selectedPriceRange.set('all');
         this.sortOrder.set('featured');
+        this.draftPriceRange.set('all');
+        this.draftSortOrder.set('featured');
+    }
+
+    openMobileFilters() {
+        this.draftPriceRange.set(this.selectedPriceRange());
+        this.draftSortOrder.set(this.sortOrder());
+        this.isMobileFilterOpen.set(true);
+    }
+
+    applyMobileFilters() {
+        this.selectedPriceRange.set(this.draftPriceRange());
+        this.sortOrder.set(this.draftSortOrder());
+        this.isMobileFilterOpen.set(false);
+    }
+
+    resetDraftFilters() {
+        this.draftPriceRange.set('all');
+        this.draftSortOrder.set('featured');
+    }
+
+    onFilterDrawerHide() {
+        this.isMobileFilterOpen.set(false);
     }
 
     hasActiveFilters(): boolean {

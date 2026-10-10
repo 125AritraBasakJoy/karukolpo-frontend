@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { BadgeModule } from 'primeng/badge';
+import { DrawerModule } from 'primeng/drawer';
 import { CartService } from '../../core/services/cart/cart.service';
 import { CategoryService } from '../../core/services/category/category.service';
 import { NgOptimizedImage } from '@angular/common';
@@ -11,7 +12,7 @@ import { NgOptimizedImage } from '@angular/common';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ButtonModule, BadgeModule, NgOptimizedImage],
+  imports: [CommonModule, RouterModule, FormsModule, ButtonModule, BadgeModule, DrawerModule, NgOptimizedImage],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })
@@ -20,6 +21,8 @@ export class HeaderComponent {
   isShopMenuOpen = signal<boolean>(false);
   isCollectionsMenuOpen = signal<boolean>(false);
   isMobileMenuOpen = signal<boolean>(false);
+  isCategoriesSectionExpanded = signal<boolean>(false);
+  expandedCategories = signal<Set<string>>(new Set<string>());
 
   constructor(
     public cartService: CartService,
@@ -58,6 +61,28 @@ export class HeaderComponent {
     this.isMobileMenuOpen.set(!this.isMobileMenuOpen());
   }
 
+  toggleCategoriesSection() {
+    this.isCategoriesSectionExpanded.set(!this.isCategoriesSectionExpanded());
+  }
+
+  toggleCategoryExpand(catId: string, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.expandedCategories.update(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) {
+        next.delete(catId);
+      } else {
+        next.add(catId);
+      }
+      return next;
+    });
+  }
+
+  isCategoryExpanded(catId: string): boolean {
+    return this.expandedCategories().has(catId);
+  }
+
   closeAllMenus() {
     this.isShopMenuOpen.set(false);
     this.isCollectionsMenuOpen.set(false);
@@ -67,7 +92,8 @@ export class HeaderComponent {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     if (!this.elementRef.nativeElement.contains(event.target)) {
-      this.closeAllMenus();
+      this.isShopMenuOpen.set(false);
+      this.isCollectionsMenuOpen.set(false);
     }
   }
 }

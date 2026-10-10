@@ -290,6 +290,46 @@
     font-size: 0.95rem;
     color: #6C5F54;
   }
+
+  .mobile-filter-header-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.9rem;
+    background: #FAF7F2;
+    border: 1px solid #E5DACB;
+    border-radius: 9999px;
+    color: #26221F;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+
+    i {
+      color: #B84E29;
+    }
+
+    &:hover,
+    &:focus {
+      background: #FFFFFF;
+      border-color: #B84E29;
+      color: #B84E29;
+      box-shadow: 0 2px 8px rgba(184, 78, 41, 0.12);
+    }
+
+    .mobile-filter-badge {
+      background: #B84E29;
+      color: #FFFFFF;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+  }
 }
 
 /* Pagination container */
@@ -457,20 +497,21 @@
   }
 }
 
-/* Mobile Filter Bottom Sheet Modal */
+/* Mobile Filter Drawer (Right to Left) */
 ::ng-deep {
   .p-drawer-mask {
     z-index: 1100 !important;
   }
 
+  .mobile-filter-drawer-right.p-drawer,
   .mobile-filter-bottom-sheet.p-drawer {
     z-index: 1101 !important;
-    border-top-left-radius: 20px !important;
-    border-top-right-radius: 20px !important;
-    max-height: 85vh !important;
-    height: auto !important;
+    width: 320px !important;
+    max-width: 85vw !important;
+    height: 100% !important;
     background: #FFFFFF !important;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 0 !important;
 
     .p-drawer-header {
       padding: 1.1rem 1.25rem 0.8rem 1.25rem !important;

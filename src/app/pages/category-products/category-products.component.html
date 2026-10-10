@@ -13,12 +13,7 @@
     <div class="category-hero-banner mb-4 p-4 md:p-5 border-round-2xl relative overflow-hidden">
       <div class="banner-content relative z-2">
         <h1 class="banner-title mb-2">{{ category()?.name || 'Collection' }}</h1>
-        <p class="banner-subtitle mb-3">{{ getCategorySubtitle() }}</p>
-        <div class="banner-badges flex flex-wrap align-items-center gap-3">
-          <span class="banner-badge">✦ 100% Handcrafted</span>
-          <span class="banner-badge">✦ Sacred & Authentic</span>
-          <span class="banner-badge">✦ Safe Fragile Packaging</span>
-        </div>
+        <p class="banner-subtitle mb-0">{{ getCategorySubtitle() }}</p>
       </div>
       <div class="banner-artistic-overlay absolute top-0 right-0 h-full w-4 hidden md:block"></div>
     </div>
@@ -34,8 +29,8 @@
         </div>
       </div>
 
-      <!-- Quick Filter Dropdowns -->
-      <div class="filter-dropdowns flex flex-wrap align-items-center gap-2">
+      <!-- Quick Filter Dropdowns (Desktop / Tablet >= 768px) -->
+      <div class="filter-dropdowns hidden md:flex flex-wrap align-items-center gap-2">
         <p-dropdown [options]="priceRangeOptions" [ngModel]="selectedPriceRange()"
                     (ngModelChange)="onPriceRangeChange($event)" optionLabel="label" optionValue="value"
                     appendTo="body" styleClass="compact-filter-dropdown"></p-dropdown>
@@ -50,13 +45,25 @@
       </div>
     </div>
 
-    <!-- Products Count Header -->
+    <!-- Products Count Header & Mobile Filter Button -->
     <div class="products-grid-header flex align-items-center justify-content-between mb-3 px-1">
       <span class="products-count-text font-medium">{{ filteredProducts().length }} crafts found</span>
-      <div class="flex align-items-center gap-2">
+
+      <!-- Desktop Sort Display -->
+      <div class="hidden md:flex align-items-center gap-2">
         <span class="text-xs text-600 hidden sm:inline">Sort:</span>
         <span class="font-bold text-sm text-900">{{ sortOrder() === 'newest' ? 'Newest' : (sortOrder() === 'price_asc' ? 'Price: Low to High' : 'Featured') }}</span>
       </div>
+
+      <!-- Mobile Filter Button (replaces sort label on mobile) -->
+      <button type="button" class="mobile-filter-header-btn md:hidden flex align-items-center gap-2 p-link font-semibold"
+              (click)="openMobileFilters()" aria-label="Open filter options">
+        <i class="pi pi-sliders-h text-sm"></i>
+        <span>Filter</span>
+        <span *ngIf="activeDrawerFilterCount() > 0" class="mobile-filter-badge">
+          {{ activeDrawerFilterCount() }}
+        </span>
+      </button>
     </div>
 
     <!-- Loading State -->
@@ -137,4 +144,47 @@
       </button>
     </div>
   </div>
+
+  <!-- Mobile Filter Right Drawer (< 768px) -->
+  <p-drawer [(visible)]="isMobileFilterOpen" position="right" [modal]="true"
+            [dismissible]="true" [closeOnEscape]="true" [blockScroll]="true"
+            styleClass="mobile-filter-drawer-right" (onHide)="onFilterDrawerHide()"
+            appendTo="body">
+    <ng-template pTemplate="header">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-sliders-h text-primary font-bold"></i>
+        <span class="font-bold text-lg text-900">Filters</span>
+        <span *ngIf="activeDrawerFilterCount() > 0" class="sheet-count-pill ml-2">
+          {{ activeDrawerFilterCount() }} active
+        </span>
+      </div>
+    </ng-template>
+
+    <div class="mobile-sheet-content py-2">
+      <div class="field mb-3">
+        <label class="block font-semibold text-sm mb-2 text-800">Price Range</label>
+        <p-dropdown [options]="priceRangeOptions" [ngModel]="draftPriceRange()"
+                    (ngModelChange)="draftPriceRange.set($event)" optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="w-full full-filter-dropdown"></p-dropdown>
+      </div>
+
+      <div class="field mb-2">
+        <label class="block font-semibold text-sm mb-2 text-800">Sort By</label>
+        <p-dropdown [options]="sortOptions" [ngModel]="draftSortOrder()"
+                    (ngModelChange)="draftSortOrder.set($event)" optionLabel="label" optionValue="value"
+                    appendTo="body" styleClass="w-full full-filter-dropdown"></p-dropdown>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="sheet-footer-actions flex align-items-center gap-2 w-full pt-2">
+        <button type="button" class="btn-sheet-reset flex-1 font-semibold" (click)="resetDraftFilters()">
+          Reset
+        </button>
+        <button type="button" class="btn-sheet-apply flex-1 font-semibold" (click)="applyMobileFilters()">
+          Apply Filters
+        </button>
+      </div>
+    </ng-template>
+  </p-drawer>
 </div>

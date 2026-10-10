@@ -310,6 +310,11 @@ export class CategoryService {
             );
         }
 
+        const rawChildren = backendCategory.children || backendCategory.subcategories || backendCategory.subCategories;
+        if (rawChildren && Array.isArray(rawChildren)) {
+            category.children = rawChildren.map((c: any) => this.mapBackendToFrontend(c));
+        }
+
         return category;
     }
 }

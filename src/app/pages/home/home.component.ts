@@ -159,20 +159,26 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     // Replaces confirmPayment and integration into placeOrder
     getCategoryImage(categoryName: string): string {
-        if (!categoryName) return 'assets/logo.webp';
+        if (!categoryName) return 'assets/category/img.png';
 
         const name = categoryName.toLowerCase().trim();
-        const mapping: { [key: string]: string } = {
-            'prodip': 'assets/categories/prodip.webp',
-            'protima': 'assets/categories/protima.webp',
-            'shora': 'assets/categories/shora.webp',
-            'home decor': 'assets/categories/homedecor.webp',
-            'homedecor': 'assets/categories/homedecor.webp',
-            'mirror': 'assets/categories/mirror.webp',
-            'sharee': 'assets/categories/sharee.webp'
-        };
+        if (name === 'prodip') {
+            return 'assets/category/prodip/img.png';
+        }
+        if (name === 'shora') {
+            return 'assets/category/img_2.png';
+        }
+        if (name === 'sharee') {
+            return 'assets/categories/sharee.png';
+        }
+        if (name === 'mirror') {
+            return 'assets/categories/mirror.png';
+        }
+        if (name === 'home decor' || name === 'homedecor') {
+            return 'assets/categories/homedecor.png';
+        }
 
-        return mapping[name] || 'assets/logo.webp';
+        return 'assets/category/img.png';
     }
 
     openPaymentModal(orderId: string) {

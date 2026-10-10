@@ -259,33 +259,37 @@
 }
 
 .landscape-category-card {
-  background: #FFFFFF;
-  border: 1px solid #ECE7E0;
-  border-radius: 16px;
+  background: var(--surface-card, #FFFFFF);
+  border: 1px solid var(--surface-border, #ECE7E0);
+  border-radius: 18px;
+  padding: 8px;
   overflow: hidden;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
-  box-shadow: 0 2px 10px rgba(42, 37, 33, 0.04), 0 1px 3px rgba(42, 37, 33, 0.02);
+  transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+  box-shadow: 0 4px 16px rgba(42, 37, 33, 0.05), 0 1px 3px rgba(42, 37, 33, 0.03);
   text-decoration: none;
   position: relative;
 
+  @media (min-width: 768px) {
+    border-radius: 20px;
+    padding: 10px;
+  }
+
   @media (hover: hover) and (pointer: fine) {
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 22px rgba(42, 37, 33, 0.08);
-      border-color: #DDD4C8;
+      box-shadow: 0 12px 28px rgba(42, 37, 33, 0.1), 0 2px 6px rgba(42, 37, 33, 0.04);
+      border-color: #D8CEBE;
 
       .category-media-box img {
-        transform: scale(1.03);
+        transform: scale(1.04);
       }
 
       .category-bottom-bar .category-arrow-circle {
         background: #B84E29;
         border-color: #B84E29;
         color: #FFFFFF;
-        transform: translateX(2px);
 
         i {
           color: #FFFFFF;
@@ -295,13 +299,22 @@
   }
 
   &:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(42, 37, 33, 0.06);
+    box-shadow: 0 2px 8px rgba(42, 37, 33, 0.06);
   }
 
   &:focus-visible {
     outline: 2px solid #B84E29;
     outline-offset: 3px;
+
+    .category-bottom-bar .category-arrow-circle {
+      background: #B84E29;
+      border-color: #B84E29;
+      color: #FFFFFF;
+
+      i {
+        color: #FFFFFF;
+      }
+    }
   }
 
   .category-media-box {
@@ -309,33 +322,39 @@
     width: 100%;
     aspect-ratio: 16 / 11;
     overflow: hidden;
+    border-radius: 12px;
     background: #F7F3ED;
+
+    @media (min-width: 768px) {
+      border-radius: 14px;
+    }
 
     img {
       object-fit: cover;
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
   }
 
   .category-bottom-bar {
-    padding: 0.8rem 0.95rem;
-    min-height: 52px;
-    background: #FFFFFF;
-    gap: 0.5rem;
+    padding: 0.85rem 0.5rem 0.45rem;
+    min-height: 56px;
+    background: transparent;
+    gap: 0.65rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
 
     @media (min-width: 768px) {
-      padding: 0.9rem 1.05rem;
-      min-height: 56px;
+      padding: 1rem 0.65rem 0.55rem;
+      min-height: 62px;
     }
 
     .category-title {
-      font-size: 0.92rem;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.05rem;
       font-weight: 600;
       line-height: 1.25;
-      color: #26221F;
+      color: var(--text-color, #26221F);
       min-width: 0;
       flex: 1;
       display: -webkit-box;
@@ -345,32 +364,50 @@
       word-break: break-word;
 
       @media (min-width: 768px) {
-        font-size: 0.95rem;
+        font-size: 1.15rem;
       }
     }
 
     .category-arrow-circle {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #FAF7F2;
-      border: 1px solid #E8E2D8;
-      color: #706861;
-      transition: all 0.25s ease;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: rgba(184, 78, 41, 0.08);
+      border: 1px solid rgba(184, 78, 41, 0.22);
+      color: #B84E29;
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
       flex-shrink: 0;
+
+      i {
+        transition: color 0.25s ease;
+      }
     }
   }
 
   &.skeleton-card {
     cursor: default;
-    border-radius: 16px;
+    border-radius: 18px;
+    padding: 8px;
+
+    @media (min-width: 768px) {
+      border-radius: 20px;
+      padding: 10px;
+    }
+
     .category-media-box {
       aspect-ratio: 16 / 11;
-    }
-    .category-bottom-bar {
-      min-height: 52px;
+      border-radius: 12px;
       @media (min-width: 768px) {
-        min-height: 56px;
+        border-radius: 14px;
+      }
+    }
+
+    .category-bottom-bar {
+      min-height: 56px;
+      padding: 0.85rem 0.5rem 0.45rem;
+      @media (min-width: 768px) {
+        min-height: 62px;
+        padding: 1rem 0.65rem 0.55rem;
       }
     }
   }

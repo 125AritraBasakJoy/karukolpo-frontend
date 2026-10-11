@@ -4041,3 +4041,48 @@ app-edit-product .premium-editor .ql-editor {
     }
 }
 
+/* Admin Add-Product Discount Dropdown Panel - Theme Alignment */
+.add-product-discount-panel.p-select-overlay,
+.add-product-discount-panel.p-dropdown-panel {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 12px !important;
+
+    .p-select-list,
+    .p-dropdown-items {
+        padding: 0.4rem !important;
+        background: transparent !important;
+    }
+
+    .p-select-option,
+    .p-dropdown-item {
+        color: #94a3b8 !important;
+        background: transparent !important;
+        border-radius: 8px !important;
+        font-size: 0.9rem !important;
+        padding: 0.65rem 0.85rem !important;
+        transition: all 0.2s ease !important;
+
+        &:not(.p-disabled):hover,
+        &:not(.p-disabled).p-focus {
+            background: rgba(59, 130, 246, 0.15) !important;
+            color: #ffffff !important;
+        }
+
+        &.p-select-option-selected,
+        &.p-highlight {
+            background: rgba(59, 130, 246, 0.25) !important;
+            color: #60a5fa !important;
+            font-weight: 600 !important;
+
+            &:hover,
+            &.p-focus {
+                background: rgba(59, 130, 246, 0.35) !important;
+                color: #ffffff !important;
+            }
+        }
+    }
+}
+
+

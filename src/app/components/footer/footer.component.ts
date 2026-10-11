@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { Component, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -31,8 +31,11 @@ export class FooterComponent {
         address: 'Pathrail, Tangail-1912, Bangladesh.'
     };
 
+    constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+
     navigateAndScroll(route: string) {
-        // Scroll to top of the page when footer link is clicked
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (!isPlatformBrowser(this.platformId)) return;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
     }
 }

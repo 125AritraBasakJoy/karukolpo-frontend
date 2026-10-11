@@ -1,4 +1,4 @@
-import { Component, signal, ViewChildren, QueryList, OnInit, OnDestroy, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { Component, signal, ViewChild, ViewChildren, QueryList, ElementRef, OnInit, OnDestroy, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -53,6 +53,7 @@ interface GalleryFileItem {
     templateUrl: './add-product.component.html'
 })
 export class AddProductComponent implements OnInit, OnDestroy {
+    @ViewChild('stepsTrack') stepsTrackRef?: ElementRef<HTMLDivElement>;
     @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
     private scrollListener: any;
 
@@ -392,10 +393,12 @@ export class AddProductComponent implements OnInit, OnDestroy {
             if (this.activeStep() === 2 && !this.validateStep2()) return;
             if (targetStep === 3 && !this.validateStep1()) {
                 this.activeStep.set(1);
+                this.scrollActiveStepIntoView(1);
                 return;
             }
         }
         this.activeStep.set(targetStep);
+        this.scrollActiveStepIntoView(targetStep);
     }
 
     goToStep(targetStep: number): void {
@@ -414,6 +417,20 @@ export class AddProductComponent implements OnInit, OnDestroy {
             if (this.activeStep() === 2 && !this.validateStep2()) return;
         }
         this.activeStep.set(targetStep);
+        this.scrollActiveStepIntoView(targetStep);
+    }
+
+    private scrollActiveStepIntoView(step: number): void {
+        if (!isPlatformBrowser(this.platformId)) return;
+        setTimeout(() => {
+            const track = this.stepsTrackRef?.nativeElement;
+            if (!track) return;
+            const buttons = track.querySelectorAll<HTMLButtonElement>('.wizard-step-item');
+            const targetBtn = buttons[step - 1];
+            if (targetBtn) {
+                targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }, 50);
     }
 
     validateStep1(): boolean {

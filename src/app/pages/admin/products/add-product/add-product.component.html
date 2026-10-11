@@ -7,53 +7,46 @@
     <div class="glass-card add-product-card p-3 sm:p-5 fadein animation-duration-500">
         <!-- 3-Step Header Navigation -->
         <div class="wizard-stepper-header mb-4 sm:mb-5">
-            <div class="wizard-steps-bar">
-                <!-- Step 1 Tab -->
-                <button type="button" class="wizard-step-item"
-                    [class.active]="activeStep() === 1"
-                    [class.completed]="activeStep() > 1"
-                    (click)="onStepClick(1)">
-                    <div class="wizard-step-circle">
-                        <i class="pi pi-check" *ngIf="activeStep() > 1"></i>
-                        <span *ngIf="activeStep() <= 1">1</span>
-                    </div>
-                    <div class="wizard-step-label">
-                        <span class="step-num-kicker">Step 1</span>
+            <div class="wizard-steps-track" #stepsTrack>
+                <div class="wizard-steps-bar">
+                    <!-- Step 1 Tab -->
+                    <button type="button" class="wizard-step-item"
+                        [class.active]="activeStep() === 1"
+                        [class.completed]="activeStep() > 1"
+                        (click)="onStepClick(1)">
+                        <div class="wizard-step-circle">
+                            <i class="pi pi-check" *ngIf="activeStep() > 1"></i>
+                            <span *ngIf="activeStep() <= 1">1</span>
+                        </div>
                         <span class="step-name">Product Info</span>
-                    </div>
-                </button>
+                    </button>
 
-                <div class="wizard-step-connector" [class.completed]="activeStep() > 1"></div>
+                    <div class="wizard-step-connector" [class.completed]="activeStep() > 1"></div>
 
-                <!-- Step 2 Tab -->
-                <button type="button" class="wizard-step-item"
-                    [class.active]="activeStep() === 2"
-                    [class.completed]="activeStep() > 2"
-                    (click)="onStepClick(2)">
-                    <div class="wizard-step-circle">
-                        <i class="pi pi-check" *ngIf="activeStep() > 2"></i>
-                        <span *ngIf="activeStep() <= 2">2</span>
-                    </div>
-                    <div class="wizard-step-label">
-                        <span class="step-num-kicker">Step 2</span>
+                    <!-- Step 2 Tab -->
+                    <button type="button" class="wizard-step-item"
+                        [class.active]="activeStep() === 2"
+                        [class.completed]="activeStep() > 2"
+                        (click)="onStepClick(2)">
+                        <div class="wizard-step-circle">
+                            <i class="pi pi-check" *ngIf="activeStep() > 2"></i>
+                            <span *ngIf="activeStep() <= 2">2</span>
+                        </div>
                         <span class="step-name">Set Inventory</span>
-                    </div>
-                </button>
+                    </button>
 
-                <div class="wizard-step-connector" [class.completed]="activeStep() > 2"></div>
+                    <div class="wizard-step-connector" [class.completed]="activeStep() > 2"></div>
 
-                <!-- Step 3 Tab -->
-                <button type="button" class="wizard-step-item"
-                    [class.active]="activeStep() === 3"
-                    (click)="onStepClick(3)">
-                    <div class="wizard-step-circle">
-                        <span>3</span>
-                    </div>
-                    <div class="wizard-step-label">
-                        <span class="step-num-kicker">Step 3</span>
+                    <!-- Step 3 Tab -->
+                    <button type="button" class="wizard-step-item"
+                        [class.active]="activeStep() === 3"
+                        (click)="onStepClick(3)">
+                        <div class="wizard-step-circle">
+                            <span>3</span>
+                        </div>
                         <span class="step-name">Preview</span>
-                    </div>
-                </button>
+                    </button>
+                </div>
             </div>
         </div>
 

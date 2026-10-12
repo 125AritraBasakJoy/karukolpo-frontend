@@ -314,10 +314,12 @@
 
             <div class="grid align-items-center">
                 <div class="col-12 md:col-5 mb-4 md:mb-0">
-                    <div class="crafted-image-card relative overflow-hidden">
-                        <img [ngSrc]="'assets/img.png'" fill alt="Rural artisan shaping pottery in Bangladesh"
-                            sizes="(max-width: 768px) 95vw, 42vw" loading="lazy" decoding="async"
-                            class="crafted-image">
+                    <div class="crafted-image-card">
+                        <div class="crafted-image-viewport relative overflow-hidden">
+                            <img [ngSrc]="'assets/img.png'" fill alt="Traditional handcrafted terracotta Durga relief displayed outdoors"
+                                sizes="(max-width: 768px) 95vw, 42vw" loading="lazy" decoding="async"
+                                class="crafted-image">
+                        </div>
                     </div>
                 </div>
                 <div class="col-12 md:col-7 md:pl-5">

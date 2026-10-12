@@ -652,21 +652,87 @@
   scroll-margin-top: 1rem;
 
   .crafted-image-card {
-    border-radius: 16px;
-    overflow: hidden;
+    background: transparent;
+    border: none;
+    padding: 0;
     width: 100%;
-    aspect-ratio: 4 / 3;
     position: relative;
-    box-shadow: 0 10px 30px rgba(42, 37, 33, 0.08);
-    border: 1px solid #ECE7E0;
+    border-radius: 14px;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+
+    // Warm ambient glow & blurred shadow under the image
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 8px 12px -16px;
+      background: radial-gradient(ellipse at center, rgba(184, 78, 41, 0.28) 0%, rgba(42, 37, 33, 0.32) 55%, transparent 75%);
+      filter: blur(20px);
+      border-radius: inherit;
+      z-index: 0;
+      opacity: 0.65;
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  filter 0.5s ease;
+      pointer-events: none;
+    }
+
+    @media (min-width: 768px) {
+      border-radius: 16px;
+
+      &::before {
+        inset: 12px 18px -22px;
+        filter: blur(26px);
+        opacity: 0.75;
+      }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        transform: translateY(-5px);
+
+        &::before {
+          opacity: 0.95;
+          filter: blur(32px);
+          transform: translateY(6px) scale(1.02);
+        }
+
+        .crafted-image-viewport {
+          box-shadow: 0 24px 52px -16px rgba(42, 37, 33, 0.3),
+                      0 10px 22px -8px rgba(42, 37, 33, 0.16);
+        }
+
+        .crafted-image {
+          transform: scale(1.035);
+        }
+      }
+    }
+
+    .crafted-image-viewport {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: inherit;
+      background: #EFE8DE;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      box-shadow: 0 14px 34px -14px rgba(42, 37, 33, 0.22),
+                  0 6px 14px -6px rgba(42, 37, 33, 0.1);
+      transition: box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        border: 1px solid rgba(42, 37, 33, 0.08);
+        pointer-events: none;
+      }
+    }
 
     .crafted-image {
       object-fit: cover;
+      object-position: center;
       transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    &:hover .crafted-image {
-      transform: scale(1.04);
     }
   }
 

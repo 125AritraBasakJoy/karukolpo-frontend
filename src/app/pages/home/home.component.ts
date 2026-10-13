@@ -2,13 +2,11 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
-    ElementRef,
     Inject,
     OnDestroy,
     OnInit,
     PLATFORM_ID,
-    signal,
-    ViewChild
+    signal
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
@@ -57,8 +55,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     displayProductModal = false;
     selectedProduct: Product | null = null;
     activeIndex: number = 0;
-    @ViewChild('bestSellingList') bestSellingListEl!: ElementRef<HTMLElement>;
-    @ViewChild('hotDealsList') hotDealsListEl!: ElementRef<HTMLElement>;
     // Contact Form
     contactForm = {
         name: '',
@@ -126,9 +122,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
     ];
     private storageListener: (() => void) | null = null;
-    private autoScrollTimer: any = null;
-    private resumeAutoScrollTimer: any = null;
-    private readonly autoScrollInteractionHandler = (event: Event) => this.pauseAutoScroll(event);
 
     constructor(
         private productService: ProductService,
@@ -241,11 +234,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         });
 
         this.updateSeo();
-
-        this.startAutoScroll();
-        if (isPlatformBrowser(this.platformId)) {
-            document.addEventListener('touchstart', this.autoScrollInteractionHandler, { passive: true });
-        }
     }
 
     updateSeo() {
@@ -339,10 +327,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (this.storageListener && isPlatformBrowser(this.platformId)) {
             window.removeEventListener('storage', this.storageListener);
         }
-        this.stopAutoScroll();
-        if (isPlatformBrowser(this.platformId)) {
-            document.removeEventListener('touchstart', this.autoScrollInteractionHandler);
-        }
     }
 
     scrollLeft(element: HTMLElement) {
@@ -354,9 +338,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     private manualScrollStep(element: HTMLElement, direction: -1 | 1) {
-        this.stopAutoScroll();
-        this.resumeAutoScrollTimer = setTimeout(() => this.startAutoScroll(), 6000);
-
         const cards = Array.from(element.querySelectorAll<HTMLElement>('.swipe-card-wrapper'));
         if (cards.length === 0) {
             const fallbackStep = Math.max(element.clientWidth * 0.5, 200);
@@ -380,57 +361,6 @@ export class HomeComponent implements OnInit, OnDestroy {
                 element.scrollTo({ left: prevCard.offsetLeft, behavior: 'smooth' });
             } else {
                 element.scrollTo({ left: 0, behavior: 'smooth' });
-            }
-        }
-    }
-
-    private startAutoScroll() {
-        if (!isPlatformBrowser(this.platformId) || this.autoScrollTimer) {
-            return;
-        }
-        this.autoScrollTimer = setInterval(() => {
-            this.autoScrollStep();
-        }, 3000);
-    }
-
-    private stopAutoScroll() {
-        if (this.autoScrollTimer) {
-            clearInterval(this.autoScrollTimer);
-            this.autoScrollTimer = null;
-        }
-        if (this.resumeAutoScrollTimer) {
-            clearTimeout(this.resumeAutoScrollTimer);
-            this.resumeAutoScrollTimer = null;
-        }
-    }
-
-    private pauseAutoScroll(event: Event) {
-        const target = event.target as HTMLElement | null;
-        if (!target || !target.closest('.product-swipe-container')) {
-            return;
-        }
-        this.stopAutoScroll();
-        this.resumeAutoScrollTimer = setTimeout(() => this.startAutoScroll(), 6000);
-    }
-
-    private autoScrollStep() {
-        if (!isPlatformBrowser(this.platformId)) {
-            return;
-        }
-        const containers = [this.bestSellingListEl, this.hotDealsListEl]
-            .filter((ref): ref is ElementRef<HTMLElement> => !!ref && !!ref.nativeElement)
-            .map(ref => ref.nativeElement);
-
-        for (const el of containers) {
-            const maxScroll = el.scrollWidth - el.clientWidth;
-            if (maxScroll <= 0) {
-                continue;
-            }
-            const step = Math.max(el.clientWidth * 0.6, 180);
-            if (el.scrollLeft + step >= maxScroll - 1) {
-                el.scrollTo({ left: 0, behavior: 'smooth' });
-            } else {
-                el.scrollBy({ left: step, behavior: 'smooth' });
             }
         }
     }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, computed, HostListener } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgOptimizedImage } from '@angular/common';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { Title, Meta } from '@angular/platform-browser';
@@ -47,6 +47,15 @@ export class ProductDetailsComponent implements OnInit {
   displayGalleria = signal<boolean>(false);
   quantity = signal<number>(1);
   activeTab = signal<'about' | 'care' | 'shipping'>('about');
+
+  // Hover magnifier state
+  isZooming = signal<boolean>(false);
+  lensLeft = signal<number>(0);
+  lensTop = signal<number>(0);
+  zoomBgX = signal<number>(0);
+  zoomBgY = signal<number>(0);
+  readonly zoomFactor = 2.5;
+  readonly lensSize = 140;
 
   // Reactive image array
   images = computed(() => {
@@ -216,6 +225,7 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   showGalleria(index: number) {
+    this.isZooming.set(false);
     this.activeImageIndex.set(index);
     this.displayGalleria.set(true);
   }
@@ -226,6 +236,7 @@ export class ProductDetailsComponent implements OnInit {
 
   nextImage(event?: Event) {
     if (event) event.stopPropagation();
+    this.isZooming.set(false);
     const current = this.activeImageIndex();
     const total = this.images().length;
     if (total > 1) {
@@ -235,10 +246,65 @@ export class ProductDetailsComponent implements OnInit {
 
   prevImage(event?: Event) {
     if (event) event.stopPropagation();
+    this.isZooming.set(false);
     const current = this.activeImageIndex();
     const total = this.images().length;
     if (total > 1) {
       this.activeImageIndex.set((current - 1 + total) % total);
+    }
+  }
+
+  selectImage(idx: number) {
+    this.isZooming.set(false);
+    this.activeImageIndex.set(idx);
+  }
+
+  onMouseMove(event: MouseEvent) {
+    const target = event.currentTarget as HTMLElement | null;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    if (width <= 0 || height <= 0) return;
+
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const halfLens = this.lensSize / 2;
+    const maxLeft = width - this.lensSize;
+    const maxTop = height - this.lensSize;
+
+    const clampedLeft = Math.max(0, Math.min(x - halfLens, maxLeft));
+    const clampedTop = Math.max(0, Math.min(y - halfLens, maxTop));
+
+    this.lensLeft.set(clampedLeft);
+    this.lensTop.set(clampedTop);
+
+    const percentX = maxLeft > 0 ? (clampedLeft / maxLeft) * 100 : 0;
+    const percentY = maxTop > 0 ? (clampedTop / maxTop) * 100 : 0;
+
+    this.zoomBgX.set(percentX);
+    this.zoomBgY.set(percentY);
+    this.isZooming.set(true);
+  }
+
+  onMouseLeave() {
+    this.isZooming.set(false);
+  }
+
+  closeLightbox() {
+    this.displayGalleria.set(false);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent) {
+    if (!this.displayGalleria()) return;
+    if (event.key === 'Escape') {
+      this.closeLightbox();
+    } else if (event.key === 'ArrowLeft') {
+      this.prevImage();
+    } else if (event.key === 'ArrowRight') {
+      this.nextImage();
     }
   }
 

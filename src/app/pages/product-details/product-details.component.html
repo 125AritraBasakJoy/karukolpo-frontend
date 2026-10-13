@@ -34,9 +34,13 @@
     <div class="grid mb-6">
       <!-- Left: Interactive Gallery -->
       <div class="col-12 lg:col-5">
-        <div class="gallery-wrapper">
+        <div class="gallery-wrapper relative">
           <!-- Main Hero Image Viewport -->
-          <div class="main-image-viewport relative" (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)">
+          <div class="main-image-viewport relative"
+               (mousemove)="onMouseMove($event)"
+               (mouseleave)="onMouseLeave()"
+               (touchstart)="onTouchStart($event)"
+               (touchend)="onTouchEnd($event)">
             <!-- Navigation Arrows Overlaid -->
             <button type="button" class="gallery-nav-btn prev" *ngIf="images().length > 1" (click)="prevImage($event)" aria-label="Previous image">
               <i class="pi pi-chevron-left"></i>
@@ -50,18 +54,34 @@
                  class="main-image cursor-pointer"
                  (click)="showGalleria(activeImageIndex())">
 
+            <!-- Hover Magnifier Lens -->
+            <div class="zoom-lens"
+                 *ngIf="isZooming()"
+                 [style.left.px]="lensLeft()"
+                 [style.top.px]="lensTop()"
+                 [style.width.px]="lensSize"
+                 [style.height.px]="lensSize"></div>
+
             <!-- Zoom Pill Hint -->
             <div class="zoom-indicator-pill" (click)="showGalleria(activeImageIndex())">
               <i class="pi pi-search-plus mr-1"></i> Click to enlarge
             </div>
           </div>
 
+          <!-- Floating Magnified Preview (desktop hover) -->
+          <div class="zoom-preview-flyout"
+               *ngIf="isZooming()"
+               [style.background-image]="'url(' + images()[activeImageIndex()] + ')'"
+               [style.background-position]="zoomBgX() + '% ' + zoomBgY() + '%'"
+               [style.background-size]="(zoomFactor * 100) + '% auto'"
+               aria-hidden="true"></div>
+
           <!-- Thumbnails Strip -->
           <div class="thumbnails-strip mt-3 flex gap-2 overflow-x-auto" *ngIf="images().length > 1">
             <div *ngFor="let img of images(); let idx = index"
                  class="thumbnail-item cursor-pointer"
                  [class.active]="idx === activeImageIndex()"
-                 (click)="activeImageIndex.set(idx)">
+                 (click)="selectImage(idx)">
               <img [src]="img" [alt]="product()!.name + ' thumbnail ' + (idx + 1)" class="thumbnail-img">
             </div>
           </div>
@@ -263,13 +283,62 @@
     </div>
   </div>
 
-  <!-- Hidden Fullscreen Galleria for Zoom -->
-  <p-galleria [value]="images()" [visible]="displayGalleria()" (visibleChange)="displayGalleria.set($event)"
-              [activeIndex]="activeImageIndex()" (activeIndexChange)="activeImageIndex.set($event)"
-              [showThumbnails]="false" [showItemNavigators]="true" [fullScreen]="true" [circular]="true"
-              [containerStyle]="{'max-width': '850px'}">
-    <ng-template pTemplate="item" let-item>
-      <img [src]="item" style="width: 100%; max-height: 85vh; object-fit: contain;" />
-    </ng-template>
-  </p-galleria>
+  <!-- Custom Luxury Lightbox Modal -->
+  <div class="custom-lightbox-overlay"
+       *ngIf="displayGalleria()"
+       (click)="closeLightbox()"
+       role="dialog"
+       aria-modal="true"
+       [attr.aria-label]="product()?.name || 'Product Image View'">
+    <!-- Top Bar: Title & Close -->
+    <div class="lightbox-header" (click)="$event.stopPropagation()">
+      <div class="lightbox-info">
+        <span class="lightbox-title">{{ product()?.name }}</span>
+        <span class="lightbox-counter" *ngIf="images().length > 1">
+          {{ activeImageIndex() + 1 }} / {{ images().length }}
+        </span>
+      </div>
+      <button type="button" class="lightbox-close-btn" (click)="closeLightbox()" aria-label="Close image viewer">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Center Stage -->
+    <div class="lightbox-stage" (click)="$event.stopPropagation()">
+      <!-- Nav Button: Prev -->
+      <button type="button"
+              class="lightbox-nav-btn prev"
+              *ngIf="images().length > 1"
+              (click)="prevImage($event)"
+              aria-label="Previous image">
+        <i class="pi pi-chevron-left"></i>
+      </button>
+
+      <!-- Main Image Display -->
+      <div class="lightbox-image-container">
+        <img [src]="images()[activeImageIndex()]"
+             [alt]="product()?.name"
+             class="lightbox-main-img" />
+      </div>
+
+      <!-- Nav Button: Next -->
+      <button type="button"
+              class="lightbox-nav-btn next"
+              *ngIf="images().length > 1"
+              (click)="nextImage($event)"
+              aria-label="Next image">
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Bottom Thumbnail Strip -->
+    <div class="lightbox-thumbnails-bar" *ngIf="images().length > 1" (click)="$event.stopPropagation()">
+      <div class="lightbox-thumb"
+           *ngFor="let img of images(); let i = index"
+           [class.active]="i === activeImageIndex()"
+           (click)="selectImage(i)">
+        <img [src]="img" [alt]="'Thumbnail ' + (i + 1)" />
+      </div>
+    </div>
+  </div>
 </div>

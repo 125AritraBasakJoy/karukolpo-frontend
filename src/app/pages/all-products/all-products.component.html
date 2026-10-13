@@ -1,12 +1,96 @@
 <div class="all-products-page">
   <div class="container max-w-1320 py-4 px-3 md:px-4">
     <!-- Hero Banner Card -->
-    <div class="page-hero-banner mb-4 p-4 md:p-5 border-round-2xl relative overflow-hidden">
+    <div class="page-hero-banner mb-4 border-round-2xl relative overflow-hidden">
       <div class="banner-content relative z-2">
+        <span class="banner-eyebrow">ঐতিহ্যবাহী কারুশিল্প • Heritage Craft</span>
         <h1 class="banner-title mb-2">{{ getPageTitle() }}</h1>
+        <div class="banner-divider" aria-hidden="true">
+          <span class="divider-line"></span>
+          <span class="divider-gem">◆</span>
+          <span class="divider-line"></span>
+        </div>
         <p class="banner-subtitle mb-0">Explore our complete collection of authentic Bangladeshi handicrafts.</p>
       </div>
-      <div class="banner-artistic-overlay absolute top-0 right-0 h-full w-4 hidden md:block"></div>
+
+      <!-- Bengali Alpona Motif -->
+      <div class="banner-alpona-art" aria-hidden="true">
+        <svg class="alpona-svg" viewBox="0 0 360 360" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+          <defs>
+            <!-- 8-fold lotus petal pair -->
+            <g id="alpona-petal-inner">
+              <path d="M 180 180 C 172 154 170 134 180 120 C 190 134 188 154 180 180 Z" stroke="currentColor" stroke-width="1.3" />
+              <path d="M 180 180 C 176 160 176 142 180 130 C 184 142 184 160 180 180 Z" stroke="currentColor" stroke-width="0.9" opacity="0.65" />
+              <circle cx="180" cy="115" r="2.2" fill="currentColor" />
+            </g>
+            <g id="alpona-petal-outer">
+              <path d="M 180 180 C 166 142 162 108 180 82 C 198 108 194 142 180 180 Z" stroke="currentColor" stroke-width="1.5" />
+              <path d="M 180 180 C 172 148 170 118 180 96 C 190 118 188 148 180 180 Z" stroke="currentColor" stroke-width="0.9" opacity="0.55" />
+              <!-- Paisley tip curl (kalka flourish) -->
+              <circle cx="180" cy="74" r="2.8" fill="currentColor" />
+              <path d="M 180 77 C 176 74 175 69 178 66 C 182 63 186 66 184 70" stroke="currentColor" stroke-width="1.1" fill="none" />
+            </g>
+            <g id="alpona-kalka-ray">
+              <path d="M 180 62 C 174 54 173 42 180 34 C 187 42 186 54 180 62 Z" stroke="currentColor" stroke-width="1.2" />
+              <circle cx="180" cy="27" r="2.5" fill="currentColor" />
+            </g>
+          </defs>
+
+          <!-- Outer boundary beaded rings -->
+          <circle cx="180" cy="180" r="172" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity="0.45" />
+          <circle cx="180" cy="180" r="164" stroke="currentColor" stroke-width="1.2" opacity="0.7" />
+          <circle cx="180" cy="180" r="156" stroke="currentColor" stroke-width="0.8" opacity="0.5" />
+
+          <!-- Outer ray layer (16 repeats: 8 primary, 8 secondary) -->
+          <g transform="rotate(0 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(22.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+          <g transform="rotate(45 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(67.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+          <g transform="rotate(90 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(112.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+          <g transform="rotate(135 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(157.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+          <g transform="rotate(180 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(202.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+          <g transform="rotate(225 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(247.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+          <g transform="rotate(270 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(292.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+          <g transform="rotate(315 180 180)"><use href="#alpona-kalka-ray" /></g>
+          <g transform="rotate(337.5 180 180)"><use href="#alpona-kalka-ray" opacity="0.6" transform="scale(0.9) translate(20, 20)" /></g>
+
+          <!-- Outer lotus petal ring (8 petals) -->
+          <g transform="rotate(0 180 180)"><use href="#alpona-petal-outer" /></g>
+          <g transform="rotate(45 180 180)"><use href="#alpona-petal-outer" /></g>
+          <g transform="rotate(90 180 180)"><use href="#alpona-petal-outer" /></g>
+          <g transform="rotate(135 180 180)"><use href="#alpona-petal-outer" /></g>
+          <g transform="rotate(180 180 180)"><use href="#alpona-petal-outer" /></g>
+          <g transform="rotate(225 180 180)"><use href="#alpona-petal-outer" /></g>
+          <g transform="rotate(270 180 180)"><use href="#alpona-petal-outer" /></g>
+          <g transform="rotate(315 180 180)"><use href="#alpona-petal-outer" /></g>
+
+          <!-- Middle decorative ring -->
+          <circle cx="180" cy="180" r="108" stroke="currentColor" stroke-width="1.1" />
+          <circle cx="180" cy="180" r="98" stroke="currentColor" stroke-width="0.9" stroke-dasharray="2 3" opacity="0.75" />
+
+          <!-- Inner lotus petal ring (offset by 22.5 deg) -->
+          <g transform="rotate(22.5 180 180)"><use href="#alpona-petal-inner" /></g>
+          <g transform="rotate(67.5 180 180)"><use href="#alpona-petal-inner" /></g>
+          <g transform="rotate(112.5 180 180)"><use href="#alpona-petal-inner" /></g>
+          <g transform="rotate(157.5 180 180)"><use href="#alpona-petal-inner" /></g>
+          <g transform="rotate(202.5 180 180)"><use href="#alpona-petal-inner" /></g>
+          <g transform="rotate(247.5 180 180)"><use href="#alpona-petal-inner" /></g>
+          <g transform="rotate(292.5 180 180)"><use href="#alpona-petal-inner" /></g>
+          <g transform="rotate(337.5 180 180)"><use href="#alpona-petal-inner" /></g>
+
+          <!-- Inner core rosette -->
+          <circle cx="180" cy="180" r="54" stroke="currentColor" stroke-width="1.2" />
+          <circle cx="180" cy="180" r="42" stroke="currentColor" stroke-width="0.8" opacity="0.7" />
+          <circle cx="180" cy="180" r="28" stroke="currentColor" stroke-width="1.1" />
+          <circle cx="180" cy="180" r="14" fill="currentColor" opacity="0.85" />
+          <circle cx="180" cy="180" r="5" fill="#FAF5ED" />
+        </svg>
+      </div>
     </div>
 
     <!-- Horizontal Top Filter Bar -->

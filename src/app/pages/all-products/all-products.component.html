@@ -1,9 +1,8 @@
 <div class="all-products-page">
-  <div class="container max-w-1320 py-4 px-3 md:px-4">
+  <div class="container max-w-1320 pt-3 pb-2 px-3 md:px-4">
     <!-- Hero Banner Card -->
     <div class="page-hero-banner mb-4 border-round-2xl relative overflow-hidden">
       <div class="banner-content relative z-2">
-        <span class="banner-eyebrow">ঐতিহ্যবাহী কারুশিল্প • Heritage Craft</span>
         <h1 class="banner-title mb-2">{{ getPageTitle() }}</h1>
         <div class="banner-divider" aria-hidden="true">
           <span class="divider-line"></span>
@@ -248,7 +247,13 @@
               <!-- Product Body -->
               <div class="product-info-content">
                 <div class="product-header-flex">
-                  <h3 class="product-title">{{ product.name }}</h3>
+                  <div class="flex align-items-start justify-content-between gap-2 mb-1">
+                    <h3 class="product-title flex-1">{{ product.name }}</h3>
+                    <span *ngIf="!isOutOfStock(product)" class="in-stock-badge flex-shrink-0 mt-1">
+                      <span class="dot"></span> In Stock
+                    </span>
+                  </div>
+
                   <div class="price-container">
                     <span class="current-price">{{ (product.effective_price ?? product.price) | currency:'BDT':'৳':'1.0-0' }}</span>
                     <span *ngIf="product.effective_price && product.effective_price < product.price" class="old-price">
@@ -257,16 +262,16 @@
                   </div>
                 </div>
 
-                <!-- Card Bottom Row: Stock status & Green Cart Icon Button -->
-                <div *ngIf="!isOutOfStock(product)" class="card-bottom-actions flex align-items-center justify-content-between mt-auto">
-                  <span class="in-stock-badge">
-                    <span class="dot"></span> In Stock
-                  </span>
-
-                  <!-- Deep Green Cart Button from mockup -->
-                  <button type="button" class="artisan-cart-btn"
+                <!-- Card Bottom Row: Cart Action -->
+                <div class="card-bottom-actions mt-auto pt-2 border-top-1 surface-border">
+                  <button *ngIf="!isOutOfStock(product)" type="button" class="btn-product-add-cart w-full flex align-items-center justify-content-center gap-2"
                           (click)="quickAddToCart(product, $event)" title="Add to Cart" aria-label="Add to cart">
                     <i class="pi pi-shopping-bag"></i>
+                    <span>Add to Cart</span>
+                  </button>
+                  <button *ngIf="isOutOfStock(product)" type="button" class="btn-product-add-cart disabled w-full flex align-items-center justify-content-center gap-2"
+                          disabled title="Out of Stock">
+                    <span>Out of Stock</span>
                   </button>
                 </div>
               </div>
@@ -275,7 +280,7 @@
         </div>
 
         <!-- Pagination -->
-        <div *ngIf="!loading() && totalCount() > rows()" class="pagination-container my-5">
+        <div *ngIf="!loading() && totalCount() > rows()" class="pagination-container mt-3 mb-2">
           <p-paginator
             [first]="first()"
             [rows]="rows()"

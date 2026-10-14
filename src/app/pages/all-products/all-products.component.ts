@@ -58,7 +58,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
     selectedCategoryId = signal<string | null>(null);
     sortOrder = signal<string>('newest');
     filterType = signal<string | null>(null);
-    selectedAvailability = signal<'all' | 'in_stock' | 'out_of_stock'>('all');
+    selectedAvailability = signal<'all' | 'in_stock'>('all');
     selectedPriceRange = signal<string>('all');
     
     categories = this.categoryService.categories;
@@ -84,8 +84,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
 
     availabilityOptions = [
         { label: 'All Availability', value: 'all' },
-        { label: 'In Stock', value: 'in_stock' },
-        { label: 'Out of Stock', value: 'out_of_stock' }
+        { label: 'In Stock', value: 'in_stock' }
     ];
 
     hasActiveFilters = computed(() => {
@@ -102,7 +101,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
     isMobileFilterOpen = signal<boolean>(false);
     draftCategoryId = signal<string | null>(null);
     draftPriceRange = signal<string>('all');
-    draftAvailability = signal<'all' | 'in_stock' | 'out_of_stock'>('all');
+    draftAvailability = signal<'all' | 'in_stock'>('all');
     draftSortOrder = signal<string>('newest');
 
     activeDrawerFilterCount = computed(() => {
@@ -198,7 +197,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
 
     setAvailability(avail: any) {
         this.first.set(0);
-        this.selectedAvailability.set(avail as 'all' | 'in_stock' | 'out_of_stock');
+        this.selectedAvailability.set(avail as 'all' | 'in_stock');
         this.fetchProducts();
     }
 
@@ -247,9 +246,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         }
 
         const priceBounds = this.getPriceBounds();
-        const inStockFilter = this.selectedAvailability() === 'in_stock' 
-            ? true 
-            : (this.selectedAvailability() === 'out_of_stock' ? false : undefined);
+        const inStockFilter = this.selectedAvailability() === 'in_stock' ? true : undefined;
 
         const options: ProductQueryOptions = {
             skip: this.first(),
@@ -286,8 +283,6 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         }
         if (this.selectedAvailability() === 'in_stock') {
             filtered = filtered.filter(p => p.isInStock);
-        } else if (this.selectedAvailability() === 'out_of_stock') {
-            filtered = filtered.filter(p => !p.isInStock);
         }
 
         const priceBounds = this.getPriceBounds();

@@ -419,6 +419,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+
+  @media (max-width: 576px) {
+    margin-top: 1rem !important;
+    margin-bottom: 0.25rem !important;
+  }
 }
 
 /* Product Card Image Wrapper & Stock Badge */
@@ -650,6 +657,55 @@
           box-shadow: 0 4px 12px rgba(184, 78, 41, 0.35);
         }
       }
+    }
+  }
+}
+
+/* Premium Card Add-to-Cart Button & Stock Badge */
+.btn-product-add-cart {
+  background: #B84E29;
+  border: 1px solid #B84E29;
+  color: #FFFFFF;
+  padding: 0.55rem 0.9rem;
+  border-radius: 9px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(184, 78, 41, 0.2);
+
+  i {
+    font-size: 0.9rem;
+  }
+
+  &:hover:not(:disabled) {
+    background: #9E3E1C;
+    border-color: #9E3E1C;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(184, 78, 41, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &.disabled,
+  &:disabled {
+    background: #EDE6DD;
+    border-color: #E2D9CC;
+    color: #9C9083;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (max-width: 576px) {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.78rem;
+
+    i {
+      font-size: 0.8rem;
     }
   }
 }

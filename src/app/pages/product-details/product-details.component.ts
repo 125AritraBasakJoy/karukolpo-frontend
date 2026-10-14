@@ -67,18 +67,19 @@ export class ProductDetailsComponent implements OnInit {
 
   categoryName = computed(() => {
     const p = this.product();
-    if (!p || !p.categoryId) return 'Handicrafts';
+    if (!p || !p.categoryId) return 'Collections';
     const cats = this.categoryService.categories();
     const cat = cats.find(c => String(c.id) === String(p.categoryId));
-    return cat ? cat.name : 'Protima';
+    return cat ? cat.name : 'Collections';
   });
 
-  categorySlug = computed(() => {
+  categoryLink = computed(() => {
     const p = this.product();
-    if (!p || !p.categoryId) return 'all-products';
+    if (!p || !p.categoryId) return ['/all-products'];
     const cats = this.categoryService.categories();
     const cat = cats.find(c => String(c.id) === String(p.categoryId));
-    return cat ? (cat.slug || cat.id) : '';
+    const slug = cat ? (cat.slug || cat.id) : null;
+    return slug ? ['/category', slug] : ['/all-products'];
   });
 
   savings = computed(() => {

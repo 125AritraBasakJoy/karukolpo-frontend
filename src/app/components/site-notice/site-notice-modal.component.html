@@ -9,14 +9,104 @@
   (onHide)="onDismiss()"
   ariaLabel="Store Notice"
 >
+  <div class="storefront-notice-ornament ornament-top-left" aria-hidden="true">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,0 L60,0 C60,33.14 33.14,60 0,60 Z" class="alpona-fill-subtle" />
+      <path d="M0,2 C40,2 78,40 78,80" class="alpona-stroke-main" stroke-width="1.2" stroke-linecap="round" />
+      <path d="M0,8 C36,8 68,40 68,76" class="alpona-stroke-accent" stroke-width="0.8" stroke-dasharray="2 3" />
+      <path d="M12,12 C24,18 36,30 42,42 C30,36 18,24 12,12 Z" class="alpona-fill-motif" />
+      <circle cx="28" cy="28" r="3.5" class="alpona-fill-accent" />
+      <circle cx="48" cy="18" r="2" class="alpona-fill-subtle" />
+      <circle cx="18" cy="48" r="2" class="alpona-fill-subtle" />
+      <path d="M2,24 C14,24 24,14 24,2" class="alpona-stroke-subtle" stroke-width="0.75" />
+      <path d="M2,42 C22,42 42,22 42,2" class="alpona-stroke-subtle" stroke-width="0.75" />
+    </svg>
+  </div>
+
+  <div class="storefront-notice-ornament ornament-bottom-right" aria-hidden="true">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M100,100 L40,100 C40,66.86 66.86,40 100,40 Z" class="alpona-fill-subtle" />
+      <path d="M100,98 C60,98 22,60 22,20" class="alpona-stroke-main" stroke-width="1.2" stroke-linecap="round" />
+      <path d="M100,92 C64,92 32,60 32,24" class="alpona-stroke-accent" stroke-width="0.8" stroke-dasharray="2 3" />
+      <path d="M88,88 C76,82 64,70 58,58 C70,64 82,76 88,88 Z" class="alpona-fill-motif" />
+      <circle cx="72" cy="72" r="3.5" class="alpona-fill-accent" />
+      <circle cx="52" cy="82" r="2" class="alpona-fill-subtle" />
+      <circle cx="82" cy="52" r="2" class="alpona-fill-subtle" />
+      <path d="M98,76 C86,76 76,86 76,98" class="alpona-stroke-subtle" stroke-width="0.75" />
+      <path d="M98,58 C78,58 58,78 58,98" class="alpona-stroke-subtle" stroke-width="0.75" />
+    </svg>
+  </div>
+
   <ng-template pTemplate="header">
     <div class="storefront-notice-header">
       <span class="storefront-notice-eyebrow">KARUKOLPO &middot; A NOTE FROM US</span>
       <h3 class="storefront-notice-title">Store Notice</h3>
+      <div class="storefront-notice-divider" aria-hidden="true">
+        <span class="divider-line"></span>
+        <span class="divider-gem"></span>
+        <span class="divider-line"></span>
+      </div>
     </div>
   </ng-template>
 
   <div class="storefront-notice-body">
+    <div class="storefront-notice-watermark" aria-hidden="true">
+      <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Central circular mandala with 8-fold radial petals & rings -->
+        <circle cx="100" cy="100" r="10" class="alpona-wm-accent-fill" />
+        <circle cx="100" cy="100" r="16" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="100" cy="100" r="28" class="alpona-wm-stroke-accent" stroke-width="0.9" stroke-dasharray="2 3" />
+        <circle cx="100" cy="100" r="48" class="alpona-wm-stroke-main" stroke-width="1" />
+        <circle cx="100" cy="100" r="68" class="alpona-wm-stroke-accent" stroke-width="0.8" stroke-dasharray="3 4" />
+        <circle cx="100" cy="100" r="86" class="alpona-wm-stroke-subtle" stroke-width="0.75" />
+
+        <!-- 8 radiating lotus/kalka petals -->
+        <g class="alpona-wm-motif-group">
+          <!-- 0 deg (top) -->
+          <path d="M100,72 C93,58 93,42 100,32 C107,42 107,58 100,72 Z" class="alpona-wm-motif-fill" />
+          <circle cx="100" cy="24" r="2.5" class="alpona-wm-accent-fill" />
+
+          <!-- 45 deg (top right) -->
+          <path d="M119.8,80.2 C129.7,70.3 141,61.8 151.6,67.6 C145.8,78.2 137.3,89.5 127.4,99.4 Z" class="alpona-wm-motif-fill" />
+          <circle cx="157.3" cy="57.3" r="2.5" class="alpona-wm-accent-fill" />
+
+          <!-- 90 deg (right) -->
+          <path d="M128,100 C142,93 158,93 168,100 C158,107 142,107 128,100 Z" class="alpona-wm-motif-fill" />
+          <circle cx="176" cy="100" r="2.5" class="alpona-wm-accent-fill" />
+
+          <!-- 135 deg (bottom right) -->
+          <path d="M119.8,119.8 C129.7,129.7 141,138.2 135.2,148.8 C124.6,143 116.1,131.7 106.2,121.8 Z" class="alpona-wm-motif-fill" />
+          <circle cx="140.7" cy="154.7" r="2.5" class="alpona-wm-accent-fill" />
+
+          <!-- 180 deg (bottom) -->
+          <path d="M100,128 C93,142 93,158 100,168 C107,158 107,142 100,128 Z" class="alpona-wm-motif-fill" />
+          <circle cx="100" cy="176" r="2.5" class="alpona-wm-accent-fill" />
+
+          <!-- 225 deg (bottom left) -->
+          <path d="M80.2,119.8 C70.3,129.7 59,138.2 48.4,132.4 C54.2,121.8 62.7,110.5 72.6,100.6 Z" class="alpona-wm-motif-fill" />
+          <circle cx="42.7" cy="142.7" r="2.5" class="alpona-wm-accent-fill" />
+
+          <!-- 270 deg (left) -->
+          <path d="M72,100 C58,93 42,93 32,100 C42,107 58,107 72,100 Z" class="alpona-wm-motif-fill" />
+          <circle cx="24" cy="100" r="2.5" class="alpona-wm-accent-fill" />
+
+          <!-- 315 deg (top left) -->
+          <path d="M80.2,80.2 C70.3,70.3 59,61.8 64.8,51.2 C75.4,57 83.9,68.3 93.8,78.2 Z" class="alpona-wm-motif-fill" />
+          <circle cx="59.3" cy="45.3" r="2.5" class="alpona-wm-accent-fill" />
+        </g>
+
+        <!-- Inner delicate scalloped ring -->
+        <circle cx="100" cy="84" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="111.3" cy="88.7" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="116" cy="100" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="111.3" cy="111.3" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="100" cy="116" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="88.7" cy="111.3" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="84" cy="100" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+        <circle cx="88.7" cy="88.7" r="2" class="alpona-wm-stroke-subtle" stroke-width="0.8" />
+      </svg>
+    </div>
+
     @for (item of activeNotices(); track $index) {
       <div class="storefront-notice-item">
         <p class="storefront-notice-text">{{ item.message }}</p>

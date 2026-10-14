@@ -41,30 +41,43 @@ export class CategoryProductsComponent implements OnInit {
     // Search & Filter signals
     searchQuery = signal<string>('');
     selectedPriceRange = signal<string>('all');
+    selectedAvailability = signal<'all' | 'in_stock'>('all');
     sortOrder = signal<string>('featured');
 
     // Pagination signals
     first = signal<number>(0);
     rows = signal<number>(12);
 
+    // Categories
+    categories = this.categoryService.categories;
+
     // Mobile right-drawer state
     isMobileFilterOpen = signal<boolean>(false);
+    draftCategoryId = signal<string | null>(null);
     draftPriceRange = signal<string>('all');
+    draftAvailability = signal<'all' | 'in_stock'>('all');
     draftSortOrder = signal<string>('featured');
 
     activeDrawerFilterCount = computed(() => {
         let count = 0;
         if (this.selectedPriceRange() !== 'all') count++;
+        if (this.selectedAvailability() !== 'all') count++;
         if (this.sortOrder() !== 'featured') count++;
         return count;
     });
 
     priceRangeOptions = [
         { label: 'All Prices', value: 'all' },
-        { label: 'Under ৳1,000', value: 'under_1000' },
-        { label: '৳1,000 - ৳2,500', value: '1000_2500' },
-        { label: '৳2,500 - ৳5,000', value: '2500_5000' },
-        { label: 'Above ৳5,000', value: 'above_5000' }
+        { label: 'Under ৳ 300', value: 'under-300' },
+        { label: '৳ 300 - ৳ 600', value: '300-600' },
+        { label: '৳ 600 - ৳ 1,000', value: '600-1000' },
+        { label: '৳ 1,000 - ৳ 2,000', value: '1000-2000' },
+        { label: 'Above ৳ 2,000', value: '2000-above' }
+    ];
+
+    availabilityOptions = [
+        { label: 'All Availability', value: 'all' },
+        { label: 'In Stock', value: 'in_stock' }
     ];
 
     sortOptions = [
@@ -73,6 +86,15 @@ export class CategoryProductsComponent implements OnInit {
         { label: 'Price: High to Low', value: 'price_desc' },
         { label: 'Newest Arrivals', value: 'newest' }
     ];
+
+    hasActiveFilters = computed(() => {
+        return !!(
+            this.searchQuery() ||
+            this.selectedPriceRange() !== 'all' ||
+            this.selectedAvailability() !== 'all' ||
+            this.sortOrder() !== 'featured'
+        );
+    });
 
     // Filtered and sorted products
     filteredProducts = computed(() => {
@@ -90,12 +112,17 @@ export class CategoryProductsComponent implements OnInit {
         if (priceRange !== 'all') {
             items = items.filter(p => {
                 const price = p.effective_price || p.price;
-                if (priceRange === 'under_1000') return price < 1000;
-                if (priceRange === '1000_2500') return price >= 1000 && price <= 2500;
-                if (priceRange === '2500_5000') return price > 2500 && price <= 5000;
-                if (priceRange === 'above_5000') return price > 5000;
+                if (priceRange === 'under-300') return price < 300;
+                if (priceRange === '300-600') return price >= 300 && price <= 600;
+                if (priceRange === '600-1000') return price >= 600 && price <= 1000;
+                if (priceRange === '1000-2000') return price >= 1000 && price <= 2000;
+                if (priceRange === '2000-above') return price > 2000;
                 return true;
             });
+        }
+
+        if (this.selectedAvailability() === 'in_stock') {
+            items = items.filter(p => p.isInStock);
         }
 
         const sort = this.sortOrder();
@@ -219,30 +246,62 @@ export class CategoryProductsComponent implements OnInit {
         this.sortOrder.set(val);
     }
 
+    setAvailability(avail: any) {
+        this.first.set(0);
+        this.selectedAvailability.set(avail as 'all' | 'in_stock');
+    }
+
+    isCategorySelected(catId: any): boolean {
+        const currentCat = this.category();
+        if (!currentCat) return false;
+        return String(currentCat.id) === String(catId);
+    }
+
     clearFilters() {
         this.first.set(0);
         this.searchQuery.set('');
         this.selectedPriceRange.set('all');
+        this.selectedAvailability.set('all');
         this.sortOrder.set('featured');
         this.draftPriceRange.set('all');
+        this.draftAvailability.set('all');
         this.draftSortOrder.set('featured');
     }
 
     openMobileFilters() {
+        const curCat = this.category();
+        this.draftCategoryId.set(curCat ? (curCat.id as string) : null);
         this.draftPriceRange.set(this.selectedPriceRange());
+        this.draftAvailability.set(this.selectedAvailability());
         this.draftSortOrder.set(this.sortOrder());
         this.isMobileFilterOpen.set(true);
     }
 
     applyMobileFilters() {
+        const targetCatId = this.draftCategoryId();
+        const curCat = this.category();
+
         this.first.set(0);
         this.selectedPriceRange.set(this.draftPriceRange());
+        this.selectedAvailability.set(this.draftAvailability());
         this.sortOrder.set(this.draftSortOrder());
         this.isMobileFilterOpen.set(false);
+
+        // If category changed from the dropdown, navigate to that category or all-products
+        if (!targetCatId) {
+            this.router.navigate(['/all-products']);
+        } else if (!curCat || String(curCat.id) !== String(targetCatId)) {
+            const targetCat = this.categories().find(c => String(c.id) === String(targetCatId));
+            const slug = targetCat ? (targetCat.slug || targetCat.id) : targetCatId;
+            this.router.navigate(['/category', slug]);
+        }
     }
 
     resetDraftFilters() {
+        const curCat = this.category();
+        this.draftCategoryId.set(curCat ? (curCat.id as string) : null);
         this.draftPriceRange.set('all');
+        this.draftAvailability.set('all');
         this.draftSortOrder.set('featured');
     }
 
@@ -258,12 +317,11 @@ export class CategoryProductsComponent implements OnInit {
         }
     }
 
-    hasActiveFilters(): boolean {
-        return this.searchQuery().trim() !== '' || this.selectedPriceRange() !== 'all' || this.sortOrder() !== 'featured';
-    }
-
     showProductDetails(product: Product) {
-        this.router.navigate(['/products', product.slug || product.id]);
+        const cat = this.category();
+        this.router.navigate(['/products', product.slug || product.id], {
+            queryParams: cat ? { category: cat.slug || cat.id } : undefined
+        });
     }
 
     quickAddToCart(event: Event, product: Product) {

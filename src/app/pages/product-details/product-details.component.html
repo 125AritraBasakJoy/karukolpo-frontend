@@ -257,20 +257,32 @@
             </div>
 
             <!-- Info -->
-            <div class="product-info-content">
+            <div class="product-info-content p-2 flex flex-column flex-grow-1">
               <div class="product-header-flex">
-                <h3 class="product-title">{{ p.name }}</h3>
+                <div class="flex align-items-start justify-content-between gap-2 mb-1">
+                  <h3 class="product-title flex-1">{{ p.name }}</h3>
+                  <span *ngIf="!isOutOfStock(p)" class="in-stock-badge flex-shrink-0 mt-1">
+                    <span class="dot"></span> In Stock
+                  </span>
+                </div>
                 <div class="price-container">
-                  <span class="current-price">{{ (p.effective_price ?? p.price) | currency:'BDT':'৳':'1.0-0' }}</span>
-                  <span *ngIf="p.effective_price && p.effective_price < p.price" class="old-price">
+                  <span class="current-price font-bold">{{ (p.effective_price ?? p.price) | currency:'BDT':'৳':'1.0-0' }}</span>
+                  <span *ngIf="p.effective_price && p.effective_price < p.price" class="old-price text-xs line-through">
                     {{ p.price | currency:'BDT':'৳':'1.0-0' }}
                   </span>
                 </div>
               </div>
 
-              <div class="card-bottom-actions">
-                <button type="button" class="dark-cart-button" (click)="$event.stopPropagation(); showProductDetails(p)">
-                  <i class="pi pi-eye"></i> View Details
+              <!-- Card Bottom Row: Cart Action -->
+              <div class="card-bottom-actions mt-auto pt-2 border-top-1 surface-border">
+                <button *ngIf="!isOutOfStock(p)" type="button" class="btn-product-add-cart w-full flex align-items-center justify-content-center gap-2"
+                        (click)="quickAddToCart($event, p)" title="Add to Cart" aria-label="Add to cart">
+                  <i class="pi pi-shopping-bag"></i>
+                  <span>Add to Cart</span>
+                </button>
+                <button *ngIf="isOutOfStock(p)" type="button" class="btn-product-add-cart disabled w-full flex align-items-center justify-content-center gap-2"
+                        disabled title="Out of Stock">
+                  <span>Out of Stock</span>
                 </button>
               </div>
             </div>

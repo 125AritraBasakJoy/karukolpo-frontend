@@ -1377,6 +1377,60 @@ html.dark-mode .premium-product-card {
     }
 }
 
+/* Universal Premium Product Card Add-to-Cart Button */
+.btn-product-add-cart {
+    background: #B84E29 !important;
+    border: 1px solid #B84E29 !important;
+    color: #FFFFFF !important;
+    padding: 0.55rem 0.9rem !important;
+    border-radius: 9px !important;
+    font-size: 0.84rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.015em !important;
+    cursor: pointer !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 6px rgba(184, 78, 41, 0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+
+    i {
+        font-size: 0.9rem !important;
+        color: #FFFFFF !important;
+    }
+
+    &:hover:not(:disabled) {
+        background: #9E3E1C !important;
+        border-color: #9E3E1C !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(184, 78, 41, 0.35) !important;
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0) !important;
+    }
+
+    &.disabled,
+    &:disabled {
+        background: #EDE6DD !important;
+        border-color: #E2D9CC !important;
+        color: #9C9083 !important;
+        box-shadow: none !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+    }
+
+    @media (max-width: 576px) {
+        padding: 0.45rem 0.65rem !important;
+        font-size: 0.78rem !important;
+
+        i {
+            font-size: 0.8rem !important;
+        }
+    }
+}
+
 .hot-badge {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;

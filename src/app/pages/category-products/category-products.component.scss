@@ -416,7 +416,7 @@
   }
 
   .btn-reset-filters {
-    background: #1A3B2B;
+    background: #B84E29;
     color: #FFFFFF;
     border: none;
     padding: 0.65rem 1.5rem;
@@ -427,7 +427,165 @@
     transition: background 0.2s;
 
     &:hover {
-      background: #12281D;
+      background: #9C3E1E;
+    }
+  }
+}
+
+/* Category Sidebar Filters (Desktop) */
+.sidebar-filters-card {
+  background: #FFFFFF;
+  border: 1px solid #ECE7E0;
+  box-shadow: 0 4px 16px rgba(42, 37, 33, 0.03);
+
+  .filter-heading {
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #26221F;
+    border-bottom: 1px solid #F0EAE1;
+    padding-bottom: 0.5rem;
+  }
+
+  .cat-filter-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #4A423A;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    text-decoration: none;
+
+    &:hover {
+      background: #FAF7F2;
+      color: #B84E29;
+    }
+
+    &.active {
+      background: #FBF1EC;
+      color: #B84E29;
+      font-weight: 700;
+    }
+  }
+
+  .price-radio-label {
+    padding: 0.25rem 0;
+    font-size: 0.88rem;
+    color: #4A423A;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      color: #B84E29;
+    }
+
+    .artisan-radio {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 16px !important;
+      height: 16px !important;
+      min-width: 16px !important;
+      min-height: 16px !important;
+      max-width: 16px !important;
+      max-height: 16px !important;
+      border: 1.5px solid #CFC2B4 !important;
+      border-radius: 50% !important;
+      outline: none;
+      background-color: #FFFFFF !important;
+      cursor: pointer;
+      display: inline-grid;
+      place-content: center;
+      flex-shrink: 0 !important;
+      box-sizing: border-box !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transform: scale(0);
+        transition: 120ms transform ease-in-out;
+        background-color: #B84E29;
+      }
+
+      &:hover {
+        border-color: #B84E29;
+        background-color: #FDF9F6;
+      }
+
+      &:checked {
+        border-color: #B84E29;
+        background-color: #FFFFFF;
+        box-shadow: 0 0 0 2px rgba(184, 78, 41, 0.15);
+
+        &::before {
+          transform: scale(1);
+        }
+      }
+
+      &:focus-visible {
+        outline: 2px solid #B84E29;
+        outline-offset: 2px;
+      }
+    }
+  }
+}
+
+/* Category Links inside Mobile Drawer */
+.category-mobile-nav-list {
+  background: #FFFFFF;
+  border: 1px solid #EAE3D9;
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.cat-drawer-link {
+  color: #2F2924 !important;
+  background: transparent !important;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none !important;
+  padding: 0.75rem 0.9rem !important;
+  border-radius: 8px !important;
+  transition: all 0.18s ease;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  i {
+    color: #A39688;
+    transition: transform 0.18s ease, color 0.18s ease;
+  }
+
+  &:hover {
+    background: #FAF7F2 !important;
+    color: #B84E29 !important;
+
+    i {
+      color: #B84E29;
+      transform: translateX(2px);
+    }
+  }
+
+  &.active-cat {
+    background: #FDF4EF !important;
+    color: #B84E29 !important;
+    font-weight: 700;
+    box-shadow: inset 3px 0 0 #B84E29;
+
+    i {
+      color: #B84E29;
     }
   }
 }

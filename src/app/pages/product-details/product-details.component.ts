@@ -65,21 +65,53 @@ export class ProductDetailsComponent implements OnInit {
     return p.imageUrl ? [p.imageUrl] : [];
   });
 
+  // Query param from category page
+  sourceCategoryParam = signal<string | null>(null);
+
   categoryName = computed(() => {
-    const p = this.product();
-    if (!p || !p.categoryId) return 'Collections';
     const cats = this.categoryService.categories();
-    const cat = cats.find(c => String(c.id) === String(p.categoryId));
-    return cat ? cat.name : 'Collections';
+
+    // 1. Check query param if passed from category page (e.g., ?category=protima)
+    const param = this.sourceCategoryParam();
+    if (param) {
+      const matchParam = cats.find(c => String(c.slug).toLowerCase() === param.toLowerCase() || String(c.id) === param);
+      if (matchParam) return matchParam.name;
+    }
+
+    // 2. Match by product's categoryId
+    const p = this.product();
+    if (p && p.categoryId) {
+      const cat = cats.find(c => String(c.id) === String(p.categoryId) || String(c.slug).toLowerCase() === String(p.categoryId).toLowerCase());
+      if (cat) return cat.name;
+    }
+
+    // 3. Fallback to capitalised query param if it exists, otherwise 'Collections'
+    if (param) {
+      return param.charAt(0).toUpperCase() + param.slice(1);
+    }
+    return 'Collections';
   });
 
   categoryLink = computed(() => {
-    const p = this.product();
-    if (!p || !p.categoryId) return ['/all-products'];
     const cats = this.categoryService.categories();
-    const cat = cats.find(c => String(c.id) === String(p.categoryId));
-    const slug = cat ? (cat.slug || cat.id) : null;
-    return slug ? ['/category', slug] : ['/all-products'];
+
+    // 1. Check query param from category page
+    const param = this.sourceCategoryParam();
+    if (param) {
+      const matchParam = cats.find(c => String(c.slug).toLowerCase() === param.toLowerCase() || String(c.id) === param);
+      const slug = matchParam ? (matchParam.slug || matchParam.id) : param;
+      return ['/category', slug];
+    }
+
+    // 2. Match by product's categoryId
+    const p = this.product();
+    if (p && p.categoryId) {
+      const cat = cats.find(c => String(c.id) === String(p.categoryId) || String(c.slug).toLowerCase() === String(p.categoryId).toLowerCase());
+      const slug = cat ? (cat.slug || cat.id) : null;
+      if (slug) return ['/category', slug];
+    }
+
+    return ['/all-products'];
   });
 
   savings = computed(() => {
@@ -113,6 +145,10 @@ export class ProductDetailsComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.route.queryParams.subscribe(qParams => {
+      this.sourceCategoryParam.set(qParams['category'] || null);
+    });
+
     this.route.params.subscribe(params => {
       const id = params['id'];
       if (id) {
@@ -189,8 +225,8 @@ export class ProductDetailsComponent implements OnInit {
     });
   }
 
-  isOutOfStock(): boolean {
-    const p = this.product();
+  isOutOfStock(targetProduct?: Product): boolean {
+    const p = targetProduct ?? this.product();
     return !!p && p.isInStock === false;
   }
 
@@ -233,6 +269,11 @@ export class ProductDetailsComponent implements OnInit {
 
   showProductDetails(product: Product) {
     this.router.navigate(['/products', product.slug || product.id]);
+  }
+
+  quickAddToCart(event: Event, product: Product) {
+    event.stopPropagation();
+    this.cartService.addToCart(product, 1);
   }
 
   nextImage(event?: Event) {

@@ -39,6 +39,7 @@ import { filter } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   title = 'karukolpo-frontend';
   isAdminRoute = false;
+  readonly showSiteNoticeModal = false;
 
   constructor(
     private orderService: OrderService,

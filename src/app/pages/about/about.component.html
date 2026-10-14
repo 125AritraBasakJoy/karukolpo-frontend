@@ -154,6 +154,12 @@
           <div class="craft-card-body">
             <h3 class="craft-title">{{ item.title }}</h3>
             <p class="craft-desc">{{ item.description }}</p>
+            <a [routerLink]="['/category', item.categorySlug]"
+               class="btn-editorial-outline craft-products-link"
+               [attr.aria-label]="'View products for ' + item.title">
+              <span>View Products</span>
+              <i class="pi pi-arrow-right" aria-hidden="true"></i>
+            </a>
           </div>
         </article>
       </div>

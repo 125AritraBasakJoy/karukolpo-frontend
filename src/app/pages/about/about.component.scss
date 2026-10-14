@@ -535,6 +535,14 @@
       color: var(--text-color-secondary, #706861);
       margin: 0;
     }
+
+    .craft-products-link {
+      margin-top: 1.25rem;
+      align-self: flex-start;
+      padding: 0.6rem 1.25rem;
+      font-size: 0.85rem;
+      gap: 0.45rem;
+    }
   }
 }
 

@@ -163,7 +163,7 @@
 
     <!-- Products Grid -->
     <div *ngIf="!loading() && filteredProducts().length > 0" class="grid">
-      <div *ngFor="let product of filteredProducts()" class="col-6 sm:col-4 lg:col-3 px-2 mb-3">
+      <div *ngFor="let product of pagedProducts()" class="col-6 sm:col-4 lg:col-3 px-2 mb-3">
         <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
              (click)="showProductDetails(product)">
           <!-- Badges Column Top Left -->
@@ -208,6 +208,18 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading() && filteredProducts().length > rows()" class="flex justify-content-center align-items-center my-5">
+      <p-paginator
+        [first]="first()"
+        [rows]="rows()"
+        [totalRecords]="filteredProducts().length"
+        [showFirstLastIcon]="false"
+        styleClass="storefront-paginator"
+        (onPageChange)="onPageChange($event)">
+      </p-paginator>
     </div>
 
     <!-- Empty State -->

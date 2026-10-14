@@ -18,6 +18,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
 import { DrawerModule } from 'primeng/drawer';
+import { PaginatorModule } from 'primeng/paginator';
 import { SharedModule } from 'primeng/api';
 
 @Component({
@@ -35,6 +36,7 @@ import { SharedModule } from 'primeng/api';
         InputTextModule,
         DividerModule,
         DrawerModule,
+        PaginatorModule,
         SharedModule
     ],
     templateUrl: './all-products.component.html',
@@ -46,6 +48,10 @@ export class AllProductsComponent implements OnInit, OnDestroy {
     allCatalogProducts = signal<Product[]>([]);
     loading = signal<boolean>(true);
     totalCount = signal<number>(0);
+    
+    // Pagination State
+    first = signal<number>(0);
+    rows = signal<number>(12);
     
     // Server-side & Client-side Filtering State
     searchQuery = signal<string>('');
@@ -142,17 +148,14 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         });
 
         this.route.queryParams.subscribe(params => {
+            this.first.set(0);
             if (params['filter']) {
                 this.filterType.set(params['filter']);
             } else {
                 this.filterType.set(null);
             }
-            if (params['q']) {
-                this.searchQuery.set(params['q']);
-            }
-            if (params['category']) {
-                this.selectedCategoryId.set(params['category']);
-            }
+            this.searchQuery.set(params['q'] || '');
+            this.selectedCategoryId.set(params['category'] || null);
             this.updateSeo();
             this.fetchProducts();
         });
@@ -165,21 +168,25 @@ export class AllProductsComponent implements OnInit, OnDestroy {
     }
 
     onSearchInput(text: string) {
+        this.first.set(0);
         this.searchQuery.set(text);
         this.searchSubject.next(text);
     }
 
     onCategoryChange(catId: string | null) {
+        this.first.set(0);
         this.selectedCategoryId.set(catId);
         this.fetchProducts();
     }
 
     onSortChange(sort: string) {
+        this.first.set(0);
         this.sortOrder.set(sort);
         this.fetchProducts();
     }
 
     onPriceRangeChange(range: string) {
+        this.first.set(0);
         this.selectedPriceRange.set(range);
         this.fetchProducts();
     }
@@ -190,6 +197,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
     }
 
     setAvailability(avail: any) {
+        this.first.set(0);
         this.selectedAvailability.set(avail as 'all' | 'in_stock' | 'out_of_stock');
         this.fetchProducts();
     }
@@ -244,8 +252,8 @@ export class AllProductsComponent implements OnInit, OnDestroy {
             : (this.selectedAvailability() === 'out_of_stock' ? false : undefined);
 
         const options: ProductQueryOptions = {
-            skip: 0,
-            limit: 100,
+            skip: this.first(),
+            limit: this.rows(),
             q: this.searchQuery() || undefined,
             categoryId: this.selectedCategoryId() || undefined,
             minPrice: priceBounds.min,
@@ -281,8 +289,27 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         } else if (this.selectedAvailability() === 'out_of_stock') {
             filtered = filtered.filter(p => !p.isInStock);
         }
-        this.products.set(filtered);
+
+        const priceBounds = this.getPriceBounds();
+        if (priceBounds.min !== undefined) {
+            filtered = filtered.filter(p => (p.effective_price ?? p.price) >= priceBounds.min!);
+        }
+        if (priceBounds.max !== undefined) {
+            filtered = filtered.filter(p => (p.effective_price ?? p.price) <= priceBounds.max!);
+        }
+
+        const sort = this.sortOrder();
+        if (sort === 'price_asc') {
+            filtered.sort((a, b) => (a.effective_price ?? a.price) - (b.effective_price ?? b.price));
+        } else if (sort === 'price_desc') {
+            filtered.sort((a, b) => (b.effective_price ?? b.price) - (a.effective_price ?? a.price));
+        } else if (sort === 'name') {
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
         this.totalCount.set(filtered.length);
+        const paged = filtered.slice(this.first(), this.first() + this.rows());
+        this.products.set(paged);
     }
 
     updateSeo() {
@@ -336,6 +363,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
     }
 
     applyMobileFilters() {
+        this.first.set(0);
         this.selectedCategoryId.set(this.draftCategoryId());
         this.selectedPriceRange.set(this.draftPriceRange());
         this.selectedAvailability.set(this.draftAvailability());
@@ -358,7 +386,17 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         }
     }
 
+    onPageChange(event: any) {
+        this.first.set(event.first);
+        this.rows.set(event.rows);
+        this.fetchProducts();
+        if (isPlatformBrowser(this.platformId)) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
     clearFilters() {
+        this.first.set(0);
         this.searchQuery.set('');
         this.selectedCategoryId.set(null);
         this.sortOrder.set('newest');

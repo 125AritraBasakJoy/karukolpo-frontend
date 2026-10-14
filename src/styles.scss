@@ -2732,6 +2732,116 @@ html.dark-mode {
     }
 }
 
+/* ── Storefront Artisanal Minimal Pagination (1 2 3 Next) ────────── */
+.storefront-paginator {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 1.5rem 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+
+    /* Hide redundant elements */
+    .p-paginator-first,
+    .p-paginator-last,
+    .p-paginator-rpp-dropdown,
+    .p-paginator-rpp-options,
+    .p-select,
+    .p-dropdown {
+        display: none !important;
+    }
+
+    .p-paginator-pages {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Page Numbers */
+    .p-paginator-page {
+        min-width: 34px !important;
+        height: 34px !important;
+        padding: 0 8px !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        color: #4A423A !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
+
+        &:hover:not(.p-paginator-page-selected):not(.p-highlight) {
+            color: #1A1714 !important;
+            background: #F7F3EE !important;
+            border-color: #ECE7E0 !important;
+        }
+
+        /* Active page: terracotta text on warm ivory surface with artisan border */
+        &.p-paginator-page-selected,
+        &.p-highlight {
+            background: #FAF7F2 !important;
+            border: 1px solid #E8DFD4 !important;
+            color: #B84E29 !important;
+            font-weight: 700 !important;
+            box-shadow: none !important;
+        }
+    }
+
+    /* Previous / Next buttons */
+    .p-paginator-prev,
+    .p-paginator-next {
+        min-width: 34px !important;
+        height: 34px !important;
+        padding: 0 10px !important;
+        border-radius: 8px !important;
+        border: 1px solid transparent !important;
+        background: transparent !important;
+        color: #4A423A !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+        outline: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
+
+        &:hover:not(.p-disabled) {
+            color: #B84E29 !important;
+            background: #F7F3EE !important;
+            border-color: #ECE7E0 !important;
+        }
+
+        &.p-disabled {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+    }
+
+    .p-paginator-next {
+        flex-direction: row-reverse !important;
+        &::after {
+            content: "Next";
+            font-size: 0.9rem;
+            margin-right: 4px;
+            font-weight: 500;
+        }
+    }
+
+    .p-paginator-prev::after {
+        content: "Previous";
+        font-size: 0.9rem;
+        margin-left: 4px;
+        font-weight: 500;
+    }
+}
+
 /* ── Paginator Rows-Per-Page Dropdown: Always Open Upwards ───────── */
 .p-paginator {
     overflow: visible !important;
@@ -2761,7 +2871,6 @@ html.dark-mode {
             .p-select-panel,
             .p-dropdown-panel {
                 transform-origin: bottom center !important;
-                box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
             }
         }
 
@@ -2776,8 +2885,24 @@ html.dark-mode {
             margin-bottom: 0 !important;
             transform-origin: bottom center !important;
             min-width: 100% !important;
-            box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
             z-index: 99999 !important;
+        }
+    }
+}
+
+/* Admin paginator retains deep dark elevation */
+.p-paginator:not(.storefront-paginator) {
+    .p-paginator-rpp-dropdown,
+    .p-paginator-rpp-options,
+    .p-select,
+    .p-dropdown {
+        .p-overlay .p-select-overlay,
+        .p-overlay .p-select-panel,
+        .p-overlay .p-dropdown-panel,
+        .p-select-overlay,
+        .p-select-panel,
+        .p-dropdown-panel {
+            box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
         }
     }
 }

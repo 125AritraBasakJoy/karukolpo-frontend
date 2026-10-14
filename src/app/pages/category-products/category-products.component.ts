@@ -13,6 +13,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { DropdownModule } from 'primeng/dropdown';
 import { DrawerModule } from 'primeng/drawer';
+import { PaginatorModule } from 'primeng/paginator';
 
 @Component({
     selector: 'app-category-products',
@@ -25,6 +26,7 @@ import { DrawerModule } from 'primeng/drawer';
         ToastModule,
         DropdownModule,
         DrawerModule,
+        PaginatorModule,
         RouterLink
     ],
     templateUrl: './category-products.component.html',
@@ -40,6 +42,10 @@ export class CategoryProductsComponent implements OnInit {
     searchQuery = signal<string>('');
     selectedPriceRange = signal<string>('all');
     sortOrder = signal<string>('featured');
+
+    // Pagination signals
+    first = signal<number>(0);
+    rows = signal<number>(12);
 
     // Mobile right-drawer state
     isMobileFilterOpen = signal<boolean>(false);
@@ -104,6 +110,12 @@ export class CategoryProductsComponent implements OnInit {
         return items;
     });
 
+    pagedProducts = computed(() => {
+        const items = this.filteredProducts();
+        const start = this.first();
+        return items.slice(start, start + this.rows());
+    });
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -119,6 +131,7 @@ export class CategoryProductsComponent implements OnInit {
         this.route.params.subscribe(params => {
             const id = params['id'];
             if (id) {
+                this.first.set(0);
                 if (isPlatformBrowser(this.platformId)) {
                     window.scrollTo({ top: 0, behavior: 'instant' });
                 }
@@ -192,18 +205,22 @@ export class CategoryProductsComponent implements OnInit {
     }
 
     onSearchInput(val: string) {
+        this.first.set(0);
         this.searchQuery.set(val);
     }
 
     onPriceRangeChange(val: string) {
+        this.first.set(0);
         this.selectedPriceRange.set(val);
     }
 
     onSortChange(val: string) {
+        this.first.set(0);
         this.sortOrder.set(val);
     }
 
     clearFilters() {
+        this.first.set(0);
         this.searchQuery.set('');
         this.selectedPriceRange.set('all');
         this.sortOrder.set('featured');
@@ -218,6 +235,7 @@ export class CategoryProductsComponent implements OnInit {
     }
 
     applyMobileFilters() {
+        this.first.set(0);
         this.selectedPriceRange.set(this.draftPriceRange());
         this.sortOrder.set(this.draftSortOrder());
         this.isMobileFilterOpen.set(false);
@@ -230,6 +248,14 @@ export class CategoryProductsComponent implements OnInit {
 
     onFilterDrawerHide() {
         this.isMobileFilterOpen.set(false);
+    }
+
+    onPageChange(event: any) {
+        this.first.set(event.first);
+        this.rows.set(event.rows);
+        if (isPlatformBrowser(this.platformId)) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 
     hasActiveFilters(): boolean {

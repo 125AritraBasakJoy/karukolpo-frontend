@@ -274,6 +274,18 @@
           </div>
         </div>
 
+        <!-- Pagination -->
+        <div *ngIf="!loading() && totalCount() > rows()" class="pagination-container my-5">
+          <p-paginator
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="totalCount()"
+            [showFirstLastIcon]="false"
+            styleClass="storefront-paginator"
+            (onPageChange)="onPageChange($event)">
+          </p-paginator>
+        </div>
+
         <!-- Empty State -->
         <div *ngIf="!loading() && products().length === 0" class="empty-state-card text-center my-4">
           <div class="empty-state-icon-circle mx-auto mb-3" aria-hidden="true">

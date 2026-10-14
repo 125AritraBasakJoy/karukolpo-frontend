@@ -419,32 +419,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-
-  ::ng-deep .p-paginator {
-    background: transparent !important;
-    border: none !important;
-
-    .p-paginator-page,
-    .p-paginator-first,
-    .p-paginator-prev,
-    .p-paginator-next,
-    .p-paginator-last {
-      border-radius: 8px !important;
-      color: #4A423A !important;
-      min-width: 36px;
-      height: 36px;
-      margin: 0 3px;
-
-      &.p-highlight {
-        background: #B84E29 !important;
-        color: #FFFFFF !important;
-      }
-
-      &:hover:not(.p-highlight) {
-        background: #F0EAE1 !important;
-      }
-    }
-  }
 }
 
 /* Product Card Image Wrapper & Stock Badge */

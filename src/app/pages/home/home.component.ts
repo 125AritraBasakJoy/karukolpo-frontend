@@ -150,28 +150,30 @@ export class HomeComponent implements OnInit, OnDestroy {
         return product.categories?.[0]?.name || 'Handmade Craft';
     }
 
-    // Replaces confirmPayment and integration into placeOrder
     getCategoryImage(categoryName: string): string {
-        if (!categoryName) return 'assets/category/img.png';
+        if (!categoryName) return 'assets/categories/protima.webp';
 
         const name = categoryName.toLowerCase().trim();
         if (name === 'prodip') {
-            return 'assets/category/prodip/img.png';
+            return 'assets/categories/prodip.webp';
         }
         if (name === 'shora') {
-            return 'assets/category/img_2.png';
+            return 'assets/categories/shora.webp';
         }
         if (name === 'sharee') {
-            return 'assets/categories/sharee.png';
+            return 'assets/categories/sharee.webp';
         }
         if (name === 'mirror') {
-            return 'assets/categories/mirror.png';
+            return 'assets/categories/mirror.webp';
         }
         if (name === 'home decor' || name === 'homedecor') {
-            return 'assets/categories/homedecor.png';
+            return 'assets/categories/homedecor.webp';
+        }
+        if (name === 'protima') {
+            return 'assets/categories/protima.webp';
         }
 
-        return 'assets/category/img.png';
+        return this.categoryImages[categoryName] || 'assets/categories/protima.webp';
     }
 
     openPaymentModal(orderId: string) {

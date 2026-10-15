@@ -289,6 +289,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     if (!this.isBrowser) return;
 
     try {
+      if (typeof document !== 'undefined' && (document as any).fonts?.ready) {
+        try {
+          await (document as any).fonts.ready;
+        } catch (e) {}
+      }
       const canvas = await this.generateThermalCanvas();
       const imgData = canvas.toDataURL('image/png');
       const pdfWidth = 58; // 58mm roll width
@@ -325,8 +330,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     ctx.fillRect(0, 0, width, tempCanvas.height);
     ctx.fillStyle = '#000000';
 
-    const fontMono = "'Courier New', Courier, monospace, 'Segoe UI', 'Noto Sans Bengali', sans-serif";
-    const fontSans = "'Segoe UI', 'Noto Sans Bengali', 'Inter', -apple-system, sans-serif";
+    const fontMono = "'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', monospace, sans-serif";
+    const fontSans = "'Segoe UI', 'Noto Sans Bengali', 'Hind Siliguri', 'Inter', -apple-system, sans-serif";
 
     let y = 20;
 
@@ -383,7 +388,20 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         y = this.drawCanvasRow(ctx, leftX, rightX, 'Phone:', this.customerPhoneDisplay, y, true);
       }
       if (this.customerAddressDisplay) {
-        y = this.drawCanvasRow(ctx, leftX, rightX, 'Address:', this.customerAddressDisplay, y, false);
+        ctx.textAlign = 'left';
+        ctx.font = `14px ${fontMono}`;
+        ctx.fillText('Address:', leftX, y);
+        const addrX = leftX + 68;
+        const addrMaxWidth = rightX - addrX;
+        const addrMetrics = ctx.measureText(this.customerAddressDisplay);
+        if (addrMetrics.width <= addrMaxWidth) {
+          ctx.textAlign = 'right';
+          ctx.fillText(this.customerAddressDisplay, rightX, y);
+          y += 21;
+        } else {
+          y = this.drawCanvasWrappedText(ctx, this.customerAddressDisplay, addrX, y, addrMaxWidth, 18);
+          y += 3;
+        }
       }
       y += 4;
     }
@@ -405,9 +423,9 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     // 5. Line Items List
     for (const item of this.parsedItems) {
-      // Product Name (wrapped)
+      // Product Name (wrapped, normal weight)
       ctx.textAlign = 'left';
-      ctx.font = `bold 14.5px ${fontMono}`;
+      ctx.font = `14.5px ${fontMono}`;
       y = this.drawCanvasWrappedText(ctx, item.name, leftX, y, printableWidth, 20);
 
       // Qty x Price (left) and Line Total (right)
@@ -524,7 +542,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     ctx.font = `bold 13.5px ${fontMono}`;
     ctx.fillText('Hotline: 01675-718846', centerX, y);
-    y += 28;
+    y += 99; // Exactly 1 cm gap (10mm on 58mm canvas)
 
     // Final crop to exact content height
     const finalHeight = Math.max(y, 350);
@@ -693,6 +711,9 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
           <base href="${baseOrigin}/">
           <title> </title>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style id="base-page-style">
             @page {
               size: 58mm ${estimatedHeightMm}mm;
@@ -711,14 +732,14 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
               color: #000000 !important;
-              font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace !important;
+              font-family: 'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', 'Lucida Console', Monaco, monospace !important;
             }
             html, body {
               margin: 0 auto !important;
               padding: 0 1.5mm 0 1.5mm !important;
               width: 53mm !important;
               max-width: 53mm !important;
-              font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace !important;
+              font-family: 'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', 'Lucida Console', Monaco, monospace !important;
               color: #000000 !important;
               background: #ffffff !important;
               font-size: 11px;
@@ -821,7 +842,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
             }
             .item-title {
               font-size: 10.5px;
-              font-weight: 700;
+              font-weight: 500;
               line-height: 1.25;
               word-break: break-word;
             }
@@ -920,7 +941,7 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
               padding-bottom: 0 !important;
             }
             .footer-trailing-gap {
-              height: 14px;
+              height: 1cm;
               width: 100%;
               margin: 0 !important;
               padding: 0 !important;
@@ -930,18 +951,21 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         <body>
           ${printContent}
           <script>
-            function triggerPrintWhenReady() {
+            async function triggerPrintWhenReady() {
+              if (document.fonts && document.fonts.ready) {
+                try { await document.fonts.ready; } catch(e) {}
+              }
               var images = Array.from(document.images);
               var pending = images.filter(function(img) { return !img.complete; });
               if (pending.length === 0) {
-                setTimeout(function() { window.focus(); window.print(); }, 100);
+                setTimeout(function() { window.focus(); window.print(); }, 150);
               } else {
                 Promise.all(pending.map(function(img) {
                   return new Promise(function(resolve) {
                     img.onload = img.onerror = resolve;
                   });
                 })).then(function() {
-                  setTimeout(function() { window.focus(); window.print(); }, 150);
+                  setTimeout(function() { window.focus(); window.print(); }, 200);
                 });
               }
             }
@@ -1011,6 +1035,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     if (!this.isBrowser) {
       return { success: false, message: 'Not running in a browser environment.' };
     }
+    if (typeof document !== 'undefined' && (document as any).fonts?.ready) {
+      try {
+        await (document as any).fonts.ready;
+      } catch (e) {}
+    }
     const result = await this.bluetoothPrinter.print(this.buildEscPosReceipt());
     if (result.success) {
       this.printCompleted.emit();
@@ -1022,6 +1051,152 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
   /** Alias for printViaBluetooth for backward compatibility */
   async printViaUsb(): Promise<{ success: boolean; message?: string }> {
     return this.printViaBluetooth();
+  }
+
+  private hasBengali(text: string | undefined | null): boolean {
+    if (!text) return false;
+    return /[\u0980-\u09FF]/.test(text);
+  }
+
+  private renderTextToEscPosBitmap(text: string, isBold: boolean = true): number[] {
+    if (!this.isBrowser) return [];
+    const width = 384;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return [];
+
+    const fontSize = 21;
+    const lineHeight = 28;
+    ctx.font = `${isBold ? 'bold' : 'normal'} ${fontSize}px "Noto Sans Bengali", "Hind Siliguri", "Courier New", sans-serif`;
+
+    const words = (text || '').trim().split(/\s+/);
+    const lines: string[] = [];
+    let curLine = '';
+    const maxTextWidth = width - 8;
+
+    for (const word of words) {
+      const testLine = curLine ? `${curLine} ${word}` : word;
+      if (curLine && ctx.measureText(testLine).width > maxTextWidth) {
+        lines.push(curLine);
+        curLine = word;
+      } else {
+        curLine = testLine;
+      }
+    }
+    if (curLine) lines.push(curLine);
+    if (lines.length === 0) lines.push('');
+
+    const height = lines.length * lineHeight + 4;
+    canvas.height = height;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#000000';
+    ctx.font = `${isBold ? 'bold' : 'normal'} ${fontSize}px "Noto Sans Bengali", "Hind Siliguri", "Courier New", sans-serif`;
+    ctx.textBaseline = 'top';
+
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], 4, i * lineHeight + 2);
+    }
+
+    return this.canvasToEscPosBytes(canvas);
+  }
+
+  private renderRowToEscPosBitmap(left: string, right: string, rightBold: boolean = false): number[] {
+    if (!this.isBrowser) return [];
+    const width = 384;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return [];
+
+    const fontSize = 21;
+    const lineHeight = 28;
+    ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
+    const leftWidth = ctx.measureText(left).width;
+
+    ctx.font = `${rightBold ? 'bold' : 'normal'} ${fontSize}px "Noto Sans Bengali", "Hind Siliguri", "Courier New", sans-serif`;
+    const rightWidth = ctx.measureText(right).width;
+    const availableForRight = width - leftWidth - 16;
+
+    let height = lineHeight + 4;
+    let lines: string[] = [];
+
+    if (rightWidth <= availableForRight) {
+      lines.push(right);
+    } else {
+      const words = (right || '').trim().split(/\s+/);
+      let curLine = '';
+      for (const word of words) {
+        const testLine = curLine ? `${curLine} ${word}` : word;
+        if (curLine && ctx.measureText(testLine).width > availableForRight) {
+          lines.push(curLine);
+          curLine = word;
+        } else {
+          curLine = testLine;
+        }
+      }
+      if (curLine) lines.push(curLine);
+      height = lines.length * lineHeight + 4;
+    }
+
+    canvas.height = height;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#000000';
+    ctx.textBaseline = 'top';
+
+    // Left label
+    ctx.font = `bold ${fontSize}px "Courier New", Courier, monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillText(left, 4, 2);
+
+    // Right text
+    ctx.font = `${rightBold ? 'bold' : 'normal'} ${fontSize}px "Noto Sans Bengali", "Hind Siliguri", "Courier New", sans-serif`;
+    ctx.textAlign = 'right';
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], width - 4, i * lineHeight + 2);
+    }
+
+    return this.canvasToEscPosBytes(canvas);
+  }
+
+  private canvasToEscPosBytes(canvas: HTMLCanvasElement): number[] {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return [];
+    const w = canvas.width;
+    const h = canvas.height;
+    const imgData = ctx.getImageData(0, 0, w, h).data;
+    const rowBytes = w / 8;
+    const result: number[] = [
+      0x1D, 0x76, 0x30, 0,
+      rowBytes & 0xFF,
+      (rowBytes >> 8) & 0xFF,
+      h & 0xFF,
+      (h >> 8) & 0xFF
+    ];
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x += 8) {
+        let byteVal = 0;
+        for (let bit = 0; bit < 8; bit++) {
+          const pixelIdx = (y * w + (x + bit)) * 4;
+          const r = imgData[pixelIdx];
+          const g = imgData[pixelIdx + 1];
+          const b = imgData[pixelIdx + 2];
+          const a = imgData[pixelIdx + 3];
+          const isDark = a > 128 && (0.299 * r + 0.587 * g + 0.114 * b < 160);
+          if (isDark) {
+            byteVal |= (0x80 >> bit);
+          }
+        }
+        result.push(byteVal);
+      }
+    }
+    return result;
   }
 
   /**
@@ -1041,6 +1216,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       }
     };
     const addLine = (text: string = '') => {
+      if (this.hasBengali(text)) {
+        bytes.push(...this.renderTextToEscPosBitmap(text));
+        return;
+      }
       addText(text);
       bytes.push(0x0A); // LF
     };
@@ -1084,13 +1263,21 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       addLine('CUSTOMER INFO:');
       addBytes(0x1B, 0x45, 0x00);
       if (this.customerNameDisplay) {
-        addLine(format2Col('Name:', this.customerNameDisplay));
+        if (this.hasBengali(this.customerNameDisplay)) {
+          bytes.push(...this.renderRowToEscPosBitmap('Name:', this.customerNameDisplay, true));
+        } else {
+          addLine(format2Col('Name:', this.customerNameDisplay));
+        }
       }
       if (this.customerPhoneDisplay) {
         addLine(format2Col('Phone:', this.customerPhoneDisplay));
       }
       if (this.customerAddressDisplay) {
-        addLine(`Address: ${this.customerAddressDisplay.substring(0, 45)}`);
+        if (this.hasBengali(this.customerAddressDisplay)) {
+          bytes.push(...this.renderRowToEscPosBitmap('Address:', this.customerAddressDisplay, false));
+        } else {
+          addLine(`Address: ${this.customerAddressDisplay.substring(0, 45)}`);
+        }
       }
     }
 
@@ -1101,7 +1288,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
 
     for (const item of this.parsedItems) {
       const name = item.name || 'Product';
-      addLine(name.length > 32 ? name.substring(0, 32) : name);
+      if (this.hasBengali(name)) {
+        bytes.push(...this.renderTextToEscPosBitmap(name, false));
+      } else {
+        addLine(name.length > 32 ? name.substring(0, 32) : name);
+      }
       const leftCol = `  ${item.quantity} x Tk.${item.unitPrice.toFixed(0)}`;
       const rightCol = `Tk.${item.lineTotal.toFixed(0)}`;
       addLine(format2Col(leftCol, rightCol, 32));
@@ -1130,7 +1321,11 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     // Note (if any)
     const noteText = this.order?.note || this.note;
     if (noteText) {
-      addLine(`Note: ${noteText}`);
+      if (this.hasBengali(noteText)) {
+        bytes.push(...this.renderRowToEscPosBitmap('Note:', noteText, false));
+      } else {
+        addLine(`Note: ${noteText}`);
+      }
       addLine('--------------------------------');
     }
 
@@ -1158,8 +1353,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     addLine('Crafted with tradition & passion.');
     addLine('Hotline: 01675-718846');
 
-    // Exactly 1 line gap after Hotline number, then stop printing
-    bytes.push(0x0A);
+    // Exactly 1 cm paper feed gap (80 dots at 203 DPI / 8 dots per mm) after Hotline number
+    addBytes(0x1B, 0x4A, 80);
     return new Uint8Array(bytes);
   }
 }

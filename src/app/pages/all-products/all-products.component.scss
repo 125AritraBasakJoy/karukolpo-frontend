@@ -235,7 +235,7 @@
   border: 1px solid #EDE4D8;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
   position: sticky;
-  top: 90px;
+  top: calc(90px + var(--site-notice-h, 0px));
 
   .filter-heading {
     font-size: 0.95rem;

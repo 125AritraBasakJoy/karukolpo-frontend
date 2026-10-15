@@ -385,7 +385,7 @@
 .cart-sidebar-sticky {
   @media (min-width: 992px) and (min-height: 780px) {
     position: sticky;
-    top: 86px;
+    top: calc(86px + var(--site-notice-h, 0px));
     z-index: 10;
   }
 }

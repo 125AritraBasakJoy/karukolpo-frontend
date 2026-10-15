@@ -2,8 +2,9 @@
   display: block;
   width: 100%;
   position: sticky;
-  top: 0;
+  top: var(--site-notice-h, 0px);
   z-index: 1000;
+  transition: top 0.2s ease;
 }
 
 .site-header {

@@ -67,11 +67,17 @@ export class ProductDetailsComponent implements OnInit {
 
   // Query param from category page
   sourceCategoryParam = signal<string | null>(null);
+  sourceFromParam = signal<string | null>(null);
 
   categoryName = computed(() => {
+    // 1. Explicitly came from All Collections / All Products page
+    if (this.sourceFromParam() === 'all-collections') {
+      return 'All Collections';
+    }
+
     const cats = this.categoryService.categories();
 
-    // 1. Check query param if passed from category page (e.g., ?category=protima)
+    // 2. Check query param if passed from category page (e.g., ?category=protima)
     const param = this.sourceCategoryParam();
     if (param) {
       const matchParam = cats.find(c => String(c.slug).toLowerCase() === param.toLowerCase() || String(c.id) === param);
@@ -79,31 +85,41 @@ export class ProductDetailsComponent implements OnInit {
     }
 
     const p = this.product();
-    // 2. Check product.categories array
+    // 3. Check product.categories array
     if (p && p.categories && p.categories.length > 0) {
       const firstCat = p.categories[0];
-      const matchCat = cats.find(c => String(c.id) === String(firstCat.id) || String(c.slug).toLowerCase() === String(firstCat.slug || '').toLowerCase());
+      const firstCatId = typeof firstCat === 'object' ? (firstCat.id ?? firstCat.categoryId)?.toString() : firstCat?.toString();
+      const firstCatSlug = typeof firstCat === 'object' ? (firstCat.slug || firstCat.name) : null;
+      const matchCat = cats.find(c =>
+        (firstCatId && String(c.id) === String(firstCatId)) ||
+        (firstCatSlug && String(c.slug).toLowerCase() === String(firstCatSlug).toLowerCase())
+      );
       if (matchCat) return matchCat.name;
-      if (firstCat.name) return firstCat.name;
+      if (typeof firstCat === 'object' && firstCat.name) return firstCat.name;
     }
 
-    // 3. Match by product's categoryId
+    // 4. Match by product's categoryId
     if (p && p.categoryId && p.categoryId !== 'uncategorized') {
       const cat = cats.find(c => String(c.id) === String(p.categoryId) || String(c.slug).toLowerCase() === String(p.categoryId).toLowerCase());
       if (cat) return cat.name;
     }
 
-    // 4. Fallback to capitalised query param if it exists, otherwise 'Collections'
+    // 5. Fallback to capitalised query param if it exists, otherwise 'All Collections'
     if (param) {
       return param.charAt(0).toUpperCase() + param.slice(1);
     }
-    return 'Collections';
+    return 'All Collections';
   });
 
   categoryLink = computed(() => {
+    // 1. Explicitly came from All Collections / All Products page
+    if (this.sourceFromParam() === 'all-collections') {
+      return ['/all-products'];
+    }
+
     const cats = this.categoryService.categories();
 
-    // 1. Check query param from category page
+    // 2. Check query param from category page
     const param = this.sourceCategoryParam();
     if (param) {
       const matchParam = cats.find(c => String(c.slug).toLowerCase() === param.toLowerCase() || String(c.id) === param);
@@ -112,15 +128,20 @@ export class ProductDetailsComponent implements OnInit {
     }
 
     const p = this.product();
-    // 2. Check product.categories array
+    // 3. Check product.categories array
     if (p && p.categories && p.categories.length > 0) {
       const firstCat = p.categories[0];
-      const matchCat = cats.find(c => String(c.id) === String(firstCat.id) || String(c.slug).toLowerCase() === String(firstCat.slug || '').toLowerCase());
-      const slug = matchCat ? (matchCat.slug || matchCat.id) : (firstCat.slug || firstCat.id);
+      const firstCatId = typeof firstCat === 'object' ? (firstCat.id ?? firstCat.categoryId)?.toString() : firstCat?.toString();
+      const firstCatSlug = typeof firstCat === 'object' ? (firstCat.slug || firstCat.name) : null;
+      const matchCat = cats.find(c =>
+        (firstCatId && String(c.id) === String(firstCatId)) ||
+        (firstCatSlug && String(c.slug).toLowerCase() === String(firstCatSlug).toLowerCase())
+      );
+      const slug = matchCat ? (matchCat.slug || matchCat.id) : (firstCatSlug || firstCatId);
       if (slug) return ['/category', slug];
     }
 
-    // 3. Match by product's categoryId
+    // 4. Match by product's categoryId
     if (p && p.categoryId && p.categoryId !== 'uncategorized') {
       const cat = cats.find(c => String(c.id) === String(p.categoryId) || String(c.slug).toLowerCase() === String(p.categoryId).toLowerCase());
       const slug = cat ? (cat.slug || cat.id) : null;
@@ -163,6 +184,7 @@ export class ProductDetailsComponent implements OnInit {
   ngOnInit() {
     this.route.queryParams.subscribe(qParams => {
       this.sourceCategoryParam.set(qParams['category'] || null);
+      this.sourceFromParam.set(qParams['from'] || null);
     });
 
     this.route.params.subscribe(params => {
@@ -196,7 +218,9 @@ export class ProductDetailsComponent implements OnInit {
             this.productService.listProductCategories(product.id).subscribe({
               next: (cats) => {
                 if (cats && cats.length > 0) {
-                  this.product.update(p => p ? { ...p, categories: cats, categoryId: cats[0].id?.toString() } : p);
+                  const firstCat = cats[0];
+                  const catId = (typeof firstCat === 'object' ? (firstCat.id ?? firstCat.categoryId) : firstCat)?.toString();
+                  this.product.update(p => p ? { ...p, categories: cats, categoryId: catId } : p);
                 }
               },
               error: () => {}
@@ -300,8 +324,13 @@ export class ProductDetailsComponent implements OnInit {
 
   showProductDetails(product: Product) {
     const catSlug = this.sourceCategoryParam();
+    const fromParam = this.sourceFromParam();
+    const queryParams: any = {};
+    if (catSlug) queryParams.category = catSlug;
+    if (fromParam) queryParams.from = fromParam;
+
     this.router.navigate(['/products', product.slug || product.id], {
-      queryParams: catSlug ? { category: catSlug } : undefined
+      queryParams: Object.keys(queryParams).length > 0 ? queryParams : undefined
     });
   }
 

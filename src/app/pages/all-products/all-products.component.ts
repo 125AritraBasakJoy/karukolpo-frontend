@@ -329,19 +329,19 @@ export class AllProductsComponent implements OnInit, OnDestroy {
     }
 
     showProductDetails(product: Product) {
-        const catId = this.selectedCategoryId() || product.categoryId;
+        const catId = this.selectedCategoryId();
         let catSlug: string | undefined;
         const cats = this.categories();
         if (catId && catId !== 'uncategorized') {
             const cat = cats.find(c => String(c.id) === String(catId) || String(c.slug).toLowerCase() === String(catId).toLowerCase());
             catSlug = cat ? (cat.slug || String(cat.id)) : String(catId);
-        } else if (product.categories && product.categories.length > 0) {
-            const firstCat = product.categories[0];
-            const cat = cats.find(c => String(c.id) === String(firstCat.id) || String(c.slug).toLowerCase() === String(firstCat.slug || '').toLowerCase());
-            catSlug = cat ? (cat.slug || String(cat.id)) : (firstCat.slug || String(firstCat.id));
         }
+
+        // When navigating from All Collections without a category filter, tag ?from=all-collections
+        const queryParams: any = catSlug ? { category: catSlug } : { from: 'all-collections' };
+
         this.router.navigate(['/products', product.slug || product.id], {
-            queryParams: catSlug ? { category: catSlug } : undefined
+            queryParams
         });
     }
 

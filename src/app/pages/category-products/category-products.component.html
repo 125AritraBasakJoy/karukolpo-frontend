@@ -280,7 +280,7 @@
         </div>
 
         <!-- Pagination -->
-        <div *ngIf="!loading() && filteredProducts().length > rows()" class="pagination-container mt-3 mb-2 flex justify-content-center align-items-center">
+        <div *ngIf="!loading() && filteredProducts().length > rows()" class="pagination-container my-1">
           <p-paginator
             [first]="first()"
             [rows]="rows()"

@@ -2787,11 +2787,24 @@ html.dark-mode {
 }
 
 /* ── Storefront Artisanal Minimal Pagination (1 2 3 Next) ────────── */
+.pagination-container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+
+    @media (max-width: 576px) {
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+}
+
 .storefront-paginator {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    padding: 1.5rem 0 !important;
+    padding: 0.25rem 0 !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;

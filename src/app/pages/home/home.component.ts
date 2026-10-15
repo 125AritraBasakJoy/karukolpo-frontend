@@ -366,8 +366,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     showProductDetails(product: Product) {
-        // Navigate to product details page instead of modal
-        this.router.navigate(['/products', product.slug || product.id]);
+        let catSlug: string | undefined;
+        const cats = this.categoryService.categories();
+        if (product.categoryId && product.categoryId !== 'uncategorized') {
+            const cat = cats.find(c => String(c.id) === String(product.categoryId) || String(c.slug).toLowerCase() === String(product.categoryId).toLowerCase());
+            catSlug = cat ? (cat.slug || String(cat.id)) : undefined;
+        } else if (product.categories && product.categories.length > 0) {
+            const firstCat = product.categories[0];
+            const cat = cats.find(c => String(c.id) === String(firstCat.id) || String(c.slug).toLowerCase() === String(firstCat.slug || '').toLowerCase());
+            catSlug = cat ? (cat.slug || String(cat.id)) : (firstCat.slug || String(firstCat.id));
+        }
+        this.router.navigate(['/products', product.slug || product.id], {
+            queryParams: catSlug ? { category: catSlug } : undefined
+        });
     }
 
     addToCart(product: Product) {

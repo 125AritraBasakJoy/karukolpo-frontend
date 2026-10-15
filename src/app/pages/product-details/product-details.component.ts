@@ -78,14 +78,22 @@ export class ProductDetailsComponent implements OnInit {
       if (matchParam) return matchParam.name;
     }
 
-    // 2. Match by product's categoryId
     const p = this.product();
-    if (p && p.categoryId) {
+    // 2. Check product.categories array
+    if (p && p.categories && p.categories.length > 0) {
+      const firstCat = p.categories[0];
+      const matchCat = cats.find(c => String(c.id) === String(firstCat.id) || String(c.slug).toLowerCase() === String(firstCat.slug || '').toLowerCase());
+      if (matchCat) return matchCat.name;
+      if (firstCat.name) return firstCat.name;
+    }
+
+    // 3. Match by product's categoryId
+    if (p && p.categoryId && p.categoryId !== 'uncategorized') {
       const cat = cats.find(c => String(c.id) === String(p.categoryId) || String(c.slug).toLowerCase() === String(p.categoryId).toLowerCase());
       if (cat) return cat.name;
     }
 
-    // 3. Fallback to capitalised query param if it exists, otherwise 'Collections'
+    // 4. Fallback to capitalised query param if it exists, otherwise 'Collections'
     if (param) {
       return param.charAt(0).toUpperCase() + param.slice(1);
     }
@@ -103,9 +111,17 @@ export class ProductDetailsComponent implements OnInit {
       return ['/category', slug];
     }
 
-    // 2. Match by product's categoryId
     const p = this.product();
-    if (p && p.categoryId) {
+    // 2. Check product.categories array
+    if (p && p.categories && p.categories.length > 0) {
+      const firstCat = p.categories[0];
+      const matchCat = cats.find(c => String(c.id) === String(firstCat.id) || String(c.slug).toLowerCase() === String(firstCat.slug || '').toLowerCase());
+      const slug = matchCat ? (matchCat.slug || matchCat.id) : (firstCat.slug || firstCat.id);
+      if (slug) return ['/category', slug];
+    }
+
+    // 3. Match by product's categoryId
+    if (p && p.categoryId && p.categoryId !== 'uncategorized') {
       const cat = cats.find(c => String(c.id) === String(p.categoryId) || String(c.slug).toLowerCase() === String(p.categoryId).toLowerCase());
       const slug = cat ? (cat.slug || cat.id) : null;
       if (slug) return ['/category', slug];
@@ -169,7 +185,22 @@ export class ProductDetailsComponent implements OnInit {
           this.product.set(product);
           this.updateSeo(product);
           if (product.slug && pid !== product.slug) {
-            this.router.navigate(['/products', product.slug], { replaceUrl: true });
+            this.router.navigate(['/products', product.slug], {
+              replaceUrl: true,
+              queryParamsHandling: 'preserve'
+            });
+          }
+
+          // Fetch product categories if categoryId is missing or uncategorized
+          if (!product.categories?.length || !product.categoryId || product.categoryId === 'uncategorized') {
+            this.productService.listProductCategories(product.id).subscribe({
+              next: (cats) => {
+                if (cats && cats.length > 0) {
+                  this.product.update(p => p ? { ...p, categories: cats, categoryId: cats[0].id?.toString() } : p);
+                }
+              },
+              error: () => {}
+            });
           }
         } else {
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Product not found' });
@@ -268,7 +299,10 @@ export class ProductDetailsComponent implements OnInit {
   }
 
   showProductDetails(product: Product) {
-    this.router.navigate(['/products', product.slug || product.id]);
+    const catSlug = this.sourceCategoryParam();
+    this.router.navigate(['/products', product.slug || product.id], {
+      queryParams: catSlug ? { category: catSlug } : undefined
+    });
   }
 
   quickAddToCart(event: Event, product: Product) {

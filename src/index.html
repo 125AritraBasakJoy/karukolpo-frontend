@@ -41,6 +41,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
+  <!-- Synchronously check cached site notice to prevent layout shift (CLS) -->
+  <script>
+    try {
+      var n = localStorage.getItem('karukolpo_site_notices');
+      if (n) {
+        var p = JSON.parse(n);
+        if (Array.isArray(p) && p.length > 0) {
+          document.documentElement.style.setProperty('--site-notice-h', '40px');
+        }
+      }
+    } catch(e) {}
+  </script>
+
   <!-- Preload Critical Above-The-Fold Assets -->
   <link rel="preload" as="image" href="assets/header-logo.webp" type="image/webp" fetchpriority="high">
   <link rel="preload" as="image" href="assets/hero-banner.webp" type="image/webp" media="(min-width: 769px)" fetchpriority="high">

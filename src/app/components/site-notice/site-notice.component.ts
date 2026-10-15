@@ -55,7 +55,7 @@ export class SiteNoticeComponent implements OnDestroy {
     effect(() => {
       if (!isPlatformBrowser(this.platformId)) return;
       if (this.preview()) return;
-      const h = this.notice() ? '4.5rem' : '0px';
+      const h = this.notice() ? '40px' : '0px';
       document.documentElement.style.setProperty('--site-notice-h', h);
     });
   }

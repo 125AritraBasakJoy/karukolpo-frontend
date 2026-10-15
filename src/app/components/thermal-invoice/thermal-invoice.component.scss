@@ -17,7 +17,7 @@
   min-width: 54mm;
   background-color: #ffffff;
   color: #000000;
-  font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace;
+  font-family: 'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', 'Lucida Console', Monaco, monospace;
   font-size: 11px;
   font-weight: 600;
   line-height: 1.3;
@@ -34,7 +34,7 @@
     color: #000000 !important;
     border-color: #000000 !important;
     box-sizing: border-box;
-    font-family: 'Courier New', Courier, 'Lucida Console', Monaco, monospace;
+    font-family: 'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', 'Lucida Console', Monaco, monospace;
   }
 }
 
@@ -149,7 +149,7 @@
 
     .item-title {
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 500;
       line-height: 1.25;
       word-break: break-word;
 
@@ -270,7 +270,7 @@
   }
 
   .footer-trailing-gap {
-    height: 14px; /* exactly 1 line gap */
+    height: 1cm; /* exactly 1 cm gap */
     width: 100%;
     margin: 0 !important;
     padding: 0 !important;
@@ -305,7 +305,7 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color: #000000 !important;
-    font-family: 'Courier New', Courier, monospace !important;
+    font-family: 'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', monospace !important;
   }
 
   html, body {
@@ -314,7 +314,7 @@
     padding: 0 1.5mm 0 1.5mm !important;
     width: 53mm !important;
     max-width: 53mm !important;
-    font-family: 'Courier New', Courier, monospace !important;
+    font-family: 'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', monospace !important;
     image-rendering: -webkit-optimize-contrast !important;
     image-rendering: crisp-edges !important;
   }
@@ -334,7 +334,7 @@
     border: none !important;
     padding: 0mm 0mm 0mm 0mm !important;
     margin: 0 auto !important;
-    font-family: 'Courier New', Courier, monospace !important;
+    font-family: 'Courier New', Courier, 'Noto Sans Bengali', 'Hind Siliguri', monospace !important;
     image-rendering: -webkit-optimize-contrast !important;
     image-rendering: crisp-edges !important;
   }

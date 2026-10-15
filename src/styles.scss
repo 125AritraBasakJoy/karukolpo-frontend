@@ -2275,6 +2275,8 @@ html.dark-mode .premium-product-card {
 
 /* Admin Dark Theme Overrides for Dropdown Panels */
 html.dark-mode {
+    .p-select-overlay,
+    .p-select-panel,
     .p-multiselect-overlay,
     .p-multiselect-panel,
     .premium-multiselect-panel,
@@ -2288,6 +2290,7 @@ html.dark-mode {
         z-index: 100000 !important;
         margin-top: 6px !important;
 
+        .p-select-header,
         .p-multiselect-header,
         .p-dropdown-header {
             background: rgba(30, 41, 59, 0.85) !important;
@@ -2300,6 +2303,7 @@ html.dark-mode {
             border-top-right-radius: 16px !important;
 
         /* Filter Search Input */
+        .p-select-filter-container,
         .p-multiselect-filter-container,
         .p-dropdown-filter-container {
             position: relative !important;
@@ -2316,6 +2320,7 @@ html.dark-mode {
 
             input,
             .p-inputtext,
+            .p-select-filter,
             .p-multiselect-filter,
             .p-dropdown-filter,
             .p-iconfield .p-inputtext,
@@ -2368,6 +2373,7 @@ html.dark-mode {
             }
 
             /* Inner icon / svg inside .p-inputicon */
+            .p-inputicon .p-select-filter-icon,
             .p-inputicon .p-multiselect-filter-icon,
             .p-inputicon .p-dropdown-filter-icon,
             .p-inputicon svg,
@@ -2388,6 +2394,7 @@ html.dark-mode {
             }
 
             /* Standalone icon fallback (when not wrapped in .p-inputicon) */
+            :not(.p-inputicon) > .p-select-filter-icon,
             :not(.p-inputicon) > .p-multiselect-filter-icon,
             :not(.p-inputicon) > .p-dropdown-filter-icon {
                 position: absolute !important;
@@ -2409,6 +2416,7 @@ html.dark-mode {
         }
 
         /* Close Button */
+        .p-select-close,
         .p-multiselect-close {
             color: #94a3b8 !important;
             width: 2rem !important;
@@ -2429,6 +2437,8 @@ html.dark-mode {
     }
 
     /* Scrollable Container with Custom Themed Scrollbar Slider */
+    .p-select-list-container,
+    .p-select-items-wrapper,
     .p-multiselect-list-container,
     .p-multiselect-items-wrapper,
     .p-dropdown-items-wrapper {
@@ -2438,24 +2448,24 @@ html.dark-mode {
 
         /* Cross-Browser Themed Scrollbar Slider (Matches Theme) */
         scrollbar-width: thin !important;
-        scrollbar-color: #DACDC0 #FAF7F2 !important;
+        scrollbar-color: rgba(59, 130, 246, 0.45) rgba(15, 23, 42, 0.6) !important;
 
         &::-webkit-scrollbar {
             width: 6px !important;
         }
         &::-webkit-scrollbar-track {
-            background: #FAF7F2 !important;
+            background: rgba(15, 23, 42, 0.6) !important;
             border-radius: 9999px !important;
             margin: 4px 0 !important;
         }
         &::-webkit-scrollbar-thumb {
-            background: #DACDC0 !important;
+            background: rgba(59, 130, 246, 0.4) !important;
             border-radius: 9999px !important;
             border: none !important;
             transition: all 0.2s ease !important;
 
             &:hover {
-                background: #B84E29 !important;
+                background: rgba(59, 130, 246, 0.8) !important;
             }
         }
         &::-webkit-scrollbar-button {
@@ -2466,6 +2476,8 @@ html.dark-mode {
     }
 
     /* Items List */
+    .p-select-list,
+    .p-select-items,
     .p-multiselect-list,
     .p-multiselect-items,
     .p-dropdown-items {
@@ -2473,6 +2485,7 @@ html.dark-mode {
         margin: 0 !important;
         list-style: none !important;
 
+        .p-select-option,
         .p-multiselect-option,
         .p-multiselect-item,
         .p-dropdown-item {
@@ -2491,16 +2504,18 @@ html.dark-mode {
             cursor: pointer !important;
 
             /* Hover on unselected */
-            &:not(.p-multiselect-option-selected):not(.p-highlight):hover,
-            &:not(.p-multiselect-option-selected):not(.p-highlight).p-focus {
+            &:not(.p-select-option-selected):not(.p-multiselect-option-selected):not(.p-highlight):not([data-p-selected="true"]):not([data-p-highlight="true"]):hover,
+            &:not(.p-select-option-selected):not(.p-multiselect-option-selected):not(.p-highlight):not([data-p-selected="true"]):not([data-p-highlight="true"]).p-focus {
                 background: rgba(255, 255, 255, 0.06) !important;
                 color: #ffffff !important;
             }
 
-            /* Selected option - Overrides Lara teal #004d40 with theme blue */
+            /* Selected option - Overrides Lara teal #004d40 and customer terracotta with theme blue */
+            &.p-select-option-selected,
             &.p-multiselect-option-selected,
             &.p-highlight,
-            &[data-p-highlight="true"] {
+            &[data-p-highlight="true"],
+            &[data-p-selected="true"] {
                 background: rgba(59, 130, 246, 0.18) !important;
                 color: #60a5fa !important;
                 font-weight: 600 !important;
@@ -2518,12 +2533,41 @@ html.dark-mode {
             }
         }
 
+        .p-select-empty-message,
         .p-multiselect-empty-message,
         .p-dropdown-empty-message {
             color: #64748b !important;
             padding: 1.25rem 1rem !important;
             text-align: center !important;
             font-size: 0.9rem !important;
+        }
+    }
+
+    /* Standalone Select / Dropdown Option dark-mode safety override */
+    .p-select-option,
+    .p-dropdown-item {
+        color: #e2e8f0 !important;
+
+        &:not(.p-select-option-selected):not(.p-multiselect-option-selected):not(.p-highlight):not([data-p-selected="true"]):not([data-p-highlight="true"]):hover,
+        &:not(.p-select-option-selected):not(.p-multiselect-option-selected):not(.p-highlight):not([data-p-selected="true"]):not([data-p-highlight="true"]).p-focus {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: #ffffff !important;
+        }
+
+        &.p-select-option-selected,
+        &.p-multiselect-option-selected,
+        &.p-highlight,
+        &[data-p-highlight="true"],
+        &[data-p-selected="true"] {
+            background: rgba(59, 130, 246, 0.18) !important;
+            color: #60a5fa !important;
+            font-weight: 600 !important;
+
+            &:hover,
+            &.p-focus {
+                background: rgba(59, 130, 246, 0.26) !important;
+                color: #93c5fd !important;
+            }
         }
     }
 

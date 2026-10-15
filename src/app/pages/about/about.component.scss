@@ -190,6 +190,7 @@
     line-height: 1.15;
     letter-spacing: -0.02em;
     color: var(--text-color, #26221F);
+    text-shadow: none !important;
     margin: 0 0 1.5rem;
 
     @media (max-width: 1200px) {

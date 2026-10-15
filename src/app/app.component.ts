@@ -83,9 +83,9 @@ export class AppComponent implements OnInit {
       // so it doesn't compete with the home page's first paint / initial data.
       const defer = (fn: () => void) => {
         if ('requestIdleCallback' in window) {
-          (window as any).requestIdleCallback(() => fn(), { timeout: 4000 });
+          (window as any).requestIdleCallback(() => fn(), { timeout: 6000 });
         } else {
-          setTimeout(fn, 3000);
+          setTimeout(fn, 5000);
         }
       };
       defer(() => {
@@ -128,22 +128,23 @@ export class AppComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId) || this.gaInitialized) return;
     if (window.location.pathname.startsWith('/admin')) return;
 
-    // Fire on the first user interaction, or after the window fully loads
-    // (whichever comes first), so gtag never competes with the critical render.
+    // Fire on the first user interaction, or after idle timeout,
+    // so gtag never competes with the critical render and initial TBT.
     const fire = () => {
       if (this.gaInitialized) return;
       this.gaInitialized = true;
       window.removeEventListener('pointerdown', fire);
       window.removeEventListener('touchstart', fire);
       window.removeEventListener('keydown', fire);
-      window.removeEventListener('load', fire);
+      window.removeEventListener('scroll', fire);
       this.initGoogleAnalytics();
     };
 
     window.addEventListener('pointerdown', fire, { passive: true, once: true });
     window.addEventListener('touchstart', fire, { passive: true, once: true });
     window.addEventListener('keydown', fire, { once: true });
-    window.addEventListener('load', fire, { once: true });
+    window.addEventListener('scroll', fire, { passive: true, once: true });
+    setTimeout(fire, 8000);
   }
 
   private initGoogleAnalytics() {

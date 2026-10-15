@@ -12,6 +12,11 @@
   background: #020617;
   width: 100%;
 
+  @media (max-width: 576px) {
+    height: calc(100vh - 65px - var(--site-notice-h, 0px));
+    height: calc(100dvh - 65px - var(--site-notice-h, 0px));
+  }
+
   .hero-picture {
     position: absolute;
     top: 0;

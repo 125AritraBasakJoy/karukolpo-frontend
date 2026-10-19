@@ -37,6 +37,10 @@
   <link rel="canonical" href="https://karukolpo.com/"/>
 
   <!-- Preconnect -->
+  <link rel="preconnect" href="https://api.karukolpocrafts.com" crossorigin="">
+  <link rel="dns-prefetch" href="https://api.karukolpocrafts.com">
+  <link rel="preconnect" href="https://images.karukolpocrafts.com" crossorigin="">
+  <link rel="dns-prefetch" href="https://images.karukolpocrafts.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -153,7 +157,7 @@
     <div class="hero-shell">
       <picture class="hero-picture">
         <source media="(max-width: 768px)" srcset="assets/hero-banner-mobile.webp" type="image/webp">
-        <img src="assets/hero-banner.webp" class="hero-image" alt="Karukolpo Official Hero Banner" fetchpriority="high" decoding="async" loading="eager">
+        <img src="assets/hero-banner.webp" class="hero-image" alt="Karukolpo Official Hero Banner" fetchpriority="high" decoding="sync" loading="eager">
       </picture>
       <div class="hero-overlay"></div>
       <div class="hero-content">

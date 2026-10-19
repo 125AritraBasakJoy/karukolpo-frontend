@@ -2,12 +2,14 @@
   <div class="cart-container max-w-1320 mx-auto px-3 py-4 md:py-5">
 
     <!-- Invoice Component after Order Confirmation -->
+    @defer (when orderConfirmed) {
     <app-invoice *ngIf="orderConfirmed" [orderedItems]="orderedItems" [orderFormSnapshot]="orderFormSnapshot"
                  [orderPaymentMethod]="orderPaymentMethod" [orderDeliveryCharge]="orderDeliveryCharge"
                  [orderTotal]="orderTotal" [orderDiscount]="orderDiscount"
                  [placedOrderId]="placedOrderId" [placedOrderNumber]="placedOrderNumber"
                  (continueShoppingClick)="continueShopping()">
     </app-invoice>
+    }
 
     <!-- Main Cart Content -->
     <div *ngIf="!orderConfirmed">

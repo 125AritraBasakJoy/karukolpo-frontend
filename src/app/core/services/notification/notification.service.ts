@@ -274,9 +274,9 @@ export class NotificationService {
     private startPolling() {
         if (!isPlatformBrowser(this.platformId) || this.pollingSub) return;
 
-        // Poll unread count & notifications every 30 seconds when authenticated
+        // Poll unread count & notifications every 30 seconds when authenticated and tab is active
         this.pollingSub = interval(30000).pipe(
-            filter(() => this.authService.isAuthenticated())
+            filter(() => this.authService.isAuthenticated() && (typeof document === 'undefined' || !document.hidden))
         ).subscribe(() => {
             this.fetchUnreadCount().subscribe();
             this.fetchNotifications().subscribe();

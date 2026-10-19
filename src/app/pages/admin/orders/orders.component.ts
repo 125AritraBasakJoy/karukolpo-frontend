@@ -1,4 +1,5 @@
-import { Component, OnInit, signal, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, signal, ViewChild, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../../core/services';;;
@@ -53,6 +54,7 @@ export class OrdersComponent implements OnInit {
   // ... signals remain same ...
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
   highlightedOrderId = signal<string | null>(null);
 
   orders = signal<Order[]>([]);
@@ -103,7 +105,9 @@ export class OrdersComponent implements OnInit {
     this.first = getSavedPageOffset('karukolpo_orders_first', 0);
     this.loadOrders();
 
-    this.activatedRoute.queryParams.subscribe(params => {
+    this.activatedRoute.queryParams.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(params => {
       const highlightId = params['highlight'];
       if (highlightId) {
         this.highlightedOrderId.set(highlightId);
@@ -120,11 +124,15 @@ export class OrdersComponent implements OnInit {
         }, 1000);
       }
     });
-    this.orderService.newOrderNotification$.subscribe(() => {
+    this.orderService.newOrderNotification$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.loadOrders();
     });
 
-    this.notificationService.notificationClicked$.subscribe(notif => {
+    this.notificationService.notificationClicked$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(notif => {
       if (notif.type === 'order' && notif.data && notif.data.orderId) {
         const orderId = notif.data.orderId.toString();
 

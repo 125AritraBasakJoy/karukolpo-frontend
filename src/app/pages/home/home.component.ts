@@ -1,5 +1,6 @@
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     computed,
     Inject,
@@ -61,7 +62,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         contactInfo: '',
         message: ''
     };
-    isContactSubmitting = false;
+    isContactSubmitting = signal<boolean>(false);
     landingPageTagline = signal<string>('Authentic Bangladeshi Handcrafts');
     categoryImages: { [key: string]: string } = {
         'Protima': 'assets/categories/protima.webp',
@@ -136,7 +137,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         public cartService: CartService,
         private route: ActivatedRoute,
         private router: Router,
-        @Inject(PLATFORM_ID) private platformId: Object
+        @Inject(PLATFORM_ID) private platformId: Object,
+        private cdr: ChangeDetectorRef
     ) {
     }
 
@@ -186,7 +188,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.isContactSubmitting = true;
+        this.isContactSubmitting.set(true);
         const formData = {
             name: this.contactForm.name,
             contact: this.contactForm.contactInfo,
@@ -195,7 +197,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
         this.contactService.submitContactForm(formData).subscribe({
             next: (res) => {
-                this.isContactSubmitting = false;
+                this.isContactSubmitting.set(false);
                 this.messageService.add({ severity: 'success', summary: 'Message Sent', detail: 'Thank you for reaching out! We will get back to you soon.', life: 3000 });
                 this.contactForm = {
                     name: '',
@@ -205,11 +207,13 @@ export class HomeComponent implements OnInit, OnDestroy {
                 if (form) {
                     form.resetForm(this.contactForm);
                 }
+                this.cdr.markForCheck();
             },
             error: (err) => {
-                this.isContactSubmitting = false;
+                this.isContactSubmitting.set(false);
                 console.error('Error sending message', err);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to send message. Please try again later.' });
+                this.cdr.markForCheck();
             }
         });
     }

@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, HostListener, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services';;;
@@ -51,6 +52,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private messageService = inject(MessageService);
   private router = inject(Router);
   private pwaInstallService = inject(PwaInstallService);
+  private destroyRef = inject(DestroyRef);
   displayIosInstallDialog = false;
 
   menuItems: SidebarMenuItem[] = [
@@ -100,7 +102,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Listen to route changes
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
+      filter(event => event instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((event: any) => {
       this.updateCurrentRoute(event.url);
       if (this.isMobile()) {

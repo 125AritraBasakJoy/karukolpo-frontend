@@ -239,16 +239,6 @@ export class TrackOrderComponent {
     const normEntered = this.normalizePhoneNumber(enteredPhone);
     const normCorrect = this.normalizePhoneNumber(correctPhone);
 
-    console.log('Verifying cancellation info:', {
-      enteredPhone,
-      enteredOrderNo,
-      correctPhone,
-      correctOrderNo,
-      correctOrderId,
-      normEntered,
-      normCorrect
-    });
-
     if (normEntered !== normCorrect) {
       this.messageService.add({
         life: 3000,

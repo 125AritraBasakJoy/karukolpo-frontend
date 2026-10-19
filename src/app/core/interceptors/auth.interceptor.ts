@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { SKIP_AUTH_BEARER } from './http-context-tokens';
 
 let isRefreshing = false;
+const REFRESH_FAILED = '__REFRESH_FAILED__';
 const refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
@@ -64,6 +65,8 @@ function handle401Error(req: HttpRequest<any>, next: HttpHandlerFn, authService:
             }),
             catchError((err) => {
                 isRefreshing = false;
+                refreshTokenSubject.next(REFRESH_FAILED);
+                setTimeout(() => refreshTokenSubject.next(null), 0);
                 authService.logout();
                 return throwError(() => err);
             })
@@ -73,6 +76,9 @@ function handle401Error(req: HttpRequest<any>, next: HttpHandlerFn, authService:
             filter(token => token != null),
             take(1),
             switchMap((token) => {
+                if (token === REFRESH_FAILED) {
+                    return throwError(() => new Error('Session expired: token refresh failed'));
+                }
                 return next(req.clone({
                     setHeaders: {
                         Authorization: `Bearer ${token}`

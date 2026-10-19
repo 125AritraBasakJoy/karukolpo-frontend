@@ -1,11 +1,13 @@
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     HostListener,
     OnDestroy,
     QueryList,
     ViewChildren,
     effect,
+    inject,
     input,
     signal
 } from '@angular/core';
@@ -63,9 +65,9 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     bkashTrxId = '';
     bkashPhone = '';
     trackPhone = '';
-    trackedOrders: Order[] = [];
-    trackingLoading = false;
-    hasSearched = false;
+    trackedOrders = signal<Order[]>([]);
+    trackingLoading = signal<boolean>(false);
+    hasSearched = signal<boolean>(false);
     deliveryLocation: 'Inside Dhaka' | 'Outside Dhaka' = 'Inside Dhaka';
     currentDeliveryCharge = 0;
     districts: District[] = districts;
@@ -98,7 +100,8 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         private productService: ProductService,
         public cartService: CartService,
         private gtagService: GtagService,
-        private journeyService: JourneyService
+        private journeyService: JourneyService,
+        private cdr: ChangeDetectorRef
     ) {
         effect(() => {
             if (this.checkoutRequested()) {
@@ -224,34 +227,38 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         }
 
         const input = this.trackPhone.trim().toUpperCase();
-        this.trackingLoading = true;
-        this.hasSearched = true;
+        this.trackingLoading.set(true);
+        this.hasSearched.set(true);
 
         if (input.startsWith('ORD-')) {
             // Track by order number
             this.orderService.trackOrderByNumber(input).subscribe({
                 next: (order) => {
-                    this.trackedOrders = order ? [order] : [];
-                    this.trackingLoading = false;
+                    this.trackedOrders.set(order ? [order] : []);
+                    this.trackingLoading.set(false);
+                    this.cdr.markForCheck();
                 },
                 error: (err) => {
                     console.error('Tracking by number failed', err);
-                    this.trackedOrders = [];
-                    this.trackingLoading = false;
+                    this.trackedOrders.set([]);
+                    this.trackingLoading.set(false);
                     this.showError('Order number not found.');
+                    this.cdr.markForCheck();
                 }
             });
         } else {
             // Track by phone
             this.orderService.trackOrdersByPhone(this.trackPhone).subscribe({
                 next: (orders) => {
-                    this.trackedOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-                    this.trackingLoading = false;
+                    this.trackedOrders.set(orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()));
+                    this.trackingLoading.set(false);
+                    this.cdr.markForCheck();
                 },
                 error: (err) => {
                     console.error('Tracking failed', err);
-                    this.trackedOrders = [];
-                    this.trackingLoading = false;
+                    this.trackedOrders.set([]);
+                    this.trackingLoading.set(false);
+                    this.cdr.markForCheck();
                 }
             });
         }
@@ -430,6 +437,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
             });
             this.displayOrderSuccessModal = false;
             this.displayFinalSuccessModal = true;
+            this.cdr.markForCheck();
 
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];
@@ -495,6 +503,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
             });
             this.displayOrderSuccessModal = false;
             this.displayFinalSuccessModal = true;
+            this.cdr.markForCheck();
 
             // Clear cart and reset
             const cartItemsToReduce = [...this.cartService.cart()];

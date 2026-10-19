@@ -744,7 +744,7 @@ export class ProductService {
       name: data.name || '',
       slug: data.slug || undefined,
       _originalSlug: data.slug || undefined,
-      description: data.description ? this.decodeHtml(data.description) : '',
+      description: data.description || '',
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
       cost: cost,
       imageUrl: mainImageUrl,

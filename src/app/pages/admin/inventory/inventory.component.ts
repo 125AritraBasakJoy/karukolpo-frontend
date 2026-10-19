@@ -50,6 +50,7 @@ function matchesBilingualProduct(product: Product, query: string): boolean {
   const id = normalizeBilingualText(product.id);
   const desc = normalizeBilingualText(product.description);
   const price = normalizeBilingualText(product.price);
+  const effectivePrice = normalizeBilingualText(product.effective_price);
   const stock = normalizeBilingualText(product.stock);
 
   // Status keywords in both Bangla and English
@@ -66,6 +67,7 @@ function matchesBilingualProduct(product: Product, query: string): boolean {
     id.includes(token) ||
     desc.includes(token) ||
     price.includes(token) ||
+    effectivePrice.includes(token) ||
     stock.includes(token) ||
     statusBanglaEnglish.includes(token)
   );

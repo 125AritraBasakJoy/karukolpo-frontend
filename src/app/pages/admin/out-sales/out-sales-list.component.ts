@@ -32,6 +32,9 @@ interface SaleItemRow {
   discount: number;
   unit_cost: number | null;
   regular_price?: number | null;
+  initial_product_id?: string | null;
+  initial_unit_price?: number | null;
+  initial_unit_cost?: number | null;
 }
 
 const HANDOVER_PAYMENT_METHODS = [
@@ -929,12 +932,20 @@ export class OutSalesListComponent implements OnInit {
     const product = this.findProduct(productId);
     if (product) {
       row.product_id = product.id;
-      const catalogPrice = Number(product.price) || 0;
-      const catalogDiscount = this.getProductCatalogDiscount(product);
-      row.regular_price = catalogPrice;
-      row.discount = catalogDiscount;
-      row.unit_price = catalogDiscount > 0 ? Math.max(0, catalogPrice - catalogDiscount) : catalogPrice;
-      row.unit_cost = product.cost ?? null;
+      if (row.initial_product_id && row.initial_product_id === product.id) {
+        row.unit_price = row.initial_unit_price ?? null;
+        row.unit_cost = row.initial_unit_cost ?? null;
+        const regular = row.regular_price || Number(product.price) || 0;
+        row.regular_price = regular;
+        row.discount = (row.unit_price != null && regular > row.unit_price) ? Math.round((regular - row.unit_price) * 100) / 100 : 0;
+      } else {
+        const catalogPrice = Number(product.price) || 0;
+        const catalogDiscount = this.getProductCatalogDiscount(product);
+        row.regular_price = catalogPrice;
+        row.discount = catalogDiscount;
+        row.unit_price = catalogDiscount > 0 ? Math.max(0, catalogPrice - catalogDiscount) : catalogPrice;
+        row.unit_cost = product.cost ?? null;
+      }
     } else {
       row.unit_price = null;
       row.discount = 0;
@@ -950,20 +961,29 @@ export class OutSalesListComponent implements OnInit {
         const prod = this.findProduct(pid, item.product?.name);
         const resolvedId = prod?.id || pid;
         const anyItem = item as any;
-        const catalogPrice = prod ? (Number(prod.price) || 0) : (anyItem.regular_price || anyItem.unit_price || item.product?.price || 0);
+        const catalogPrice = anyItem.regular_price != null && Number(anyItem.regular_price) > 0
+          ? Number(anyItem.regular_price)
+          : (anyItem.price_at_purchase != null && Number(anyItem.price_at_purchase) > 0
+            ? Number(anyItem.price_at_purchase)
+            : (prod ? (Number(prod.price) || 0) : (item.product?.price != null ? Number(item.product.price) : 0)));
         const unitP = anyItem.unit_price != null ? Number(anyItem.unit_price) : (item.product?.price != null ? Number(item.product.price) : 0);
         let disc = 0;
         if (catalogPrice > unitP) {
           disc = Math.round((catalogPrice - unitP) * 100) / 100;
         }
 
+        const unitCost = anyItem.unit_cost != null ? Number(anyItem.unit_cost) : null;
+
         return {
           product_id: resolvedId,
           quantity: item.quantity || 1,
           unit_price: unitP,
           discount: disc,
-          unit_cost: (item as any).unit_cost != null ? Number((item as any).unit_cost) : (prod?.cost ?? null),
-          regular_price: catalogPrice
+          unit_cost: unitCost,
+          regular_price: catalogPrice,
+          initial_product_id: resolvedId,
+          initial_unit_price: unitP,
+          initial_unit_cost: unitCost
         };
       });
     } else {
@@ -1014,7 +1034,7 @@ export class OutSalesListComponent implements OnInit {
 
   isFormValid(): boolean {
     if (!this.editItems.length) return false;
-    const itemsValid = this.editItems.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) >= 0);
+    const itemsValid = this.editItems.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0);
     if (!itemsValid) return false;
 
     const currentSale = this.editingSale();
@@ -1038,7 +1058,7 @@ export class OutSalesListComponent implements OnInit {
       const isAwaiting = this.isAwaitingDelivery(currentSale);
       const detail = (isAwaiting && (!this.editCustomer.name?.trim() || !this.editCustomer.phone?.trim() || !this.editCustomer.address_line?.trim()))
         ? 'A sale awaiting delivery requires customer name, phone, and address line.'
-        : 'Each item must have a product, quantity, and unit price.';
+        : 'Each item must have a product, quantity, and positive unit price.';
       this.messageService.add({
         severity: 'warn',
         summary: 'Incomplete Form',
@@ -1065,13 +1085,51 @@ export class OutSalesListComponent implements OnInit {
 
     const hasCustomerInfo = this.editCustomer.name || this.editCustomer.phone || this.editCustomer.district || this.editCustomer.subdistrict || this.editCustomer.address_line;
 
+    const originalItemsMap = new Map<string, { unit_price: number | null, unit_cost: number | null }>();
+    if (currentSale.items) {
+      for (const orig of currentSale.items) {
+        const anyOrig = orig as any;
+        const pid = orig.product?.id ? orig.product.id.toString() : (anyOrig.product_id ? anyOrig.product_id.toString() : null);
+        if (pid) {
+          originalItemsMap.set(pid, {
+            unit_price: anyOrig.unit_price != null ? Number(anyOrig.unit_price) : null,
+            unit_cost: anyOrig.unit_cost != null ? Number(anyOrig.unit_cost) : null
+          });
+        }
+      }
+    }
+
+    const payloadItems = this.editItems.map(item => {
+      const pid = item.product_id!;
+      const orig = originalItemsMap.get(pid);
+      const isNewProduct = !orig;
+
+      const itemPayload: any = {
+        product_id: pid,
+        quantity: item.quantity
+      };
+
+      if (isNewProduct) {
+        itemPayload.unit_price = item.unit_price != null ? item.unit_price : 0;
+        if (item.unit_cost != null) {
+          itemPayload.unit_cost = item.unit_cost;
+        }
+      } else {
+        const priceChanged = item.unit_price !== orig.unit_price;
+        if (priceChanged && item.unit_price != null) {
+          itemPayload.unit_price = item.unit_price;
+        }
+        const costChanged = item.unit_cost !== orig.unit_cost;
+        if (costChanged) {
+          itemPayload.unit_cost = item.unit_cost;
+        }
+      }
+
+      return itemPayload;
+    });
+
     const payload = {
-      items: this.editItems.map(item => ({
-        product_id: item.product_id!,
-        quantity: item.quantity,
-        unit_price: item.unit_price || 0,
-        unit_cost: item.unit_cost ?? null
-      })),
+      items: payloadItems,
       payment_method: this.editPaymentMethod,
       sold_at: soldAtIso,
       delivery_charge: this.editDeliveryCharge || 0,

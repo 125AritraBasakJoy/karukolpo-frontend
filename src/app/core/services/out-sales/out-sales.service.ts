@@ -13,6 +13,13 @@ export interface OfflineSaleItem {
     unit_cost?: number | null;
 }
 
+export interface OfflineSaleUpdateItem {
+    product_id: string;
+    quantity: number;
+    unit_price?: number | null;
+    unit_cost?: number | null;
+}
+
 export interface OfflineSaleCustomer {
     name?: string | null;
     phone?: string | null;
@@ -33,7 +40,7 @@ export interface OfflineSaleCreate {
 }
 
 export interface OfflineSaleUpdate {
-    items?: OfflineSaleItem[];
+    items?: OfflineSaleUpdateItem[];
     payment_method?: 'cod' | 'cash' | 'bkash' | 'nagad' | 'bank' | 'other' | string;
     sold_at?: string | null;
     delivery_charge?: number | null;

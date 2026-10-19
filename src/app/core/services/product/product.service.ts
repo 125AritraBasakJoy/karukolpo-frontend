@@ -744,7 +744,7 @@ export class ProductService {
       name: data.name || '',
       slug: data.slug || undefined,
       _originalSlug: data.slug || undefined,
-      description: data.description ? this.decodeHtml(data.description) : '',
+      description: data.description || '',
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
       cost: cost,
       imageUrl: mainImageUrl,
@@ -821,7 +821,12 @@ export class ProductService {
       }
     }
 
-    payload.discount_type = product.discount_type || null;
+    if (product.discount_type) {
+      const lower = product.discount_type.toLowerCase();
+      payload.discount_type = (lower === 'percent' || lower === 'percentage') ? 'percentage' : 'fixed';
+    } else {
+      payload.discount_type = null;
+    }
     payload.discount_value = (product.discount_value != null && product.discount_type) ? product.discount_value : null;
     payload.discount_starts_at = this.toIsoStringOrNull(product.discount_starts_at);
     payload.discount_ends_at = this.toIsoStringOrNull(product.discount_ends_at);

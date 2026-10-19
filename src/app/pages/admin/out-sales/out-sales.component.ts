@@ -397,8 +397,9 @@ export class OutSalesComponent implements OnInit, OnDestroy {
         unit_price: item.unit_price || 0,
         regular_price: regPrice,
         discount: disc,
+        discount_per_unit: disc,
         price: item.unit_price || 0,
-        price_at_purchase: item.unit_price || 0,
+        price_at_purchase: regPrice,
         name: prod?.name || 'Item'
       };
     });

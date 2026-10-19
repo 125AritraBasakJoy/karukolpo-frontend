@@ -427,7 +427,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
   /**
    * Helper to detect date period from natural language query
    */
-  private parsePeriod(query: string): { label: string; periodKey: '7d' | '30d' | '90d' | '1y' | 'all'; startDate: Date; isSingleDay?: boolean } {
+  private parsePeriod(query: string): { label: string; periodKey: '7d' | '30d' | '90d' | '12m' | 'all'; startDate: Date; isSingleDay?: boolean } {
     const q = query.toLowerCase();
     const now = new Date();
 
@@ -458,7 +458,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
 
     if (q.includes('year') || q.includes('1 year') || q.includes('বছর') || q.includes('365')) {
       const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-      return { label: 'Past 1 Year', periodKey: '1y', startDate: start };
+      return { label: 'Past 1 Year', periodKey: '12m', startDate: start };
     }
 
     // Default period: Last 7 Days if specified or Last 30 Days

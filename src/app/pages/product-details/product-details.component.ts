@@ -65,6 +65,17 @@ export class ProductDetailsComponent implements OnInit {
     return p.imageUrl ? [p.imageUrl] : [];
   });
 
+  thumbnailImages = computed(() => {
+    const p = this.product();
+    if (!p) return [];
+    if (p.imageObjects && p.imageObjects.length > 0) {
+      return p.imageObjects.map(img =>
+        this.productService.getImageUrl(img.image_thumb || img.image_medium || img.image_large || img.image_path)
+      );
+    }
+    return this.images();
+  });
+
   // Query param from category page
   sourceCategoryParam = signal<string | null>(null);
   sourceFromParam = signal<string | null>(null);

@@ -61,8 +61,12 @@
                         <span class="font-semibold text-white">{{ product.name }}</span>
                     </td>
                     <td>
-                        <span class="price-value font-medium">{{ product.price | currency:'BDT':'৳'
-                            }}</span>
+                        <div class="flex flex-column align-items-start gap-1">
+                            <span class="price-value font-medium">{{ (product.effective_price ?? product.price) | currency:'BDT':'৳' }}</span>
+                            <span *ngIf="product.effective_price && product.effective_price < product.price" class="text-xs line-through text-slate-400 px-1">
+                                {{ product.price | currency:'BDT':'৳' }}
+                            </span>
+                        </div>
                     </td>
                     <td>
                         <div class="status-badge-container">

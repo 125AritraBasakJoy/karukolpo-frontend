@@ -107,7 +107,8 @@ export class AddProductComponent implements OnInit, OnDestroy {
 
     discountTypeOptions = [
         { label: 'No Discount', value: null },
-        { label: 'Fixed Amount (BDT)', value: 'FIXED' }
+        { label: 'Fixed Amount (BDT)', value: 'FIXED' },
+        { label: 'Percentage (%)', value: 'PERCENT' }
     ];
 
     // Image handling with stable object association and unique IDs

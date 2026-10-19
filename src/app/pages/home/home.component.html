@@ -459,8 +459,8 @@
 
                         <button pButton type="submit" label="Send Message" icon="pi pi-arrow-right" iconPos="right" aria-label="Send contact message"
                             class="contact-submit-btn w-full font-bold text-sm"
-                            [loading]="isContactSubmitting"
-                            [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting"></button>
+                            [loading]="isContactSubmitting()"
+                            [disabled]="!contactForm.name || !contactForm.contactInfo || !contactForm.message || isContactSubmitting()"></button>
                         <p class="contact-form-note"><i class="pi pi-heart" aria-hidden="true"></i> Our team will get back to you shortly.</p>
                     </form>
                 </div>

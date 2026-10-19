@@ -82,7 +82,8 @@ export class EditProductComponent implements OnInit, OnDestroy {
     categories = this.categoryService.categories;
     discountTypeOptions = [
         { label: 'No Discount', value: null },
-        { label: 'Fixed Amount (BDT)', value: 'FIXED' }
+        { label: 'Fixed Amount (BDT)', value: 'FIXED' },
+        { label: 'Percentage (%)', value: 'PERCENT' }
     ];
 
     // Image handling
@@ -254,8 +255,13 @@ export class EditProductComponent implements OnInit, OnDestroy {
             next: (product) => {
                 if (!product) return;
                 this.product.set(product);
+                const rawType = (product.discount_type || '').toUpperCase();
+                const normalizedType = (rawType === 'PERCENT' || rawType === 'PERCENTAGE')
+                    ? 'PERCENT'
+                    : (rawType === 'FIXED' ? 'FIXED' : null);
                 this.productForm = { 
                     ...product,
+                    discount_type: normalizedType,
                     discount_starts_at: this.formatDateForInput(product.discount_starts_at),
                     discount_ends_at: this.formatDateForInput(product.discount_ends_at)
                 };

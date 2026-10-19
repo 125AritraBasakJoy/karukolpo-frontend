@@ -1,9 +1,11 @@
 import { Injectable, Inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from '../api/api.service';
 import { MAINTENANCE_API } from './maintenance.api';
 import { SiteConfigService } from '../site-config/site-config.service';
+import { SKIP_GLOBAL_LOADER, SKIP_AUTH_BEARER } from '../../interceptors/http-context-tokens';
 
 export interface MaintenanceStatus {
     enabled: boolean;
@@ -49,7 +51,10 @@ export class MaintenanceService {
      * GET /maintenance
      */
     refreshStatus(): Observable<MaintenanceStatus> {
-        return this.apiService.get<MaintenanceStatus>(MAINTENANCE_API.STATUS);
+        const context = new HttpContext()
+            .set(SKIP_GLOBAL_LOADER, true)
+            .set(SKIP_AUTH_BEARER, true);
+        return this.apiService.get<MaintenanceStatus>(MAINTENANCE_API.STATUS, { context });
     }
 
     /**
@@ -90,6 +95,9 @@ export class MaintenanceService {
             error: () => { /* backend unreachable — keep last known state */ }
         });
         this.pollTimer = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) {
+                return;
+            }
             this.refreshStatus().subscribe({
                 next: (status) => this.applyStatus(status),
                 error: () => { /* keep last known state */ }

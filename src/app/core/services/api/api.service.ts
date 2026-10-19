@@ -8,8 +8,8 @@ import { Observable } from 'rxjs';
 export class ApiService {
   constructor(private http: HttpClient) { }
 
-  get<T>(endpoint: string): Observable<T> {
-    return this.http.get<T>(endpoint);
+  get<T>(endpoint: string, options?: { context?: any; params?: any; headers?: any }): Observable<T> {
+    return this.http.get<T>(endpoint, options);
   }
 
   getResponse<T>(endpoint: string): Observable<HttpResponse<T>> {

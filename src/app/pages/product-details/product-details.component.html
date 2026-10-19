@@ -82,7 +82,7 @@
                  class="thumbnail-item cursor-pointer"
                  [class.active]="idx === activeImageIndex()"
                  (click)="selectImage(idx)">
-              <img [src]="img" [alt]="product()!.name + ' thumbnail ' + (idx + 1)" class="thumbnail-img">
+              <img [src]="thumbnailImages()[idx] || img" [alt]="product()!.name + ' thumbnail ' + (idx + 1)" class="thumbnail-img">
             </div>
           </div>
         </div>

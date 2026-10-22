@@ -56,9 +56,10 @@ export class OrderService {
    * Create new order
    * POST /orders
    */
-  createOrder(order: Omit<Order, 'id'>): Observable<Order> {
+  createOrder(order: Omit<Order, 'id'>, idempotencyKey?: string): Observable<Order> {
     const backendOrder = this.mapFrontendToBackend(order);
-    return this.apiService.post<any>(API_ENDPOINTS.ORDERS.CREATE, backendOrder).pipe(
+    const options = idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined;
+    return this.apiService.post<any>(API_ENDPOINTS.ORDERS.CREATE, backendOrder, options).pipe(
       tap({
         next: () => this.clearCache(), // Invalidate cache on new order
         error: (err) => console.error('Order creation failed:', err)

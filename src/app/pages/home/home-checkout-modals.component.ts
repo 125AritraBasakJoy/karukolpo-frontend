@@ -74,6 +74,8 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     subDistricts: string[] = [];
     placedOrderId = '';
     placedOrderNumber = '';
+    private checkoutIdempotencyKey = '';
+    private lastCheckoutSignature = '';
     currentPaymentId: number | null = null;
     transactionId = '';
     emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -160,6 +162,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         this.cartService.refreshCartProducts();
 
         // Reset payment method to default to ensure modal logic works
+        this.resetIdempotencyKey();
         this.selectedPaymentMethod = null;
         this.displayCheckoutModal = true;
     }
@@ -397,6 +400,26 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         this.displayCodConfirmModal = false;
         this.bkashTrxId = '';
         this.bkashPhone = '';
+        this.resetIdempotencyKey();
+    }
+
+    private getOrCreateIdempotencyKey(): string {
+        // ponytail: JSON signature tracks phone, address, and cart item/qty changes; upgrade if form structure expands
+        const signature = JSON.stringify({
+            phone: this.checkoutForm.phoneNumber,
+            address: this.checkoutForm.fullAddress,
+            items: this.cartService.cart().map(i => ({ id: i.product?.id, q: i.quantity }))
+        });
+        if (!this.checkoutIdempotencyKey || this.lastCheckoutSignature !== signature) {
+            this.checkoutIdempotencyKey = crypto.randomUUID();
+            this.lastCheckoutSignature = signature;
+        }
+        return this.checkoutIdempotencyKey;
+    }
+
+    private resetIdempotencyKey() {
+        this.checkoutIdempotencyKey = '';
+        this.lastCheckoutSignature = '';
     }
 
     selectPaymentMethod(method: 'COD' | 'bKash') {
@@ -424,7 +447,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         const orderData = this.prepareOrderData('COD');
 
         try {
-            const order = await lastValueFrom(this.orderService.createOrder(orderData));
+            const order = await lastValueFrom(this.orderService.createOrder(orderData, this.getOrCreateIdempotencyKey()));
             this.placedOrderId = order.id || '';
             this.placedOrderNumber = order.orderNumber || this.placedOrderId;
 
@@ -466,7 +489,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         if (!this.placedOrderId) {
             const orderData = this.prepareOrderData('bKash');
             try {
-                const order = await lastValueFrom(this.orderService.createOrder(orderData));
+                const order = await lastValueFrom(this.orderService.createOrder(orderData, this.getOrCreateIdempotencyKey()));
                 this.placedOrderId = order.id || '';
                 this.placedOrderNumber = order.orderNumber || this.placedOrderId;
             } catch (err) {

@@ -272,7 +272,7 @@ export class ProductDetailsComponent implements OnInit {
 
   loadRelatedProducts(id: string | number) {
     this.loadingRelated.set(true);
-    this.productService.getProducts().subscribe({
+    this.productService.getProducts(0, 100, undefined, false, 'card').subscribe({
       next: (products) => {
         const currentProduct = this.product();
         if (currentProduct) {

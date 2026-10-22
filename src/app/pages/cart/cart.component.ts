@@ -77,6 +77,8 @@ export class CartComponent implements OnInit, OnDestroy {
     orderTotal = 0;
     orderDiscount = 0;
     private createdOrderObj: any = null;
+    private checkoutIdempotencyKey = '';
+    private lastCheckoutSignature = '';
 
     // Checkout draft retention in localStorage (10 minutes)
     private readonly CHECKOUT_DRAFT_TTL = 600000;
@@ -117,6 +119,7 @@ export class CartComponent implements OnInit, OnDestroy {
         if (isPlatformBrowser(this.platformId)) {
             localStorage.removeItem('karukolpo_checkout_draft');
         }
+        this.resetIdempotencyKey();
         this.checkoutForm = {
             fullName: '',
             email: '',
@@ -231,6 +234,25 @@ export class CartComponent implements OnInit, OnDestroy {
         }
     }
 
+    private getOrCreateIdempotencyKey(): string {
+        // ponytail: JSON signature tracks phone, address, and cart item/qty changes; upgrade if form structure expands
+        const signature = JSON.stringify({
+            phone: this.checkoutForm.phoneNumber,
+            address: this.checkoutForm.fullAddress,
+            items: this.cartService.cart().map(i => ({ id: i.product?.id, q: i.quantity }))
+        });
+        if (!this.checkoutIdempotencyKey || this.lastCheckoutSignature !== signature) {
+            this.checkoutIdempotencyKey = crypto.randomUUID();
+            this.lastCheckoutSignature = signature;
+        }
+        return this.checkoutIdempotencyKey;
+    }
+
+    private resetIdempotencyKey() {
+        this.checkoutIdempotencyKey = '';
+        this.lastCheckoutSignature = '';
+    }
+
     private prepareOrderData(paymentMethod: 'COD' | 'bKash'): any {
         return {
             ...this.checkoutForm,
@@ -277,7 +299,7 @@ export class CartComponent implements OnInit, OnDestroy {
         const orderData = this.prepareOrderData('COD');
 
         try {
-            const order = await lastValueFrom(this.orderService.createOrder(orderData));
+            const order = await lastValueFrom(this.orderService.createOrder(orderData, this.getOrCreateIdempotencyKey()));
             this.createdOrderObj = order;
             this.placedOrderId = order.id || '';
             this.placedOrderNumber = order.orderNumber || this.placedOrderId;
@@ -313,7 +335,7 @@ export class CartComponent implements OnInit, OnDestroy {
         if (!this.placedOrderId) {
             const orderData = this.prepareOrderData('bKash');
             try {
-                const order = await lastValueFrom(this.orderService.createOrder(orderData));
+                const order = await lastValueFrom(this.orderService.createOrder(orderData, this.getOrCreateIdempotencyKey()));
                 this.createdOrderObj = order;
                 this.placedOrderId = order.id || '';
                 this.placedOrderNumber = order.orderNumber || this.placedOrderId;

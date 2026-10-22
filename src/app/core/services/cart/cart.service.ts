@@ -69,7 +69,7 @@ export class CartService {
   refreshCartProducts() {
     if (this.cart().length === 0) return;
 
-    this.productService.getProducts().subscribe({
+    this.productService.getProducts(0, 100, undefined, false, 'card').subscribe({
       next: (products) => {
         let cartUpdated = false;
         const updatedItems = this.cart().map(item => {

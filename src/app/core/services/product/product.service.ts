@@ -22,6 +22,7 @@ export interface ProductQueryOptions {
   maxPrice?: number;
   inStock?: boolean;
   sort?: 'newest' | 'price_asc' | 'price_desc' | 'name' | string;
+  view?: 'full' | 'card';
 }
 
 export interface ProductsResponse {
@@ -37,14 +38,14 @@ export interface ProductsResponse {
   providedIn: 'root'
 })
 export class ProductService {
-  private productsCache: Product[] | null = null;
-  private hotDealsCache: Product[] | null = null;
-  private bestSellersCache: Product[] | null = null;
+  private productsCache = new Map<'full' | 'card', Product[]>();
+  private hotDealsCache = new Map<'full' | 'card', Product[]>();
+  private bestSellersCache = new Map<'full' | 'card', Product[]>();
   private productCategoriesCache = new Map<string | number, any[]>();
   private productMap = new Map<string | number, Product>();
-  private pendingProductsRequest: Observable<Product[]> | null = null;
-  private pendingHotDealsRequest: Observable<Product[]> | null = null;
-  private pendingBestSellersRequest: Observable<Product[]> | null = null;
+  private pendingProductsRequest = new Map<'full' | 'card', Observable<Product[]>>();
+  private pendingHotDealsRequest = new Map<'full' | 'card', Observable<Product[]>>();
+  private pendingBestSellersRequest = new Map<'full' | 'card', Observable<Product[]>>();
 
   constructor(
     private apiService: ApiService,
@@ -55,11 +56,14 @@ export class ProductService {
    * Clear all in-memory caches
    */
   clearCache() {
-    this.productsCache = null;
-    this.hotDealsCache = null;
-    this.bestSellersCache = null;
+    this.productsCache.clear();
+    this.hotDealsCache.clear();
+    this.bestSellersCache.clear();
     this.productCategoriesCache.clear();
     this.productMap.clear();
+    this.pendingProductsRequest.clear();
+    this.pendingHotDealsRequest.clear();
+    this.pendingBestSellersRequest.clear();
   }
 
   private buildProductQueryParams(options: ProductQueryOptions): string {
@@ -72,6 +76,7 @@ export class ProductService {
     if (options.maxPrice !== undefined && options.maxPrice !== null) params.append('max_price', options.maxPrice.toString());
     if (options.inStock !== undefined && options.inStock !== null) params.append('in_stock', options.inStock.toString());
     if (options.sort) params.append('sort', options.sort);
+    if (options.view === 'card') params.append('view', 'card');
     const qs = params.toString();
     return qs ? `?${qs}` : '';
   }
@@ -80,8 +85,9 @@ export class ProductService {
    * Get products with unpaginated total count from X-Total-Count header.
    * Leverages backend server-side search, category filter, price filter, stock filter, and sort.
    */
-  getProductsWithCount(options: ProductQueryOptions = {}): Observable<ProductsResponse> {
-    const qs = this.buildProductQueryParams(options);
+  getProductsWithCount(options: ProductQueryOptions = {}, view: 'full' | 'card' = options.view || 'full'): Observable<ProductsResponse> {
+    const queryOptions = { ...options, view };
+    const qs = this.buildProductQueryParams(queryOptions);
     return this.apiService.getResponse<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${qs}`).pipe(
       map(res => {
         const items = (res.body || []).map(p => this.mapBackendToFrontend(p));
@@ -100,26 +106,30 @@ export class ProductService {
     optionsOrSkip: ProductQueryOptions | number = 0,
     limit = 100,
     categoryId?: string | number,
-    forceRefresh = false
+    forceRefresh = false,
+    view: 'full' | 'card' = typeof optionsOrSkip === 'object' ? (optionsOrSkip.view || 'full') : 'full'
   ): Observable<Product[]> {
     if (typeof optionsOrSkip === 'object') {
-      return this.getProductsWithCount(optionsOrSkip).pipe(map(res => res.items));
+      return this.getProductsWithCount(optionsOrSkip, view).pipe(map(res => res.items));
     }
 
     const skip = optionsOrSkip;
 
-    if (!forceRefresh && !categoryId && this.productsCache) {
-      return of(this.productsCache);
+    if (!forceRefresh && !categoryId && this.productsCache.has(view)) {
+      return of(this.productsCache.get(view)!);
     }
 
     // Deduplicate simultaneous requests for the same base list
-    if (!forceRefresh && !categoryId && skip === 0 && this.pendingProductsRequest) {
-      return this.pendingProductsRequest;
+    if (!forceRefresh && !categoryId && skip === 0 && this.pendingProductsRequest.has(view)) {
+      return this.pendingProductsRequest.get(view)!;
     }
 
     let query = buildListQuery(skip, limit);
     if (categoryId) {
       query += `&category_id=${categoryId}`;
+    }
+    if (view === 'card') {
+      query += `&view=card`;
     }
 
     const request = this.apiService.get<any[]>(`${API_ENDPOINTS.PRODUCTS.LIST}${query}`).pipe(
@@ -128,19 +138,19 @@ export class ProductService {
       }),
       tap(products => {
         if (!categoryId && skip === 0 && isPlatformBrowser(this.platformId)) {
-          this.productsCache = products;
+          this.productsCache.set(view, products);
         }
       }),
       shareReplay(1),
       finalize(() => {
         if (!categoryId && skip === 0) {
-          this.pendingProductsRequest = null;
+          this.pendingProductsRequest.delete(view);
         }
       })
     );
 
     if (!categoryId && skip === 0) {
-      this.pendingProductsRequest = request;
+      this.pendingProductsRequest.set(view, request);
     }
 
     return request;
@@ -477,24 +487,25 @@ export class ProductService {
    * Get all hot deal products
    * GET /products/hot-deals
    */
-  getHotDeals(forceRefresh = false): Observable<Product[]> {
-    if (!forceRefresh && this.hotDealsCache) {
-      return of(this.hotDealsCache);
+  getHotDeals(forceRefresh = false, view: 'full' | 'card' = 'full'): Observable<Product[]> {
+    if (!forceRefresh && this.hotDealsCache.has(view)) {
+      return of(this.hotDealsCache.get(view)!);
     }
     
-    if (!forceRefresh && this.pendingHotDealsRequest) {
-      return this.pendingHotDealsRequest;
+    if (!forceRefresh && this.pendingHotDealsRequest.has(view)) {
+      return this.pendingHotDealsRequest.get(view)!;
     }
 
-    const request = this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.HOT_DEALS).pipe(
+    const endpoint = view === 'card' ? `${API_ENDPOINTS.PRODUCTS.HOT_DEALS}?view=card` : API_ENDPOINTS.PRODUCTS.HOT_DEALS;
+    const request = this.apiService.get<any[]>(endpoint).pipe(
       map(products => products.map(p => this.mapBackendToFrontend(p))),
-      tap(products => this.hotDealsCache = products),
+      tap(products => this.hotDealsCache.set(view, products)),
       shareReplay(1),
-      finalize(() => this.pendingHotDealsRequest = null)
+      finalize(() => this.pendingHotDealsRequest.delete(view))
     );
 
     if (!forceRefresh) {
-      this.pendingHotDealsRequest = request;
+      this.pendingHotDealsRequest.set(view, request);
     }
 
     return request;
@@ -546,24 +557,25 @@ export class ProductService {
    * Get all best seller products
    * GET /products/best-sellers
    */
-  getBestSellers(forceRefresh = false): Observable<Product[]> {
-    if (!forceRefresh && this.bestSellersCache) {
-      return of(this.bestSellersCache);
+  getBestSellers(forceRefresh = false, view: 'full' | 'card' = 'full'): Observable<Product[]> {
+    if (!forceRefresh && this.bestSellersCache.has(view)) {
+      return of(this.bestSellersCache.get(view)!);
     }
 
-    if (!forceRefresh && this.pendingBestSellersRequest) {
-      return this.pendingBestSellersRequest;
+    if (!forceRefresh && this.pendingBestSellersRequest.has(view)) {
+      return this.pendingBestSellersRequest.get(view)!;
     }
 
-    const request = this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.BEST_SELLERS).pipe(
+    const endpoint = view === 'card' ? `${API_ENDPOINTS.PRODUCTS.BEST_SELLERS}?view=card` : API_ENDPOINTS.PRODUCTS.BEST_SELLERS;
+    const request = this.apiService.get<any[]>(endpoint).pipe(
       map(products => products.map(p => this.mapBackendToFrontend(p))),
-      tap(products => this.bestSellersCache = products),
+      tap(products => this.bestSellersCache.set(view, products)),
       shareReplay(1),
-      finalize(() => this.pendingBestSellersRequest = null)
+      finalize(() => this.pendingBestSellersRequest.delete(view))
     );
 
     if (!forceRefresh) {
-      this.pendingBestSellersRequest = request;
+      this.pendingBestSellersRequest.set(view, request);
     }
 
     return request;

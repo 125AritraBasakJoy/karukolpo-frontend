@@ -287,13 +287,13 @@ export class HomeComponent implements OnInit, OnDestroy {
 
         const requests: any = {};
         if (config.hasHotDeals) {
-            requests.hotDeals = this.productService.getHotDeals();
+            requests.hotDeals = this.productService.getHotDeals(false, 'card');
         } else {
             requests.hotDeals = of([]);
         }
 
         if (config.hasBestSellers) {
-            requests.bestSellers = this.productService.getBestSellers();
+            requests.bestSellers = this.productService.getBestSellers(false, 'card');
         } else {
             requests.bestSellers = of([]);
         }

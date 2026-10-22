@@ -16,8 +16,8 @@ export class ApiService {
     return this.http.get<T>(endpoint, { observe: 'response' });
   }
 
-  post<T>(endpoint: string, body: any): Observable<T> {
-    return this.http.post<T>(endpoint, body);
+  post<T>(endpoint: string, body: any, options?: { context?: any; params?: any; headers?: any }): Observable<T> {
+    return this.http.post<T>(endpoint, body, options);
   }
 
   put<T>(endpoint: string, body: any): Observable<T> {

@@ -342,7 +342,7 @@
                         </div>
                         <button pButton label="Complete Payment" icon="pi pi-shield"
                             class="premium-btn-primary bkash-submit-btn w-full py-3 text-base font-bold shadow-3" (click)="submitBkashPayment()"
-                            [disabled]="!bkashPhone || !bkashTrxId" [loading]="loading()"></button>
+                            [disabled]="!bkashPhone || !bkashTrxId || loading()" [loading]="loading()"></button>
                     </div>
                 </div>
                 }
@@ -392,7 +392,7 @@
         <div class="cod-modal-actions">
             <button pButton label="Cancel" class="cod-cancel-btn" (click)="cancelCOD()"></button>
             <button pButton label="Yes, Place Order" icon="pi pi-check" class="premium-btn-primary cod-confirm-btn"
-                [loading]="loading()" (click)="proceedWithCOD()"></button>
+                [disabled]="loading()" [loading]="loading()" (click)="proceedWithCOD()"></button>
         </div>
     </div>
 </p-dialog>

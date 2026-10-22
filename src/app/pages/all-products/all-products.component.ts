@@ -218,7 +218,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
 
         const filter = this.filterType();
         if (filter === 'hot-deals') {
-            this.productService.getHotDeals().subscribe({
+            this.productService.getHotDeals(false, 'card').subscribe({
                 next: (items) => {
                     this.applyClientSideFilters(items);
                     this.loading.set(false);
@@ -232,7 +232,7 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         }
 
         if (filter === 'best-selling') {
-            this.productService.getBestSellers().subscribe({
+            this.productService.getBestSellers(false, 'card').subscribe({
                 next: (items) => {
                     this.applyClientSideFilters(items);
                     this.loading.set(false);
@@ -256,10 +256,11 @@ export class AllProductsComponent implements OnInit, OnDestroy {
             minPrice: priceBounds.min,
             maxPrice: priceBounds.max,
             inStock: inStockFilter,
-            sort: this.sortOrder()
+            sort: this.sortOrder(),
+            view: 'card'
         };
 
-        this.productService.getProductsWithCount(options).subscribe({
+        this.productService.getProductsWithCount(options, 'card').subscribe({
             next: (res) => {
                 this.products.set(res.items);
                 this.totalCount.set(res.total);

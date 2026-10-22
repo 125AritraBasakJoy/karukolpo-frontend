@@ -105,22 +105,6 @@
 
       <!-- Quick Filter Dropdowns (Desktop / Tablet >= 768px) -->
       <div class="filter-dropdowns hidden md:flex flex-wrap align-items-center gap-2">
-        <!-- Category Dropdown (Mobile/Compact) -->
-        <p-dropdown [options]="categories()" [ngModel]="selectedCategoryId()"
-                    (ngModelChange)="onCategoryChange($event)" optionLabel="name" optionValue="id"
-                    [showClear]="true" appendTo="body" placeholder="Category"
-                    styleClass="compact-filter-dropdown"></p-dropdown>
-
-        <!-- Price Range Dropdown -->
-        <p-dropdown [options]="priceRangeOptions" [ngModel]="selectedPriceRange()"
-                    (ngModelChange)="onPriceRangeChange($event)" optionLabel="label" optionValue="value"
-                    appendTo="body" styleClass="compact-filter-dropdown"></p-dropdown>
-
-        <!-- Availability Dropdown -->
-        <p-dropdown [options]="availabilityOptions" [ngModel]="selectedAvailability()"
-                    (ngModelChange)="setAvailability($event)" optionLabel="label" optionValue="value"
-                    appendTo="body" styleClass="compact-filter-dropdown"></p-dropdown>
-
         <!-- Sort By Dropdown -->
         <p-dropdown [options]="sortOptions" [ngModel]="sortOrder()"
                     (ngModelChange)="onSortChange($event)" optionLabel="label" optionValue="value"

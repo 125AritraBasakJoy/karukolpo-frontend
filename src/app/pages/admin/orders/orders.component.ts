@@ -15,7 +15,6 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { SkeletonModule } from 'primeng/skeleton';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
@@ -36,7 +35,6 @@ import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } fr
     ToastModule,
     DialogModule,
     ProgressSpinnerModule,
-    SkeletonModule,
     TooltipModule,
     InputTextModule,
     FormsModule,
@@ -145,6 +143,7 @@ export class OrdersComponent implements OnInit {
 
   // Data Buffering
   ordersBuffer: Order[] = [];
+  private terminalTotal: number | null = null;
   readonly BUFFER_SIZE = 100;
 
   loadOrders(event?: TableLazyLoadEvent) {
@@ -166,7 +165,8 @@ export class OrdersComponent implements OnInit {
 
     // Check if we have data in buffer
     let dataMissing = false;
-    for (let i = first; i < first + rows; i++) {
+    const pageEnd = Math.min(first + rows, this.terminalTotal ?? Infinity);
+    for (let i = first; i < pageEnd; i++) {
       if (!this.ordersBuffer[i]) {
         dataMissing = true;
         break;
@@ -198,6 +198,7 @@ export class OrdersComponent implements OnInit {
         if (orders.length === fetchLimit) {
           this.totalRecords.set(currentTotal + 1);
         } else {
+          this.terminalTotal = currentTotal;
           this.totalRecords.set(currentTotal);
         }
 
@@ -286,6 +287,7 @@ export class OrdersComponent implements OnInit {
     this.orderService.clearCache(); // Clear service-level cache to fetch fresh data from API
     // Clear buffer to force fresh fetch
     this.ordersBuffer = [];
+    this.terminalTotal = null;
     this.totalRecords.set(0);
 
     // Reset to first page

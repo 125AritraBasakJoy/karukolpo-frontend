@@ -177,12 +177,6 @@
                 <span class="font-bold text-base text-900">Total Amount:</span>
                 <span class="font-bold text-xl text-primary">৳{{ order()?.totalAmount | number:'1.0-0' }}</span>
               </div>
-
-              <!-- Balance / Due Row -->
-              <div *ngIf="(order()?.amount_due || 0) > 0" class="flex justify-content-between align-items-center pt-1 text-amber-700 font-semibold text-xs">
-                <span>To Collect on Delivery:</span>
-                <span class="font-bold font-mono">৳{{ order()?.amount_due | number:'1.0-0' }}</span>
-              </div>
             </div>
           </div>
         </div>

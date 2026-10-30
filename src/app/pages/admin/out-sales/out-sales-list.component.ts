@@ -23,6 +23,7 @@ import { Order } from '../../../models/order.model';
 import { formatPaymentStatus } from '../../../models/payment.model';
 import { District, districts } from '../../../data/bangladesh-data';
 import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/thermal-invoice.component';
+import { Popover, PopoverModule } from 'primeng/popover';
 import { finalize, catchError, tap } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 
@@ -71,7 +72,8 @@ export type OutSalesFilterType = 'all' | 'awaiting' | 'review' | 'delivered' | '
     ProgressSpinnerModule,
     SkeletonModule,
     CurrencyPipe,
-    ThermalInvoiceComponent
+    ThermalInvoiceComponent,
+    PopoverModule
   ],
   providers: [ConfirmationService],
   templateUrl: './out-sales-list.component.html',
@@ -81,6 +83,9 @@ export class OutSalesListComponent implements OnInit {
   @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
   @ViewChild('classifyCalendar') classifyCalendar?: Calendar;
   @ViewChild('thermalInvoice') thermalInvoice?: ThermalInvoiceComponent;
+  @ViewChild('saleActionsPopover') saleActionsPopover?: Popover;
+
+  activeActionSale = signal<Order | null>(null);
 
   // Sales Table State
   sales = signal<Order[]>([]);
@@ -1231,6 +1236,20 @@ export class OutSalesListComponent implements OnInit {
         });
       }
     });
+  }
+
+  openSaleActionMenu(event: Event, sale: Order) {
+    event.stopPropagation();
+    this.activeActionSale.set(sale);
+    this.saleActionsPopover?.toggle(event);
+  }
+
+  executeSaleAction(action: (sale: Order) => void) {
+    const sale = this.activeActionSale();
+    this.saleActionsPopover?.hide();
+    if (sale) {
+      action(sale);
+    }
   }
 
   openThermalInvoice(sale: Order) {

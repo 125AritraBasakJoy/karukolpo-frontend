@@ -6,6 +6,7 @@ import { OrderService, OrderQueryOptions } from '../../../core/services';
 import { ProductService } from '../../../core/services';
 import { PaymentService } from '../../../core/services';
 import { Order, OrderAdminUpdate, OrderEditResult } from '../../../models/order.model';
+import { Product } from '../../../models/product.model';
 import { PaymentTransaction, formatPaymentStatus, PaymentStatusInfo } from '../../../models/payment.model';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -23,6 +24,9 @@ import { FormsModule } from '@angular/forms';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { NotificationService } from '../../../core/services';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { TextareaModule } from 'primeng/textarea';
+import { CurrencyPipe } from '@angular/common';
 import { InvoiceComponent } from '../../../components/invoice/invoice.component';
 import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
 
@@ -42,6 +46,9 @@ import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } fr
     InputNumberModule,
     FormsModule,
     ConfirmDialogModule,
+    PopoverModule,
+    TextareaModule,
+    CurrencyPipe,
     InvoiceComponent
   ],
   providers: [ConfirmationService],
@@ -51,6 +58,13 @@ import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } fr
 })
 export class OrdersComponent implements OnInit {
   @ViewChild('adminInvoice') adminInvoice!: InvoiceComponent;
+  @ViewChild('orderActionsPopover') orderActionsPopover?: Popover;
+
+  activeActionOrder = signal<Order | null>(null);
+  allCatalogProducts = signal<Product[]>([]);
+  catalogProductsLoading = signal<boolean>(false);
+  selectedAddProductId: string | null = null;
+  manualPaymentSaving = signal<boolean>(false);
 
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
@@ -729,6 +743,7 @@ export class OrdersComponent implements OnInit {
       return;
     }
 
+    this.manualPaymentSaving.set(true);
     this.paymentService.recordManualPayment(order.id, {
       kind: this.manualPaymentKind(),
       method: this.manualPaymentMethod(),
@@ -737,6 +752,7 @@ export class OrdersComponent implements OnInit {
       note: this.manualPaymentNote().trim() || undefined
     }).subscribe({
       next: (detail) => {
+        this.manualPaymentSaving.set(false);
         this.messageService.add({
           severity: 'success',
           summary: 'Recorded',
@@ -748,6 +764,7 @@ export class OrdersComponent implements OnInit {
         this.loadOrders();
       },
       error: (err) => {
+        this.manualPaymentSaving.set(false);
         this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to record entry.' });
       }
     });
@@ -793,9 +810,66 @@ export class OrdersComponent implements OnInit {
     return order.status === 'Pending' || order.status === 'Confirmed';
   }
 
+  confirmDirectOrder(order: Order) {
+    this.updateStatus(order, 'Confirmed');
+  }
+
+  completeDirectOrder(order: Order) {
+    this.updateStatus(order, 'Completed');
+  }
+
+  cancelDirectOrder(order: Order) {
+    this.updateStatus(order, 'Cancelled');
+  }
+
+  openEditOrderModalDirect(order: Order) {
+    this.selectedOrder.set(order);
+    this.openEditOrderModal();
+  }
+
+  openOrderActionMenu(event: Event, order: Order) {
+    event.stopPropagation();
+    this.activeActionOrder.set(order);
+    this.orderActionsPopover?.toggle(event);
+  }
+
+  executeOrderAction(action: (order: Order) => void) {
+    const order = this.activeActionOrder();
+    this.orderActionsPopover?.hide();
+    if (order) {
+      action(order);
+    }
+  }
+
+  loadCatalogProductsIfNeeded() {
+    if (this.allCatalogProducts().length > 0 || this.catalogProductsLoading()) return;
+    this.catalogProductsLoading.set(true);
+    this.productService.getProducts(0, 500, undefined, true).subscribe({
+      next: (prods) => {
+        this.allCatalogProducts.set(prods || []);
+        this.catalogProductsLoading.set(false);
+      },
+      error: (err) => {
+        console.warn('Failed to load catalog products for dropdown', err);
+        this.catalogProductsLoading.set(false);
+      }
+    });
+  }
+
+  onAddProductDropdownChange(productId: string | null) {
+    if (!productId) return;
+    const prod = this.allCatalogProducts().find(p => p.id === productId);
+    if (prod) {
+      this.addEditProduct(prod);
+    }
+    this.selectedAddProductId = null;
+  }
+
   openEditOrderModal() {
     const order = this.selectedOrder();
     if (!order) return;
+
+    this.loadCatalogProductsIfNeeded();
 
     const basket = (order.items || []).map(item => ({
       product_id: item.product?.id || item.product_id || '',
@@ -807,6 +881,7 @@ export class OrdersComponent implements OnInit {
     }));
 
     this.editBasketItems.set(basket);
+    this.selectedAddProductId = null;
     this.editAddress.set({
       full_name: order.address?.full_name || order.fullName || '',
       phone: order.address?.phone || order.phoneNumber || '',

@@ -87,17 +87,26 @@
         </div>
 
         <!-- Payment Method & Status -->
-        <div class="od-payment-row">
-            <span class="od-label">PAYMENT METHOD</span>
-            <span class="od-payment-value">{{ paymentMethodDisplay }}</span>
-        </div>
-        <div class="od-payment-row" *ngIf="paymentStatusDisplay">
-            <span class="od-label">PAYMENT STATUS</span>
-            <span class="od-payment-value" [class.text-green-600]="paymentStatusDisplay.toLowerCase() === 'paid'">{{ paymentStatusDisplay }}</span>
-        </div>
-        <div class="od-payment-row" *ngIf="amountDue > 0">
-            <span class="od-label">AMOUNT DUE ON DELIVERY</span>
-            <span class="od-payment-value font-bold text-red-600">৳ {{ amountDue | number:'1.2-2' }}</span>
+        <div class="od-payment-meta">
+            <div class="od-payment-row">
+                <span class="od-label">PAYMENT METHOD</span>
+                <span class="od-payment-value">{{ paymentMethodDisplay }}</span>
+            </div>
+            <div class="od-payment-row" *ngIf="paymentStatusDisplay">
+                <span class="od-label">PAYMENT STATUS</span>
+                <span class="od-status-pill" [attr.data-status]="paymentStatusInfo.rawStatus">
+                    <span class="od-status-dot"></span>
+                    {{ paymentStatusDisplay }}
+                </span>
+            </div>
+            <div class="od-payment-row od-due-row" *ngIf="amountDue > 0 && paymentStatusInfo.rawStatus !== 'paid'">
+                <span class="od-label">AMOUNT DUE ON DELIVERY</span>
+                <span class="od-payment-value font-bold text-red-600">৳ {{ amountDue | number:'1.2-2' }}</span>
+            </div>
+            <div class="od-payment-row od-refund-row" *ngIf="amountDue < 0 || paymentStatusInfo.rawStatus === 'refund_due'">
+                <span class="od-label">REFUND BALANCE</span>
+                <span class="od-payment-value font-bold text-orange-600">৳ {{ (amountDue < 0 ? -amountDue : 0) | number:'1.2-2' }}</span>
+            </div>
         </div>
 
     </div>

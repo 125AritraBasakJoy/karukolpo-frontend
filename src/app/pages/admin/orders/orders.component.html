@@ -75,23 +75,9 @@
                         styleClass="text-xs font-bold uppercase px-2 py-1"></p-tag>
 
                     <div class="actions-cell flex gap-2">
-                        <button pButton icon="pi pi-eye" class="action-btn view-btn"
-                            (click)="viewOrder(order)" pTooltip="View Details" tooltipPosition="top"></button>
-                        <button pButton type="button" icon="pi pi-download" class="action-btn download-btn"
-                            (click)="$event.preventDefault(); $event.stopPropagation(); downloadAdminInvoice(order)"
-                            pTooltip="Invoice" tooltipPosition="top"></button>
-                        @if (order.status === 'Pending' && order.paymentMethod?.toLowerCase() !== 'bkash') {
-                        <button pButton icon="pi pi-check" class="action-btn deliver-btn"
-                            (click)="updateStatus(order, 'Confirmed')" pTooltip="Confirm" tooltipPosition="top"></button>
-                        }
-                        @if (order.status === 'Confirmed') {
-                        <button pButton icon="pi pi-check-circle" class="action-btn deliver-btn"
-                            (click)="updateStatus(order, 'Completed')" pTooltip="Complete" tooltipPosition="top"></button>
-                        }
-                        @if (order.status === 'Pending' || order.status === 'Confirmed') {
-                        <button pButton icon="pi pi-times" class="action-btn cancel-btn"
-                            (click)="updateStatus(order, 'Cancelled')" pTooltip="Cancel" tooltipPosition="top"></button>
-                        }
+                        <button pButton icon="pi pi-ellipsis-v" class="action-btn menu-trigger-btn"
+                            (click)="openOrderActionMenu($event, order)"
+                            pTooltip="Actions" tooltipPosition="top" aria-label="Open actions menu"></button>
                     </div>
                 </div>
             </div>
@@ -116,7 +102,7 @@
                         <th>Total</th>
                         <th>Payment Status</th>
                         <th>Fulfillment</th>
-                        <th class="text-center actions-col-header" style="width: 12rem; min-width: 12rem">Actions</th>
+                        <th class="text-center actions-col-header" style="width: 5.5rem; min-width: 5.5rem">Actions</th>
                     </tr>
                 </ng-template>
 
@@ -145,38 +131,13 @@
                             <p-tag [value]="order.status" [severity]="getSeverity(order.status)"
                                 styleClass="text-sm font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
-                        <td class="text-center actions-col-cell">
+                        <td class="text-center actions-col-cell" style="width: 5.5rem; min-width: 5.5rem">
                             <div class="actions-cell">
-                                <button pButton icon="pi pi-eye"
-                                    class="action-btn view-btn"
-                                    (click)="viewOrder(order)" pTooltip="View Details" tooltipPosition="top"></button>
-
-                                <button pButton type="button" icon="pi pi-download"
-                                    [loading]="downloadingOrderId() === (order.id || '').toString()"
-                                    class="action-btn download-btn"
-                                    (click)="$event.preventDefault(); $event.stopPropagation(); downloadAdminInvoice(order)"
-                                    pTooltip="Download Invoice" tooltipPosition="top"></button>
-
-                                @if (order.status === 'Pending' && order.paymentMethod?.toLowerCase() !== 'bkash') {
-                                <button pButton icon="pi pi-check"
-                                    class="action-btn deliver-btn"
-                                    (click)="updateStatus(order, 'Confirmed')" pTooltip="Confirm Order"
-                                    tooltipPosition="top"></button>
-                                }
-
-                                @if (order.status === 'Confirmed') {
-                                <button pButton icon="pi pi-check-circle"
-                                    class="action-btn deliver-btn"
-                                    (click)="updateStatus(order, 'Completed')" pTooltip="Mark Delivered"
-                                    tooltipPosition="top"></button>
-                                }
-
-                                @if (order.status === 'Pending' || order.status === 'Confirmed') {
-                                <button pButton icon="pi pi-times"
-                                    class="action-btn cancel-btn"
-                                    (click)="updateStatus(order, 'Cancelled')" pTooltip="Cancel Order"
-                                    tooltipPosition="top"></button>
-                                }
+                                <button pButton icon="pi pi-ellipsis-v"
+                                    class="action-btn menu-trigger-btn"
+                                    (click)="openOrderActionMenu($event, order)"
+                                    pTooltip="Actions" tooltipPosition="top"
+                                    aria-label="Open actions menu"></button>
                             </div>
                         </td>
                     </tr>
@@ -770,51 +731,136 @@
     </ng-template>
 </p-dialog>
 
+<!-- Action Menu Popover (Anchored 3-dot) -->
+<p-popover #orderActionsPopover appendTo="body" styleClass="action-menu-popover">
+    @if (activeActionOrder(); as actOrder) {
+    <div class="action-menu-list">
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(viewOrder.bind(this))">
+            <i class="pi pi-eye text-blue-400"></i>
+            <span>View Details</span>
+        </button>
+
+        <button type="button" class="action-menu-item"
+            [disabled]="downloadingOrderId() === (actOrder.id || '').toString()"
+            (click)="executeOrderAction(downloadAdminInvoice.bind(this))">
+            <i class="pi" [ngClass]="downloadingOrderId() === (actOrder.id || '').toString() ? 'pi-spin pi-spinner text-amber-400' : 'pi-download text-amber-400'"></i>
+            <span>{{ downloadingOrderId() === (actOrder.id || '').toString() ? 'Downloading...' : 'Download Invoice' }}</span>
+        </button>
+
+        @if (canEditOrder(actOrder)) {
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(openEditOrderModalDirect.bind(this))">
+            <i class="pi pi-pencil text-teal-400"></i>
+            <span>Edit Order</span>
+        </button>
+        }
+
+        @if (actOrder.status === 'Pending' && actOrder.paymentMethod?.toLowerCase() !== 'bkash') {
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(confirmDirectOrder.bind(this))">
+            <i class="pi pi-check text-green-400"></i>
+            <span>Confirm Order</span>
+        </button>
+        }
+
+        @if (actOrder.status === 'Confirmed') {
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(completeDirectOrder.bind(this))">
+            <i class="pi pi-check-circle text-green-400"></i>
+            <span>Mark Delivered</span>
+        </button>
+        }
+
+        @if (actOrder.status === 'Pending' || actOrder.status === 'Confirmed') {
+        <button type="button" class="action-menu-item item-danger" (click)="executeOrderAction(cancelDirectOrder.bind(this))">
+            <i class="pi pi-times text-red-400"></i>
+            <span>Cancel Order</span>
+        </button>
+        }
+    </div>
+    }
+</p-popover>
+
 <!-- Record Manual Payment / Refund Modal (A3) -->
-<p-dialog [(visible)]="displayManualPaymentDialog" [modal]="true" [header]="manualPaymentKind() === 'payment' ? 'Record Payment by Hand' : 'Record Refund by Hand'"
-    [style]="{width: '95vw', maxWidth: '520px'}" [draggable]="false" [resizable]="false" styleClass="premium-dialog">
-    <div class="flex flex-column gap-3 p-2">
-        <div class="grid">
-            <div class="col-6">
-                <label class="text-xs text-gray-400 font-medium block mb-1">Entry Type:</label>
-                <div class="flex gap-2">
-                    <button type="button" pButton label="Payment" class="p-button-sm flex-1"
+<p-dialog [(visible)]="displayManualPaymentDialog" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(95vw, 560px)' }" [draggable]="false" [resizable]="false"
+    styleClass="premium-dialog financial-entry-dialog">
+
+    <ng-template pTemplate="header">
+        <div class="flex flex-column">
+            <h2 class="text-xl font-bold m-0 text-white flex align-items-center gap-2">
+                <i class="pi" [ngClass]="manualPaymentKind() === 'payment' ? 'pi-wallet text-primary' : 'pi-replay text-orange-400'"></i>
+                {{ manualPaymentKind() === 'payment' ? 'Record Payment by Hand' : 'Record Refund by Hand' }}
+            </h2>
+            <p class="text-slate-400 m-0 text-xs mt-1">Direct ledger entry recorded for order #{{ selectedOrder()?.orderNumber || selectedOrder()?.id }}</p>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2 flex flex-column gap-3">
+        <!-- Entry Type Switcher -->
+        <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Entry Type</label>
+            <div class="grid p-fluid">
+                <div class="col-6">
+                    <button type="button" pButton icon="pi pi-arrow-down-left" label="Receive Payment"
+                        class="p-button-sm w-full"
                         [class.p-button-outlined]="manualPaymentKind() !== 'payment'"
+                        [class.p-button-primary]="manualPaymentKind() === 'payment'"
                         (click)="manualPaymentKind.set('payment')"></button>
-                    <button type="button" pButton label="Refund" class="p-button-sm flex-1 p-button-danger"
+                </div>
+                <div class="col-6">
+                    <button type="button" pButton icon="pi pi-arrow-up-right" label="Issue Refund"
+                        class="p-button-sm w-full p-button-danger"
                         [class.p-button-outlined]="manualPaymentKind() !== 'refund'"
                         (click)="manualPaymentKind.set('refund')"></button>
                 </div>
             </div>
-            <div class="col-6">
-                <label class="text-xs text-gray-400 font-medium block mb-1">Method:</label>
-                <p-dropdown [options]="paymentMethodOptions" [ngModel]="manualPaymentMethod()" (ngModelChange)="manualPaymentMethod.set($event)"
-                    styleClass="w-full"></p-dropdown>
+        </div>
+
+        <!-- Method & Amount Grid -->
+        <div class="grid">
+            <div class="field col-12 sm:col-6 mb-2 sm:mb-0">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Payment Method</label>
+                <p-dropdown [options]="paymentMethodOptions" [ngModel]="manualPaymentMethod()"
+                    (ngModelChange)="manualPaymentMethod.set($event)"
+                    appendTo="body" styleClass="w-full" inputStyleClass="premium-input"></p-dropdown>
+            </div>
+            <div class="field col-12 sm:col-6 mb-2 sm:mb-0">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Amount (৳)</label>
+                <input type="text" pInputText [ngModel]="manualPaymentAmount()"
+                    (ngModelChange)="manualPaymentAmount.set($event)"
+                    placeholder="0.00" class="w-full font-mono premium-input" />
             </div>
         </div>
 
+        <!-- Reference -->
         <div>
-            <label class="text-xs text-gray-400 font-medium block mb-1">Amount (৳):</label>
-            <input type="text" pInputText [ngModel]="manualPaymentAmount()" (ngModelChange)="manualPaymentAmount.set($event)"
-                placeholder="0.00" class="w-full font-mono" />
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                Reference / TrxID <span class="text-slate-500 font-normal lowercase">(optional)</span>
+            </label>
+            <input type="text" pInputText [ngModel]="manualPaymentReference()"
+                (ngModelChange)="manualPaymentReference.set($event)"
+                placeholder="e.g. bKash TrxID, Bank slip number" class="w-full premium-input" maxlength="100" />
         </div>
 
+        <!-- Note -->
         <div>
-            <label class="text-xs text-gray-400 font-medium block mb-1">Reference (TrxID / Bank reference):</label>
-            <input type="text" pInputText [ngModel]="manualPaymentReference()" (ngModelChange)="manualPaymentReference.set($event)"
-                placeholder="Optional" class="w-full" maxlength="100" />
-        </div>
-
-        <div>
-            <label class="text-xs text-gray-400 font-medium block mb-1">Note:</label>
-            <input type="text" pInputText [ngModel]="manualPaymentNote()" (ngModelChange)="manualPaymentNote.set($event)"
-                placeholder="Optional explanation" class="w-full" maxlength="255" />
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                Note <span class="text-slate-500 font-normal lowercase">(optional)</span>
+            </label>
+            <textarea pInputTextarea [ngModel]="manualPaymentNote()"
+                (ngModelChange)="manualPaymentNote.set($event)"
+                rows="2" placeholder="Audit note explaining this adjustment"
+                class="w-full premium-input" maxlength="255"></textarea>
         </div>
     </div>
+
     <ng-template pTemplate="footer">
         <div class="flex justify-content-end gap-2">
-            <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="displayManualPaymentDialog.set(false)"></button>
-            <button pButton label="Record Entry" icon="pi pi-check" class="bg-blue-600 border-none" (click)="confirmManualPayment()"></button>
+            <button pButton label="Cancel" class="p-button-text p-button-secondary"
+                [disabled]="manualPaymentSaving()"
+                (click)="displayManualPaymentDialog.set(false)"></button>
+            <button pButton [label]="manualPaymentKind() === 'payment' ? 'Record Payment' : 'Record Refund'"
+                icon="pi pi-check" class="bg-blue-600 border-none"
+                [loading]="manualPaymentSaving()"
+                (click)="confirmManualPayment()"></button>
         </div>
     </ng-template>
 </p-dialog>
@@ -841,131 +887,224 @@
 </p-dialog>
 
 <!-- Online Order Edit Modal (A5) -->
-<p-dialog [(visible)]="displayEditOrderDialog" [modal]="true" header="Edit Online Order"
-    [style]="{width: '95vw', maxWidth: '880px'}" [draggable]="false" [resizable]="false" styleClass="premium-dialog">
-    <div class="flex flex-column gap-4 p-2">
+<p-dialog [(visible)]="displayEditOrderDialog" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(95vw, 950px)', maxHeight: '90vh' }"
+    [draggable]="false" [resizable]="false" styleClass="premium-dialog edit-online-order-dialog">
+
+    <ng-template pTemplate="header">
+        <div class="flex flex-column">
+            <h2 class="text-xl font-bold m-0 text-white flex align-items-center gap-2">
+                <i class="pi pi-pencil text-primary"></i>
+                Edit Online Order #{{ selectedOrder()?.orderNumber || selectedOrder()?.id }}
+            </h2>
+            <p class="text-slate-400 m-0 text-xs mt-1">Update basket items and recipient address details.</p>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2">
         <!-- Basket Items Table -->
-        <div>
-            <h4 class="text-white text-base font-semibold m-0 mb-2">Order Items (Full Basket)</h4>
-            <div class="border-round-xl border-1 surface-border overflow-hidden p-2" style="background: rgba(255, 255, 255, 0.02);">
-                <div class="flex flex-column gap-2">
-                    @for (item of editBasketItems(); track item.product_id; let idx = $index) {
-                    <div class="flex align-items-center justify-content-between p-2 border-round surface-card gap-3">
-                        <div class="flex align-items-center gap-2 min-w-0 flex-grow-1">
-                            @if (item.imageUrl) {
-                            <img [src]="item.imageUrl" class="w-2rem h-2rem object-cover border-round" />
-                            }
-                            <div class="min-w-0">
-                                <div class="text-white text-sm font-medium line-clamp-1">{{ item.name }}</div>
-                                <div class="text-xs text-gray-400 font-mono">৳{{ item.price }} each</div>
+        <div class="mb-4">
+            <div class="flex align-items-center justify-content-between mb-2">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Line Items (Full Basket)</label>
+                <span class="text-xs text-slate-400">{{ editBasketItems().length }} item(s)</span>
+            </div>
+
+            <div class="flex flex-column gap-2">
+                @for (item of editBasketItems(); track item.product_id; let idx = $index) {
+                <div class="sale-item-row p-3 border-round-xl border-1 border-slate-800">
+                    <div class="grid align-items-center">
+                        <div class="field col-12 lg:col-5 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Product</label>
+                            <div class="flex align-items-center gap-2 min-w-0">
+                                @if (item.imageUrl) {
+                                <img [src]="item.imageUrl" class="w-2rem h-2rem object-cover border-round flex-shrink-0" />
+                                }
+                                <div class="min-w-0">
+                                    <div class="text-white text-sm font-medium truncate">{{ item.name }}</div>
+                                    @if (item.code) {
+                                    <div class="text-xs text-slate-400 font-mono">Code: {{ item.code }}</div>
+                                    }
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex align-items-center gap-2 flex-shrink-0">
-                            <button type="button" pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
-                                (click)="updateEditItemQuantity(idx, -1)"></button>
-                            <span class="font-mono font-bold text-sm w-2rem text-center">{{ item.quantity }}</span>
-                            <button type="button" pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
-                                (click)="updateEditItemQuantity(idx, 1)"></button>
-                            <button type="button" pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm ml-2"
-                                (click)="removeEditItem(idx)"></button>
+                        <div class="field col-6 sm:col-3 lg:col-2 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Qty</label>
+                            <div class="flex align-items-center gap-1">
+                                <button type="button" pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
+                                    (click)="updateEditItemQuantity(idx, -1)"></button>
+                                <span class="font-mono font-bold text-white text-sm w-2rem text-center">{{ item.quantity }}</span>
+                                <button type="button" pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
+                                    (click)="updateEditItemQuantity(idx, 1)"></button>
+                            </div>
+                        </div>
+
+                        <div class="field col-6 sm:col-3 lg:col-2 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Unit Price</label>
+                            <div class="font-mono text-sm text-slate-200 pt-1">৳{{ item.price | number:'1.2-2' }}</div>
+                        </div>
+
+                        <div class="field col-8 sm:col-4 lg:col-2 m-0">
+                            <label class="text-xs text-slate-400 block mb-1">Line Total</label>
+                            <div class="font-mono font-bold text-white text-base pt-1">
+                                ৳{{ ((item.price || 0) * (item.quantity || 0)) | number:'1.2-2' }}
+                            </div>
+                        </div>
+
+                        <div class="col-4 sm:col-2 lg:col-1 text-right m-0">
+                            <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger"
+                                (click)="removeEditItem(idx)" [disabled]="editBasketItems().length === 1"></button>
                         </div>
                     </div>
-                    }
                 </div>
+                }
+            </div>
 
-                <!-- Add product search box -->
-                <div class="mt-3 pt-3 border-top-1 border-white-alpha-10">
-                    <label class="text-xs text-gray-400 font-medium block mb-1">Add Product to Basket:</label>
-                    <input type="text" pInputText placeholder="Search product by name or code..."
-                        [ngModel]="editProductSearchQuery()" (input)="onEditProductSearch($any($event.target).value)"
-                        class="w-full p-inputtext-sm" />
-
-                    @if (editSearchingProducts()) {
-                    <div class="text-xs text-gray-400 mt-1">Searching...</div>
-                    }
-
-                    @if (editProductSearchResults().length > 0) {
-                    <div class="mt-2 border-round surface-card border-1 surface-border p-2 flex flex-column gap-1 max-h-12rem overflow-y-auto">
-                        @for (p of editProductSearchResults(); track p.id) {
-                        <div class="p-2 border-round hover:bg-white-alpha-10 cursor-pointer flex justify-content-between align-items-center"
-                            (click)="addEditProduct(p)">
-                            <div class="text-sm text-white">{{ p.name }}</div>
-                            <div class="text-xs font-mono text-blue-300">৳{{ p.effective_price || p.price }} <i class="pi pi-plus ml-1"></i></div>
-                        </div>
-                        }
+            <!-- Add Product Dropdown (from catalog) -->
+            <div class="mt-3 p-3 border-round-xl border-1 border-slate-800" style="background: rgba(255, 255, 255, 0.02);">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Add Product to Basket</label>
+                <div class="grid">
+                    <div class="col-12 sm:col-8">
+                        <p-dropdown [options]="allCatalogProducts()" optionLabel="name" optionValue="id"
+                            [(ngModel)]="selectedAddProductId"
+                            (onChange)="onAddProductDropdownChange($event.value)"
+                            [filter]="true" filterBy="name,code" placeholder="Select a product from catalog to add..."
+                            appendTo="body" styleClass="w-full" [disabled]="catalogProductsLoading()">
+                            <ng-template pTemplate="selectedItem" let-selected>
+                                <div *ngIf="selected" class="flex align-items-center justify-content-between w-full">
+                                    <span class="font-medium text-white truncate">{{ selected.name }}</span>
+                                </div>
+                            </ng-template>
+                            <ng-template pTemplate="item" let-prod>
+                                <div class="flex align-items-center justify-content-between w-full py-1">
+                                    <div class="flex flex-column min-w-0 pr-2">
+                                        <span class="font-medium text-white text-sm truncate">{{ prod.name }}</span>
+                                        <span *ngIf="prod.code" class="text-xs text-slate-400 font-mono">{{ prod.code }}</span>
+                                    </div>
+                                    <div class="flex flex-column align-items-end flex-shrink-0">
+                                        <span class="text-primary font-bold text-xs">৳{{ (prod.effective_price || prod.price) | number:'1.2-2' }}</span>
+                                        <span *ngIf="prod.effective_price && prod.effective_price < prod.price" class="text-xs line-through text-slate-500">
+                                            ৳{{ prod.price | number:'1.2-2' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </ng-template>
+                        </p-dropdown>
                     </div>
-                    }
+                    <div class="col-12 sm:col-4 flex align-items-center">
+                        <span class="text-xs text-slate-400">Selecting an item immediately adds it to the basket.</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Address Edit -->
-        <div>
-            <h4 class="text-white text-base font-semibold m-0 mb-2">Delivery Address (Partial update)</h4>
-            <div class="grid p-fluid">
-                <div class="col-12 sm:col-6">
-                    <label class="text-xs text-gray-400">Full Name</label>
-                    <input type="text" pInputText [ngModel]="editAddress().full_name" (ngModelChange)="editAddress().full_name = $event; fetchEditPreview()" class="p-inputtext-sm" />
+        <!-- Address Edit Section -->
+        <div class="field mb-4">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Recipient Delivery Details
+            </label>
+            <div class="grid">
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">Full Name</label>
+                    <input pInputText [ngModel]="editAddress().full_name"
+                        (ngModelChange)="editAddress().full_name = $event; fetchEditPreview()"
+                        placeholder="Full name" class="w-full premium-input" />
                 </div>
-                <div class="col-12 sm:col-6">
-                    <label class="text-xs text-gray-400">Phone</label>
-                    <input type="text" pInputText [ngModel]="editAddress().phone" (ngModelChange)="editAddress().phone = $event; fetchEditPreview()" class="p-inputtext-sm" />
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">Phone Number</label>
+                    <input pInputText [ngModel]="editAddress().phone"
+                        (ngModelChange)="editAddress().phone = $event; fetchEditPreview()"
+                        placeholder="Phone" class="w-full premium-input" />
                 </div>
-                <div class="col-12 sm:col-6">
-                    <label class="text-xs text-gray-400">District (Changing recomputes delivery)</label>
-                    <input type="text" pInputText [ngModel]="editAddress().district" (ngModelChange)="editAddress().district = $event; fetchEditPreview()" class="p-inputtext-sm" />
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">District</label>
+                    <input pInputText [ngModel]="editAddress().district"
+                        (ngModelChange)="editAddress().district = $event; fetchEditPreview()"
+                        placeholder="District" class="w-full premium-input" />
                 </div>
-                <div class="col-12 sm:col-6">
-                    <label class="text-xs text-gray-400">Subdistrict</label>
-                    <input type="text" pInputText [ngModel]="editAddress().subdistrict" (ngModelChange)="editAddress().subdistrict = $event; fetchEditPreview()" class="p-inputtext-sm" />
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">Subdistrict</label>
+                    <input pInputText [ngModel]="editAddress().subdistrict"
+                        (ngModelChange)="editAddress().subdistrict = $event; fetchEditPreview()"
+                        placeholder="Subdistrict" class="w-full premium-input" />
                 </div>
-                <div class="col-12">
-                    <label class="text-xs text-gray-400">Address Line</label>
-                    <input type="text" pInputText [ngModel]="editAddress().address_line" (ngModelChange)="editAddress().address_line = $event; fetchEditPreview()" class="p-inputtext-sm" />
+                <div class="field col-12">
+                    <label class="text-xs text-slate-400 block mb-1">Address Line</label>
+                    <textarea pInputTextarea [ngModel]="editAddress().address_line"
+                        (ngModelChange)="editAddress().address_line = $event; fetchEditPreview()"
+                        rows="2" placeholder="Full street / house / delivery address"
+                        class="w-full premium-input" maxlength="300"></textarea>
                 </div>
             </div>
         </div>
 
-        <div>
-            <label class="text-xs text-gray-400 font-medium block mb-1">Reason for edit (stored in revision history):</label>
-            <input type="text" pInputText [ngModel]="editReason()" (ngModelChange)="editReason.set($event)"
-                placeholder="e.g. Swapped green vase for blue, customer phone change" class="w-full p-inputtext-sm" maxlength="255" />
+        <!-- Reason -->
+        <div class="field mb-4">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Reason for edit <span class="text-slate-500 font-normal lowercase">(stored in audit log)</span>
+            </label>
+            <input pInputText [ngModel]="editReason()" (ngModelChange)="editReason.set($event)"
+                placeholder="e.g. customer requested color change, corrected phone"
+                class="w-full premium-input" maxlength="255" />
         </div>
 
-        <!-- Dry Run Preview Summary -->
-        @if (editPreviewLoading()) {
-        <div class="text-center p-3 text-gray-400">
-            <i class="pi pi-spin pi-spinner mr-2"></i> Computing preview totals...
-        </div>
-        } @else if (editPreviewResult()) {
-        <div class="p-3 border-round-xl" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2);">
-            <div class="font-bold text-white text-sm mb-2">Edit Preview:</div>
-            <div class="flex justify-content-between text-xs text-gray-300 mb-1">
-                <span>New Total:</span>
-                <span class="font-bold text-white font-mono">৳{{ editPreviewResult()!.order.total }}</span>
+        <!-- Dry Run Preview Summary Card -->
+        <div class="billing-summary-card p-4 border-round-2xl mt-4">
+            <div class="flex align-items-center justify-content-between pb-3 mb-3 border-bottom-1 border-slate-800">
+                <div class="flex align-items-center gap-2 text-slate-200 font-semibold text-sm">
+                    <i class="pi pi-receipt text-primary"></i>
+                    <span>Order Preview</span>
+                </div>
+                @if (editPreviewLoading()) {
+                <span class="text-xs text-amber-400 flex align-items-center gap-1">
+                    <i class="pi pi-spin pi-spinner text-xs"></i> Calculating...
+                </span>
+                } @else {
+                <span class="text-xs text-slate-400 font-medium">Server dry-run calculation</span>
+                }
             </div>
-            <div class="flex justify-content-between text-xs text-gray-300 mb-1">
-                <span>Delivery Charge:</span>
-                <span class="font-mono">৳{{ editPreviewResult()!.order.delivery_charge }}</span>
+
+            @if (editPreviewResult(); as res) {
+            <div class="flex flex-column gap-2 mb-3">
+                <div class="flex align-items-center justify-content-between text-sm py-1">
+                    <span class="text-slate-400">Delivery Charge</span>
+                    <span class="font-medium text-slate-200 font-mono">৳{{ res.order.delivery_charge | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex align-items-center justify-content-between text-sm py-1">
+                    <span class="text-slate-400">Payment Status after save</span>
+                    <span class="font-medium text-blue-300 uppercase">{{ res.order.payment_status }} (৳{{ res.order.amount_due | number:'1.2-2' }} due)</span>
+                </div>
+
+                @if (res.coupon_removed) {
+                <div class="p-2 border-round bg-amber-500 bg-opacity-10 border-1 border-amber-500 border-opacity-30 text-amber-300 text-xs">
+                    <i class="pi pi-exclamation-triangle mr-1"></i> Coupon removed: {{ res.coupon_removed_reason || 'Order total fell below voucher minimum spend.' }}
+                </div>
+                }
             </div>
-            <div class="flex justify-content-between text-xs text-gray-300 mb-1">
-                <span>Payment Status after save:</span>
-                <span class="uppercase font-bold text-blue-300">{{ editPreviewResult()!.order.payment_status }} (Due: ৳{{ editPreviewResult()!.order.amount_due }})</span>
-            </div>
-            @if (editPreviewResult()!.coupon_removed) {
-            <div class="text-amber-400 text-xs mt-2">
-                <i class="pi pi-exclamation-triangle mr-1"></i> Coupon removed: {{ editPreviewResult()!.coupon_removed_reason || 'Total fell below minimum spend.' }}
+
+            <div class="grand-total-banner p-3 border-round-xl flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider block font-semibold">New Total</span>
+                    <span class="text-xs text-slate-400">All line items + delivery</span>
+                </div>
+                <div class="text-right">
+                    <span class="font-mono font-bold text-2xl text-white">৳{{ res.order.total | number:'1.2-2' }}</span>
+                </div>
             </div>
             }
         </div>
-        }
     </div>
+
     <ng-template pTemplate="footer">
         <div class="flex justify-content-end gap-2">
-            <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="displayEditOrderDialog.set(false)"></button>
-            <button pButton label="Refresh Preview" icon="pi pi-sync" class="p-button-outlined p-button-info" (click)="fetchEditPreview()"></button>
-            <button pButton label="Save Changes" icon="pi pi-check" class="bg-blue-600 border-none" [loading]="editSaving()"
+            <button pButton label="Cancel" class="p-button-text p-button-secondary"
+                [disabled]="editSaving()"
+                (click)="displayEditOrderDialog.set(false)"></button>
+            <button pButton label="Refresh Preview" icon="pi pi-sync" class="p-button-outlined p-button-info"
+                [disabled]="editSaving() || editPreviewLoading()"
+                (click)="fetchEditPreview()"></button>
+            <button pButton label="Save Changes" icon="pi pi-check" class="bg-blue-600 border-none"
+                [loading]="editSaving()"
                 (click)="confirmSaveEditOrder()"></button>
         </div>
     </ng-template>

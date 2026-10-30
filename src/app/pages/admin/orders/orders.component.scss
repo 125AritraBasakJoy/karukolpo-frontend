@@ -790,6 +790,116 @@
     }
 }
 
+/* =========================================================
+   Online Order Edit & Manual Payment/Refund Modal Styling
+   (Matched to Edit Out Sales design system)
+   ========================================================= */
+
+.sale-item-row {
+    background: rgba(255, 255, 255, 0.02);
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+}
+
+.billing-summary-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(10, 15, 30, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.grand-total-banner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(30, 58, 138, 0.08) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.premium-input {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #F8FAFC !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 0.85rem !important;
+    font-size: 0.9rem !important;
+
+    &:focus {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    }
+}
+
+/* Actions Menu Popover */
+:host ::ng-deep .action-menu-popover {
+    background: #0F172A !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+    padding: 0.35rem !important;
+    min-width: 180px;
+
+    .p-popover-content {
+        padding: 0 !important;
+    }
+}
+
+.action-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0.55rem 0.85rem;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: #E2E8F0;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    i {
+        font-size: 0.95rem;
+        width: 1rem;
+        text-align: center;
+    }
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.08);
+        color: #FFFFFF;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    &.item-danger {
+        color: #F87171;
+
+        &:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.12);
+            color: #EF4444;
+        }
+    }
+}
+
+.menu-trigger-btn {
+    color: #CBD5E1 !important;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: #FFFFFF !important;
+    }
+}
+
 :host ::ng-deep {
     .highlighted-order-row {
         background: rgba(245, 158, 11, 0.12) !important;

@@ -241,19 +241,90 @@
     }
 }
 
-/* Payment method */
-.od-payment-row {
+/* Payment method & status metadata */
+.od-payment-meta {
     margin-top: 18px;
     padding-top: 14px;
     border-top: 1px solid #EDE4D8;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.od-payment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 2px 0;
+
+    .od-label {
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
 }
 
 .od-payment-value {
-    font-size: 15px;
-    font-weight: 700;
-    color: #0E3B27;
-    margin-left: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #26221F;
+    text-align: right;
+}
+
+.od-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    background: #F4F4F5;
+    color: #3F3F46;
+    border: 1px solid #E4E4E7;
+    max-width: 100%;
+    word-break: break-word;
+
+    .od-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+    }
+
+    &[data-status="paid"] {
+        background: #ECFDF5;
+        color: #047857;
+        border-color: #A7F3D0;
+    }
+
+    &[data-status="partially_paid"],
+    &[data-status="unpaid"] {
+        background: #FFFBEB;
+        color: #B45309;
+        border-color: #FDE68A;
+    }
+
+    &[data-status="refund_due"] {
+        background: #FEF2F2;
+        color: #B91C1C;
+        border-color: #FECACA;
+    }
+
+    &[data-status="awaiting_verification"] {
+        background: #EFF6FF;
+        color: #1D4ED8;
+        border-color: #BFDBFE;
+    }
+
+    &[data-status="refunded"],
+    &[data-status="void"] {
+        background: #F4F4F5;
+        color: #52525B;
+        border-color: #E4E4E7;
+    }
 }
 
 /* ===== Action Buttons ===== */

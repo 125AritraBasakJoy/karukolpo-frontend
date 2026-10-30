@@ -16,7 +16,7 @@ import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ProductService } from '../../core/services/product/product.service';
 import { DialogModule } from 'primeng/dialog';
-import { formatPaymentStatus, PaymentStatusInfo } from '../../models/payment.model';
+import { formatPaymentStatus, PaymentStatusInfo, PaymentStatus } from '../../models/payment.model';
 
 @Component({
   selector: 'app-track-order',
@@ -78,11 +78,25 @@ export class TrackOrderComponent {
 
   getPaymentStatusInfo(order: Order | null): PaymentStatusInfo {
     if (!order) return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
-    return formatPaymentStatus(
-      order.payment_status || order.paymentStatus,
-      order.amount_due || 0,
-      order.paymentMethod
-    );
+    const raw = (order.payment_status || order.paymentStatus || '').toLowerCase().trim() as PaymentStatus;
+
+    switch (raw) {
+      case 'paid':
+        return { label: 'Paid', severity: 'success', rawStatus: 'paid' };
+      case 'partially_paid':
+        return { label: 'Partially Paid', severity: 'warn', rawStatus: 'partially_paid' };
+      case 'awaiting_verification':
+        return { label: 'Awaiting Verification', severity: 'info', rawStatus: 'awaiting_verification' };
+      case 'refund_due':
+        return { label: 'Refund Pending', severity: 'danger', rawStatus: 'refund_due' };
+      case 'refunded':
+        return { label: 'Refunded', severity: 'secondary', rawStatus: 'refunded' };
+      case 'void':
+        return { label: 'Cancelled', severity: 'secondary', rawStatus: 'void' };
+      case 'unpaid':
+      default:
+        return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+    }
   }
 
   trackOrder() {

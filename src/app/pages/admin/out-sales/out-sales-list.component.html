@@ -110,7 +110,7 @@
                         <th style="min-width: 7rem">Total</th>
                         <th style="min-width: 7.5rem">Payment</th>
                         <th style="min-width: 7.5rem">Status</th>
-                        <th class="text-center actions-col-header">Actions</th>
+                        <th class="text-center actions-col-header" style="width: 5.5rem; min-width: 5.5rem">Actions</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body">
@@ -154,7 +154,7 @@
                         <th style="min-width: 7rem">Total</th>
                         <th style="min-width: 7.5rem">Payment</th>
                         <th style="min-width: 7.5rem">Status</th>
-                        <th class="text-center actions-col-header">Actions</th>
+                        <th class="text-center actions-col-header" style="width: 5.5rem; min-width: 5.5rem">Actions</th>
                     </tr>
                 </ng-template>
 
@@ -214,50 +214,13 @@
                             <p-tag [value]="getStatusInfo(sale).label" [severity]="getStatusInfo(sale).severity" [rounded]="true"
                                 styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
-                        <td class="text-center actions-col-cell">
+                        <td class="text-center actions-col-cell" style="width: 5.5rem; min-width: 5.5rem">
                             <div class="actions-cell">
-                                <!-- Thermal Receipt (available on all sales) -->
-                                <button pButton icon="pi pi-receipt"
-                                    class="action-btn receipt-btn"
-                                    (click)="openThermalInvoice(sale)"
-                                    pTooltip="Thermal Receipt (58mm)" tooltipPosition="top"></button>
-
-                                <!-- Handover for unreviewed sales -->
-                                <button *ngIf="needsReview(sale)" pButton icon="pi pi-check"
-                                    class="action-btn text-green-400"
-                                    (click)="quickClassifyHandover(sale)"
-                                    pTooltip="Mark Handed Over" tooltipPosition="top"></button>
-
-                                <!-- Mark Delivered (for cod_processing or paid) -->
-                                <button *ngIf="isDeliveryInProgress(sale)" pButton icon="pi pi-send"
-                                    class="action-btn text-blue-400"
-                                    (click)="confirmMarkDelivered(sale)"
-                                    pTooltip="Mark Delivered" tooltipPosition="top"></button>
-
-                                <!-- Cancel / Refused (for cod_processing or paid) -->
-                                <button *ngIf="isDeliveryInProgress(sale)" pButton icon="pi pi-times-circle"
-                                    class="action-btn text-orange-400"
-                                    (click)="openCancelModal(sale)"
-                                    pTooltip="Cancel / Refused Parcel" tooltipPosition="top"></button>
-
-                                <!-- Change Type / Classify (hidden on cancelled) -->
-                                <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-sync"
-                                    class="action-btn classify-btn"
-                                    (click)="openClassifyModal(sale)"
-                                    [pTooltip]="needsReview(sale) ? 'Review & Classify' : 'Change Type'" tooltipPosition="top"></button>
-
-                                <!-- Edit (hidden on cancelled) -->
-                                <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-pencil"
-                                    class="action-btn edit-btn"
-                                    (click)="openEditModal(sale)"
-                                    pTooltip="Edit Sale" tooltipPosition="top"></button>
-
-                                <!-- Void (hidden on cancelled) -->
-                                <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-trash"
-                                    [loading]="voidingSaleId() === sale.id"
-                                    class="action-btn void-btn"
-                                    (click)="confirmVoidSale(sale)"
-                                    pTooltip="Void Sale" tooltipPosition="top"></button>
+                                <button pButton icon="pi pi-ellipsis-v"
+                                    class="action-btn menu-trigger-btn"
+                                    (click)="openSaleActionMenu($event, sale)"
+                                    pTooltip="Actions" tooltipPosition="top"
+                                    aria-label="Open actions menu"></button>
                             </div>
                         </td>
                     </tr>
@@ -780,5 +743,59 @@
         </div>
     </ng-template>
 </p-dialog>
+
+<!-- Out Sales Action Menu Popover (Anchored 3-dot) -->
+<p-popover #saleActionsPopover appendTo="body" styleClass="action-menu-popover">
+    <div *ngIf="activeActionSale() as actSale" class="action-menu-list">
+        <!-- Thermal Receipt (all sales) -->
+        <button type="button" class="action-menu-item" (click)="executeSaleAction(openThermalInvoice.bind(this))">
+            <i class="pi pi-receipt text-teal-400"></i>
+            <span>Thermal Receipt</span>
+        </button>
+
+        <!-- Handover for unreviewed sales -->
+        <button *ngIf="needsReview(actSale)" type="button" class="action-menu-item"
+            (click)="executeSaleAction(quickClassifyHandover.bind(this))">
+            <i class="pi pi-check text-green-400"></i>
+            <span>Mark Handed Over</span>
+        </button>
+
+        <!-- Mark Delivered -->
+        <button *ngIf="isDeliveryInProgress(actSale)" type="button" class="action-menu-item"
+            (click)="executeSaleAction(confirmMarkDelivered.bind(this))">
+            <i class="pi pi-send text-blue-400"></i>
+            <span>Mark Delivered</span>
+        </button>
+
+        <!-- Cancel / Refused Parcel -->
+        <button *ngIf="isDeliveryInProgress(actSale)" type="button" class="action-menu-item item-danger"
+            (click)="executeSaleAction(openCancelModal.bind(this))">
+            <i class="pi pi-times-circle text-orange-400"></i>
+            <span>Cancel / Refused</span>
+        </button>
+
+        <!-- Change Type / Classify -->
+        <button *ngIf="!isCancelledSale(actSale)" type="button" class="action-menu-item"
+            (click)="executeSaleAction(openClassifyModal.bind(this))">
+            <i class="pi pi-sync text-indigo-400"></i>
+            <span>{{ needsReview(actSale) ? 'Review & Classify' : 'Change Type' }}</span>
+        </button>
+
+        <!-- Edit -->
+        <button *ngIf="!isCancelledSale(actSale)" type="button" class="action-menu-item"
+            (click)="executeSaleAction(openEditModal.bind(this))">
+            <i class="pi pi-pencil text-amber-400"></i>
+            <span>Edit Sale</span>
+        </button>
+
+        <!-- Void -->
+        <button *ngIf="!isCancelledSale(actSale)" type="button" class="action-menu-item item-danger"
+            [disabled]="voidingSaleId() === actSale.id"
+            (click)="executeSaleAction(confirmVoidSale.bind(this))">
+            <i class="pi" [ngClass]="voidingSaleId() === actSale.id ? 'pi-spin pi-spinner text-red-400' : 'pi-trash text-red-400'"></i>
+            <span>Void Sale</span>
+        </button>
+    </div>
+</p-popover>
 
 <p-confirmDialog appendTo="body" styleClass="premium-confirm-dialog"></p-confirmDialog>

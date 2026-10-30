@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { THERMAL_LOGO_BASE64 } from '../thermal-invoice/thermal-logo.constant';
-import { formatPaymentStatus } from '../../models/payment.model';
+import { formatPaymentStatus, PaymentStatusInfo } from '../../models/payment.model';
 
 @Component({
     selector: 'app-invoice',
@@ -69,13 +69,19 @@ export class InvoiceComponent {
         return this.orderPaymentMethod || 'Cash on Delivery';
     }
 
-    get paymentStatusDisplay(): string {
+    get paymentStatusInfo(): PaymentStatusInfo {
         if (this.paymentStatus) {
-            return formatPaymentStatus(this.paymentStatus, this.amountDue, this.orderPaymentMethod).label;
+            return formatPaymentStatus(this.paymentStatus, this.amountDue, this.orderPaymentMethod);
         }
         const m = (this.orderPaymentMethod || '').toLowerCase();
-        if (m.includes('bkash')) return 'Paid';
-        return 'Unpaid';
+        if (m.includes('bkash')) {
+            return { label: 'Paid', severity: 'success', rawStatus: 'paid' };
+        }
+        return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+    }
+
+    get paymentStatusDisplay(): string {
+        return this.paymentStatusInfo.label;
     }
 
     get subtotal(): number {
@@ -337,8 +343,28 @@ export class InvoiceComponent {
         text(this.formattedTime, margin + 24, y, { size: 9, color: textPrimary, bold: true });
 
         text('PAYMENT STATUS:', pageW - margin - 65, y, { size: 7.5, color: textMuted, bold: true });
-        const statusColor = this.paymentStatusDisplay.toLowerCase() === 'paid' ? green : brandAccent;
-        text(this.paymentStatusDisplay, pageW - margin, y, { size: 9, color: statusColor, bold: true, align: 'right' });
+        const rawStatus = this.paymentStatusInfo.rawStatus;
+        const statusColor: [number, number, number] = rawStatus === 'paid'
+            ? green
+            : rawStatus === 'refund_due'
+                ? [220, 38, 38]
+                : rawStatus === 'awaiting_verification'
+                    ? [37, 99, 235]
+                    : brandAccent;
+
+        const maxStatusWidthMm = 45;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8.5);
+        const statusLines = pdf.splitTextToSize(this.paymentStatusDisplay, maxStatusWidthMm);
+        if (statusLines.length > 1) {
+            let statusY = y - 1;
+            statusLines.forEach((sLine: string, idx: number) => {
+                text(sLine, pageW - margin, statusY + (idx * 3.5), { size: 8, color: statusColor, bold: true, align: 'right' });
+            });
+            y += (statusLines.length - 1) * 3.5;
+        } else {
+            text(this.paymentStatusDisplay, pageW - margin, y, { size: 8.5, color: statusColor, bold: true, align: 'right' });
+        }
         y += 9.5;
 
         // =====================

@@ -184,6 +184,39 @@
       </div>
     </div>
 
+    <!-- 1. Combo Offers Section (Directly under Buy Box) -->
+    <div class="product-combo-offers-section mb-6" *ngIf="combos().length > 0">
+      <div class="section-title-wrap mb-3">
+        <span class="section-kicker block mb-1">SAVE MORE TOGETHER</span>
+        <h2 class="section-heading m-0">Combo Offers</h2>
+      </div>
+
+      <div class="flex flex-column gap-3" *ngIf="combos().length <= 2">
+        <app-combo-card *ngFor="let combo of combos()"
+                        [combo]="combo"
+                        (addCombo)="onAddCombo($event)"
+                        (configure)="onConfigureCombo($event)">
+        </app-combo-card>
+      </div>
+
+      <div class="swipe-section-wrapper" *ngIf="combos().length > 2">
+        <button type="button" pButton icon="pi pi-chevron-left" aria-label="Previous combos"
+                class="swipe-nav-btn prev-btn p-button-rounded"
+                (click)="scrollLeft(pCombosList)"></button>
+        <div class="product-swipe-container" #pCombosList>
+          <div *ngFor="let combo of combos()" class="swipe-card-wrapper combo-card-wrapper px-2">
+            <app-combo-card [combo]="combo"
+                            (addCombo)="onAddCombo($event)"
+                            (configure)="onConfigureCombo($event)">
+            </app-combo-card>
+          </div>
+        </div>
+        <button type="button" pButton icon="pi pi-chevron-right" aria-label="Next combos"
+                class="swipe-nav-btn next-btn p-button-rounded"
+                (click)="scrollRight(pCombosList)"></button>
+      </div>
+    </div>
+
     <!-- Product Tabbed Information Section -->
     <div class="product-tabs-card mb-6">
       <div class="tabs-header-bar flex border-bottom-1 surface-border">
@@ -235,62 +268,112 @@
       </div>
     </div>
 
-    <!-- Related Products -->
-    <div class="related-section mt-6" *ngIf="relatedProducts().length > 0">
-      <div class="mb-4">
-        <h2 class="text-2xl font-bold m-0" style="font-family: 'Playfair Display', serif;">Related Products</h2>
+    <!-- 3. Frequently Bought Together Section (After Tabs) -->
+    <div class="fbt-section mb-6 p-3 sm:p-4 border-round-2xl surface-card border-1 surface-border" *ngIf="fbtProducts().length > 0">
+      <div class="section-title-wrap mb-3">
+        <span class="section-kicker block mb-1">COMMONLY PAIRED</span>
+        <h2 class="section-heading text-xl sm:text-2xl m-0">Frequently Bought Together</h2>
       </div>
 
-      <div class="grid">
-        <div class="col-6 sm:col-4 md:col-3 px-2 mb-3" *ngFor="let p of relatedProducts()">
-          <div class="premium-product-card flex flex-column h-full relative cursor-pointer" (click)="showProductDetails(p)">
-            <!-- Top Badges -->
-            <div class="absolute top-0 left-0 m-2 z-3" *ngIf="p.discount_value && p.effective_price && p.effective_price < p.price">
-              <span class="discount-badge">
-                {{ p.discount_type === 'percentage' ? ((p.discount_percent || p.discount_value) + '% OFF') : ('৳' + (p.savings || p.discount_value | number:'1.0-0') + ' OFF') }}
-              </span>
-            </div>
+      <!-- Thumbnails plus row -->
+      <div class="fbt-visual-strip flex align-items-center flex-wrap gap-2 mb-4">
+        <!-- Current Product -->
+        <div class="fbt-visual-item relative">
+          <img [src]="product()?.imageUrl" [alt]="product()?.name" class="fbt-visual-thumb" />
+          <span class="fbt-check-badge"><i class="pi pi-check text-xs"></i></span>
+        </div>
 
-            <!-- Image -->
-            <div class="product-image-wrapper">
-              <img [src]="p.imageUrl" [alt]="p.name" class="product-image" loading="lazy" decoding="async">
-            </div>
-
-            <!-- Info -->
-            <div class="product-info-content p-2 flex flex-column flex-grow-1">
-              <div class="product-header-flex">
-                <div class="flex align-items-start justify-content-between gap-2 mb-1">
-                  <h3 class="product-title flex-1">{{ p.name }}</h3>
-                  <span *ngIf="!isOutOfStock(p)" class="in-stock-badge flex-shrink-0 mt-1">
-                    <span class="dot"></span> In Stock
-                  </span>
-                </div>
-                <div class="price-container">
-                  <span class="current-price font-bold">{{ (p.effective_price ?? p.price) | currency:'BDT':'৳':'1.0-0' }}</span>
-                  <span *ngIf="p.effective_price && p.effective_price < p.price" class="old-price text-xs line-through">
-                    {{ p.price | currency:'BDT':'৳':'1.0-0' }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Card Bottom Row: Cart Action -->
-              <div class="card-bottom-actions mt-auto pt-2 border-top-1 surface-border">
-                <button *ngIf="!isOutOfStock(p)" type="button" class="btn-product-add-cart w-full flex align-items-center justify-content-center gap-2"
-                        (click)="quickAddToCart($event, p)" title="Add to Cart" aria-label="Add to cart">
-                  <i class="pi pi-shopping-bag"></i>
-                  <span>Add to Cart</span>
-                </button>
-                <button *ngIf="isOutOfStock(p)" type="button" class="btn-product-add-cart disabled w-full flex align-items-center justify-content-center gap-2"
-                        disabled title="Out of Stock">
-                  <span>Out of Stock</span>
-                </button>
-              </div>
-            </div>
+        <ng-container *ngFor="let p of fbtProducts()">
+          <i class="pi pi-plus text-xs text-400 mx-1"></i>
+          <div class="fbt-visual-item relative" [class.unselected]="!isFbtSelected(p.id)">
+            <img [src]="p.imageUrl" [alt]="p.name" class="fbt-visual-thumb" />
+            <span class="fbt-check-badge" *ngIf="isFbtSelected(p.id)">
+              <i class="pi pi-check text-xs"></i>
+            </span>
           </div>
+        </ng-container>
+      </div>
+
+      <!-- Checklist & Total Row -->
+      <div class="fbt-controls-wrap flex flex-column md:flex-row align-items-start md:align-items-center justify-content-between gap-4 pt-3 border-top-1 surface-border">
+        <!-- Checkboxes -->
+        <div class="fbt-checklist flex flex-column gap-2 flex-grow-1">
+          <!-- Current Item Checkbox (Disabled, Always Ticked) -->
+          <label class="fbt-check-row flex align-items-center gap-2 cursor-default">
+            <input type="checkbox" checked disabled class="accent-primary" />
+            <span class="text-sm font-semibold text-900">This item: {{ product()?.name }}</span>
+            <span class="text-sm font-bold text-primary ml-auto">৳{{ (product()?.effective_price ?? product()?.price) | number:'1.0-0' }}</span>
+          </label>
+
+          <!-- FBT Items Checkboxes -->
+          <label *ngFor="let p of fbtProducts()"
+                 class="fbt-check-row flex align-items-center gap-2 cursor-pointer"
+                 (click)="$event.preventDefault(); toggleFbtItem(p.id)">
+            <input type="checkbox" [checked]="isFbtSelected(p.id)" class="accent-primary cursor-pointer" />
+            <span class="text-sm text-800">{{ p.name }}</span>
+            <span class="text-sm font-bold text-primary ml-auto">৳{{ (p.effective_price ?? p.price) | number:'1.0-0' }}</span>
+          </label>
+        </div>
+
+        <!-- Sticky / Total Box -->
+        <div class="fbt-total-box p-3 border-round-xl surface-ground flex flex-column gap-2 flex-shrink-0 w-full md:w-auto">
+          <div class="flex align-items-baseline gap-2">
+            <span class="text-xs text-600 font-semibold uppercase">Total ({{ fbtSelectedCount() }} items):</span>
+            <span class="font-bold text-2xl text-primary">৳{{ fbtTotal() | number:'1.0-0' }}</span>
+          </div>
+          <button type="button" class="btn-add-fbt w-full flex align-items-center justify-content-center gap-2"
+                  [disabled]="!product()?.isInStock"
+                  (click)="addFbtSelectedToCart()">
+            <i class="pi pi-shopping-bag"></i>
+            <span>Add selected to cart</span>
+          </button>
         </div>
       </div>
     </div>
+
+    <!-- 4. You May Also Like Section (Always Present) -->
+    <div class="related-section mt-6">
+      <div class="section-title-wrap mb-4">
+        <span class="section-kicker block mb-1">Similar Pieces</span>
+        <h2 class="section-heading m-0">You May Also Like</h2>
+      </div>
+
+      <!-- Skeleton when loading -->
+      <div class="grid" *ngIf="loadingRelated()">
+        <div *ngFor="let i of [1,2,3,4]" class="col-6 sm:col-4 md:col-3 px-2 mb-3">
+          <p-skeleton width="100%" height="180px" borderRadius="12px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="70%" height="1rem" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="40%" height="1.2rem"></p-skeleton>
+        </div>
+      </div>
+
+      <!-- Swipe row of product cards -->
+      <div class="swipe-section-wrapper" *ngIf="!loadingRelated() && relatedProducts().length > 0">
+        <button type="button" pButton icon="pi pi-chevron-left" aria-label="Previous recommended products"
+                class="swipe-nav-btn prev-btn p-button-rounded"
+                (click)="scrollLeft(relatedList)"></button>
+
+        <div class="product-swipe-container" #relatedList>
+          <div *ngFor="let p of relatedProducts()" class="swipe-card-wrapper px-2">
+            <app-product-card
+              [product]="p"
+              (addToCart)="cartService.addToCart($event)">
+            </app-product-card>
+          </div>
+        </div>
+
+        <button type="button" pButton icon="pi pi-chevron-right" aria-label="Next recommended products"
+                class="swipe-nav-btn next-btn p-button-rounded"
+                (click)="scrollRight(relatedList)"></button>
+      </div>
+    </div>
   </div>
+
+  <app-bundle-picker
+    [combo]="selectedMixCombo()"
+    [(visible)]="mixPickerVisible"
+    (picksConfirmed)="onPicksConfirmed($event)">
+  </app-bundle-picker>
 
   <!-- Custom Luxury Lightbox Modal -->
   <div class="custom-lightbox-overlay"

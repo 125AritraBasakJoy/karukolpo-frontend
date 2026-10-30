@@ -1,0 +1,450 @@
+<p-toast></p-toast>
+
+<div class="combo-wizard-container p-2 sm:p-4 min-h-screen">
+  <!-- Header -->
+  <div class="header-section mb-4 sm:mb-5">
+    <h1 class="combo-wizard-title font-bold m-0 tracking-tight text-white mb-2">
+      {{ isEditMode() ? 'Edit Combo Offer' : 'Create New Combo Offer' }}
+    </h1>
+    <p class="text-slate-400 m-0 text-base sm:text-lg">
+      Step-by-step guidance for fixed bundles, multipacks and customer mix-and-match offers.
+    </p>
+  </div>
+
+  <div class="glass-card combo-wizard-card p-3 sm:p-5 fadein animation-duration-500">
+    <!-- 4-Step Header Navigation Track -->
+    <div class="wizard-stepper-header mb-4 sm:mb-5">
+      <div class="wizard-steps-track">
+        <div class="wizard-steps-bar">
+          <!-- Step 1 -->
+          <button type="button" class="wizard-step-item"
+                  [class.active]="activeStep() === 1"
+                  [class.completed]="activeStep() > 1"
+                  (click)="onStepClick(1)">
+            <div class="wizard-step-circle">
+              <i class="pi pi-check" *ngIf="activeStep() > 1"></i>
+              <span *ngIf="activeStep() <= 1">1</span>
+            </div>
+            <span class="step-name">Combo Info</span>
+          </button>
+
+          <div class="wizard-step-connector" [class.completed]="activeStep() > 1"></div>
+
+          <!-- Step 2 -->
+          <button type="button" class="wizard-step-item"
+                  [class.active]="activeStep() === 2"
+                  [class.completed]="activeStep() > 2"
+                  (click)="onStepClick(2)">
+            <div class="wizard-step-circle">
+              <i class="pi pi-check" *ngIf="activeStep() > 2"></i>
+              <span *ngIf="activeStep() <= 2">2</span>
+            </div>
+            <span class="step-name">Products</span>
+          </button>
+
+          <div class="wizard-step-connector" [class.completed]="activeStep() > 2"></div>
+
+          <!-- Step 3 -->
+          <button type="button" class="wizard-step-item"
+                  [class.active]="activeStep() === 3"
+                  [class.completed]="activeStep() > 3"
+                  (click)="onStepClick(3)">
+            <div class="wizard-step-circle">
+              <i class="pi pi-check" *ngIf="activeStep() > 3"></i>
+              <span *ngIf="activeStep() <= 3">3</span>
+            </div>
+            <span class="step-name">Pricing & Schedule</span>
+          </button>
+
+          <div class="wizard-step-connector" [class.completed]="activeStep() > 3"></div>
+
+          <!-- Step 4 -->
+          <button type="button" class="wizard-step-item"
+                  [class.active]="activeStep() === 4"
+                  (click)="onStepClick(4)">
+            <div class="wizard-step-circle">
+              <span>4</span>
+            </div>
+            <span class="step-name">Review</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Combo Info -->
+    <div *ngIf="activeStep() === 1" class="step-content-pane fadein">
+      <div class="flex flex-column gap-4 max-w-40rem mx-auto">
+        <!-- Kind Selector -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Combo Type <span class="text-red-400">*</span>
+          </label>
+          <p-selectButton [options]="kindOptions" [(ngModel)]="kind" optionLabel="label" optionValue="value"
+                          styleClass="w-full"></p-selectButton>
+          <p class="text-xs text-slate-400 mt-2 m-0" *ngIf="kind === 'fixed'">
+            Fixed Set: Exact items grouped together. A single product with quantity 2+ creates a Multipack.
+          </p>
+          <p class="text-xs text-slate-400 mt-2 m-0" *ngIf="kind === 'mix_and_match'">
+            Mix & Match: The customer fills slots from a chosen product pool (e.g. "Buy 3 Get 1 Free, pick any 4 tees").
+          </p>
+        </div>
+
+        <!-- Name -->
+        <div>
+          <label for="combo-name" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Combo Name <span class="text-red-400">*</span>
+          </label>
+          <input type="text" pInputText id="combo-name" [(ngModel)]="name"
+                 placeholder="e.g. Prodip Puja Set or Any 4 Tees" class="w-full premium-input" />
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="combo-desc" class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Description (Optional)
+          </label>
+          <textarea pInputTextarea id="combo-desc" [(ngModel)]="description" rows="3"
+                    placeholder="Short description of what is included in this bundle..." class="w-full premium-input"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Products -->
+    <div *ngIf="activeStep() === 2" class="step-content-pane fadein">
+      <!-- Fixed Set Mode -->
+      <div *ngIf="kind === 'fixed'" class="flex flex-column gap-3 max-w-50rem mx-auto">
+        <div class="flex align-items-center justify-content-between mb-1">
+          <div>
+            <h3 class="text-lg font-bold text-white m-0">Select Products & Quantities</h3>
+            <span class="text-xs text-slate-400">1 to 5 products. Total units must be at least 2.</span>
+          </div>
+          <button pButton label="Add Product" icon="pi pi-plus"
+                  class="p-button-outlined p-button-sm premium-btn-secondary"
+                  [disabled]="productRows.length >= 5"
+                  (click)="addProductRow()">
+          </button>
+        </div>
+
+        <!-- Multipack Hint -->
+        <div *ngIf="productRows.length === 1 && (productRows[0].quantity || 0) >= 2 && productRows[0].product"
+             class="p-2 border-round bg-blue-900-alpha-20 border-1 border-blue-500-alpha-30 text-blue-300 text-xs flex align-items-center gap-2">
+          <i class="pi pi-info-circle"></i>
+          <span>Multipack: {{ productRows[0].quantity }} × {{ productRows[0].product.name }}</span>
+        </div>
+
+        <!-- Product Rows -->
+        <div class="flex flex-column gap-3">
+          <div *ngFor="let row of productRows; let i = index"
+               class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card flex flex-column sm:flex-row align-items-stretch sm:align-items-center gap-3">
+
+            <div class="flex-1">
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                Product #{{ i + 1 }}
+              </label>
+              <p-dropdown [options]="catalogSearchResults()"
+                          [(ngModel)]="row.product"
+                          optionLabel="name"
+                          [filter]="true"
+                          filterBy="name,code"
+                          [showClear]="true"
+                          [loading]="searchLoading()"
+                          (onFilter)="onProductSearch($event)"
+                          placeholder="Search product by name or code..."
+                          styleClass="w-full premium-dropdown">
+                <ng-template let-prod pTemplate="item">
+                  <div class="flex align-items-center gap-2">
+                    <img [src]="prod.imageUrl" [alt]="prod.name" class="w-2rem h-2rem border-round object-cover" />
+                    <div class="flex flex-column">
+                      <span class="text-sm font-semibold text-white">{{ prod.name }}</span>
+                      <span class="text-xs text-blue-400">৳{{ (prod.effective_price || prod.price) | number:'1.0-0' }}</span>
+                    </div>
+                  </div>
+                </ng-template>
+              </p-dropdown>
+            </div>
+
+            <!-- Quantity Stepper -->
+            <div style="width: 140px;">
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                Qty (1-50)
+              </label>
+              <p-inputNumber [(ngModel)]="row.quantity" [showButtons]="true" [min]="1" [max]="50"
+                             buttonLayout="horizontal"
+                             spinnerMode="horizontal"
+                             decrementButtonClass="p-button-secondary"
+                             incrementButtonClass="p-button-secondary"
+                             incrementButtonIcon="pi pi-plus"
+                             decrementButtonIcon="pi pi-minus"
+                             styleClass="w-full"></p-inputNumber>
+            </div>
+
+            <!-- Remove Button -->
+            <div class="sm:pt-4">
+              <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                      (click)="removeProductRow(i)" [disabled]="productRows.length <= 1" pTooltip="Remove">
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pick Any N Mode -->
+      <div *ngIf="kind === 'mix_and_match'" class="flex flex-column gap-4 max-w-50rem mx-auto">
+        <!-- Slot Count -->
+        <div class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-3">
+          <div>
+            <span class="font-bold text-white text-base block">How many slots? (slot_count)</span>
+            <span class="text-xs text-slate-400">Customer picks this exact number of items from the pool (2 to 20).</span>
+          </div>
+          <p-inputNumber [(ngModel)]="slotCount" [showButtons]="true" [min]="2" [max]="20"
+                         buttonLayout="horizontal" spinnerMode="horizontal"
+                         decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary"
+                         incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus"
+                         styleClass="w-10rem"></p-inputNumber>
+        </div>
+
+        <!-- Category Batch Import -->
+        <div class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card">
+          <span class="font-bold text-white text-sm block mb-2">Import from Category</span>
+          <div class="flex flex-column sm:flex-row align-items-center gap-2">
+            <p-dropdown [options]="categories()" [(ngModel)]="selectedCategoryForPool" optionLabel="name"
+                        placeholder="Select a category..." styleClass="w-full sm:w-20rem"></p-dropdown>
+            <button pButton label="Add All from Category" icon="pi pi-download"
+                    class="premium-btn-secondary p-button-sm w-full sm:w-auto"
+                    [loading]="categoryImportLoading"
+                    [disabled]="!selectedCategoryForPool || poolProducts.length >= 50"
+                    (click)="importCategoryProducts()">
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Individual Product to Pool -->
+        <div class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card">
+          <span class="font-bold text-white text-sm block mb-2">Add Product to Pool ({{ poolProducts.length }}/50)</span>
+          <p-dropdown [options]="catalogSearchResults()"
+                      (onChange)="addPoolProduct($event.value)"
+                      optionLabel="name"
+                      [filter]="true"
+                      filterBy="name,code"
+                      [loading]="searchLoading()"
+                      (onFilter)="onProductSearch($event)"
+                      placeholder="Search and select product to add to pool..."
+                      styleClass="w-full premium-dropdown">
+            <ng-template let-prod pTemplate="item">
+              <div class="flex align-items-center gap-2">
+                <img [src]="prod.imageUrl" [alt]="prod.name" class="w-2rem h-2rem border-round object-cover" />
+                <div class="flex flex-column">
+                  <span class="text-sm font-semibold text-white">{{ prod.name }}</span>
+                  <span class="text-xs text-blue-400">৳{{ (prod.effective_price || prod.price) | number:'1.0-0' }}</span>
+                </div>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+
+        <!-- Pool Products Grid -->
+        <div class="pool-list-section">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">
+            Current Pool Members ({{ poolProducts.length }})
+          </span>
+          <div *ngIf="poolProducts.length === 0" class="text-slate-500 text-sm italic py-3 text-center">
+            No products in pool yet. Add at least 2 products above.
+          </div>
+          <div class="grid" *ngIf="poolProducts.length > 0">
+            <div *ngFor="let p of poolProducts; let i = index" class="col-6 sm:col-4 md:col-3 p-1">
+              <div class="p-2 border-round-lg border-1 border-white-alpha-10 surface-card flex align-items-center justify-content-between gap-2">
+                <div class="flex align-items-center gap-2 overflow-hidden">
+                  <img [src]="p.imageUrl" [alt]="p.name" class="w-2rem h-2rem border-round object-cover flex-shrink-0" />
+                  <span class="text-xs text-white line-clamp-1 font-medium">{{ p.name }}</span>
+                </div>
+                <button type="button" class="p-button-text p-button-danger border-none bg-transparent cursor-pointer text-red-400"
+                        (click)="removePoolProduct(i)">
+                  <i class="pi pi-times text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Pricing & Schedule -->
+    <div *ngIf="activeStep() === 3" class="step-content-pane fadein">
+      <div class="flex flex-column gap-4 max-w-44rem mx-auto">
+        <!-- Pricing Type Selector -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Pricing Type <span class="text-red-400">*</span>
+          </label>
+          <p-selectButton [options]="pricingOptions" [(ngModel)]="pricingType" optionLabel="label" optionValue="value"
+                          styleClass="w-full"></p-selectButton>
+        </div>
+
+        <!-- Pricing Value Input -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            {{ pricingType === 'fixed_price' ? 'Fixed Price (৳)' : (pricingType === 'percentage' ? 'Percentage Off (%)' : 'Free Units per Set (N)') }}
+            <span class="text-red-400">*</span>
+          </label>
+
+          <p-inputNumber *ngIf="pricingType === 'fixed_price'" [(ngModel)]="pricingValue" mode="currency" currency="BDT" locale="en-US"
+                         [min]="1" styleClass="w-full"></p-inputNumber>
+
+          <p-inputNumber *ngIf="pricingType === 'percentage'" [(ngModel)]="pricingValue" suffix="%" [min]="1" [max]="90"
+                         styleClass="w-full"></p-inputNumber>
+
+          <div *ngIf="pricingType === 'cheapest_free'">
+            <p-inputNumber [(ngModel)]="pricingValue" [min]="1" [max]="totalUnitsInSet - 1"
+                           [showButtons]="true" styleClass="w-full"></p-inputNumber>
+            <span class="text-xs text-blue-400 font-semibold mt-1 block">
+              = Buy {{ totalUnitsInSet - pricingValue }} Get {{ pricingValue }} Free
+            </span>
+          </div>
+        </div>
+
+        <!-- Live Price Preview Card -->
+        <div class="p-3 sm:p-4 border-round-xl border-1 surface-card"
+             [class.border-green-500-alpha-40]="isAValidSaving"
+             [class.border-red-500-alpha-40]="!isAValidSaving">
+          <span class="text-xs font-bold uppercase tracking-wider block mb-2"
+                [class.text-green-400]="isAValidSaving"
+                [class.text-red-400]="!isAValidSaving">
+            {{ isAValidSaving ? 'Live Price Preview (Valid Saving)' : 'Invalid Price (Must Cost Less Than Buying Separately)' }}
+          </span>
+
+          <div class="flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-3">
+            <div>
+              <span *ngIf="kind === 'mix_and_match'" class="text-xs text-slate-400 block mb-1">
+                Based on {{ slotCount }} × cheapest pool item:
+              </span>
+              <div class="flex align-items-baseline gap-2">
+                <span class="text-slate-400 line-through text-sm">৳{{ previewListTotal | number:'1.0-0' }}</span>
+                <i class="pi pi-arrow-right text-xs text-slate-500"></i>
+                <span class="font-bold text-2xl text-blue-400">৳{{ previewComboPrice | number:'1.0-0' }}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-column align-items-start sm:align-items-end">
+              <span class="text-sm font-bold" [class.text-green-400]="isAValidSaving" [class.text-red-400]="!isAValidSaving">
+                Customer Saves ৳{{ previewSavings | number:'1.0-0' }} ({{ previewSavingsPercent }}%)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule & Active Toggle -->
+        <div class="grid">
+          <div class="col-12 sm:col-6">
+            <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Start Date (Optional)
+            </label>
+            <p-calendar [(ngModel)]="startsAt" [showTime]="true" [showIcon]="true" appendTo="body"
+                        placeholder="Starts immediately if blank" styleClass="w-full"></p-calendar>
+          </div>
+          <div class="col-12 sm:col-6">
+            <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              End Date (Optional)
+            </label>
+            <p-calendar [(ngModel)]="endsAt" [showTime]="true" [showIcon]="true" appendTo="body"
+                        placeholder="Runs indefinitely if blank" styleClass="w-full"></p-calendar>
+          </div>
+        </div>
+
+        <div class="flex align-items-center justify-content-between p-3 border-round-xl border-1 border-white-alpha-10 surface-card">
+          <div>
+            <span class="font-bold text-white text-base block">Active Status</span>
+            <span class="text-xs text-slate-400">Inactive combos will not appear on the storefront.</span>
+          </div>
+          <p-inputSwitch [(ngModel)]="isActive"></p-inputSwitch>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Review -->
+    <div *ngIf="activeStep() === 4" class="step-content-pane fadein">
+      <div class="flex flex-column gap-4 max-w-44rem mx-auto">
+        <!-- Summary Card -->
+        <div class="p-4 border-round-xl border-1 border-white-alpha-10 surface-card flex flex-column gap-3">
+          <div class="flex align-items-center justify-content-between border-bottom-1 border-white-alpha-10 pb-3">
+            <div>
+              <span class="text-xs font-bold text-blue-400 uppercase tracking-wider block">
+                {{ kind === 'mix_and_match' ? 'Pick Any ' + slotCount + ' Bundle' : 'Fixed Set / Multipack' }}
+              </span>
+              <h3 class="text-2xl font-bold text-white m-0">{{ name }}</h3>
+            </div>
+            <p-tag [value]="isActive ? 'ACTIVE' : 'INACTIVE'" [severity]="isActive ? 'success' : 'secondary'"></p-tag>
+          </div>
+
+          <p *ngIf="description" class="text-slate-300 text-sm m-0">{{ description }}</p>
+
+          <div class="py-2 border-bottom-1 border-white-alpha-10">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Components</span>
+            <div *ngIf="kind === 'fixed'" class="flex flex-column gap-1">
+              <div *ngFor="let r of productRows" class="flex align-items-center justify-content-between text-sm text-slate-200">
+                <span>{{ r.quantity }} × {{ r.product?.name }}</span>
+                <span class="text-slate-400">৳{{ ((r.product?.effective_price || r.product?.price || 0) * r.quantity) | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <div *ngIf="kind === 'mix_and_match'" class="text-sm text-slate-300">
+              Pool of {{ poolProducts.length }} products · Customer selects {{ slotCount }} items
+            </div>
+          </div>
+
+          <div class="flex align-items-center justify-content-between pt-1">
+            <span class="text-sm text-slate-400">Combo Pricing:</span>
+            <div class="flex align-items-baseline gap-2">
+              <span class="text-slate-400 line-through text-sm">৳{{ previewListTotal | number:'1.0-0' }}</span>
+              <span class="font-bold text-xl text-blue-400">৳{{ previewComboPrice | number:'1.0-0' }}</span>
+              <span class="text-xs text-green-400 font-bold">(Save ৳{{ previewSavings | number:'1.0-0' }})</span>
+            </div>
+          </div>
+
+          <div class="p-2 border-round bg-blue-900-alpha-20 border-1 border-blue-500-alpha-20 text-xs text-blue-300">
+            <i class="pi pi-info-circle mr-1"></i>
+            Business Rule: Coupons do not apply to combo items. Editing this combo does not reprice existing placed orders.
+          </div>
+        </div>
+
+        <!-- Server Error Banner -->
+        <div *ngIf="serverError()" class="p-3 border-round-xl bg-red-900-alpha-20 border-1 border-red-500 text-red-200 text-sm flex align-items-center gap-2">
+          <i class="pi pi-exclamation-circle text-base"></i>
+          <span>{{ serverError() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard Footer Navigation Bar -->
+    <div class="wizard-footer flex flex-column sm:flex-row align-items-center justify-content-between gap-3 mt-5 sm:mt-6 pt-4 border-top-1 border-white-alpha-10">
+      <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary wizard-action-btn w-full sm:w-auto"
+              [disabled]="loading()" (click)="cancel()">
+      </button>
+
+      <div class="wizard-actions-group flex flex-column sm:flex-row align-items-stretch sm:align-items-center gap-2 sm:gap-3 w-full sm:w-auto justify-content-end">
+        <button *ngIf="activeStep() > 1" pButton label="Back" icon="pi pi-arrow-left"
+                class="p-button-outlined premium-btn-secondary wizard-action-btn px-4"
+                [disabled]="loading()" (click)="goToStep(activeStep() - 1)">
+        </button>
+
+        <button *ngIf="activeStep() === 1" pButton label="Next: Products" icon="pi pi-arrow-right" iconPos="right"
+                class="premium-btn-primary wizard-action-btn px-5 shadow-4" (click)="goToStep(2)">
+        </button>
+
+        <button *ngIf="activeStep() === 2" pButton label="Next: Pricing & Schedule" icon="pi pi-arrow-right" iconPos="right"
+                class="premium-btn-primary wizard-action-btn px-5 shadow-4" (click)="goToStep(3)">
+        </button>
+
+        <button *ngIf="activeStep() === 3" pButton label="Next: Review" icon="pi pi-arrow-right" iconPos="right"
+                class="premium-btn-primary wizard-action-btn px-5 shadow-4" (click)="goToStep(4)">
+        </button>
+
+        <button *ngIf="activeStep() === 4" pButton
+                [label]="isEditMode() ? 'Update Combo' : 'Save Combo'"
+                icon="pi pi-check"
+                [loading]="loading()"
+                class="premium-btn-primary wizard-action-btn px-5 shadow-4"
+                (click)="saveCombo()">
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

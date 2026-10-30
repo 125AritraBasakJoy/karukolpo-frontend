@@ -18,6 +18,11 @@ import { ToastModule } from 'primeng/toast';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ImageModule } from 'primeng/image';
 import { GalleriaModule } from 'primeng/galleria';
+import { ComboService } from '../../core/services/combo/combo.service';
+import { ComboView } from '../../models/combo.model';
+import { ComboCardComponent } from '../../components/combo-card/combo-card.component';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
+import { BundlePickerComponent } from '../../components/bundle-picker/bundle-picker.component';
 
 @Component({
   selector: 'app-product-details',
@@ -34,7 +39,10 @@ import { GalleriaModule } from 'primeng/galleria';
     RouterLink,
     SafeHtmlPipe,
     ImageModule,
-    GalleriaModule
+    GalleriaModule,
+    ComboCardComponent,
+    ProductCardComponent,
+    BundlePickerComponent
   ],
   templateUrl: './product-details.component.html',
   styleUrls: ['./product-details.component.scss'],
@@ -43,12 +51,39 @@ import { GalleriaModule } from 'primeng/galleria';
 export class ProductDetailsComponent implements OnInit {
   product = signal<Product | null>(null);
   relatedProducts = signal<Product[]>([]);
+  combos = signal<ComboView[]>([]);
+  loadingCombos = signal<boolean>(false);
+  fbtProducts = signal<Product[]>([]);
+  loadingFbt = signal<boolean>(false);
+  fbtSelectedIds = signal<Set<string>>(new Set<string>());
+  selectedMixCombo = signal<ComboView | null>(null);
+  mixPickerVisible = signal<boolean>(false);
+
   loading = signal<boolean>(true);
   loadingRelated = signal<boolean>(false);
   activeImageIndex = signal<number>(0);
   displayGalleria = signal<boolean>(false);
   quantity = signal<number>(1);
   activeTab = signal<'about' | 'care' | 'shipping'>('about');
+
+  fbtTotal = computed(() => {
+    let sum = 0;
+    const current = this.product();
+    if (current) {
+      sum += current.effective_price ?? current.price ?? 0;
+    }
+    const selected = this.fbtSelectedIds();
+    for (const p of this.fbtProducts()) {
+      if (selected.has(p.id)) {
+        sum += p.effective_price ?? p.price ?? 0;
+      }
+    }
+    return sum;
+  });
+
+  fbtSelectedCount = computed(() => {
+    return (this.product() ? 1 : 0) + this.fbtSelectedIds().size;
+  });
 
   // Hover magnifier state
   isZooming = signal<boolean>(false);
@@ -189,6 +224,7 @@ export class ProductDetailsComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
+    private comboService: ComboService,
     public cartService: CartService,
     public categoryService: CategoryService,
     private messageService: MessageService,
@@ -211,13 +247,98 @@ export class ProductDetailsComponent implements OnInit {
         if (id) {
           this.cartService.refreshCartProducts();
           this.product.set(null);
+          this.combos.set([]);
+          this.fbtProducts.set([]);
+          this.fbtSelectedIds.set(new Set());
           this.relatedProducts.set([]);
           this.loadProduct(id);
+          this.loadCombos(id);
+          this.loadFbt(id);
           this.loadRelatedProducts(id);
         }
         return of(id);
       })
     ).subscribe();
+  }
+
+  loadCombos(id: string | number) {
+    this.loadingCombos.set(true);
+    this.comboService.getProductCombos(String(id)).subscribe({
+      next: (list) => {
+        this.combos.set(list || []);
+        this.loadingCombos.set(false);
+      },
+      error: () => this.loadingCombos.set(false)
+    });
+  }
+
+  loadFbt(id: string | number) {
+    this.loadingFbt.set(true);
+    this.productService.getFrequentlyBoughtTogether(String(id), 3).subscribe({
+      next: (list) => {
+        this.fbtProducts.set(list || []);
+        const allIds = new Set((list || []).map(p => p.id));
+        this.fbtSelectedIds.set(allIds);
+        this.loadingFbt.set(false);
+      },
+      error: () => this.loadingFbt.set(false)
+    });
+  }
+
+  toggleFbtItem(productId: string) {
+    if (this.product()?.id === productId) return;
+    this.fbtSelectedIds.update(set => {
+      const next = new Set(set);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  }
+
+  isFbtSelected(productId: string): boolean {
+    return this.product()?.id === productId || this.fbtSelectedIds().has(productId);
+  }
+
+  addFbtSelectedToCart() {
+    const main = this.product();
+    if (main && main.isInStock) {
+      this.cartService.addToCart(main);
+    }
+    const selected = this.fbtSelectedIds();
+    for (const p of this.fbtProducts()) {
+      if (selected.has(p.id) && p.isInStock) {
+        this.cartService.addToCart(p);
+      }
+    }
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Added to Cart',
+      detail: `${this.fbtSelectedCount()} items added to cart`
+    });
+  }
+
+  onAddCombo(event: { combo: ComboView; picks?: string[] }) {
+    this.cartService.addComboToCart(event.combo, 1, event.picks);
+  }
+
+  onConfigureCombo(combo: ComboView) {
+    this.selectedMixCombo.set(combo);
+    this.mixPickerVisible.set(true);
+  }
+
+  onPicksConfirmed(event: { combo: ComboView; picks: string[] }) {
+    this.cartService.addComboToCart(event.combo, 1, event.picks);
+  }
+
+  scrollLeft(el: HTMLElement) {
+    el.scrollBy({ left: -320, behavior: 'smooth' });
+  }
+
+  scrollRight(el: HTMLElement) {
+    el.scrollBy({ left: 320, behavior: 'smooth' });
   }
 
   loadProduct(id: string | number) {

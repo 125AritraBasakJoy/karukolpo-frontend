@@ -397,7 +397,14 @@ export class OrderService {
    */
   private mapFrontendToBackend(order: Omit<Order, 'id'>): any {
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    const payload = {
+    const standaloneItems = (order.items || []).filter(item => !item.order_combo_id);
+    const combos = (order.combos || []).map(c => ({
+      combo_id: c.combo_id,
+      quantity: c.quantity,
+      ...(c.picks && c.picks.length ? { picks: c.picks } : {})
+    }));
+
+    const payload: any = {
       address: {
         full_name: order.fullName,
         phone: order.phoneNumber,
@@ -407,12 +414,13 @@ export class OrderService {
         additional_info: order.additionalInfo || '',
         email: order.email ? order.email : null
       },
-      items: order.items.map(item => ({
+      items: standaloneItems.map(item => ({
         product_id: item.product.id,
         quantity: item.quantity
       })),
+      combos,
       payment_method: order.paymentMethod ? (order.paymentMethod.toLowerCase() === 'bkash' ? 'bkash' : order.paymentMethod) : null,
-      payment_status: order.payment_status || order.paymentStatus || 'unpaid',
+      coupon_code: order.couponCode || null,
       utm_source: urlParams ? urlParams.get('utm_source') : null,
       utm_medium: urlParams ? urlParams.get('utm_medium') : null,
       utm_campaign: urlParams ? urlParams.get('utm_campaign') : null,
@@ -529,10 +537,27 @@ export class OrderService {
           regular_price: catalogPrice,
           price_at_purchase: grossPrice,
           discount_per_unit: unitDiscount,
+          order_combo_id: item.order_combo_id ? item.order_combo_id.toString() : null,
+          combo_discount_per_unit: item.combo_discount_per_unit != null ? parseFloat(item.combo_discount_per_unit) : 0,
           unit_cost: (item.unit_cost !== undefined && item.unit_cost !== null) ? parseFloat(item.unit_cost) : undefined,
           product_id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (rawProduct.id?.toString() || '')
         };
       }),
+      combos: (backendOrder.combos || []).map((c: any) => ({
+        id: c.id ? c.id.toString() : undefined,
+        combo_id: c.combo_id ? c.combo_id.toString() : null,
+        name: c.name || '',
+        kind: c.kind || 'fixed',
+        quantity: c.quantity || 1,
+        list_total: c.list_total != null ? parseFloat(c.list_total) : 0,
+        combo_price: c.combo_price != null ? parseFloat(c.combo_price) : 0,
+        discount_applied: c.discount_applied != null ? parseFloat(c.discount_applied) : 0,
+        picks: c.picks || null
+      })),
+      combo_savings: (backendOrder.combos || []).reduce(
+        (sum: number, c: any) => sum + (c.discount_applied != null ? parseFloat(c.discount_applied) : 0),
+        0
+      ),
       totalAmount: backendOrder.total != null ? parseFloat(backendOrder.total) :
         (backendOrder.total_amount != null ? parseFloat(backendOrder.total_amount) :
           (backendOrder.totalAmount != null ? parseFloat(backendOrder.totalAmount) :

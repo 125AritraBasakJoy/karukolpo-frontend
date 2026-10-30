@@ -9,6 +9,8 @@ export const PRODUCTS_API = {
     CREATE: BASE,
     GET_BY_ID: (productId: string) => `${BASE}/${productId}`,
     RELATED: (ref: string, limit: number = 8) => `${BASE}/${ref}/related?limit=${limit}`,
+    FBT: (ref: string, limit: number = 3) => `${BASE}/${ref}/frequently-bought-together?limit=${limit}`,
+    RELATED_PINS: (id: string) => `admin/${BASE}/${id}/related-pins`,
     UPDATE: (productId: string) => `${BASE}/${productId}`,
     DELETE: (productId: string) => `${BASE}/${productId}`,
 

@@ -108,58 +108,11 @@
                 <div class="product-swipe-container" #hotDealsList>
                     @for (product of hotDeals(); track product.id) {
                     <div class="swipe-card-wrapper px-2">
-                        <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
-                             (click)="showProductDetails(product)">
-                            <!-- Badges Stack Top Left -->
-                            <div class="product-badges-stack pointer-events-none">
-                                <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
-                                      class="discount-badge">
-                                    {{ product.discount_type === 'percentage' ? ((product.discount_percent || product.discount_value) + '% OFF') : ('৳' + (product.savings || product.discount_value | number:'1.0-0') + ' OFF') }}
-                                </span>
-                                <span *ngIf="isOutOfStock(product)" class="oos-badge">
-                                    Sold Out
-                                </span>
-                            </div>
-
-                            <!-- Product Image Wrapper -->
-                            <div class="product-img-box relative overflow-hidden">
-                                <img [src]="product.imageUrl" [alt]="product.name" class="artisan-product-img" loading="lazy" decoding="async" />
-                            </div>
-
-                            <!-- Product Meta Info -->
-                            <div class="product-info-content p-2 flex flex-column flex-grow-1">
-                                <div class="product-header-flex">
-                                    <div class="flex align-items-start justify-content-between gap-2 mb-1">
-                                        <h3 class="product-title flex-1">{{ product.name }}</h3>
-                                        <span *ngIf="!isOutOfStock(product)" class="in-stock-badge flex-shrink-0 mt-1">
-                                            <span class="dot"></span> In Stock
-                                        </span>
-                                    </div>
-                                    <div class="price-container">
-                                        <span class="current-price font-bold">
-                                            ৳{{ (product.effective_price || product.price) | number:'1.0-0' }}
-                                        </span>
-                                        <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
-                                              class="old-price text-xs line-through">
-                                            ৳{{ product.price | number:'1.0-0' }}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Card Bottom Row: Cart Action -->
-                                <div class="card-bottom-actions mt-auto pt-2 border-top-1 surface-border">
-                                    <button *ngIf="!isOutOfStock(product)" type="button" class="btn-product-add-cart w-full flex align-items-center justify-content-center gap-2"
-                                            (click)="quickAddToCart($event, product)" title="Add to Cart" aria-label="Add to cart">
-                                        <i class="pi pi-shopping-bag"></i>
-                                        <span>Add to Cart</span>
-                                    </button>
-                                    <button *ngIf="isOutOfStock(product)" type="button" class="btn-product-add-cart disabled w-full flex align-items-center justify-content-center gap-2"
-                                            disabled title="Out of Stock">
-                                        <span>Out of Stock</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <app-product-card
+                            [product]="product"
+                            (addToCart)="onCardAddToCart(product)"
+                            (cardClick)="showProductDetails(product)">
+                        </app-product-card>
                     </div>
                     }
 
@@ -200,6 +153,80 @@
     </div>
     }
 
+    <!-- Combo Offers Section -->
+    @defer (on viewport) {
+    @if (combos().length > 0) {
+    <section id="combo-offers" class="product-showcase-section py-5 sm:py-6 px-3 sm:px-4">
+        <div class="container relative">
+            <div class="section-header-row flex align-items-end justify-content-between mb-4">
+                <div>
+                    <span class="section-kicker font-bold uppercase block mb-1">Better Together</span>
+                    <h2 class="section-heading m-0">Combo Offers</h2>
+                </div>
+                <a [routerLink]="['/combos']"
+                   class="view-all-link flex align-items-center gap-1" aria-label="View all combo offers">
+                    <span>View All</span>
+                    <i class="pi pi-arrow-right text-xs" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="swipe-section-wrapper">
+                @if (combos().length > 2) {
+                <button type="button" pButton icon="pi pi-chevron-left" aria-label="Previous combo offers"
+                    class="swipe-nav-btn prev-btn p-button-rounded" 
+                    (click)="scrollLeft(comboOffersList)"></button>
+                }
+
+                <div class="product-swipe-container" #comboOffersList>
+                    @for (combo of combos(); track combo.id) {
+                    <div class="swipe-card-wrapper combo-card-wrapper px-2">
+                        <app-combo-card
+                            [combo]="combo"
+                            [compact]="true"
+                            (addCombo)="onAddCombo($event)"
+                            (configure)="onConfigureCombo($event)">
+                        </app-combo-card>
+                    </div>
+                    }
+
+                    <!-- View All Card at the end of Combos -->
+                    <div class="swipe-card-wrapper combo-card-wrapper px-2">
+                        <div class="product-card premium-product-card view-all-product-card flex flex-column align-items-center justify-content-center h-full cursor-pointer text-center"
+                            [routerLink]="['/combos']"
+                            role="link" aria-label="View all combo offers">
+                            <div class="view-more-card-content flex flex-column align-items-center justify-content-center py-5 h-full w-full">
+                                <div class="view-more-icon-circle mb-3 flex align-items-center justify-content-center">
+                                    <i class="pi pi-arrow-right text-lg" aria-hidden="true"></i>
+                                </div>
+                                <span class="view-more-card-text">View All Combos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (combos().length > 2) {
+                <button type="button" pButton icon="pi pi-chevron-right" aria-label="Next combo offers"
+                    class="swipe-nav-btn next-btn p-button-rounded"
+                    (click)="scrollRight(comboOffersList)"></button>
+                }
+            </div>
+        </div>
+    </section>
+    }
+    } @placeholder {
+    <div>
+        <div class="container px-3 sm:px-4 py-4" *ngIf="loadingCombos()">
+            <div class="grid">
+                @for (i of [1,2,3]; track i) {
+                <div class="col-12 sm:col-6 md:col-4 px-2">
+                    <div class="skeleton-loader h-16rem w-full border-round-xl"></div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+
     <!-- Best Selling Section (Featured Crafts) -->
     @defer (on viewport) {
     @if (bestSelling().length > 0) {
@@ -227,58 +254,11 @@
                 <div class="product-swipe-container" #bestSellingList>
                     @for (product of bestSelling(); track product.id) {
                     <div class="swipe-card-wrapper px-2">
-                        <div class="premium-product-card flex flex-column h-full relative cursor-pointer"
-                             (click)="showProductDetails(product)">
-                            <!-- Badges Stack Top Left -->
-                            <div class="product-badges-stack pointer-events-none">
-                                <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
-                                      class="discount-badge">
-                                    {{ product.discount_type === 'percentage' ? ((product.discount_percent || product.discount_value) + '% OFF') : ('৳' + (product.savings || product.discount_value | number:'1.0-0') + ' OFF') }}
-                                </span>
-                                <span *ngIf="isOutOfStock(product)" class="oos-badge">
-                                    Sold Out
-                                </span>
-                            </div>
-
-                            <!-- Product Image Wrapper -->
-                            <div class="product-img-box relative overflow-hidden">
-                                <img [src]="product.imageUrl" [alt]="product.name" class="artisan-product-img" loading="lazy" decoding="async" />
-                            </div>
-
-                            <!-- Product Meta Info -->
-                            <div class="product-info-content p-2 flex flex-column flex-grow-1">
-                                <div class="product-header-flex">
-                                    <div class="flex align-items-start justify-content-between gap-2 mb-1">
-                                        <h3 class="product-title flex-1">{{ product.name }}</h3>
-                                        <span *ngIf="!isOutOfStock(product)" class="in-stock-badge flex-shrink-0 mt-1">
-                                            <span class="dot"></span> In Stock
-                                        </span>
-                                    </div>
-                                    <div class="price-container">
-                                        <span class="current-price font-bold">
-                                            ৳{{ (product.effective_price || product.price) | number:'1.0-0' }}
-                                        </span>
-                                        <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
-                                              class="old-price text-xs line-through">
-                                            ৳{{ product.price | number:'1.0-0' }}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <!-- Card Bottom Row: Cart Action -->
-                                <div class="card-bottom-actions mt-auto pt-2 border-top-1 surface-border">
-                                    <button *ngIf="!isOutOfStock(product)" type="button" class="btn-product-add-cart w-full flex align-items-center justify-content-center gap-2"
-                                            (click)="quickAddToCart($event, product)" title="Add to Cart" aria-label="Add to cart">
-                                        <i class="pi pi-shopping-bag"></i>
-                                        <span>Add to Cart</span>
-                                    </button>
-                                    <button *ngIf="isOutOfStock(product)" type="button" class="btn-product-add-cart disabled w-full flex align-items-center justify-content-center gap-2"
-                                            disabled title="Out of Stock">
-                                        <span>Out of Stock</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <app-product-card
+                            [product]="product"
+                            (addToCart)="onCardAddToCart(product)"
+                            (cardClick)="showProductDetails(product)">
+                        </app-product-card>
                     </div>
                     }
 
@@ -480,3 +460,9 @@
 } @placeholder {
     <div></div>
 }
+
+<app-bundle-picker
+    [combo]="selectedMixCombo()"
+    [(visible)]="mixPickerVisible"
+    (picksConfirmed)="onPicksConfirmed($event)">
+</app-bundle-picker>

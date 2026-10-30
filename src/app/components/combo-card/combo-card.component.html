@@ -1,0 +1,78 @@
+<div class="combo-offer-card p-3 sm:p-4 flex flex-column justify-content-between h-full"
+     [class.compact-card]="compact">
+
+  <div>
+    <!-- Top kicker and relative deadline badge -->
+    <div class="flex align-items-center justify-content-between gap-2 mb-3">
+      <span class="combo-kicker">{{ kickerText }}</span>
+      <span *ngIf="endsRelativeText" class="combo-deadline-chip">
+        <i class="pi pi-clock text-xs mr-1"></i>
+        <span>{{ endsRelativeText }}</span>
+      </span>
+    </div>
+
+    <!-- Multipack Presentation -->
+    <div *ngIf="isMultipack" class="multipack-visual flex align-items-center gap-3 mb-3">
+      <div class="multipack-thumb-wrap relative">
+        <img [src]="multipackItem.product.imageUrl" [alt]="multipackItem.product.name" class="multipack-thumb" loading="lazy" />
+        <span class="multipack-qty-badge">×{{ multipackItem.quantity }}</span>
+      </div>
+      <div class="flex flex-column">
+        <span class="font-bold text-lg text-900">{{ multipackItem.quantity }} × {{ multipackItem.product.name }}</span>
+        <span class="text-sm text-500">৳{{ multipackPerUnitPrice | number:'1.0-2' }} each</span>
+      </div>
+    </div>
+
+    <!-- Fixed Set Product Thumbnails Strip -->
+    <div *ngIf="!isMultipack && !isMixAndMatch" class="combo-thumbnails-row flex align-items-center flex-wrap gap-2 mb-3">
+      <ng-container *ngFor="let it of combo.items; let last = last">
+        <a [routerLink]="['/products', it.product.slug || it.product.id]" class="thumb-link relative" [title]="it.product.name">
+          <img [src]="it.product.imageUrl" [alt]="it.product.name" class="combo-thumb" loading="lazy" />
+          <span *ngIf="(it.quantity || 1) > 1" class="thumb-qty-pill">×{{ it.quantity }}</span>
+        </a>
+        <i *ngIf="!last" class="pi pi-plus text-xs text-400 mx-1"></i>
+      </ng-container>
+    </div>
+
+    <!-- Mix and Match Pool Preview Strip -->
+    <div *ngIf="isMixAndMatch" class="combo-thumbnails-row flex align-items-center flex-wrap gap-2 mb-3">
+      <div class="pool-preview-hint text-xs text-500 mb-1 w-full">
+        Pool of {{ combo.items.length }} products · Pick any {{ combo.slot_count }}
+      </div>
+      <ng-container *ngFor="let it of combo.items.slice(0, 5); let last = last">
+        <div class="thumb-link relative" [title]="it.product.name">
+          <img [src]="it.product.imageUrl" [alt]="it.product.name" class="combo-thumb" loading="lazy" />
+        </div>
+      </ng-container>
+      <span *ngIf="combo.items.length > 5" class="pool-more-badge">
+        +{{ combo.items.length - 5 }}
+      </span>
+    </div>
+
+    <!-- Title and Description -->
+    <h3 class="combo-name font-bold text-xl m-0 mb-1 text-900">{{ combo.name }}</h3>
+    <p *ngIf="combo.description" class="combo-desc text-sm text-600 m-0 mb-3 line-clamp-2">
+      {{ combo.description }}
+    </p>
+  </div>
+
+  <!-- Bottom Pricing and Cart Action -->
+  <div class="combo-bottom-bar pt-3 border-top-1 surface-border flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-3">
+    <div class="price-block flex flex-column">
+      <div class="flex align-items-baseline gap-2">
+        <span *ngIf="combo.price_is_from" class="text-xs text-500 font-semibold uppercase">From</span>
+        <span class="old-price line-through text-500 text-sm">৳{{ combo.list_total | number:'1.0-0' }}</span>
+        <span class="combo-price font-bold text-2xl text-primary">৳{{ combo.combo_price | number:'1.0-0' }}</span>
+      </div>
+      <div *ngIf="hasSavings" class="savings-pill mt-1">
+        <span>SAVE ৳{{ combo.savings | number:'1.0-0' }}</span>
+        <span *ngIf="combo.savings_percent"> · {{ combo.savings_percent }}%</span>
+      </div>
+    </div>
+
+    <button type="button" class="btn-combo-action w-full sm:w-auto" (click)="onActionClick($event)">
+      <i class="pi" [ngClass]="isMixAndMatch ? 'pi-sliders-h' : 'pi-shopping-bag'"></i>
+      <span>{{ isMixAndMatch ? 'Choose Items' : 'Add Combo to Cart' }}</span>
+    </button>
+  </div>
+</div>

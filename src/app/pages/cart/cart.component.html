@@ -6,6 +6,7 @@
     <app-invoice *ngIf="orderConfirmed" [orderedItems]="orderedItems" [orderFormSnapshot]="orderFormSnapshot"
                  [orderPaymentMethod]="orderPaymentMethod" [orderDeliveryCharge]="orderDeliveryCharge"
                  [orderTotal]="orderTotal" [orderDiscount]="orderDiscount"
+                 [combos]="orderCombos" [comboSavings]="orderComboSavings"
                  [placedOrderId]="placedOrderId" [placedOrderNumber]="placedOrderNumber"
                  (continueShoppingClick)="continueShopping()">
     </app-invoice>
@@ -21,7 +22,7 @@
       </div>
 
       <!-- Empty Cart State -->
-      <div *ngIf="cartService.cart().length === 0" class="empty-cart-card text-center py-7 px-4 border-round-2xl my-4">
+      <div *ngIf="cartService.isEmpty()" class="empty-cart-card text-center py-7 px-4 border-round-2xl my-4">
         <i class="pi pi-shopping-bag text-6xl mb-3 text-400"></i>
         <h2 class="empty-title mb-2">Your cart is empty</h2>
         <p class="empty-sub mb-4">Discover our authentic handmade creations and fill your space with tradition.</p>
@@ -31,7 +32,7 @@
       </div>
 
       <!-- Cart + Checkout Grid -->
-      <div *ngIf="cartService.cart().length > 0" class="grid">
+      <div *ngIf="!cartService.isEmpty()" class="grid">
 
         <!-- Left Column: Items Table + Order Note + Shipping Details -->
         <div class="col-12 lg:col-8">
@@ -42,8 +43,58 @@
               Your Items ({{ cartService.totalItems() }})
             </h2>
 
+            <!-- Combos in Cart -->
+            <div *ngIf="cartService.combos().length > 0" class="cart-combos-list mb-4 flex flex-column gap-3">
+              <div *ngFor="let c of cartService.combos()"
+                   class="cart-combo-card p-3 border-round-xl surface-card border-1 surface-border flex flex-column gap-2"
+                   style="border-left: 4px solid var(--primary-color, #B84E29) !important;">
+                <div class="flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div class="flex align-items-center gap-2">
+                    <span class="discount-badge text-xs px-2 py-1 border-round font-bold">COMBO</span>
+                    <span class="font-bold text-base text-900">{{ c.combo.name }}</span>
+                  </div>
+                  <div class="flex align-items-center gap-3">
+                    <div class="cart-qty-pill inline-flex align-items-center">
+                      <button type="button" class="qty-btn" (click)="cartService.updateComboQuantity(c, -1)" [disabled]="c.quantity <= 1">
+                        <i class="pi pi-minus"></i>
+                      </button>
+                      <span class="qty-val">{{ c.quantity }}</span>
+                      <button type="button" class="qty-btn" (click)="cartService.updateComboQuantity(c, 1)">
+                        <i class="pi pi-plus"></i>
+                      </button>
+                    </div>
+                    <div class="text-right">
+                      <span class="font-bold text-base text-primary">
+                        ৳{{ getComboLineTotal(c) | number:'1.0-0' }}
+                      </span>
+                    </div>
+                    <button type="button" class="btn-remove-item border-none bg-transparent cursor-pointer p-2" (click)="cartService.removeCombo(c)" title="Remove combo" aria-label="Remove combo">
+                      <i class="pi pi-trash text-red-500"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Combo Composition / Picks Subtitle -->
+                <div class="flex align-items-center justify-content-between flex-wrap gap-2 pt-1 border-top-1 surface-border text-xs text-600">
+                  <div class="flex align-items-center gap-2 flex-wrap">
+                    <span *ngIf="c.combo.kind === 'fixed'">
+                      Includes: {{ c.combo.items.length }} products
+                    </span>
+                    <span *ngIf="c.combo.kind === 'mix_and_match'">
+                      Pick any {{ c.combo.slot_count }} items
+                    </span>
+                  </div>
+                  <button *ngIf="c.combo.kind === 'mix_and_match'" type="button"
+                          class="p-button-text p-button-sm text-xs font-semibold text-primary border-none bg-transparent cursor-pointer p-0"
+                          (click)="openChangeCombo(c)">
+                    <i class="pi pi-pencil mr-1 text-xs"></i> Change Items
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Desktop & Mobile Items Table -->
-            <div class="cart-table-wrapper overflow-x-auto">
+            <div *ngIf="cartService.cart().length > 0" class="cart-table-wrapper overflow-x-auto">
               <table class="cart-table w-full">
                 <thead>
                   <tr>
@@ -148,7 +199,7 @@
               <div class="col-12 md:col-6 field mb-3">
                 <label for="cart_phone" class="form-field-label">Phone Number <span class="req">*</span></label>
                 <input type="tel" id="cart_phone" name="phoneNumber" autocomplete="tel" spellcheck="false"
-                       [(ngModel)]="checkoutForm.phoneNumber" (ngModelChange)="saveFormState()"
+                       [(ngModel)]="checkoutForm.phoneNumber" (ngModelChange)="onPhoneNumberChange($event); saveFormState()"
                        placeholder="Enter your phone number" maxlength="11" class="artisan-input w-full" required #phone="ngModel" />
                 <small class="error-msg" *ngIf="phone.invalid && (phone.dirty || phone.touched)">Valid 11-digit phone number is required</small>
               </div>
@@ -280,9 +331,9 @@
 
             <!-- COD Direct Confirm Box -->
             <div *ngIf="selectedPaymentMethod === 'COD'" class="cod-confirm-box p-3 border-round-xl mb-4 text-center">
-              <p class="text-sm text-700 mb-3">You will pay <strong>৳{{ getTotalPrice() | number:'1.0-0' }}</strong> in cash upon delivery of your parcel.</p>
+              <p class="text-sm text-700 mb-3">You will pay <strong>৳{{ totalAmount | number:'1.0-0' }}</strong> in cash upon delivery of your parcel.</p>
               <button type="button" class="btn-submit-cod w-full font-bold"
-                      [disabled]="loading()"
+                      [disabled]="loading() || quoteProblems.length > 0"
                       (click)="confirmCOD()">
                 <span *ngIf="!loading()">Place Cash on Delivery Order</span>
                 <span *ngIf="loading()"><i class="pi pi-spin pi-spinner mr-2"></i>Processing...</span>
@@ -301,26 +352,82 @@
             <div class="artisanal-card summary-card p-3 md:p-4">
               <h2 class="section-card-title mb-3">Order Summary</h2>
 
+              <!-- Quote Problems Warning -->
+              <div *ngIf="quoteProblems.length > 0" class="p-3 border-round-xl mb-3 bg-red-50 border-1 border-red-200">
+                <div *ngFor="let prob of quoteProblems" class="text-xs font-semibold text-red-600 flex align-items-center gap-1 mb-1">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span>{{ prob }}</span>
+                </div>
+              </div>
+
+              <!-- Coupon Input Box -->
+              <div class="coupon-box mb-3 p-3 border-round-xl surface-ground border-1 surface-border">
+                <div class="flex align-items-center justify-content-between mb-2">
+                  <span class="text-xs font-bold text-600 uppercase">Promo Code</span>
+                  <span *ngIf="quote?.coupon?.applied" class="text-xs font-bold text-green-700 flex align-items-center gap-1">
+                    <i class="pi pi-check"></i> Applied
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <input type="text" [(ngModel)]="couponInput" placeholder="Enter coupon"
+                         [disabled]="!!quote?.coupon?.applied"
+                         class="p-inputtext-sm w-full artisan-input uppercase font-semibold" />
+                  <button *ngIf="!quote?.coupon?.applied" type="button" class="px-3 py-2 border-round-lg text-white font-semibold text-xs border-none cursor-pointer"
+                          style="background: #1A3B2B;"
+                          [disabled]="!couponInput.trim() || quoteLoading"
+                          (click)="applyCoupon()">
+                    Apply
+                  </button>
+                  <button *ngIf="quote?.coupon?.applied" type="button" class="px-3 py-2 border-round-lg text-red-600 bg-red-50 border-1 border-red-200 font-semibold text-xs cursor-pointer"
+                          (click)="removeCoupon()">
+                    Remove
+                  </button>
+                </div>
+                <p *ngIf="quote?.coupon && !quote?.coupon?.applied && quote?.coupon?.message" class="text-xs text-red-600 m-0 mt-2 font-medium">
+                  {{ quote?.coupon?.message }}
+                </p>
+                <p class="text-xs text-500 m-0 mt-1">Coupons discount standalone goods only.</p>
+              </div>
+
+              <!-- Summary Lines -->
               <div class="summary-line flex justify-content-between mb-2">
                 <span class="summary-label">Subtotal</span>
-                <span class="summary-val font-semibold">৳{{ getSubTotal() | number:'1.0-0' }}</span>
+                <span class="summary-val font-semibold">৳{{ subtotalAmount | number:'1.0-0' }}</span>
+              </div>
+
+              <div *ngIf="productDiscountAmount > 0" class="summary-line flex justify-content-between mb-2 text-green-700">
+                <span class="summary-label">Product Discounts</span>
+                <span class="summary-val font-semibold">-৳{{ productDiscountAmount | number:'1.0-0' }}</span>
+              </div>
+
+              <div *ngIf="comboSavingsAmount > 0" class="summary-line flex justify-content-between mb-2 text-green-700">
+                <span class="summary-label">Combo Savings</span>
+                <span class="summary-val font-semibold">-৳{{ comboSavingsAmount | number:'1.0-0' }}</span>
+              </div>
+
+              <div *ngIf="couponDiscountAmount > 0" class="summary-line flex justify-content-between mb-2 text-green-700">
+                <span class="summary-label">Coupon Discount</span>
+                <span class="summary-val font-semibold">-৳{{ couponDiscountAmount | number:'1.0-0' }}</span>
               </div>
 
               <div class="summary-line flex justify-content-between mb-2">
-                <span class="summary-label">Delivery Charge ({{ deliveryLocation }})</span>
-                <span class="summary-val font-semibold">৳{{ currentDeliveryCharge | number:'1.0-0' }}</span>
+                <span class="summary-label">Delivery Charge</span>
+                <span class="summary-val font-semibold" *ngIf="checkoutForm.district">৳{{ deliveryAmount | number:'1.0-0' }}</span>
+                <span class="summary-val text-xs text-500" *ngIf="!checkoutForm.district">Calculated at checkout</span>
               </div>
 
               <div class="summary-total-line flex justify-content-between pt-3 mt-3 border-top-1 border-300">
                 <span class="total-label font-bold text-lg">Total</span>
-                <span class="total-val font-bold text-xl text-primary-color">৳{{ getTotalPrice() | number:'1.0-0' }}</span>
+                <span class="total-val font-bold text-xl text-primary-color">৳{{ totalAmount | number:'1.0-0' }}</span>
               </div>
 
               <!-- Primary Action Button (Proceed to Payment / Checkout) -->
               <div *ngIf="!showPaymentSection" class="mt-4">
                 <button type="button" class="btn-proceed-checkout w-full font-bold"
+                        [disabled]="quoteLoading || quoteProblems.length > 0"
                         (click)="proceedToPayment()">
-                  Proceed to Checkout
+                  <span *ngIf="!quoteLoading">Proceed to Checkout</span>
+                  <span *ngIf="quoteLoading"><i class="pi pi-spin pi-spinner mr-2"></i>Pricing...</span>
                 </button>
               </div>
 
@@ -373,3 +480,11 @@
 
   </div>
 </div>
+
+<app-bundle-picker
+  [combo]="comboToChange()?.combo || null"
+  [initialPicks]="comboToChange()?.picks || []"
+  [(visible)]="changePickerVisible"
+  actionLabel="Update Bundle"
+  (picksConfirmed)="onComboChanged($event)">
+</app-bundle-picker>

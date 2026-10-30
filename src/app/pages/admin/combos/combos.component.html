@@ -1,0 +1,194 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="combos-admin-container p-2 sm:p-4 min-h-screen">
+  <!-- Page Header -->
+  <div class="flex flex-column sm:flex-row align-items-start sm:align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="font-bold m-0 tracking-tight text-white text-2xl sm:text-3xl">Combo Offers</h1>
+      <p class="text-slate-400 m-0 mt-1 text-sm sm:text-base">
+        Create fixed sets, multipacks and pick-any bundles with dedicated savings.
+      </p>
+    </div>
+    <button pButton label="Create Combo" icon="pi pi-plus"
+            class="premium-btn-primary px-4 py-2 border-round-xl shadow-4"
+            [routerLink]="['/admin/dashboard/combos/add']">
+    </button>
+  </div>
+
+  <!-- Pill Tabs -->
+  <div class="pill-tabs flex align-items-center gap-2 mb-4">
+    <button type="button" class="tab-pill" [class.active]="activeTab() === 'combos'" (click)="setTab('combos')">
+      <i class="pi pi-th-large mr-2"></i>
+      <span>All Combos ({{ combos().length }})</span>
+    </button>
+    <button type="button" class="tab-pill" [class.active]="activeTab() === 'suggestions'" (click)="setTab('suggestions')">
+      <i class="pi pi-sparkles mr-2"></i>
+      <span>Order Suggestions ({{ suggestions().length }})</span>
+    </button>
+  </div>
+
+  <!-- Tab 1: Combos Table -->
+  <div *ngIf="activeTab() === 'combos'" class="glass-card p-3 sm:p-4">
+    <p-table [value]="combos()" [loading]="loading()" [responsiveLayout]="'scroll'"
+             styleClass="p-datatable-sm premium-table-v2" [paginator]="combos().length > 10" [rows]="10">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Combo</th>
+          <th>Price & Savings</th>
+          <th>Status</th>
+          <th>Schedule</th>
+          <th>Sales</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-combo>
+        <tr>
+          <!-- Combo Name & Thumbnails -->
+          <td style="min-width: 240px;">
+            <div class="flex flex-column gap-2">
+              <div class="flex align-items-center gap-2">
+                <span class="font-semibold text-white text-base">{{ combo.name }}</span>
+                <span class="kind-chip text-xs px-2 py-1 border-round font-semibold">
+                  {{ getKindLabel(combo) }}
+                </span>
+              </div>
+              <div class="flex align-items-center gap-1 flex-wrap">
+                <ng-container *ngFor="let it of combo.items.slice(0, 4)">
+                  <img [src]="it.product?.imageUrl" [alt]="it.product?.name" class="row-thumb" [title]="it.product?.name" />
+                </ng-container>
+                <span *ngIf="combo.items.length > 4" class="row-more-thumb text-xs">
+                  +{{ combo.items.length - 4 }}
+                </span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Price & Savings -->
+          <td style="min-width: 170px;">
+            <div class="flex flex-column gap-1">
+              <div class="flex align-items-baseline gap-2">
+                <span *ngIf="combo.price_is_from" class="text-xs text-slate-400 font-semibold uppercase">From</span>
+                <span class="text-xs text-slate-400 line-through">৳{{ combo.list_total | number:'1.0-0' }}</span>
+                <span class="font-bold text-base text-blue-400">৳{{ combo.combo_price | number:'1.0-0' }}</span>
+              </div>
+              <div class="save-tag-sm" *ngIf="combo.savings && combo.savings > 0">
+                Save ৳{{ combo.savings | number:'1.0-0' }}
+                <span *ngIf="combo.savings_percent"> ({{ combo.savings_percent }}%)</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Status -->
+          <td style="min-width: 130px;">
+            <p-tag [value]="combo.status | uppercase"
+                   [severity]="getStatusSeverity(combo.status)"
+                   [pTooltip]="combo.status_reason || undefined"
+                   tooltipPosition="top">
+            </p-tag>
+          </td>
+
+          <!-- Schedule -->
+          <td style="min-width: 150px;" class="text-sm text-slate-300">
+            <div *ngIf="combo.starts_at || combo.ends_at" class="flex flex-column text-xs gap-1">
+              <span *ngIf="combo.starts_at">From: {{ combo.starts_at | date:'shortDate' }}</span>
+              <span *ngIf="combo.ends_at">To: {{ combo.ends_at | date:'shortDate' }}</span>
+            </div>
+            <span *ngIf="!combo.starts_at && !combo.ends_at" class="text-xs text-slate-400">Ongoing</span>
+          </td>
+
+          <!-- Sales -->
+          <td style="min-width: 150px;" class="text-sm text-slate-300">
+            <div class="flex flex-column text-xs gap-1">
+              <span><b>{{ combo.sets_sold }}</b> sets sold</span>
+              <span><b>{{ combo.orders }}</b> orders</span>
+              <span class="text-slate-400">৳{{ combo.discount_given | number:'1.0-0' }} given</span>
+            </div>
+          </td>
+
+          <!-- Actions -->
+          <td class="text-right" style="min-width: 140px;">
+            <div class="flex align-items-center justify-content-end gap-1">
+              <button pButton icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-sm text-blue-400"
+                      [routerLink]="['/admin/dashboard/combos', combo.id, 'edit']"
+                      pTooltip="Edit Combo" tooltipPosition="top">
+              </button>
+              <button pButton [icon]="combo.is_active ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                      class="p-button-rounded p-button-text p-button-sm"
+                      [class.text-green-400]="!combo.is_active"
+                      [class.text-orange-400]="combo.is_active"
+                      (click)="toggleActive(combo)"
+                      [pTooltip]="combo.is_active ? 'Deactivate' : 'Activate'"
+                      tooltipPosition="top">
+              </button>
+              <button pButton icon="pi pi-trash"
+                      class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                      (click)="deleteCombo(combo)"
+                      pTooltip="Delete" tooltipPosition="top">
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center py-6 text-slate-400">
+            <i class="pi pi-th-large text-4xl mb-3 block text-slate-500"></i>
+            <p class="m-0 text-base font-medium">No combo offers found.</p>
+            <p class="m-0 text-xs text-slate-500 mt-1">Click "Create Combo" to launch your first deal.</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Tab 2: Suggestions -->
+  <div *ngIf="activeTab() === 'suggestions'" class="glass-card p-3 sm:p-5">
+    <div *ngIf="loadingSuggestions()" class="py-6 text-center text-slate-400">
+      <i class="pi pi-spin pi-spinner text-3xl"></i>
+    </div>
+
+    <div *ngIf="!loadingSuggestions() && suggestions().length === 0" class="py-6 text-center text-slate-400">
+      <i class="pi pi-sparkles text-4xl mb-3 block text-slate-500"></i>
+      <p class="m-0 text-base font-medium">No combo suggestions yet.</p>
+      <p class="m-0 text-xs text-slate-500 mt-1 max-w-26rem mx-auto">
+        Suggestions appear once two products are bought together in at least 2 real customer orders.
+      </p>
+    </div>
+
+    <div *ngIf="!loadingSuggestions() && suggestions().length > 0" class="grid">
+      <div *ngFor="let s of suggestions()" class="col-12 md:col-6 lg:col-4 p-2">
+        <div class="suggestion-card p-3 border-round-xl flex flex-column justify-content-between h-full">
+          <div>
+            <div class="flex align-items-center justify-content-between mb-3">
+              <span class="suggestion-badge text-xs font-bold px-2 py-1 border-round">
+                {{ s.orders_together }} orders together
+              </span>
+              <span class="text-xs text-slate-400">Combined: ৳{{ s.list_total | number:'1.0-0' }}</span>
+            </div>
+
+            <div class="flex align-items-center gap-3 mb-3">
+              <ng-container *ngFor="let p of s.products; let last = last">
+                <div class="flex flex-column align-items-center gap-1 flex-1">
+                  <img [src]="p.imageUrl" [alt]="p.name" class="suggestion-thumb" />
+                  <span class="text-xs text-white line-clamp-1 text-center font-medium">{{ p.name }}</span>
+                  <span class="text-xs text-blue-400 font-bold">৳{{ (p.effective_price || p.price) | number:'1.0-0' }}</span>
+                </div>
+                <i *ngIf="!last" class="pi pi-plus text-slate-500 text-sm"></i>
+              </ng-container>
+            </div>
+          </div>
+
+          <button pButton label="Create Combo with These" icon="pi pi-arrow-right" iconPos="right"
+                  class="premium-btn-primary w-full p-button-sm border-round-lg mt-2"
+                  (click)="createFromSuggestion(s)">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,10 +1,14 @@
 import { Injectable, signal, computed, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { forkJoin } from 'rxjs';
-import { CartItem } from '../../../models/cart.model';
+import { forkJoin, Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, tap } from 'rxjs/operators';
+import { CartItem, CartCombo } from '../../../models/cart.model';
 import { Product } from '../../../models/product.model';
+import { ComboView } from '../../../models/combo.model';
+import { CartQuoteRequest, CartQuoteResponse } from '../../../models/quote.model';
 import { MessageService } from 'primeng/api';
 import { ProductService } from '../product/product.service';
+import { ComboService } from '../combo/combo.service';
 import { JourneyService } from '../tracking/journey.service';
 
 @Injectable({
@@ -13,9 +17,21 @@ import { JourneyService } from '../tracking/journey.service';
 export class CartService {
   private readonly ABANDON_KEY = 'cart_abandon_at';
   private readonly ABANDON_MS = 600000;
+  private readonly COMBOS_STORAGE_KEY = 'cart_combos';
   private abandonTimer: any = null;
 
   cart = signal<CartItem[]>([]);
+  combos = signal<CartCombo[]>([]);
+
+  quote = signal<CartQuoteResponse | null>(null);
+  quoteLoading = signal<boolean>(false);
+  quoteError = signal<string | null>(null);
+
+  private quoteSubject = new Subject<{
+    district?: string | null;
+    phone?: string | null;
+    couponCode?: string | null;
+  }>();
 
   getItemPrice(product: Product): number {
     return product.effective_price !== undefined && product.effective_price !== null
@@ -27,29 +43,47 @@ export class CartService {
     return this.getItemPrice(item.product) * item.quantity;
   }
 
-  totalItems = computed(() => this.cart().reduce((total, item) => total + item.quantity, 0));
-  subTotal = computed(() => this.cart().reduce((total, item) => total + this.getItemSubtotal(item), 0));
+  getComboKey(comboId: string, picks?: string[] | null): string {
+    const sortedPicks = picks && picks.length ? [...picks].sort().join(',') : '';
+    return `${comboId}::${sortedPicks}`;
+  }
+
+  totalItems = computed(() => {
+    const standaloneCount = this.cart().reduce((total, item) => total + item.quantity, 0);
+    const comboCount = this.combos().reduce((total, combo) => total + combo.quantity, 0);
+    return standaloneCount + comboCount;
+  });
+
+  subTotal = computed(() => {
+    const standaloneSub = this.cart().reduce((total, item) => total + this.getItemSubtotal(item), 0);
+    const comboSub = this.combos().reduce((total, c) => {
+      const price = typeof c.combo.combo_price === 'string'
+        ? parseFloat(c.combo.combo_price)
+        : Number(c.combo.combo_price || 0);
+      return total + (price * c.quantity);
+    }, 0);
+    return standaloneSub + comboSub;
+  });
+
+  isEmpty = computed(() => this.cart().length === 0 && this.combos().length === 0);
 
   constructor(
     private messageService: MessageService,
     private productService: ProductService,
+    private comboService: ComboService,
     private journeyService: JourneyService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
-    // Load cart from localStorage if needed (optional enhancement)
     if (isPlatformBrowser(this.platformId)) {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
         try {
           const items = JSON.parse(savedCart);
-          // Normalize loaded data for robustness
           const normalizedItems = items.map((item: any) => {
             if (item.product) {
-              // Ensure manualStockStatus is uppercase
               if (typeof item.product.manualStockStatus === 'string') {
                 item.product.manualStockStatus = item.product.manualStockStatus.toUpperCase();
               }
-              // Force recalculate isInStock if it's missing or if stock logic changed
               if (item.product.isInStock === undefined) {
                 const stock = parseInt(String(item.product.stock || 0), 10);
                 const status = item.product.manualStockStatus;
@@ -63,8 +97,214 @@ export class CartService {
           console.error('Failed to load cart', e);
         }
       }
+
+      const savedCombos = localStorage.getItem(this.COMBOS_STORAGE_KEY);
+      if (savedCombos) {
+        try {
+          const combosData = JSON.parse(savedCombos);
+          if (Array.isArray(combosData)) {
+            const normalizedCombos: CartCombo[] = combosData.map((c: any) => ({
+              combo: c.combo,
+              quantity: Math.max(1, Math.min(20, parseInt(c.quantity, 10) || 1)),
+              picks: Array.isArray(c.picks) ? c.picks : undefined
+            }));
+            this.combos.set(normalizedCombos);
+          }
+        } catch (e) {
+          console.error('Failed to load cart combos', e);
+        }
+      }
     }
+
+    this.initQuotePipeline();
     this.handleAbandonedCart();
+  }
+
+  private initQuotePipeline() {
+    this.quoteSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
+      switchMap(params => {
+        if (this.isEmpty()) {
+          this.quote.set(null);
+          this.quoteLoading.set(false);
+          this.quoteError.set(null);
+          return of(null);
+        }
+
+        const req = this.buildQuoteRequest(params.district, params.phone, params.couponCode);
+        this.quoteLoading.set(true);
+        this.quoteError.set(null);
+
+        return this.comboService.quoteCart(req, true).pipe(
+          tap({
+            next: (res) => {
+              this.quote.set(res);
+              this.quoteLoading.set(false);
+              this.quoteError.set(null);
+            },
+            error: (err) => {
+              this.quoteLoading.set(false);
+              const detail = err?.error?.detail || err?.message || 'Failed to price cart';
+              this.quoteError.set(detail);
+            }
+          }),
+          catchError(() => of(null))
+        );
+      })
+    ).subscribe();
+  }
+
+  buildQuoteRequest(
+    district?: string | null,
+    phone?: string | null,
+    couponCode?: string | null
+  ): CartQuoteRequest {
+    const items = this.cart().map(item => ({
+      product_id: item.product.id,
+      quantity: item.quantity
+    }));
+
+    const combos = this.combos().map(c => ({
+      combo_id: c.combo.id,
+      quantity: c.quantity,
+      ...(c.picks && c.picks.length ? { picks: c.picks } : {})
+    }));
+
+    return {
+      items,
+      combos,
+      district: district || null,
+      phone: phone || null,
+      coupon_code: couponCode || null
+    };
+  }
+
+  fetchQuote(district?: string | null, phone?: string | null, couponCode?: string | null) {
+    this.quoteSubject.next({ district, phone, couponCode });
+  }
+
+  private saveCombos() {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(this.COMBOS_STORAGE_KEY, JSON.stringify(this.combos()));
+    }
+  }
+
+  addComboToCart(combo: ComboView, requestedQuantity: number = 1, picks?: string[]): number {
+    const qty = Math.max(1, Math.min(20, Math.floor(requestedQuantity || 1)));
+    const key = this.getComboKey(combo.id, picks);
+    const currentCombos = this.combos();
+    const existingIndex = currentCombos.findIndex(c => this.getComboKey(c.combo.id, c.picks) === key);
+
+    let acceptedQty = qty;
+    if (existingIndex >= 0) {
+      const existing = currentCombos[existingIndex];
+      const maxAddable = Math.max(0, 20 - existing.quantity);
+      if (maxAddable === 0) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Limit Reached',
+          detail: 'Maximum 20 sets per combo offer in cart',
+          life: 2500
+        });
+        return 0;
+      }
+      acceptedQty = Math.min(qty, maxAddable);
+      this.combos.update(list => list.map((item, idx) =>
+        idx === existingIndex ? { ...item, quantity: item.quantity + acceptedQty } : item
+      ));
+    } else {
+      this.combos.update(list => [...list, { combo, quantity: acceptedQty, picks: picks ? [...picks] : undefined }]);
+    }
+
+    this.journeyService.track('add_to_cart', { quantity: acceptedQty });
+    this.saveCombos();
+
+    const detail = acceptedQty > 1
+      ? `${acceptedQty} × ${combo.name} sets added to cart`
+      : `${combo.name} combo added to cart`;
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Added to Cart',
+      detail,
+      life: 2500
+    });
+
+    this.fetchQuote();
+    return acceptedQty;
+  }
+
+  updateComboQuantity(entry: CartCombo, change: number) {
+    const key = this.getComboKey(entry.combo.id, entry.picks);
+    const current = this.combos();
+    const existing = current.find(c => this.getComboKey(c.combo.id, c.picks) === key);
+    if (!existing) return;
+
+    const newQuantity = existing.quantity + change;
+    if (newQuantity <= 0) {
+      this.removeCombo(entry);
+      return;
+    }
+
+    if (newQuantity > 20) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Limit Reached',
+        detail: 'Maximum 20 sets per combo offer',
+        life: 2500
+      });
+      return;
+    }
+
+    this.combos.update(list => list.map(c =>
+      this.getComboKey(c.combo.id, c.picks) === key ? { ...c, quantity: newQuantity } : c
+    ));
+    this.saveCombos();
+    this.fetchQuote();
+  }
+
+  removeCombo(entry: CartCombo) {
+    const key = this.getComboKey(entry.combo.id, entry.picks);
+    this.journeyService.track('remove_from_cart', { quantity: entry.quantity });
+    this.combos.update(list => list.filter(c => this.getComboKey(c.combo.id, c.picks) !== key));
+    this.saveCombos();
+    this.fetchQuote();
+  }
+
+  changeComboPicks(entry: CartCombo, newPicks: string[]): boolean {
+    const oldKey = this.getComboKey(entry.combo.id, entry.picks);
+    const newKey = this.getComboKey(entry.combo.id, newPicks);
+
+    const currentList = this.combos();
+    const existingTargetIndex = currentList.findIndex(c => this.getComboKey(c.combo.id, c.picks) === newKey);
+
+    if (existingTargetIndex >= 0 && oldKey !== newKey) {
+      const target = currentList[existingTargetIndex];
+      const mergedQty = target.quantity + entry.quantity;
+      if (mergedQty > 20) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Limit Reached',
+          detail: 'Cannot merge sets: total would exceed the 20 sets limit',
+          life: 2500
+        });
+        return false;
+      }
+      this.combos.update(list =>
+        list
+          .filter(c => this.getComboKey(c.combo.id, c.picks) !== oldKey)
+          .map(c => this.getComboKey(c.combo.id, c.picks) === newKey ? { ...c, quantity: mergedQty } : c)
+      );
+    } else {
+      this.combos.update(list => list.map(c =>
+        this.getComboKey(c.combo.id, c.picks) === oldKey ? { ...c, picks: [...newPicks] } : c
+      ));
+    }
+
+    this.saveCombos();
+    this.fetchQuote();
+    return true;
   }
 
   refreshCartProducts() {
@@ -158,6 +398,7 @@ export class CartService {
 
     this.journeyService.track('add_to_cart', { product_id: String(product.id), quantity: acceptedQty });
     this.saveCart();
+    this.fetchQuote();
 
     if (acceptedQty < qty) {
       this.messageService.add({
@@ -226,6 +467,7 @@ export class CartService {
       ));
     }
     this.saveCart();
+    this.fetchQuote();
   }
 
   markCheckoutLeft() {
@@ -259,7 +501,7 @@ export class CartService {
     const elapsed = Date.now() - startedAt;
     if (elapsed >= this.ABANDON_MS) {
       this.clearAbandonClock();
-      if (this.cart().length > 0) {
+      if (this.cart().length > 0 || this.combos().length > 0) {
         this.clearCart();
       }
       return;
@@ -273,7 +515,7 @@ export class CartService {
       this.abandonTimer = null;
       if (isPlatformBrowser(this.platformId) && localStorage.getItem(this.ABANDON_KEY)) {
         this.clearAbandonClock();
-        if (this.cart().length > 0) {
+        if (this.cart().length > 0 || this.combos().length > 0) {
           this.clearCart();
         }
       }
@@ -282,7 +524,10 @@ export class CartService {
 
   clearCart() {
     this.cart.set([]);
+    this.combos.set([]);
+    this.quote.set(null);
     this.saveCart();
+    this.saveCombos();
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('karukolpo_checkout_draft');
     }

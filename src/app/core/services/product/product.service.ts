@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Observable, of, forkJoin, timer, from } from 'rxjs';
 import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import { Product, ProductImage } from '../../../models/product.model';
+import { RelatedPinsResponse } from '../../../models/combo.model';
 import { ApiService } from '../api/api.service';
 import { PRODUCTS_API } from './product.api';
 import { buildListQuery } from '../api/helpers';
@@ -186,6 +187,52 @@ export class ProductService {
         console.error(`Failed to load related products for ${ref}:`, err);
         return of([]);
       })
+    );
+  }
+
+  /**
+   * Get frequently bought together products
+   * GET /products/{product_ref}/frequently-bought-together?limit={limit}
+   */
+  getFrequentlyBoughtTogether(ref: string, limit: number = 3): Observable<Product[]> {
+    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.FBT(ref, limit)).pipe(
+      map(items => (items || []).map(p => this.mapBackendToFrontend(p))),
+      catchError(err => {
+        console.error(`Failed to load frequently bought together for ${ref}:`, err);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get pinned related products (Admin)
+   * GET /admin/products/{id}/related-pins
+   */
+  getRelatedPins(productId: string): Observable<RelatedPinsResponse> {
+    return this.apiService.get<any>(API_ENDPOINTS.PRODUCTS.RELATED_PINS(productId)).pipe(
+      map(res => ({
+        product_ids: res?.product_ids || [],
+        products: (res?.products || []).map((p: any) => ({
+          ...this.mapBackendToFrontend(p),
+          is_active: p.is_active !== false
+        }))
+      }))
+    );
+  }
+
+  /**
+   * Update pinned related products (Admin)
+   * PUT /admin/products/{id}/related-pins
+   */
+  updateRelatedPins(productId: string, productIds: string[]): Observable<RelatedPinsResponse> {
+    return this.apiService.put<any>(API_ENDPOINTS.PRODUCTS.RELATED_PINS(productId), { product_ids: productIds }).pipe(
+      map(res => ({
+        product_ids: res?.product_ids || [],
+        products: (res?.products || []).map((p: any) => ({
+          ...this.mapBackendToFrontend(p),
+          is_active: p.is_active !== false
+        }))
+      }))
     );
   }
 

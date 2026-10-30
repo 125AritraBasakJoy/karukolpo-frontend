@@ -82,6 +82,53 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     phoneRegex = /^(?:\+88|88)?(01[3-9]\d{8})$/; // Bangladeshi Phone Number
     postalCodeRegex = /^\d{4}$/; // Exact 4 digits
 
+    couponInput = '';
+    appliedCouponCode = '';
+
+    get quote() {
+        return this.cartService.quote();
+    }
+    get quoteLoading() {
+        return this.cartService.quoteLoading();
+    }
+    get quoteProblems(): string[] {
+        return this.quote?.problems || [];
+    }
+    get subtotalAmount(): number {
+        if (this.quote?.subtotal != null) return Number(this.quote.subtotal);
+        return this.cartService.subTotal();
+    }
+    get productDiscountAmount(): number {
+        return Number(this.quote?.product_discount || 0);
+    }
+    get comboSavingsAmount(): number {
+        return Number(this.quote?.combo_discount || 0);
+    }
+    get couponDiscountAmount(): number {
+        return Number(this.quote?.coupon?.discount || 0);
+    }
+    get deliveryAmount(): number {
+        if (this.quote?.delivery_charge != null) return Number(this.quote.delivery_charge);
+        return this.currentDeliveryCharge;
+    }
+    get totalAmount(): number {
+        if (this.quote?.total != null) return Number(this.quote.total);
+        return this.getTotalPrice();
+    }
+
+    applyCoupon() {
+        const code = this.couponInput.trim();
+        if (!code) return;
+        this.appliedCouponCode = code;
+        this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, this.appliedCouponCode);
+    }
+
+    removeCoupon() {
+        this.appliedCouponCode = '';
+        this.couponInput = '';
+        this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, null);
+    }
+
     @ViewChildren(NgModel) formControls!: QueryList<NgModel>;
 
     checkoutForm = {
@@ -154,12 +201,13 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     }
 
     openCheckout() {
-        if (this.cartService.cart().length === 0) {
+        if (this.cartService.isEmpty()) {
             this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
             return;
         }
         // Refresh cart products before showing checkout to ensure latest price/stock
         this.cartService.refreshCartProducts();
+        this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, this.appliedCouponCode);
 
         // Reset payment method to default to ensure modal logic works
         this.resetIdempotencyKey();
@@ -181,6 +229,12 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
             this.currentDeliveryCharge = 130;
             this.deliveryLocation = 'Outside Dhaka';
         }
+        this.cartService.fetchQuote(districtName, this.checkoutForm.phoneNumber, this.appliedCouponCode);
+    }
+
+    onPhoneNumberChange(val: string) {
+        this.checkoutForm.phoneNumber = val;
+        this.cartService.fetchQuote(this.checkoutForm.district, val, this.appliedCouponCode);
     }
 
     updateQuantity(item: CartItem, change: number) {
@@ -196,6 +250,15 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     }
 
     placeOrder() {
+        if (this.quoteProblems.length > 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Action Required',
+                detail: this.quoteProblems[0]
+            });
+            return;
+        }
+
         if (!this.isCheckoutFormValid) {
             this.messageService.add({
                 life: 2000,
@@ -301,11 +364,12 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     }
 
     private getOrCreateIdempotencyKey(): string {
-        // ponytail: JSON signature tracks phone, address, and cart item/qty changes; upgrade if form structure expands
         const signature = JSON.stringify({
             phone: this.checkoutForm.phoneNumber,
             address: this.checkoutForm.fullAddress,
-            items: this.cartService.cart().map(i => ({ id: i.product?.id, q: i.quantity }))
+            items: this.cartService.cart().map(i => ({ id: i.product?.id, q: i.quantity })),
+            combos: this.cartService.combos().map(c => ({ id: c.combo.id, q: c.quantity, picks: c.picks })),
+            coupon: this.appliedCouponCode
         });
         if (!this.checkoutIdempotencyKey || this.lastCheckoutSignature !== signature) {
             this.checkoutIdempotencyKey = crypto.randomUUID();
@@ -465,12 +529,17 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         return {
             ...this.checkoutForm,
             items: this.cartService.cart(),
-            totalAmount: this.getTotalPrice(),
+            combos: this.cartService.combos().map(c => ({
+                combo_id: c.combo.id,
+                quantity: c.quantity,
+                ...(c.picks && c.picks.length ? { picks: c.picks } : {})
+            })),
+            couponCode: this.appliedCouponCode || undefined,
+            totalAmount: this.totalAmount,
             status: 'Pending' as 'Pending',
             paymentMethod: paymentMethod,
-            paymentStatus: paymentMethod === 'COD' ? 'Confirmed' : 'Pending',
             deliveryLocation: this.deliveryLocation,
-            deliveryCharge: this.currentDeliveryCharge,
+            deliveryCharge: this.deliveryAmount,
             orderDate: new Date()
         };
     }

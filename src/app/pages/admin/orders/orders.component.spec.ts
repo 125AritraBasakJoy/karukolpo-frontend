@@ -6,7 +6,7 @@ import { MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
 import { Subject, of } from 'rxjs';
 import { OrdersComponent } from './orders.component';
-import { OrderService, ProductService, PaymentService, NotificationService } from '../../../core/services';
+import { OrderService, ProductService, PaymentService, NotificationService, ComboService } from '../../../core/services';
 import { Order } from '../../../models/order.model';
 
 describe('OrdersComponent pagination', () => {
@@ -28,6 +28,7 @@ describe('OrdersComponent pagination', () => {
         { provide: ProductService, useValue: {} },
         { provide: PaymentService, useValue: {} },
         { provide: NotificationService, useValue: {} },
+        { provide: ComboService, useValue: { getCombos: () => of([]) } },
         MessageService
       ]
     });

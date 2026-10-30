@@ -1,5 +1,6 @@
 import { CartItem } from './cart.model';
 import { Payment, PaymentStatus, PaymentTransaction } from './payment.model';
+import { ComboKind } from './combo.model';
 
 export interface OrderRevision {
   id: string;
@@ -18,6 +19,25 @@ export interface OrderEditItem {
   quantity: number;
 }
 
+export interface OrderEditCombo {
+  order_combo_id?: string;
+  combo_id?: string;
+  quantity: number;
+  picks?: string[];
+}
+
+export interface OrderCombo {
+  id?: string;
+  combo_id?: string | null;
+  name: string;
+  kind?: ComboKind;
+  quantity: number;
+  list_total?: string | number;
+  combo_price?: string | number;
+  discount_applied?: string | number;
+  picks?: string[] | null;
+}
+
 export interface OrderAddressUpdate {
   full_name?: string;
   phone?: string;
@@ -30,6 +50,7 @@ export interface OrderAddressUpdate {
 
 export interface OrderAdminUpdate {
   items?: OrderEditItem[];
+  combos?: OrderEditCombo[];
   address?: OrderAddressUpdate;
   reason?: string;
 }
@@ -56,6 +77,8 @@ export interface Order {
   postalCode: string;
   fullAddress: string;
   items: CartItem[];
+  combos?: OrderCombo[];
+  combo_savings?: number;
   totalAmount: number;
   status: 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Completed' | 'Cancelled';
   paymentMethod?: 'COD' | 'bKash' | string | null; // Allow null

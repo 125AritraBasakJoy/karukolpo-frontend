@@ -151,6 +151,10 @@
                 <span>Discount:</span>
                 <span class="font-semibold">-৳{{ order()?.discountAmount | number:'1.0-0' }}</span>
               </div>
+              <div *ngIf="order()?.combo_savings" class="flex justify-content-between text-green-600">
+                <span>Combo Savings:</span>
+                <span class="font-semibold">-৳{{ order()?.combo_savings | number:'1.0-0' }}</span>
+              </div>
               <div *ngIf="order()?.deliveryCharge" class="flex justify-content-between">
                 <span class="text-600">Delivery Charge:</span>
                 <span class="font-semibold text-800">+৳{{ order()?.deliveryCharge | number:'1.0-0' }}</span>
@@ -188,7 +192,26 @@
               <span>Items ({{ order()?.items?.length || 0 }})</span>
             </h4>
             <div class="track-items-list overflow-y-auto pr-1" style="max-height: 230px;">
-              <div *ngFor="let item of order()?.items" class="track-item-row flex align-items-center justify-content-between py-2 border-bottom-1 border-100 last:border-none">
+              <!-- Grouped Combos -->
+              <ng-container *ngIf="getOrderCombos().length > 0">
+                <div *ngFor="let combo of getOrderCombos()" class="mb-2 p-2 border-round bg-blue-50 border-1 border-blue-200">
+                  <div class="flex align-items-center justify-content-between mb-1">
+                    <span class="text-xs font-bold text-blue-800">Combo: {{ combo.name }} × {{ combo.quantity }}</span>
+                    <span *ngIf="combo.discount_applied" class="text-xs text-green-700 font-semibold">
+                      Save ৳{{ combo.discount_applied | number:'1.0-0' }}
+                    </span>
+                  </div>
+                  <div class="pl-2 border-left-2 border-blue-300">
+                    <div *ngFor="let item of getOrderComboLines(combo.id)" class="text-xs text-700 py-1 flex justify-content-between">
+                      <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                      <span class="font-mono">৳{{ ((item.unit_price || item.product.price) * item.quantity) | number:'1.0-0' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- Standalone items -->
+              <div *ngFor="let item of (getOrderCombos().length > 0 ? getStandaloneLines() : order()?.items)" class="track-item-row flex align-items-center justify-content-between py-2 border-bottom-1 border-100 last:border-none">
                 <div class="flex align-items-center gap-2 min-w-0 mr-2">
                   <img [src]="item.product.imageUrl || productService.getImageUrl(null)"
                        [alt]="item.product.name"

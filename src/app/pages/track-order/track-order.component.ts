@@ -8,7 +8,8 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TimelineModule } from 'primeng/timeline';
 import { OrderService } from '../../core/services/order/order.service';
-import { Order } from '../../models/order.model';
+import { Order, OrderCombo } from '../../models/order.model';
+import { CartItem } from '../../models/cart.model';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -78,6 +79,20 @@ export class TrackOrderComponent {
       default:
         return 'info';
     }
+  }
+
+  getOrderCombos(): OrderCombo[] {
+    return this.order()?.combos || [];
+  }
+
+  getOrderComboLines(orderComboId?: string): CartItem[] {
+    if (!orderComboId || !this.order()) return [];
+    return (this.order()?.items || []).filter(item => item.order_combo_id === orderComboId);
+  }
+
+  getStandaloneLines(): CartItem[] {
+    if (!this.order()) return [];
+    return (this.order()?.items || []).filter(item => !item.order_combo_id);
   }
 
   getPaymentStatusInfo(order: Order | null): PaymentStatusInfo {

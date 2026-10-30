@@ -30,6 +30,11 @@ import { CurrencyPipe } from '@angular/common';
 import { InvoiceComponent } from '../../../components/invoice/invoice.component';
 import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
 import { districts } from '../../../data/bangladesh-data';
+import { ComboService } from '../../../core/services/combo/combo.service';
+import { ComboView } from '../../../models/combo.model';
+import { OrderCombo } from '../../../models/order.model';
+import { CartItem } from '../../../models/cart.model';
+import { BundlePickerComponent } from '../../../components/bundle-picker/bundle-picker.component';
 
 @Component({
   selector: 'app-orders',
@@ -50,7 +55,8 @@ import { districts } from '../../../data/bangladesh-data';
     PopoverModule,
     TextareaModule,
     CurrencyPipe,
-    InvoiceComponent
+    InvoiceComponent,
+    BundlePickerComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './orders.component.html',
@@ -176,6 +182,23 @@ export class OrdersComponent implements OnInit {
   editSubDistricts = signal<string[]>([]);
   showAddProductPicker = signal<boolean>(false);
 
+  editOrderCombos = signal<Array<{
+    order_combo_id?: string;
+    combo_id?: string;
+    name: string;
+    kind?: string;
+    quantity: number;
+    list_total?: number;
+    combo_price?: number;
+    discount_applied?: number;
+    picks?: string[] | null;
+  }>>([]);
+  availableCatalogCombos = signal<ComboView[]>([]);
+  showAddComboPicker = signal<boolean>(false);
+  selectedAddCombo: ComboView | null = null;
+  editMixComboToConfigure = signal<ComboView | null>(null);
+  editMixPickerVisible = signal<boolean>(false);
+
   editProductSearchQuery = signal<string>('');
   editProductSearchResults = signal<any[]>([]);
   editSearchingProducts = signal<boolean>(false);
@@ -185,6 +208,7 @@ export class OrdersComponent implements OnInit {
     private orderService: OrderService,
     private productService: ProductService,
     private paymentService: PaymentService,
+    private comboService: ComboService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService
@@ -865,7 +889,8 @@ export class OrdersComponent implements OnInit {
   }
 
   private initializeEditModal(order: Order) {
-    const basket = (order.items || []).map(item => {
+    const standaloneItems = (order.items || []).filter(item => !item.order_combo_id);
+    const basket = standaloneItems.map(item => {
       const anyItem = item as any;
       const pid: string = item.product?.id || item.product_id || '';
       const cached = pid ? this.productDetailCache.get(pid) : null;
@@ -890,6 +915,21 @@ export class OrdersComponent implements OnInit {
     });
 
     this.editBasketItems.set(basket);
+
+    const combos = (order.combos || []).map(c => ({
+      order_combo_id: c.id,
+      combo_id: c.combo_id || undefined,
+      name: c.name,
+      kind: c.kind || 'fixed',
+      quantity: c.quantity || 1,
+      list_total: typeof c.list_total === 'string' ? parseFloat(c.list_total) : Number(c.list_total || 0),
+      combo_price: typeof c.combo_price === 'string' ? parseFloat(c.combo_price) : Number(c.combo_price || 0),
+      discount_applied: typeof c.discount_applied === 'string' ? parseFloat(c.discount_applied) : Number(c.discount_applied || 0),
+      picks: c.picks || null
+    }));
+    this.editOrderCombos.set(combos);
+    this.loadAvailableCombos();
+
     this.showAddProductPicker.set(false);
     this.selectedAddProductId = null;
 
@@ -1108,6 +1148,78 @@ export class OrdersComponent implements OnInit {
     this.fetchEditPreview();
   }
 
+  loadAvailableCombos() {
+    this.comboService.getCombos(50).subscribe(list => {
+      this.availableCatalogCombos.set(list || []);
+    });
+  }
+
+  addComboToEdit(combo: ComboView, picks?: string[]) {
+    if (combo.kind === 'mix_and_match' && (!picks || picks.length !== combo.slot_count)) {
+      this.editMixComboToConfigure.set(combo);
+      this.editMixPickerVisible.set(true);
+      return;
+    }
+    const price = typeof combo.combo_price === 'string' ? parseFloat(combo.combo_price) : Number(combo.combo_price || 0);
+    const listTotal = typeof combo.list_total === 'string' ? parseFloat(combo.list_total) : Number(combo.list_total || 0);
+    const savings = typeof combo.savings === 'string' ? parseFloat(combo.savings) : Number(combo.savings || 0);
+
+    this.editOrderCombos.update(list => [
+      ...list,
+      {
+        combo_id: combo.id,
+        name: combo.name,
+        kind: combo.kind,
+        quantity: 1,
+        list_total: listTotal,
+        combo_price: price,
+        discount_applied: savings,
+        picks: picks || null
+      }
+    ]);
+    this.showAddComboPicker.set(false);
+    this.selectedAddCombo = null;
+    this.fetchEditPreview();
+  }
+
+  onEditPicksConfirmed(event: { combo: ComboView; picks: string[] }) {
+    this.addComboToEdit(event.combo, event.picks);
+  }
+
+  updateEditComboQuantity(idx: number, change: number) {
+    const list = this.editOrderCombos();
+    const target = list[idx];
+    if (!target) return;
+    const newQty = target.quantity + change;
+    if (newQty <= 0) {
+      this.removeEditCombo(idx);
+    } else if (newQty > 20) {
+      this.messageService.add({ severity: 'warn', summary: 'Limit', detail: 'Maximum 20 sets per combo' });
+    } else {
+      this.editOrderCombos.update(l => l.map((c, i) => i === idx ? { ...c, quantity: newQty } : c));
+      this.fetchEditPreview();
+    }
+  }
+
+  removeEditCombo(idx: number) {
+    this.editOrderCombos.update(l => l.filter((_, i) => i !== idx));
+    this.fetchEditPreview();
+  }
+
+  getOrderCombos(order: Order | null): OrderCombo[] {
+    return order?.combos || [];
+  }
+
+  getOrderComboLines(order: Order | null, orderComboId?: string): CartItem[] {
+    if (!order || !orderComboId) return [];
+    return (order.items || []).filter(item => item.order_combo_id === orderComboId);
+  }
+
+  getStandaloneLines(order: Order | null): CartItem[] {
+    if (!order) return [];
+    return (order.items || []).filter(item => !item.order_combo_id);
+  }
+
   private buildEditPayload(): OrderAdminUpdate {
     const addr = this.editAddress();
     const cleanAddress: any = {};
@@ -1119,11 +1231,27 @@ export class OrdersComponent implements OnInit {
     if (addr.address_line?.trim()) cleanAddress.address_line = addr.address_line.trim();
     if (addr.additional_info !== undefined) cleanAddress.additional_info = addr.additional_info;
 
+    const combosPayload = this.editOrderCombos().map(c => {
+      if (c.order_combo_id) {
+        return {
+          order_combo_id: c.order_combo_id,
+          quantity: c.quantity
+        };
+      } else {
+        return {
+          combo_id: c.combo_id,
+          quantity: c.quantity,
+          ...(c.picks && c.picks.length ? { picks: c.picks } : {})
+        };
+      }
+    });
+
     return {
       items: this.editBasketItems().map(i => ({
         product_id: i.product_id,
         quantity: i.quantity
       })),
+      combos: combosPayload,
       address: Object.keys(cleanAddress).length > 0 ? cleanAddress : undefined,
       reason: this.editReason().trim() || undefined
     };
@@ -1131,7 +1259,7 @@ export class OrdersComponent implements OnInit {
 
   fetchEditPreview() {
     const order = this.selectedOrder();
-    if (!order || !order.id || this.editBasketItems().length === 0) return;
+    if (!order || !order.id || (this.editBasketItems().length === 0 && this.editOrderCombos().length === 0)) return;
 
     this.editPreviewLoading.set(true);
     const payload = this.buildEditPayload();
@@ -1151,7 +1279,7 @@ export class OrdersComponent implements OnInit {
   confirmSaveEditOrder() {
     const order = this.selectedOrder();
     if (!order || !order.id) return;
-    if (this.editBasketItems().length === 0) {
+    if (this.editBasketItems().length === 0 && this.editOrderCombos().length === 0) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Basket cannot be empty.' });
       return;
     }
@@ -1229,6 +1357,8 @@ export class OrdersComponent implements OnInit {
           deliveryCharge: finalOrder.deliveryCharge || 0,
           total: finalOrder.totalAmount || 0,
           discount: finalOrder.discountAmount || 0,
+          combo_savings: finalOrder.combo_savings || 0,
+          combos: finalOrder.combos || [],
           id: orderIdStr,
           orderNumber: finalOrder.orderNumber || orderIdStr,
           payment_status: finalOrder.payment_status || finalOrder.paymentStatus || 'unpaid',

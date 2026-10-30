@@ -19,6 +19,8 @@ export class InvoiceComponent {
     @Input() orderDeliveryCharge: number = 0;
     @Input() orderTotal: number = 0;
     @Input() orderDiscount: number = 0;
+    @Input() comboSavings: number = 0;
+    @Input() combos: any[] = [];
     @Input() placedOrderId: string = '';
     @Input() placedOrderNumber: string = '';
     @Input() paymentStatus?: string;
@@ -588,7 +590,14 @@ export class InvoiceComponent {
         //  PRODUCTS TABLE (AutoTable)
         // =====================
         const tableBody = (this.orderedItems || []).map((item: any) => {
-            const name = item.product?.name || item.product?.code || `Product ID: ${item.product?.id || 'Unknown'}`;
+            let name = item.product?.name || item.product?.code || `Product ID: ${item.product?.id || 'Unknown'}`;
+            if (item.order_combo_id) {
+                const matchCombo = (this.combos || []).find((c: any) => c.id === item.order_combo_id);
+                const comboName = matchCombo ? matchCombo.name : item.combo_name;
+                if (comboName) {
+                    name = `${name} (Combo: ${comboName})`;
+                }
+            }
             const isBengali = this.hasBengali(name);
 
             // Available width for product name column is ~66mm
@@ -690,6 +699,10 @@ export class InvoiceComponent {
         if (this.discount > 0) {
             currentY += 5.5;
             totRow('Discount Applied:', `- BDT ${this.discount.toLocaleString()}`, currentY, { color: brandAccent, bold: true });
+        }
+        if (this.comboSavings > 0) {
+            currentY += 5.5;
+            totRow('Combo Savings:', `- BDT ${this.comboSavings.toLocaleString()}`, currentY, { color: brandAccent, bold: true });
         }
 
         // Grand Total

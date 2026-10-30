@@ -204,7 +204,38 @@
                         }
 
                         <div class="order-items-list">
-                            @for (item of filteredOrderItems(); track item.product.id || $index) {
+                            @if (getOrderCombos(selectedOrder()).length > 0) {
+                            <div class="mb-3">
+                                <span class="text-xs font-bold text-blue-400 uppercase tracking-wider block mb-2">Combos & Bundles</span>
+                                @for (combo of getOrderCombos(selectedOrder()); track combo.id || $index) {
+                                <div class="p-3 border-round-xl border-1 border-blue-500-alpha-30 mb-2" style="background: rgba(30, 41, 59, 0.7);">
+                                    <div class="flex align-items-center justify-content-between mb-2">
+                                        <div class="flex align-items-center gap-2">
+                                            <span class="text-xs font-bold bg-blue-500 text-white px-2 py-1 border-round">COMBO</span>
+                                            <span class="font-bold text-white text-sm">{{ combo.name }} × {{ combo.quantity }}</span>
+                                        </div>
+                                        <span class="text-xs text-green-400 font-semibold" *ngIf="combo.discount_applied">
+                                            Saved ৳{{ combo.discount_applied | number:'1.0-0' }}
+                                        </span>
+                                    </div>
+                                    <div class="pl-3 border-left-2 border-blue-400 flex flex-column gap-2">
+                                        @for (line of getOrderComboLines(selectedOrder(), combo.id); track line.product_id || $index) {
+                                        <div class="flex align-items-center justify-content-between text-xs text-slate-300">
+                                            <span>{{ line.quantity }} × {{ line.product.name }}</span>
+                                            <span class="font-mono text-slate-400">৳{{ getItemFinalUnitPrice(line) | number:'1.0-2' }}</span>
+                                        </div>
+                                        }
+                                    </div>
+                                </div>
+                                }
+                            </div>
+                            }
+
+                            @if (getStandaloneLines(selectedOrder()).length > 0) {
+                            <div *ngIf="getOrderCombos(selectedOrder()).length > 0" class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                Standalone Products
+                            </div>
+                            @for (item of (getOrderCombos(selectedOrder()).length > 0 ? getStandaloneLines(selectedOrder()) : filteredOrderItems()); track item.product.id || $index) {
                             <div class="order-item-tile flex align-items-center justify-content-between gap-3">
                                 <div class="order-item-left flex align-items-center min-w-0 flex-grow-1">
                                     <div class="order-item-img-container overflow-hidden flex-shrink-0">
@@ -249,6 +280,7 @@
                                 </div>
                             </div>
                             }
+                            }
                         </div>
                     </div>
                 </div>
@@ -280,6 +312,12 @@
                             <div class="flex justify-content-between align-items-center text-sm text-green-400">
                                 <span>Discount</span>
                                 <span class="font-medium">-{{ selectedOrder()!.discountAmount | currency:'BDT':'৳' }}</span>
+                            </div>
+                            }
+                            @if (selectedOrder()!.combo_savings) {
+                            <div class="flex justify-content-between align-items-center text-sm text-green-400">
+                                <span>Combo Savings</span>
+                                <span class="font-medium">-{{ selectedOrder()!.combo_savings | currency:'BDT':'৳' }}</span>
                             </div>
                             }
                         </div>
@@ -851,6 +889,72 @@
     </ng-template>
 
     <div class="p-fluid py-2">
+        <!-- Combo Items Section in Edit Modal -->
+        <div class="mb-4">
+            <div class="flex align-items-center justify-content-between mb-3">
+                <div class="flex align-items-center gap-2">
+                    <label class="text-xs font-semibold text-blue-400 uppercase tracking-wider m-0">Combos & Bundles</label>
+                    <span class="text-xs text-slate-400 font-mono">({{ editOrderCombos().length }} combos)</span>
+                </div>
+                <button type="button" pButton icon="pi pi-plus" label="Add Combo"
+                    class="p-button-sm p-button-outlined p-button-info"
+                    [disabled]="showAddComboPicker()"
+                    (click)="showAddComboPicker.set(true)"></button>
+            </div>
+
+            <!-- Add Combo Dropdown -->
+            @if (showAddComboPicker()) {
+            <div class="mb-3 p-3 border-round-xl border-1 border-blue-500 bg-slate-900 border-opacity-40 shadow-2">
+                <div class="flex align-items-center justify-content-between mb-2">
+                    <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+                        Select Active Combo Offer
+                    </span>
+                    <button type="button" pButton icon="pi pi-times"
+                        class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                        (click)="showAddComboPicker.set(false)"></button>
+                </div>
+                <p-dropdown [options]="availableCatalogCombos()" optionLabel="name"
+                            [(ngModel)]="selectedAddCombo"
+                            (onChange)="addComboToEdit($event.value)"
+                            placeholder="Choose a combo offer to add..."
+                            appendTo="body" styleClass="w-full">
+                    <ng-template let-c pTemplate="item">
+                        <div class="flex align-items-center justify-content-between w-full py-1">
+                            <span class="text-sm font-semibold text-white">{{ c.name }}</span>
+                            <span class="text-xs font-bold text-blue-400">৳{{ c.combo_price }}</span>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+            </div>
+            }
+
+            <!-- Combo Items List -->
+            @if (editOrderCombos().length > 0) {
+            <div class="flex flex-column gap-2 mb-3">
+                @for (c of editOrderCombos(); track c.order_combo_id || c.combo_id || $index; let cIdx = $index) {
+                <div class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card flex align-items-center justify-content-between gap-3">
+                    <div class="flex flex-column">
+                        <span class="font-bold text-white text-sm">{{ c.name }}</span>
+                        <span class="text-xs text-slate-400">৳{{ c.combo_price }} per set</span>
+                    </div>
+                    <div class="flex align-items-center gap-3">
+                        <div class="flex align-items-center gap-1">
+                            <button pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                                    (click)="updateEditComboQuantity(cIdx, -1)"></button>
+                            <span class="font-mono font-bold text-white px-2">{{ c.quantity }}</span>
+                            <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                                    (click)="updateEditComboQuantity(cIdx, 1)"></button>
+                        </div>
+                        <span class="font-mono font-bold text-blue-400 text-sm">৳{{ ((c.combo_price || 0) * c.quantity) | number:'1.0-0' }}</span>
+                        <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                                (click)="removeEditCombo(cIdx)"></button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
         <!-- Basket Items Table -->
         <div class="mb-4">
             <div class="flex align-items-center justify-content-between mb-3">
@@ -954,7 +1058,7 @@
 
                         <div class="col-4 sm:col-2 lg:col-1 text-right m-0">
                             <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger"
-                                (click)="removeEditItem(idx)" [disabled]="editBasketItems().length === 1"></button>
+                                (click)="removeEditItem(idx)" [disabled]="editBasketItems().length === 1 && editOrderCombos().length === 0"></button>
                         </div>
                     </div>
                 </div>
@@ -1086,9 +1190,19 @@
     <app-invoice #adminInvoice [orderedItems]="invoiceOrderData().items"
         [orderFormSnapshot]="invoiceOrderData().snapshot" [orderPaymentMethod]="invoiceOrderData().method"
         [orderDeliveryCharge]="invoiceOrderData().deliveryCharge" [orderTotal]="invoiceOrderData().total"
-        [orderDiscount]="invoiceOrderData().discount" [placedOrderId]="invoiceOrderData().id"
+        [orderDiscount]="invoiceOrderData().discount"
+        [comboSavings]="invoiceOrderData().combo_savings"
+        [combos]="invoiceOrderData().combos"
+        [placedOrderId]="invoiceOrderData().id"
         [placedOrderNumber]="invoiceOrderData().orderNumber"
         [paymentStatus]="invoiceOrderData().payment_status"
         [amountDue]="invoiceOrderData().amount_due"
         [createdAt]="invoiceOrderData().created_at"></app-invoice>
 </div>
+
+<app-bundle-picker
+    [combo]="editMixComboToConfigure()"
+    [(visible)]="editMixPickerVisible"
+    actionLabel="Add Combo to Order"
+    (picksConfirmed)="onEditPicksConfirmed($event)">
+</app-bundle-picker>

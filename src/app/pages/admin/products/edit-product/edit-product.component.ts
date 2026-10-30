@@ -97,6 +97,12 @@ export class EditProductComponent implements OnInit, OnDestroy {
     initialPrimaryId: string | null = null;
     newPrimaryImageId: string | null = null;
 
+    pinnedProducts = signal<(Product & { is_active?: boolean })[]>([]);
+    savingPins = signal<boolean>(false);
+    pinSearchLoading = signal<boolean>(false);
+    pinSearchResults = signal<Product[]>([]);
+    private pinSearchSubject = new Subject<string>();
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -105,7 +111,24 @@ export class EditProductComponent implements OnInit, OnDestroy {
         private slugService: SlugService,
         private messageService: MessageService,
         @Inject(PLATFORM_ID) private platformId: Object
-    ) { }
+    ) {
+        this.pinSearchSubject.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            switchMap(query => {
+                this.pinSearchLoading.set(true);
+                return this.productService.getProductsWithCount({ q: query, view: 'card', limit: 20 }).pipe(
+                    catchError(() => of({ items: [], total: 0 }))
+                );
+            })
+        ).subscribe(res => {
+            const currentPins = new Set(this.pinnedProducts().map(p => p.id));
+            currentPins.add(this.productId || '');
+            const filtered = (res.items || []).filter(p => !currentPins.has(p.id));
+            this.pinSearchResults.set(filtered);
+            this.pinSearchLoading.set(false);
+        });
+    }
 
     ngOnInit() {
         const idParam = this.route.snapshot.paramMap.get('id');
@@ -293,12 +316,89 @@ export class EditProductComponent implements OnInit, OnDestroy {
                     error: (err) => console.error('Error fetching product categories:', err)
                 });
 
+                this.loadRelatedPins();
                 this.loading.set(false);
             },
             error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load product' });
                 this.loading.set(false);
                 this.router.navigate(['/admin/dashboard/inventory']);
+            }
+        });
+    }
+
+    loadRelatedPins() {
+        if (!this.productId) return;
+        this.productService.getRelatedPins(this.productId).subscribe({
+            next: (res) => {
+                this.pinnedProducts.set(res.products || []);
+            },
+            error: (err) => console.error('Failed to load related pins', err)
+        });
+    }
+
+    onPinSearch(event: any) {
+        this.pinSearchSubject.next(event.filter || '');
+    }
+
+    addPin(product: Product) {
+        if (!product || product.id === this.productId) return;
+        if (this.pinnedProducts().some(p => p.id === product.id)) return;
+        if (this.pinnedProducts().length >= 8) {
+            this.messageService.add({ severity: 'warn', summary: 'Limit Reached', detail: 'Maximum 8 pinned products allowed' });
+            return;
+        }
+        this.pinnedProducts.update(list => [...list, { ...product, is_active: true }]);
+    }
+
+    removePin(index: number) {
+        this.pinnedProducts.update(list => list.filter((_, i) => i !== index));
+    }
+
+    movePinUp(index: number) {
+        if (index <= 0) return;
+        this.pinnedProducts.update(list => {
+            const copy = [...list];
+            const temp = copy[index - 1];
+            copy[index - 1] = copy[index];
+            copy[index] = temp;
+            return copy;
+        });
+    }
+
+    movePinDown(index: number) {
+        const list = this.pinnedProducts();
+        if (index >= list.length - 1) return;
+        this.pinnedProducts.update(l => {
+            const copy = [...l];
+            const temp = copy[index + 1];
+            copy[index + 1] = copy[index];
+            copy[index] = temp;
+            return copy;
+        });
+    }
+
+    savePins() {
+        if (!this.productId) return;
+        this.savingPins.set(true);
+        const ids = this.pinnedProducts().map(p => p.id);
+        this.productService.updateRelatedPins(this.productId, ids).subscribe({
+            next: (res) => {
+                this.savingPins.set(false);
+                this.pinnedProducts.set(res.products || []);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Pins Saved',
+                    detail: 'Updated "You May Also Like" pinned recommendations'
+                });
+            },
+            error: (err) => {
+                this.savingPins.set(false);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: err?.error?.detail || 'Failed to save pins'
+                });
             }
         });
     }

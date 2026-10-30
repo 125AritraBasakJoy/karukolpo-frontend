@@ -87,4 +87,17 @@ describe('OrdersComponent pagination', () => {
     expect(table.loading).toBeFalse();
     expect(getOrdersWithCount).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps the orders table wrapper visible and does not render separate mobile cards', () => {
+    getOrdersWithCount.and.returnValue(of({ items: [], total: 0 }));
+    const fixture = TestBed.createComponent(OrdersComponent);
+    fixture.detectChanges();
+    const tableEl = fixture.debugElement.query(By.directive(Table));
+    expect(tableEl).toBeTruthy();
+    const tableWrapper = tableEl.nativeElement.closest('.overflow-x-auto');
+    expect(tableWrapper).toBeTruthy();
+    expect(tableWrapper.classList.contains('hidden')).toBeFalse();
+    const mobileCards = fixture.debugElement.query(By.css('.mobile-orders-cards'));
+    expect(mobileCards).toBeNull();
+  });
 });

@@ -159,6 +159,23 @@
                 <span class="font-bold text-base text-900">Total Amount:</span>
                 <span class="font-bold text-xl text-primary">৳{{ order()?.totalAmount | number:'1.0-0' }}</span>
               </div>
+
+              <!-- Payment Breakdown: Paid Amount & Due Amount -->
+              <div *ngIf="order()?.amount_paid != null || order()?.amount_due != null" class="pt-2 border-top-1 border-100 flex flex-column gap-1 text-sm mt-1">
+                <div *ngIf="order()?.amount_paid != null" class="flex justify-content-between align-items-center text-green-700">
+                  <span class="font-medium">Paid Amount:</span>
+                  <span class="font-bold font-mono">৳{{ (order()?.amount_paid || 0) | number:'1.2-2' }}</span>
+                </div>
+                <div *ngIf="(order()?.amount_due ?? 0) >= 0" class="flex justify-content-between align-items-center"
+                     [ngClass]="(order()?.amount_due ?? 0) > 0 ? 'text-red-600' : 'text-600'">
+                  <span class="font-medium">Due Amount:</span>
+                  <span class="font-bold font-mono">৳{{ (order()?.amount_due || 0) | number:'1.2-2' }}</span>
+                </div>
+                <div *ngIf="(order()?.amount_due ?? 0) < 0" class="flex justify-content-between align-items-center text-orange-600">
+                  <span class="font-medium">Refund Due:</span>
+                  <span class="font-bold font-mono">৳{{ (-(order()?.amount_due || 0)) | number:'1.2-2' }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ViewChild, inject, DestroyRef, HostListener } from '@angular/core';
+import { Component, OnInit, signal, ViewChild, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -82,8 +82,6 @@ export class OrdersComponent implements OnInit {
   loadingDetails = signal(false);
   lastOpenedOrderId: string | null = null;
   lastLazyLoadEvent: TableLazyLoadEvent | null = null;
-
-  isMobile = signal<boolean>(typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false);
 
   // Invoice Mapping State
   invoiceOrderData = signal<any>({
@@ -191,13 +189,6 @@ export class OrdersComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService
   ) { }
-
-  @HostListener('window:resize')
-  onResize() {
-    if (typeof window !== 'undefined') {
-      this.isMobile.set(window.matchMedia('(max-width: 768px)').matches);
-    }
-  }
 
   ngOnInit() {
     this.rows = getSavedPageSize('karukolpo_orders_rows', 10);

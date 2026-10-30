@@ -16,6 +16,7 @@ import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ProductService } from '../../core/services/product/product.service';
 import { DialogModule } from 'primeng/dialog';
+import { formatPaymentStatus, PaymentStatusInfo } from '../../models/payment.model';
 
 @Component({
   selector: 'app-track-order',
@@ -27,14 +28,22 @@ import { DialogModule } from 'primeng/dialog';
 export class TrackOrderComponent {
   orderId = '';
   order = signal<Order | null>(null);
+  ordersList = signal<Order[]>([]);
   loading = signal<boolean>(false);
   events: any[];
+
+  // Normalized phone searched
+  searchedPhone = '';
 
   // Cancellation Modal State
   displayCancelModal = false;
   cancelPhone = '';
   cancelOrderNo = '';
   cancelLoading = false;
+
+  // Re-submit bKash TrxID State (A7)
+  resubmitTrxId = signal<string>('');
+  resubmitting = signal<boolean>(false);
 
   constructor(
     private orderService: OrderService,
@@ -67,13 +76,23 @@ export class TrackOrderComponent {
     }
   }
 
+  getPaymentStatusInfo(order: Order | null): PaymentStatusInfo {
+    if (!order) return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+    return formatPaymentStatus(
+      order.payment_status || order.paymentStatus,
+      order.amount_due || 0,
+      order.paymentMethod
+    );
+  }
+
   trackOrder() {
     if (!this.orderId) return;
 
     this.loading.set(true);
     this.order.set(null);
+    this.ordersList.set([]);
 
-    const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
+    const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, '');
     const isPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanPhone);
 
     if (!isPhone) {
@@ -87,45 +106,21 @@ export class TrackOrderComponent {
       return;
     }
 
-    // Normalize phone number to 11 digits (01XXXXXXXXX format)
-    let normalizedPhone = cleanPhone;
-
-    // Remove +88 or 88 prefix if present
-    normalizedPhone = normalizedPhone.replace(/^(\+?88)/, '');
-
-    // Ensure it starts with 0
+    let normalizedPhone = cleanPhone.replace(/^(\+?88)/, '');
     if (!normalizedPhone.startsWith('0')) {
       normalizedPhone = '0' + normalizedPhone;
     }
+    this.searchedPhone = normalizedPhone;
 
     this.orderService.trackOrdersByPhone(normalizedPhone).subscribe({
       next: (orders) => {
         if (orders && orders.length > 0) {
-          // Sort by date descending and get the most recent order
           const sorted = orders.sort((a, b) =>
             new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
           );
 
-          const mostRecent = sorted[0];
-
-          // Fetch the FULL order details using the order_number and phone to populate ID, items, and address
-          const orderNo = (mostRecent.orderNumber || mostRecent.id || '').trim().replace(/^#/, '');
-          this.orderService.trackOrderByNumber(orderNo, normalizedPhone).subscribe({
-            next: (fullOrder) => {
-              this.resolveProductNames(fullOrder).subscribe(resolvedOrder => {
-                this.order.set(resolvedOrder);
-                this.loading.set(false);
-              });
-            },
-            error: (err) => {
-              console.error('Failed to fetch full order details:', err);
-              // Fallback to trimmed order if full lookup fails
-              this.resolveProductNames(mostRecent).subscribe(resolvedOrder => {
-                this.order.set(resolvedOrder);
-                this.loading.set(false);
-              });
-            }
-          });
+          this.ordersList.set(sorted);
+          this.selectOrder(sorted[0]);
         } else {
           this.messageService.add({
             life: 2000,
@@ -149,26 +144,84 @@ export class TrackOrderComponent {
     });
   }
 
-  /**
-   * Resolve product names for order items if they are missing
-   */
+  selectOrder(selected: Order) {
+    this.loading.set(true);
+    const orderNo = (selected.orderNumber || selected.id || '').trim().replace(/^#/, '');
+
+    this.orderService.trackOrderByNumber(orderNo, this.searchedPhone).subscribe({
+      next: (fullOrder) => {
+        this.resolveProductNames(fullOrder).subscribe(resolvedOrder => {
+          this.order.set(resolvedOrder);
+          this.resubmitTrxId.set('');
+          this.loading.set(false);
+        });
+      },
+      error: (err) => {
+        console.error('Failed to fetch full order details:', err);
+        this.resolveProductNames(selected).subscribe(resolvedOrder => {
+          this.order.set(resolvedOrder);
+          this.resubmitTrxId.set('');
+          this.loading.set(false);
+        });
+      }
+    });
+  }
+
+  resubmitBkashTrx() {
+    const currentOrder = this.order();
+    if (!currentOrder || !currentOrder.id) return;
+
+    const rawTrx = this.resubmitTrxId().trim().toUpperCase();
+    if (!/^[A-Z0-9]{10}$/.test(rawTrx)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid TrxID',
+        detail: 'Transaction ID must be exactly 10 alphanumeric characters (e.g. BL99K7M80J)'
+      });
+      return;
+    }
+
+    this.resubmitting.set(true);
+    const payload = {
+      transaction_id: rawTrx,
+      sender_phone: currentOrder.phoneNumber
+    };
+
+    this.orderService.submitTrx(currentOrder.id, payload, this.searchedPhone).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Submitted',
+          detail: 'New Transaction ID submitted. Awaiting verification.'
+        });
+        this.resubmitting.set(false);
+        this.selectOrder(currentOrder);
+      },
+      error: (err) => {
+        this.resubmitting.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Submission Failed',
+          detail: err.error?.detail || 'Failed to submit Transaction ID'
+        });
+      }
+    });
+  }
+
   private resolveProductNames(order: Order) {
     if (!order || !order.items || order.items.length === 0) {
       return of(order);
     }
 
     const resolutionObservables = order.items.map(item => {
-      // Format existing imageUrl with getImageUrl if present
       if (item.product?.imageUrl) {
         item.product.imageUrl = this.productService.getImageUrl(item.product.imageUrl);
       }
 
-      // If product name and image are both present, return item as is
       if (item.product?.name && item.product?.imageUrl && !item.product.imageUrl.includes('data:image/svg+xml')) {
         return of(item);
       }
 
-      // If product ID is present, fetch full product info including primary image
       const productId = item.product?.id || (item as any).product_id;
       if (productId) {
         return this.productService.getProductById(productId).pipe(
@@ -224,18 +277,16 @@ export class TrackOrderComponent {
   submitCancelRequest() {
     const currentOrder = this.order();
     if (!currentOrder || !currentOrder.id) {
-      console.warn('Cannot cancel order: currentOrder or order ID is missing.', currentOrder);
       return;
     }
 
     const enteredPhone = this.cancelPhone.trim();
     const enteredOrderNo = this.cancelOrderNo.trim().toUpperCase();
-    
+
     const correctPhone = currentOrder.phoneNumber || '';
     const correctOrderNo = (currentOrder.orderNumber || '').toUpperCase();
     const correctOrderId = currentOrder.id.toUpperCase();
 
-    // Normalize phone numbers to compare
     const normEntered = this.normalizePhoneNumber(enteredPhone);
     const normCorrect = this.normalizePhoneNumber(correctPhone);
 
@@ -260,11 +311,11 @@ export class TrackOrderComponent {
     }
 
     this.cancelLoading = true;
-    this.orderService.cancelOrder(currentOrder.id, enteredPhone, { reason: 'Cancelled by customer' }).subscribe({
-      next: (updatedOrder) => {
-        this.order.set(updatedOrder);
+    this.orderService.cancelOrder(currentOrder.id, normEntered).subscribe({
+      next: (cancelledOrder) => {
         this.cancelLoading = false;
         this.displayCancelModal = false;
+        this.order.set(cancelledOrder);
         this.messageService.add({
           life: 3000,
           severity: 'success',
@@ -273,72 +324,16 @@ export class TrackOrderComponent {
         });
       },
       error: (err) => {
-        console.error('Order cancellation failed:', err);
         this.cancelLoading = false;
+        console.error('Failed to cancel order:', err);
         this.messageService.add({
           life: 3000,
           severity: 'error',
           summary: 'Cancellation Failed',
-          detail: err.error?.detail || 'Failed to cancel the order. Please try again.'
+          detail: err.error?.detail || 'Failed to cancel the order. Please contact support.'
         });
       }
     });
-  }
-
-  getCustomerName(): string {
-    const o = this.order();
-    return o?.address?.full_name || o?.fullName || 'Customer';
-  }
-
-  getCustomerPhone(): string {
-    const o = this.order();
-    return o?.address?.phone || o?.phoneNumber || '';
-  }
-
-  getStreetAddress(): string {
-    const o = this.order();
-    return o?.address?.address_line || o?.fullAddress || '';
-  }
-
-  getLocationDetails(): string {
-    const o = this.order();
-    if (!o) return '';
-    const subDistrict = o.address?.subdistrict || o.subDistrict || '';
-    const district = o.address?.district || o.district || '';
-    const postal = o.address?.postal_code || o.postalCode || '';
-
-    const parts: string[] = [];
-    if (subDistrict) parts.push(subDistrict);
-    if (district) {
-      if (postal) {
-        parts.push(`${district} - ${postal}`);
-      } else {
-        parts.push(district);
-      }
-    } else if (postal) {
-      parts.push(postal);
-    }
-    return parts.join(', ');
-  }
-
-  getAdditionalInfo(): string {
-    const o = this.order();
-    return o?.address?.additional_info || o?.additionalInfo || '';
-  }
-
-  getFullAddress(): string {
-    const o = this.order();
-    if (!o) return '';
-    const street = this.getStreetAddress();
-    const location = this.getLocationDetails();
-    const note = this.getAdditionalInfo();
-
-    const parts = [street, location].filter(Boolean);
-    let full = parts.join(', ');
-    if (note) {
-      full += full ? ` (${note})` : note;
-    }
-    return full || 'No address provided';
   }
 
   goBack() {

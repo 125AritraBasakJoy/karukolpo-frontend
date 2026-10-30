@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { THERMAL_LOGO_BASE64 } from '../thermal-invoice/thermal-logo.constant';
+import { formatPaymentStatus } from '../../models/payment.model';
 
 @Component({
     selector: 'app-invoice',
@@ -20,20 +21,32 @@ export class InvoiceComponent {
     @Input() orderDiscount: number = 0;
     @Input() placedOrderId: string = '';
     @Input() placedOrderNumber: string = '';
+    @Input() paymentStatus?: string;
+    @Input() amountDue: number = 0;
+    @Input() createdAt?: string | Date;
 
     @Output() continueShoppingClick = new EventEmitter<void>();
 
     today = new Date();
 
+    get orderDate(): Date {
+        if (this.createdAt) {
+            const d = new Date(this.createdAt);
+            if (!isNaN(d.getTime())) return d;
+        }
+        return this.today;
+    }
+
     get invoiceNumber(): string {
-        const year = this.today.getFullYear();
+        const year = this.orderDate.getFullYear();
         // Use orderNumber if available, otherwise fallback to id
         const idPart = (this.placedOrderNumber || this.placedOrderId || '0').slice(-5);
         return `INV-${year}-${idPart}`;
     }
 
     get formattedDate(): string {
-        return this.today.toLocaleDateString('en-US', {
+        return this.orderDate.toLocaleDateString('en-US', {
+            timeZone: 'Asia/Dhaka',
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -41,7 +54,8 @@ export class InvoiceComponent {
     }
 
     get formattedTime(): string {
-        return this.today.toLocaleTimeString('en-US', {
+        return this.orderDate.toLocaleTimeString('en-US', {
+            timeZone: 'Asia/Dhaka',
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
@@ -51,10 +65,14 @@ export class InvoiceComponent {
     get paymentMethodDisplay(): string {
         const m = (this.orderPaymentMethod || '').toLowerCase();
         if (m.includes('bkash')) return 'bKash';
-        return 'Cash on Delivery';
+        if (m.includes('cod') || m.includes('cash on delivery')) return 'Cash on Delivery';
+        return this.orderPaymentMethod || 'Cash on Delivery';
     }
 
-    get paymentStatus(): string {
+    get paymentStatusDisplay(): string {
+        if (this.paymentStatus) {
+            return formatPaymentStatus(this.paymentStatus, this.amountDue, this.orderPaymentMethod).label;
+        }
         const m = (this.orderPaymentMethod || '').toLowerCase();
         if (m.includes('bkash')) return 'Paid';
         return 'Unpaid';
@@ -221,6 +239,15 @@ export class InvoiceComponent {
             this.orderDiscount = customData.discount || 0;
             this.placedOrderId = customData.id || '';
             this.placedOrderNumber = customData.orderNumber || '';
+            if (customData.payment_status || customData.paymentStatus) {
+                this.paymentStatus = customData.payment_status || customData.paymentStatus;
+            }
+            if (customData.amount_due !== undefined) {
+                this.amountDue = customData.amount_due;
+            }
+            if (customData.created_at || customData.createdAt) {
+                this.createdAt = customData.created_at || customData.createdAt;
+            }
         }
 
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -310,8 +337,8 @@ export class InvoiceComponent {
         text(this.formattedTime, margin + 24, y, { size: 9, color: textPrimary, bold: true });
 
         text('PAYMENT STATUS:', pageW - margin - 65, y, { size: 7.5, color: textMuted, bold: true });
-        const statusColor = this.paymentStatus === 'Paid' ? green : brandAccent;
-        text(this.paymentStatus, pageW - margin, y, { size: 9, color: statusColor, bold: true, align: 'right' });
+        const statusColor = this.paymentStatusDisplay.toLowerCase() === 'paid' ? green : brandAccent;
+        text(this.paymentStatusDisplay, pageW - margin, y, { size: 9, color: statusColor, bold: true, align: 'right' });
         y += 9.5;
 
         // =====================
@@ -656,19 +683,21 @@ export class InvoiceComponent {
         const boxW = totalsW;
         const boxH = 16;
         
-        const isPaid = this.paymentStatus === 'Paid';
+        const isPaid = this.paymentStatusDisplay.toLowerCase() === 'paid';
         const badgeBg: [number, number, number] = isPaid ? [240, 253, 244] : [244, 244, 245];
         const badgeBorder: [number, number, number] = isPaid ? [187, 247, 208] : borderColor;
         const badgeTextColor: [number, number, number] = isPaid ? green : textPrimary;
-        const amountDue = isPaid ? 0 : this.grandTotal;
+        const due = isPaid ? 0 : (this.amountDue !== undefined ? this.amountDue : this.grandTotal);
 
         pdf.setFillColor(...badgeBg);
         pdf.setDrawColor(...badgeBorder);
         pdf.setLineWidth(0.4);
         pdf.roundedRect(boxX, y, boxW, boxH, 1.5, 1.5, 'FD');
 
-        text('AMOUNT DUE', boxX + boxW / 2, y + 5, { size: 7, color: textMuted, bold: true, align: 'center' });
-        text(`BDT ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 11.5, { size: 12.5, color: badgeTextColor, bold: true, align: 'center' });
+        const badgeLabel = isPaid ? 'AMOUNT PAID' : (due < 0 ? 'REFUND DUE' : 'AMOUNT DUE');
+        const displayAmt = due < 0 ? -due : due;
+        text(badgeLabel, boxX + boxW / 2, y + 5, { size: 7, color: textMuted, bold: true, align: 'center' });
+        text(`BDT ${displayAmt.toLocaleString()}`, boxX + boxW / 2, y + 11.5, { size: 12.5, color: badgeTextColor, bold: true, align: 'center' });
 
         // Page Bottom Clean Minimal Footer
         const footerY = pageH - 12;

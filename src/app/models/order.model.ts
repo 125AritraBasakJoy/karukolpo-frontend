@@ -1,4 +1,49 @@
 import { CartItem } from './cart.model';
+import { Payment, PaymentStatus, PaymentTransaction } from './payment.model';
+
+export interface OrderRevision {
+  id: string;
+  admin_id?: string | null;
+  created_at: string;
+  reason?: string | null;
+  changes: {
+    before?: any;
+    after?: any;
+    [key: string]: any;
+  };
+}
+
+export interface OrderEditItem {
+  product_id: string;
+  quantity: number;
+}
+
+export interface OrderAddressUpdate {
+  full_name?: string;
+  phone?: string;
+  email?: string;
+  district?: string;
+  subdistrict?: string;
+  address_line?: string;
+  additional_info?: string | null;
+}
+
+export interface OrderAdminUpdate {
+  items?: OrderEditItem[];
+  address?: OrderAddressUpdate;
+  reason?: string;
+}
+
+export interface OrderEditResult {
+  order: any;
+  coupon_removed: boolean;
+  coupon_removed_reason?: string | null;
+  dry_run: boolean;
+}
+
+export interface OrderCompletePayload {
+  collected_via?: string;
+}
 
 export interface Order {
   id?: string;
@@ -14,8 +59,12 @@ export interface Order {
   totalAmount: number;
   status: 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Completed' | 'Cancelled';
   paymentMethod?: 'COD' | 'bKash' | string | null; // Allow null
-  paymentStatus?: 'Pending' | 'Paid' | string;
-  paymentId?: number;
+  paymentStatus?: PaymentStatus | string;
+  payment_status?: PaymentStatus;
+  amount_paid?: number;
+  amount_refunded?: number;
+  amount_due?: number;
+  paymentId?: string;
   transactionId?: string;
   bkashNumber?: string;
   deliveryLocation?: string;
@@ -39,13 +88,11 @@ export interface Order {
     postal_code?: string | null;
     address?: string | null;
   };
-  payments?: {
-    id: string;
-    order_id: string;
-    status: string;
-    payment_method: string;
-    transaction_id: string;
-  };
+  payments?: Payment | null;
+  payment_transactions?: PaymentTransaction[];
+  revisions?: OrderRevision[];
+  edited_at?: string | null;
+  edited_by?: string | null;
   created_at?: string;
   channel?: 'online' | 'offline' | string;
   note?: string;

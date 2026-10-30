@@ -168,7 +168,8 @@
             display: flex !important;
             align-items: center !important;
 
-            .p-dropdown-label {
+            .p-dropdown-label,
+            .p-select-label {
                 padding-top: 0 !important;
                 padding-bottom: 0 !important;
                 height: 44px !important;
@@ -177,7 +178,8 @@
                 align-items: center !important;
             }
 
-            .p-dropdown-trigger {
+            .p-dropdown-trigger,
+            .p-select-dropdown {
                 height: 44px !important;
             }
         }

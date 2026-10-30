@@ -90,9 +90,12 @@ export class AppComponent implements OnInit {
       };
       defer(() => {
         this.versionService.checkForUpdates();
-        this.trackingService.trackVisit();
-        // Keep storefront maintenance state in sync with the backend
-        this.maintenanceService.startPolling();
+        const isAdmin = window.location.pathname.startsWith('/admin');
+        if (!isAdmin) {
+          this.trackingService.trackVisit();
+          // Keep storefront maintenance state in sync with the backend
+          this.maintenanceService.startPolling();
+        }
         this.initGoogleAnalyticsOnIdle();
       });
     }

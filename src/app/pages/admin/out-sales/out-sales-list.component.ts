@@ -20,6 +20,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { OutSalesService, ProductService, OrderService } from '../../../core/services';
 import { Product } from '../../../models/product.model';
 import { Order } from '../../../models/order.model';
+import { formatPaymentStatus } from '../../../models/payment.model';
 import { District, districts } from '../../../data/bangladesh-data';
 import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/thermal-invoice.component';
 import { finalize, catchError, tap } from 'rxjs/operators';
@@ -406,6 +407,16 @@ export class OutSalesListComponent implements OnInit {
     return sale.totalAmount != null ? sale.totalAmount : 0;
   }
 
+  getPaymentStatusInfo(sale: Order) {
+    const status = sale.payment_status || sale.paymentStatus;
+    return formatPaymentStatus(status, sale.amount_due || 0, sale.paymentMethod);
+  }
+
+  isDeliveryInProgress(sale: Order): boolean {
+    const raw = (sale.rawStatus || sale.status || '').toLowerCase().trim();
+    return raw === 'cod_processing' || raw === 'paid';
+  }
+
   // ===== ROW ACTION & BULK ACTION: MARK DELIVERED =====
   confirmMarkDelivered(sale: Order) {
     if (!sale || !sale.id) return;
@@ -417,10 +428,18 @@ export class OutSalesListComponent implements OnInit {
   }
 
   confirmBulkMarkDelivered() {
-    if (!this.selectedSales.length) return;
+    const eligible = this.selectedSales.filter(s => this.isDeliveryInProgress(s));
+    if (!eligible.length) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'No Eligible Sales',
+        detail: 'Only sales awaiting delivery (COD or Prepaid) can be marked as delivered.'
+      });
+      return;
+    }
     this.closeAllCalendarOverlays();
     this.maxDate = new Date();
-    this.targetDeliverySales.set([...this.selectedSales]);
+    this.targetDeliverySales.set([...eligible]);
     this.markDeliveredAt = null;
     this.markDeliveredModalVisible.set(true);
   }

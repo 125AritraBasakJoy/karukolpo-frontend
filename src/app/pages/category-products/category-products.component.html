@@ -230,7 +230,7 @@
               <div class="product-badges-stack pointer-events-none">
                 <span *ngIf="product.discount_value && product.effective_price && product.effective_price < product.price"
                       class="discount-badge">
-                  Flat ৳{{ product.discount_value | number:'1.0-0' }} OFF
+                  {{ product.discount_type === 'percentage' ? ((product.discount_percent || product.discount_value) + '% OFF') : ('৳' + (product.savings || product.discount_value | number:'1.0-0') + ' OFF') }}
                 </span>
                 <span *ngIf="isOutOfStock(product)" class="oos-badge">
                   Sold Out

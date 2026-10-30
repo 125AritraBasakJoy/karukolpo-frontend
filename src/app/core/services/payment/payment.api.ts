@@ -1,4 +1,5 @@
 const ORDER_BASE = 'orders' as const;
+const ADMIN_BASE = 'admin/orders' as const;
 
 /**
  * Payment-related endpoints (nested under orders)
@@ -8,5 +9,8 @@ export const PAYMENTS_API = {
     CONFIRM: (orderId: number | string, paymentId: number | string) => `${ORDER_BASE}/${orderId}/payments/${paymentId}/confirm`,
     SUBMIT_TRX: (orderId: number | string) => `${ORDER_BASE}/${orderId}/payment/submit`,
     VERIFY: (orderId: number | string) => `${ORDER_BASE}/${orderId}/payment/verify`,
+    REJECT: (orderId: number | string) => `${ORDER_BASE}/${orderId}/payment/reject`,
+    RECORD_MANUAL: (orderId: number | string) => `${ADMIN_BASE}/${orderId}/payments`,
+    VOID_ENTRY: (orderId: number | string, entryId: number | string) => `${ADMIN_BASE}/${orderId}/payments/${entryId}`,
     WEBHOOK: (orderId: number | string) => `${ORDER_BASE}/${orderId}/payments/payments/webhook`,
 } as const;

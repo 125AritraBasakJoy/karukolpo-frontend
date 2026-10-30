@@ -599,12 +599,6 @@ textarea,
 
 /* Premium Table V2 moved to admin-styles.scss */
 
-
-/* Fix for Paginator Clipping */
-.p-datatable-wrapper {
-    overflow: visible !important;
-}
-
 /* Glassmorphism Components */
 .glass-card {
     background: #0f172a;
@@ -1575,6 +1569,22 @@ html.dark-mode .premium-product-card {
         background: transparent !important;
         border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
         padding: 1.25rem 2.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .premium-dialog, .premium-confirm-dialog {
+        .p-dialog-header  { padding: 1rem 1.25rem !important; }
+        .p-dialog-content { padding: 1rem 1.25rem !important; }
+        .p-dialog-footer  { padding: .75rem 1.25rem !important; flex-wrap: wrap !important; gap: .5rem !important; }
+    }
+}
+
+@media (pointer: coarse) {
+    .action-btn, .action-icon-btn {
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+        max-width: 2.75rem !important;
     }
 }
 

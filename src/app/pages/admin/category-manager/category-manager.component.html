@@ -5,7 +5,7 @@
                 <h1 class="text-4xl font-bold m-0 tracking-tight text-white mb-2">Category Manager</h1>
                 <p class="text-slate-400 m-0 text-lg">Organize and manage your product catalog efficiently.</p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <button pButton pRipple label="New Category" icon="pi pi-plus"
                     class="p-button-raised premium-btn-primary" (click)="openNew()"></button>
                 <button pButton pRipple label="Uncategorized" icon="pi pi-eye-slash"
@@ -175,12 +175,12 @@
         </div>
     </div>
     <ng-template pTemplate="footer">
-        <div class="flex gap-2 justify-content-end px-3 pb-3">
-            <button pButton pRipple label="Cancel" class="p-button-text p-button-secondary" (click)="moveDialog = false"></button>
+        <div class="flex flex-column-reverse sm:flex-row gap-2 justify-content-end px-3 pb-3">
+            <button pButton pRipple label="Cancel" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="moveDialog = false"></button>
             <button pButton pRipple [label]="viewingCategory?.id === 'uncategorized' ? 'Assign' : 'Move'"
                 icon="pi pi-check" (click)="confirmMove()"
                 [disabled]="!targetCategoryIds || targetCategoryIds.length === 0"
-                class="premium-btn-primary px-4"></button>
+                class="premium-btn-primary px-4 w-full sm:w-auto"></button>
         </div>
     </ng-template>
 </p-dialog>
@@ -231,10 +231,10 @@
     </form>
 
     <ng-template pTemplate="footer">
-        <div class="flex gap-2 justify-content-end px-3 pb-4">
-            <button pButton pRipple label="Cancel" class="p-button-text p-button-secondary" (click)="hideDialog()"></button>
+        <div class="flex flex-column-reverse sm:flex-row gap-2 justify-content-end px-3 pb-4">
+            <button pButton pRipple label="Cancel" class="p-button-text p-button-secondary w-full sm:w-auto" (click)="hideDialog()"></button>
             <button pButton pRipple label="Save Category" icon="pi pi-save"
-                (click)="saveCategory()" class="premium-btn-primary px-4"></button>
+                (click)="saveCategory()" class="premium-btn-primary px-4 w-full sm:w-auto"></button>
         </div>
     </ng-template>
 </p-dialog>

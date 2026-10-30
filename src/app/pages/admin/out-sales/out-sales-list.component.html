@@ -161,7 +161,7 @@
                 <ng-template pTemplate="body" let-sale>
                     <tr>
                         <td>
-                            <p-tableCheckbox [value]="sale"></p-tableCheckbox>
+                            <p-tableCheckbox [value]="sale" [disabled]="!isDeliveryInProgress(sale)"></p-tableCheckbox>
                         </td>
                         <td>
                             <span class="id-tag">{{ sale.orderNumber || sale.id }}</span>
@@ -200,8 +200,15 @@
                             </div>
                         </td>
                         <td>
-                            <p-tag [value]="getPaymentMethodLabel(sale.paymentMethod)" severity="info" [rounded]="true"
-                                styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
+                            <div class="flex flex-column gap-1">
+                                <p-tag [value]="getPaymentMethodLabel(sale.paymentMethod)" severity="info" [rounded]="true"
+                                    styleClass="text-xs font-bold uppercase tracking-wider px-2"></p-tag>
+                                <p-tag *ngIf="sale.payment_status || sale.paymentStatus"
+                                    [value]="getPaymentStatusInfo(sale).label"
+                                    [severity]="getPaymentStatusInfo(sale).severity"
+                                    [rounded]="true"
+                                    styleClass="text-2xs font-semibold px-2"></p-tag>
+                            </div>
                         </td>
                         <td>
                             <p-tag [value]="getStatusInfo(sale).label" [severity]="getStatusInfo(sale).severity" [rounded]="true"
@@ -214,6 +221,24 @@
                                     class="action-btn receipt-btn"
                                     (click)="openThermalInvoice(sale)"
                                     pTooltip="Thermal Receipt (58mm)" tooltipPosition="top"></button>
+
+                                <!-- Handover for unreviewed sales -->
+                                <button *ngIf="needsReview(sale)" pButton icon="pi pi-check"
+                                    class="action-btn text-green-400"
+                                    (click)="quickClassifyHandover(sale)"
+                                    pTooltip="Mark Handed Over" tooltipPosition="top"></button>
+
+                                <!-- Mark Delivered (for cod_processing or paid) -->
+                                <button *ngIf="isDeliveryInProgress(sale)" pButton icon="pi pi-send"
+                                    class="action-btn text-blue-400"
+                                    (click)="confirmMarkDelivered(sale)"
+                                    pTooltip="Mark Delivered" tooltipPosition="top"></button>
+
+                                <!-- Cancel / Refused (for cod_processing or paid) -->
+                                <button *ngIf="isDeliveryInProgress(sale)" pButton icon="pi pi-times-circle"
+                                    class="action-btn text-orange-400"
+                                    (click)="openCancelModal(sale)"
+                                    pTooltip="Cancel / Refused Parcel" tooltipPosition="top"></button>
 
                                 <!-- Change Type / Classify (hidden on cancelled) -->
                                 <button *ngIf="!isCancelledSale(sale)" pButton icon="pi pi-sync"
@@ -372,13 +397,13 @@
                 </div>
 
                 <div class="grid mb-2">
-                    <div class="field col-6">
+                    <div class="field col-12 sm:col-6">
                         <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">District</label>
                         <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
                             [(ngModel)]="classifyCustomer.district" (onChange)="onClassifyDistrictChange($event)"
                             placeholder="District" appendTo="body" styleClass="w-full" [filter]="true" filterBy="name" [showClear]="true"></p-dropdown>
                     </div>
-                    <div class="field col-6">
+                    <div class="field col-12 sm:col-6">
                         <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Sub-district</label>
                         <p-dropdown [options]="classifySubDistricts" [(ngModel)]="classifyCustomer.subdistrict"
                             placeholder="Sub-district" [disabled]="!classifySubDistricts.length" appendTo="body" styleClass="w-full" [filter]="true" [showClear]="true"></p-dropdown>
@@ -397,11 +422,11 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <div class="flex justify-content-end gap-2">
-            <p-button label="Cancel" styleClass="p-button-text p-button-secondary"
+        <div class="flex flex-column-reverse sm:flex-row justify-content-end gap-2 w-full">
+            <p-button label="Cancel" styleClass="p-button-text p-button-secondary w-full sm:w-auto"
                 (onClick)="closeClassifyDialog()"></p-button>
             <p-button label="Confirm Classification" icon="pi pi-check" [loading]="savingClassification()"
-                styleClass="p-button-primary" (onClick)="submitClassification()"></p-button>
+                styleClass="p-button-primary w-full sm:w-auto" (onClick)="submitClassification()"></p-button>
         </div>
     </ng-template>
 </p-dialog>

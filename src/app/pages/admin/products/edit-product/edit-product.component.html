@@ -1,9 +1,9 @@
-<div class="edit-product-container p-4 min-h-screen">
+<div class="edit-product-container p-3 md:p-5 min-h-screen">
     <div class="header-section mb-6">
         <div class="flex align-items-center gap-3 mb-2">
             <button pButton icon="pi pi-arrow-left" class="p-button-rounded p-button-text text-white"
                 (click)="cancel()"></button>
-            <h1 class="text-4xl font-bold m-0 tracking-tight text-white">Edit Product</h1>
+            <h1 class="text-2xl md:text-4xl font-bold m-0 tracking-tight text-white">Edit Product</h1>
         </div>
         <p class="text-slate-400 m-0 text-lg ml-7">Update the details of your masterpiece.</p>
     </div>
@@ -337,7 +337,7 @@
     </div>
 
     <!-- Saving Status Overlay Loader -->
-    <div *ngIf="saving() && savingStatus()" class="fixed inset-0 z-5 bg-black-alpha-70 flex flex-column align-items-center justify-content-center">
+    <div *ngIf="saving() && savingStatus()" class="fixed inset-0 bg-black-alpha-70 flex flex-column align-items-center justify-content-center" style="z-index: 1200;">
         <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
         <p class="text-white mt-4 text-xl font-semibold tracking-wide">{{ savingStatus() }}</p>
     </div>

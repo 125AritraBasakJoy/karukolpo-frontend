@@ -126,6 +126,20 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     return m === 'cod' || m.includes('cash on delivery');
   }
 
+  get amountDueDisplay(): number {
+    if (this.order?.amount_due !== undefined && this.order?.amount_due !== null) {
+      return Number(this.order.amount_due);
+    }
+    if (this.isCod) {
+      const status = (this.order?.status || '').toLowerCase();
+      if (status === 'delivered' || status === 'completed') {
+        return 0;
+      }
+      return this.grandTotalDisplay;
+    }
+    return 0;
+  }
+
   get customerNameDisplay(): string {
     return this.order?.fullName ||
       this.order?.customer?.name ||
@@ -486,10 +500,10 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     ctx.fillText(grandFormatted, rightX, y);
     y += 24;
 
-    if (this.isCod) {
+    if (this.amountDueDisplay > 0) {
       ctx.font = `bold 13px ${fontMono}`;
       ctx.textAlign = 'left';
-      ctx.fillText(`Amount due on delivery: Tk. ${this.grandTotalDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`, leftX, y);
+      ctx.fillText(`Amount due on delivery: Tk. ${this.amountDueDisplay.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`, leftX, y);
       y += 20;
     }
 
@@ -1313,8 +1327,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
     addLine(format2Col('TOTAL:', `Tk.${this.grandTotalDisplay.toFixed(0)}`, 32));
     addBytes(0x1D, 0x21, 0x00); // Normal
     addBytes(0x1B, 0x45, 0x00); // Bold OFF
-    if (this.isCod) {
-      addLine(`Amount due on delivery: Tk.${this.grandTotalDisplay.toFixed(0)}`);
+    if (this.amountDueDisplay > 0) {
+      addLine(`Amount due on delivery: Tk.${this.amountDueDisplay.toFixed(0)}`);
     }
     addLine('--------------------------------');
 

@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { CartItem } from '../../../models/cart.model';
 import { Product } from '../../../models/product.model';
 import { MessageService } from 'primeng/api';
@@ -67,16 +68,30 @@ export class CartService {
   }
 
   refreshCartProducts() {
-    if (this.cart().length === 0) return;
+    const current = this.cart();
+    if (current.length === 0) return;
 
-    this.productService.getProducts(0, 100, undefined, false, 'card').subscribe({
-      next: (products) => {
+    const uniqueIds = Array.from(new Set(current.map(i => i.product.id).filter(Boolean)));
+    const fetches = uniqueIds.map(id => this.productService.getProductById(id));
+
+    forkJoin(fetches).subscribe({
+      next: (freshProducts) => {
         let cartUpdated = false;
         const updatedItems = this.cart().map(item => {
-          const freshProduct = products.find(p => p.id === item.product.id);
-          if (freshProduct && JSON.stringify(freshProduct) !== JSON.stringify(item.product)) {
+          const fresh = freshProducts.find(p => p && p.id === item.product.id);
+          if (fresh) {
             cartUpdated = true;
-            return { ...item, product: freshProduct };
+            return {
+              ...item,
+              product: {
+                ...item.product,
+                price: fresh.price,
+                effective_price: fresh.effective_price,
+                isInStock: fresh.isInStock,
+                stock: fresh.stock ?? item.product.stock,
+                manualStockStatus: fresh.manualStockStatus ?? item.product.manualStockStatus
+              }
+            };
           }
           return item;
         });

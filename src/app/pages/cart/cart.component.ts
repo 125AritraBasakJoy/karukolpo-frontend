@@ -311,10 +311,8 @@ export class CartComponent implements OnInit, OnDestroy {
                 window.scrollTo(0, 0);
             }
 
-            const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearAbandonClock();
             this.cartService.clearCart();
-            this.productService.reduceStock(cartItemsToReduce);
             this.clearCheckoutDraft();
         } catch (err) {
             console.error('COD Order creation failed', err);
@@ -327,6 +325,16 @@ export class CartComponent implements OnInit, OnDestroy {
     async submitBkashPayment() {
         if (!this.bkashTrxId || !this.bkashPhone) {
             this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Transaction ID and Phone Number are required' });
+            return;
+        }
+
+        const cleanTrx = this.bkashTrxId.toUpperCase().trim();
+        if (!/^[A-Z0-9]{10}$/.test(cleanTrx)) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Invalid TrxID',
+                detail: 'bKash Transaction ID must be exactly 10 alphanumeric characters (e.g. BL99K7M80J)'
+            });
             return;
         }
 
@@ -354,7 +362,7 @@ export class CartComponent implements OnInit, OnDestroy {
         }
 
         const payload = {
-            transaction_id: this.bkashTrxId.trim(),
+            transaction_id: cleanTrx,
             sender_phone: cleanPhone
         };
 
@@ -368,10 +376,8 @@ export class CartComponent implements OnInit, OnDestroy {
                 window.scrollTo(0, 0);
             }
 
-            const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearAbandonClock();
             this.cartService.clearCart();
-            this.productService.reduceStock(cartItemsToReduce);
             this.clearCheckoutDraft();
         } catch (err: any) {
             console.error('Payment submission failed:', err);

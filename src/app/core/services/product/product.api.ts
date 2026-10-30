@@ -8,6 +8,7 @@ export const PRODUCTS_API = {
     LIST: BASE,
     CREATE: BASE,
     GET_BY_ID: (productId: string) => `${BASE}/${productId}`,
+    RELATED: (ref: string, limit: number = 8) => `${BASE}/${ref}/related?limit=${limit}`,
     UPDATE: (productId: string) => `${BASE}/${productId}`,
     DELETE: (productId: string) => `${BASE}/${productId}`,
 

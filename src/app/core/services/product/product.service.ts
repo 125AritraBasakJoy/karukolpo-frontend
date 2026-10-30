@@ -176,6 +176,20 @@ export class ProductService {
   }
 
   /**
+   * Get related products from backend
+   * GET /products/{product_ref}/related?limit={limit}
+   */
+  getRelatedProducts(ref: string, limit: number = 8): Observable<Product[]> {
+    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.RELATED(ref, limit)).pipe(
+      map(items => (items || []).map(p => this.mapBackendToFrontend(p))),
+      catchError(err => {
+        console.error(`Failed to load related products for ${ref}:`, err);
+        return of([]);
+      })
+    );
+  }
+
+  /**
    * Create new product
    * POST /products (requires auth)
    */
@@ -728,8 +742,9 @@ export class ProductService {
       ? parseFloat(String(data.effective_price))
       : rawPrice;
 
+    let isDiscountActive = false;
     if ((data.effective_price === undefined || data.effective_price === null || effectivePrice === rawPrice) && discountVal && discountVal > 0) {
-      let isDiscountActive = true;
+      isDiscountActive = true;
       const now = new Date().getTime();
       if (data.discount_starts_at) {
         const start = new Date(data.discount_starts_at).getTime();
@@ -748,6 +763,10 @@ export class ProductService {
           effectivePrice = Math.max(0, Math.round((rawPrice - discountVal) * 100) / 100);
         }
       }
+    } else if (data.has_active_discount !== undefined) {
+      isDiscountActive = !!data.has_active_discount;
+    } else if (effectivePrice < rawPrice) {
+      isDiscountActive = true;
     }
 
     return {
@@ -772,6 +791,9 @@ export class ProductService {
       isBestSeller: !!(data.is_best_seller || data.best_seller),
       discount_type: data.discount_type || null,
       discount_value: discountVal,
+      discount_percent: data.discount_percent != null ? parseFloat(data.discount_percent) : (data.discount_type === 'percentage' ? discountVal : null),
+      savings: data.savings != null ? parseFloat(data.savings) : (effectivePrice !== undefined && rawPrice > effectivePrice ? Math.round(rawPrice - effectivePrice) : null),
+      has_active_discount: !!(data.has_active_discount || isDiscountActive),
       discount_starts_at: data.discount_starts_at || null,
       discount_ends_at: data.discount_ends_at || null,
       effective_price: effectivePrice

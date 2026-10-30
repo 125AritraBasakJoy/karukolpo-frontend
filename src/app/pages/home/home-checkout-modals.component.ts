@@ -267,109 +267,6 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         }
     }
 
-    openPaymentForOrder(orderId: string | undefined) {
-        if (!orderId) {
-            this.showError('Invalid Order ID');
-            return;
-        }
-        this.placedOrderId = orderId;
-        this.displayTrackOrderModal = false;
-        this.displayPaymentMethodModal = true;
-        this.selectedPaymentMethod = null;
-        this.transactionId = '';
-        this.currentPaymentId = null;
-    }
-
-    processPayment() {
-        if (!this.selectedPaymentMethod) {
-            this.showError('Please select a payment method');
-            return;
-        }
-
-        if (this.selectedPaymentMethod === 'bKash') {
-            if (!this.transactionId) {
-                this.showError('Transaction ID is required');
-                return;
-            }
-        }
-
-        const oid = this.placedOrderId;
-
-        // Helper to handle confirmation
-        const handleConfirmation = (paymentId: number) => {
-            if (this.selectedPaymentMethod === 'bKash') {
-                const trxId = this.transactionId.trim();
-
-                if (!trxId) {
-                    this.showError('Transaction ID is required');
-                    return;
-                }
-
-                this.paymentService.confirmPayment(oid, paymentId, trxId).subscribe({
-                    next: () => {
-                        this.messageService.add({
-                            life: 2000,
-                            severity: 'success',
-                            summary: 'Payment Submitted',
-                            detail: 'Waiting for admin verification.'
-                        });
-                        this.displayPaymentMethodModal = false;
-                        this.displayPaymentSuccessModal = true;
-                    },
-                    error: (err: any) => {
-                        console.error('Payment confirmation failed', err);
-
-                        let errorMsg = 'Failed to confirm payment. Please check Transaction ID.';
-                        if (err.error && err.error.detail) {
-                            if (typeof err.error.detail === 'string') {
-                                errorMsg = err.error.detail;
-                            } else if (Array.isArray(err.error.detail)) {
-                                errorMsg = err.error.detail.map((e: any) => e.msg).join(', ');
-                            }
-                        }
-
-                        this.showError(errorMsg);
-                    }
-                });
-            } else {
-                // COD - Just finish
-                this.messageService.add({
-                    life: 2000,
-                    severity: 'success',
-                    summary: 'COD Selected',
-                    detail: 'Waiting for admin verification.'
-                });
-                this.displayPaymentMethodModal = false;
-                this.displayPaymentSuccessModal = true;
-            }
-        };
-
-        // If we already have a payment ID for this session, skip creation
-        if (this.currentPaymentId) {
-            handleConfirmation(this.currentPaymentId);
-            return;
-        }
-
-        // 1. Create Payment
-        const methodToSend = this.selectedPaymentMethod === 'bKash' ? 'bkash' : 'cod';
-
-        this.paymentService.createPayment(oid, methodToSend).subscribe({
-            next: (payment: any) => {
-                if (payment && payment.id) {
-                    this.currentPaymentId = payment.id;
-                    handleConfirmation(payment.id);
-                } else {
-                    console.error('Payment created but no ID returned', payment);
-                    this.showError('Payment initialization failed. Please try again.');
-                }
-            },
-            error: (err: any) => {
-                console.error('Payment creation failed', err);
-                this.showError('Failed to initiate payment. Please try again.');
-            }
-        });
-    }
-
     showError(msg: any, status?: number) {
         let detail = msg;
         if (typeof msg === 'object' && msg !== null) {
@@ -463,11 +360,10 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
             this.cdr.markForCheck();
 
             // Clear cart and reset
-            const cartItemsToReduce = [...this.cartService.cart()];
-            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
+            const cartItems = [...this.cartService.cart()];
+            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItems);
             this.cartService.clearAbandonClock();
             this.cartService.clearCart();
-            this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();
         } catch (err) {
             console.error('COD Order creation failed', err);
@@ -480,6 +376,12 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     async submitBkashPayment() {
         if (!this.bkashTrxId || !this.bkashPhone) {
             this.showError('Transaction ID and Phone Number are required');
+            return;
+        }
+
+        const cleanTrx = this.bkashTrxId.toUpperCase().trim();
+        if (!/^[A-Z0-9]{10}$/.test(cleanTrx)) {
+            this.showError('bKash Transaction ID must be exactly 10 alphanumeric characters (e.g. BL99K7M80J)');
             return;
         }
 
@@ -509,7 +411,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
         }
 
         const payload = {
-            transaction_id: this.bkashTrxId.trim(),
+            transaction_id: cleanTrx,
             sender_phone: cleanPhone
         };
 
@@ -529,11 +431,10 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
             this.cdr.markForCheck();
 
             // Clear cart and reset
-            const cartItemsToReduce = [...this.cartService.cart()];
-            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItemsToReduce);
+            const cartItems = [...this.cartService.cart()];
+            this.gtagService.trackPurchase(this.placedOrderNumber || this.placedOrderId, this.getTotalPrice(), cartItems);
             this.cartService.clearAbandonClock();
             this.cartService.clearCart();
-            this.productService.reduceStock(cartItemsToReduce);
             this.resetCheckoutForm();
         } catch (err: any) {
             console.error('Payment submission failed:', err);

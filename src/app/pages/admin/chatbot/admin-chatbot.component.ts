@@ -132,7 +132,6 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
       }
       this.initSpeechRecognition();
     }
-    this.refreshAllData();
   }
 
   ngOnDestroy(): void {
@@ -1798,7 +1797,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
   handleChipClick(chip: { label: string; route?: string; query?: string }): void {
     if (chip.route) {
       this.router.navigateByUrl(chip.route);
-      if (window.innerWidth < 768) {
+      if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
         this.isOpen.set(false);
       }
     } else if (chip.query) {
@@ -1808,7 +1807,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
 
   navigateToOrder(orderId: string): void {
     this.router.navigate(['/admin/dashboard/orders'], { queryParams: { highlight: orderId } });
-    if (window.innerWidth < 768) {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
       this.isOpen.set(false);
     }
   }

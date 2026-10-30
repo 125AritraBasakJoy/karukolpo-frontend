@@ -247,7 +247,7 @@
             <!-- Top Badges -->
             <div class="absolute top-0 left-0 m-2 z-3" *ngIf="p.discount_value && p.effective_price && p.effective_price < p.price">
               <span class="discount-badge">
-                Flat ৳{{ p.discount_value | number:'1.0-0' }} OFF
+                {{ p.discount_type === 'percentage' ? ((p.discount_percent || p.discount_value) + '% OFF') : ('৳' + (p.savings || p.discount_value | number:'1.0-0') + ' OFF') }}
               </span>
             </div>
 

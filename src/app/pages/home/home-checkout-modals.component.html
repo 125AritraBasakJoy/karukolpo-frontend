@@ -174,12 +174,6 @@
                 <div class="flex justify-content-between align-items-center">
                     <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'৳' }}</span>
 
-                    <!-- Payment Button -->
-                    @if (order.status === 'Confirmed' && order.paymentStatus !== 'Paid') {
-                    <button pButton label="Make Payment" icon="pi pi-wallet" class="p-button-sm"
-                        (click)="openPaymentForOrder(order.id)"></button>
-                    }
-
                     @if (order.paymentStatus === 'Paid') {
                     <p-tag value="Paid" severity="success"></p-tag>
                     }

@@ -86,10 +86,18 @@
             </div>
         </div>
 
-        <!-- Payment Method -->
+        <!-- Payment Method & Status -->
         <div class="od-payment-row">
             <span class="od-label">PAYMENT METHOD</span>
             <span class="od-payment-value">{{ paymentMethodDisplay }}</span>
+        </div>
+        <div class="od-payment-row" *ngIf="paymentStatusDisplay">
+            <span class="od-label">PAYMENT STATUS</span>
+            <span class="od-payment-value" [class.text-green-600]="paymentStatusDisplay.toLowerCase() === 'paid'">{{ paymentStatusDisplay }}</span>
+        </div>
+        <div class="od-payment-row" *ngIf="amountDue > 0">
+            <span class="od-label">AMOUNT DUE ON DELIVERY</span>
+            <span class="od-payment-value font-bold text-red-600">৳ {{ amountDue | number:'1.2-2' }}</span>
         </div>
 
     </div>

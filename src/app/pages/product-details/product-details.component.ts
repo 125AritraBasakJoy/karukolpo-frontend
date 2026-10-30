@@ -1,8 +1,10 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy, computed, HostListener } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, computed, HostListener, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, CurrencyPipe, NgOptimizedImage } from '@angular/common';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
 import { Title, Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { switchMap, of } from 'rxjs';
 import { ProductService } from '../../core/services/product/product.service';
 import { CartService } from '../../core/services/cart/cart.service';
 import { CategoryService } from '../../core/services/category/category.service';
@@ -181,6 +183,8 @@ export class ProductDetailsComponent implements OnInit {
     { breakpoint: '560px', numVisible: 3, numScroll: 1 }
   ];
 
+  private destroyRef = inject(DestroyRef);
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -193,19 +197,27 @@ export class ProductDetailsComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.route.queryParams.subscribe(qParams => {
+    this.route.queryParams.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(qParams => {
       this.sourceCategoryParam.set(qParams['category'] || null);
       this.sourceFromParam.set(qParams['from'] || null);
     });
 
-    this.route.params.subscribe(params => {
-      const id = params['id'];
-      if (id) {
-        this.cartService.refreshCartProducts();
-        this.loadProduct(id);
-        this.loadRelatedProducts(id);
-      }
-    });
+    this.route.paramMap.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      switchMap(params => {
+        const id = params.get('id');
+        if (id) {
+          this.cartService.refreshCartProducts();
+          this.product.set(null);
+          this.relatedProducts.set([]);
+          this.loadProduct(id);
+          this.loadRelatedProducts(id);
+        }
+        return of(id);
+      })
+    ).subscribe();
   }
 
   loadProduct(id: string | number) {
@@ -272,20 +284,14 @@ export class ProductDetailsComponent implements OnInit {
 
   loadRelatedProducts(id: string | number) {
     this.loadingRelated.set(true);
-    this.productService.getProducts(0, 100, undefined, false, 'card').subscribe({
+    this.productService.getRelatedProducts(id.toString(), 4).subscribe({
       next: (products) => {
-        const currentProduct = this.product();
-        if (currentProduct) {
-          this.relatedProducts.set(
-            products.filter(p => p.categoryId === currentProduct.categoryId && p.id !== currentProduct.id).slice(0, 4)
-          );
-        } else {
-          this.relatedProducts.set(products.slice(0, 4));
-        }
+        this.relatedProducts.set(products);
         this.loadingRelated.set(false);
       },
       error: (err) => {
         console.error('Failed to load related products', err);
+        this.relatedProducts.set([]);
         this.loadingRelated.set(false);
       }
     });

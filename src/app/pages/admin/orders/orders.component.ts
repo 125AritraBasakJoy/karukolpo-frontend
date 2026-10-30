@@ -29,6 +29,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { CurrencyPipe } from '@angular/common';
 import { InvoiceComponent } from '../../../components/invoice/invoice.component';
 import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
+import { districts } from '../../../data/bangladesh-data';
 
 @Component({
   selector: 'app-orders',
@@ -172,6 +173,10 @@ export class OrdersComponent implements OnInit {
   editPreviewResult = signal<OrderEditResult | null>(null);
   editPreviewLoading = signal<boolean>(false);
   editSaving = signal<boolean>(false);
+
+  districts = districts;
+  editSubDistricts = signal<string[]>([]);
+  showAddProductPicker = signal<boolean>(false);
 
   editProductSearchQuery = signal<string>('');
   editProductSearchResults = signal<any[]>([]);
@@ -823,8 +828,139 @@ export class OrdersComponent implements OnInit {
   }
 
   openEditOrderModalDirect(order: Order) {
-    this.selectedOrder.set(order);
-    this.openEditOrderModal();
+    this.prepareAndOpenEditModal(order);
+  }
+
+  openEditOrderModal() {
+    const order = this.selectedOrder();
+    if (!order) return;
+    this.prepareAndOpenEditModal(order);
+  }
+
+  prepareAndOpenEditModal(order: Order) {
+    if (!this.canEditOrder(order)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Cannot Edit',
+        detail: 'Only Pending or Confirmed online orders can be edited.'
+      });
+      return;
+    }
+
+    if (order.id) {
+      this.loading.set(true);
+      this.orderService.getOrderById(order.id).pipe(
+        switchMap((fullOrder: Order | undefined) => {
+          const target = fullOrder || order;
+          return this.ensureProductDetails(target);
+        }),
+        catchError(() => this.ensureProductDetails(order))
+      ).subscribe({
+        next: (enrichedOrder: Order) => {
+          this.loading.set(false);
+          this.selectedOrder.set(enrichedOrder);
+          this.initializeEditModal(enrichedOrder);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.selectedOrder.set(order);
+          this.initializeEditModal(order);
+        }
+      });
+    } else {
+      this.selectedOrder.set(order);
+      this.initializeEditModal(order);
+    }
+  }
+
+  private initializeEditModal(order: Order) {
+    const basket = (order.items || []).map(item => {
+      const anyItem = item as any;
+      const pid: string = item.product?.id || item.product_id || '';
+      const cached = pid ? this.productDetailCache.get(pid) : null;
+      const catalog = pid ? this.allCatalogProducts().find(p => p.id === pid) : null;
+
+      let resolvedName: string = item.product?.name || item.name || '';
+      if (!resolvedName || resolvedName.trim().toLowerCase() === 'product') {
+        resolvedName = cached?.name || catalog?.name || (pid ? `Product (${pid.substring(0, 8)})` : 'Product');
+      }
+
+      const resolvedCode: string = item.product?.code || anyItem.code || cached?.code || catalog?.code || '';
+      const resolvedImg: string = item.product?.imageUrl || anyItem.imageUrl || cached?.imageUrl || catalog?.imageUrl || '';
+
+      return {
+        product_id: pid,
+        name: resolvedName,
+        price: item.unit_price ?? item.price_at_purchase ?? cached?.effective_price ?? cached?.price ?? 0,
+        quantity: item.quantity || 1,
+        imageUrl: resolvedImg,
+        code: resolvedCode
+      };
+    });
+
+    this.editBasketItems.set(basket);
+    this.showAddProductPicker.set(false);
+    this.selectedAddProductId = null;
+
+    const rawDistrict = order.address?.district || order.district || '';
+    const matchedDistrict = this.districts.find(d => d.name.toLowerCase() === rawDistrict.toLowerCase());
+    if (matchedDistrict) {
+      this.editSubDistricts.set(matchedDistrict.subDistricts);
+    } else {
+      this.editSubDistricts.set([]);
+    }
+
+    const rawSubDistrict = order.address?.subdistrict || order.subDistrict || '';
+    const matchedSubDistrict = matchedDistrict?.subDistricts.find(s => s.toLowerCase() === rawSubDistrict.toLowerCase());
+
+    this.editAddress.set({
+      full_name: order.address?.full_name || order.fullName || '',
+      phone: order.address?.phone || order.phoneNumber || '',
+      email: order.address?.email || order.email || '',
+      district: matchedDistrict ? matchedDistrict.name : (rawDistrict || undefined),
+      subdistrict: matchedSubDistrict || (rawSubDistrict || undefined),
+      address_line: order.address?.address_line || order.fullAddress || '',
+      additional_info: order.address?.additional_info || order.additionalInfo || ''
+    });
+
+    this.editReason.set('');
+    this.editPreviewResult.set(null);
+    this.editProductSearchQuery.set('');
+    this.editProductSearchResults.set([]);
+    this.displayEditOrderDialog.set(true);
+
+    this.fetchEditPreview();
+    this.loadCatalogProductsIfNeeded();
+  }
+
+  onEditDistrictChange(selectedDistrictName: string | null) {
+    const districtObj = this.districts.find(d => d.name.toLowerCase() === (selectedDistrictName || '').toLowerCase());
+    if (districtObj) {
+      this.editSubDistricts.set(districtObj.subDistricts);
+      const currentSub = this.editAddress().subdistrict;
+      const stillValid = currentSub ? districtObj.subDistricts.some(s => s.toLowerCase() === currentSub.toLowerCase()) : false;
+      this.editAddress.update(addr => ({
+        ...addr,
+        district: districtObj.name,
+        subdistrict: stillValid ? currentSub : undefined
+      }));
+    } else {
+      this.editSubDistricts.set([]);
+      this.editAddress.update(addr => ({
+        ...addr,
+        district: selectedDistrictName || undefined,
+        subdistrict: undefined
+      }));
+    }
+    this.fetchEditPreview();
+  }
+
+  onEditSubDistrictChange(selectedSubDistrict: string | null) {
+    this.editAddress.update(addr => ({
+      ...addr,
+      subdistrict: selectedSubDistrict || undefined
+    }));
+    this.fetchEditPreview();
   }
 
   openOrderActionMenu(event: Event, order: Order) {
@@ -844,16 +980,50 @@ export class OrdersComponent implements OnInit {
   loadCatalogProductsIfNeeded() {
     if (this.allCatalogProducts().length > 0 || this.catalogProductsLoading()) return;
     this.catalogProductsLoading.set(true);
-    this.productService.getProducts(0, 500, undefined, true).subscribe({
+    this.productService.getProducts(0, 100, undefined, true).subscribe({
       next: (prods) => {
-        this.allCatalogProducts.set(prods || []);
+        const list = prods || [];
+        this.allCatalogProducts.set(list);
         this.catalogProductsLoading.set(false);
+
+        // Also enrich any basket item that might still have fallback name
+        const currentBasket = this.editBasketItems();
+        let changed = false;
+        const enriched = currentBasket.map(item => {
+          if (!item.name || item.name.toLowerCase() === 'product' || item.name.startsWith('Product (')) {
+            const match = list.find(p => p.id === item.product_id);
+            if (match?.name) {
+              changed = true;
+              return {
+                ...item,
+                name: match.name,
+                code: item.code || match.code,
+                imageUrl: item.imageUrl || match.imageUrl
+              };
+            }
+          }
+          return item;
+        });
+        if (changed) {
+          this.editBasketItems.set(enriched);
+        }
       },
       error: (err) => {
-        console.warn('Failed to load catalog products for dropdown', err);
+        console.warn('Failed to load catalog products', err);
         this.catalogProductsLoading.set(false);
       }
     });
+  }
+
+  openAddProductPicker() {
+    this.selectedAddProductId = null;
+    this.showAddProductPicker.set(true);
+    this.loadCatalogProductsIfNeeded();
+  }
+
+  closeAddProductPicker() {
+    this.selectedAddProductId = null;
+    this.showAddProductPicker.set(false);
   }
 
   onAddProductDropdownChange(productId: string | null) {
@@ -863,41 +1033,24 @@ export class OrdersComponent implements OnInit {
       this.addEditProduct(prod);
     }
     this.selectedAddProductId = null;
+    this.showAddProductPicker.set(false);
   }
 
-  openEditOrderModal() {
-    const order = this.selectedOrder();
-    if (!order) return;
-
-    this.loadCatalogProductsIfNeeded();
-
-    const basket = (order.items || []).map(item => ({
-      product_id: item.product?.id || item.product_id || '',
-      name: item.product?.name || item.name || 'Product',
-      price: item.unit_price ?? item.price_at_purchase ?? 0,
-      quantity: item.quantity || 1,
-      imageUrl: item.product?.imageUrl || '',
-      code: item.product?.code || ''
-    }));
-
-    this.editBasketItems.set(basket);
-    this.selectedAddProductId = null;
-    this.editAddress.set({
-      full_name: order.address?.full_name || order.fullName || '',
-      phone: order.address?.phone || order.phoneNumber || '',
-      email: order.address?.email || order.email || '',
-      district: order.address?.district || order.district || '',
-      subdistrict: order.address?.subdistrict || order.subDistrict || '',
-      address_line: order.address?.address_line || order.fullAddress || '',
-      additional_info: order.address?.additional_info || order.additionalInfo || ''
+  onAddProductFilter(event: { originalEvent: Event; filter: string }) {
+    const q = (event?.filter || '').trim();
+    if (!q || q.length < 2) return;
+    this.productService.getProductsWithCount({ q, view: 'card', limit: 25 }).subscribe({
+      next: (res) => {
+        if (res?.items && res.items.length > 0) {
+          const current = this.allCatalogProducts();
+          const currentIds = new Set(current.map(p => p.id));
+          const toAdd = res.items.filter(p => !currentIds.has(p.id));
+          if (toAdd.length > 0) {
+            this.allCatalogProducts.set([...current, ...toAdd]);
+          }
+        }
+      }
     });
-    this.editReason.set('');
-    this.editPreviewResult.set(null);
-    this.editProductSearchQuery.set('');
-    this.editProductSearchResults.set([]);
-    this.displayEditOrderDialog.set(true);
-
-    this.fetchEditPreview();
   }
 
   onEditProductSearch(query: string) {

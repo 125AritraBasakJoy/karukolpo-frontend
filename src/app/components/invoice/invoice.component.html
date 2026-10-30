@@ -96,7 +96,7 @@
                 <span class="od-label">PAYMENT STATUS</span>
                 <span class="od-status-pill" [attr.data-status]="paymentStatusInfo.rawStatus">
                     <span class="od-status-dot"></span>
-                    {{ paymentStatusDisplay }}
+                    <span class="od-status-text">{{ paymentStatusDisplay }}</span>
                 </span>
             </div>
             <div class="od-payment-row od-due-row" *ngIf="amountDue > 0 && paymentStatusInfo.rawStatus !== 'paid'">

@@ -70,8 +70,25 @@ export class InvoiceComponent {
     }
 
     get paymentStatusInfo(): PaymentStatusInfo {
-        if (this.paymentStatus) {
-            return formatPaymentStatus(this.paymentStatus, this.amountDue, this.orderPaymentMethod);
+        const raw = (this.paymentStatus || '').toLowerCase().trim();
+        if (raw) {
+            switch (raw) {
+                case 'paid':
+                    return { label: 'Paid', severity: 'success', rawStatus: 'paid' };
+                case 'partially_paid':
+                    return { label: 'Partially Paid', severity: 'warn', rawStatus: 'partially_paid' };
+                case 'awaiting_verification':
+                    return { label: 'Awaiting Verification', severity: 'info', rawStatus: 'awaiting_verification' };
+                case 'refund_due':
+                    return { label: 'Refund Pending', severity: 'danger', rawStatus: 'refund_due' };
+                case 'refunded':
+                    return { label: 'Refunded', severity: 'secondary', rawStatus: 'refunded' };
+                case 'void':
+                    return { label: 'Cancelled', severity: 'secondary', rawStatus: 'void' };
+                case 'unpaid':
+                default:
+                    return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+            }
         }
         const m = (this.orderPaymentMethod || '').toLowerCase();
         if (m.includes('bkash')) {
@@ -353,17 +370,18 @@ export class InvoiceComponent {
                     : brandAccent;
 
         const maxStatusWidthMm = 45;
+        const statusText = this.paymentStatusDisplay;
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(8.5);
-        const statusLines = pdf.splitTextToSize(this.paymentStatusDisplay, maxStatusWidthMm);
+        const statusLines = pdf.splitTextToSize(statusText, maxStatusWidthMm);
         if (statusLines.length > 1) {
             let statusY = y - 1;
             statusLines.forEach((sLine: string, idx: number) => {
-                text(sLine, pageW - margin, statusY + (idx * 3.5), { size: 8, color: statusColor, bold: true, align: 'right' });
+                text(sLine, pageW - margin, statusY + (idx * 3.5), { size: 8.5, color: statusColor, bold: true, align: 'right' });
             });
             y += (statusLines.length - 1) * 3.5;
         } else {
-            text(this.paymentStatusDisplay, pageW - margin, y, { size: 8.5, color: statusColor, bold: true, align: 'right' });
+            text(statusText, pageW - margin, y, { size: 8.5, color: statusColor, bold: true, align: 'right' });
         }
         y += 9.5;
 

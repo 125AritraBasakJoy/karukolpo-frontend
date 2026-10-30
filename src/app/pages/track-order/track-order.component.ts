@@ -30,10 +30,14 @@ export class TrackOrderComponent {
   order = signal<Order | null>(null);
   ordersList = signal<Order[]>([]);
   loading = signal<boolean>(false);
+  detailsLoading = signal<boolean>(false);
+  searchedPhone = '';
   events: any[];
 
-  // Normalized phone searched
-  searchedPhone = '';
+  // Navigation for latest orders (max 3)
+  currentOrderIndex = signal<number>(0);
+  private currentSelectToken = 0;
+  private currentSearchGeneration = 0;
 
   // Cancellation Modal State
   displayCancelModal = false;
@@ -99,12 +103,42 @@ export class TrackOrderComponent {
     }
   }
 
+  hasOlderOrder(): boolean {
+    return this.currentOrderIndex() < this.ordersList().length - 1;
+  }
+
+  hasNewerOrder(): boolean {
+    return this.currentOrderIndex() > 0;
+  }
+
+  showOlderOrder() {
+    if (!this.hasOlderOrder() || this.detailsLoading()) return;
+    const nextIdx = this.currentOrderIndex() + 1;
+    this.currentOrderIndex.set(nextIdx);
+    const target = this.ordersList()[nextIdx];
+    if (target) {
+      this.selectOrder(target);
+    }
+  }
+
+  showNewerOrder() {
+    if (!this.hasNewerOrder() || this.detailsLoading()) return;
+    const prevIdx = this.currentOrderIndex() - 1;
+    this.currentOrderIndex.set(prevIdx);
+    const target = this.ordersList()[prevIdx];
+    if (target) {
+      this.selectOrder(target);
+    }
+  }
+
   trackOrder() {
     if (!this.orderId) return;
 
+    const searchGen = ++this.currentSearchGeneration;
     this.loading.set(true);
     this.order.set(null);
     this.ordersList.set([]);
+    this.currentOrderIndex.set(0);
 
     const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, '');
     const isPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanPhone);
@@ -128,13 +162,18 @@ export class TrackOrderComponent {
 
     this.orderService.trackOrdersByPhone(normalizedPhone).subscribe({
       next: (orders) => {
+        if (searchGen !== this.currentSearchGeneration) return;
         if (orders && orders.length > 0) {
           const sorted = orders.sort((a, b) =>
             new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
           );
 
-          this.ordersList.set(sorted);
-          this.selectOrder(sorted[0]);
+          // Show at most the latest 3 orders for this phone number
+          const latestThree = sorted.slice(0, 3);
+          this.ordersList.set(latestThree);
+          this.currentOrderIndex.set(0);
+          this.selectOrder(latestThree[0]);
+          this.loading.set(false);
         } else {
           this.messageService.add({
             life: 2000,
@@ -146,6 +185,7 @@ export class TrackOrderComponent {
         }
       },
       error: (err) => {
+        if (searchGen !== this.currentSearchGeneration) return;
         console.error('Phone tracking error:', err);
         this.loading.set(false);
         this.messageService.add({
@@ -159,23 +199,29 @@ export class TrackOrderComponent {
   }
 
   selectOrder(selected: Order) {
-    this.loading.set(true);
+    this.detailsLoading.set(true);
+    const token = ++this.currentSelectToken;
+    const searchGen = this.currentSearchGeneration;
     const orderNo = (selected.orderNumber || selected.id || '').trim().replace(/^#/, '');
 
     this.orderService.trackOrderByNumber(orderNo, this.searchedPhone).subscribe({
       next: (fullOrder) => {
+        if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
         this.resolveProductNames(fullOrder).subscribe(resolvedOrder => {
+          if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
           this.order.set(resolvedOrder);
           this.resubmitTrxId.set('');
-          this.loading.set(false);
+          this.detailsLoading.set(false);
         });
       },
       error: (err) => {
+        if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
         console.error('Failed to fetch full order details:', err);
         this.resolveProductNames(selected).subscribe(resolvedOrder => {
+          if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
           this.order.set(resolvedOrder);
           this.resubmitTrxId.set('');
-          this.loading.set(false);
+          this.detailsLoading.set(false);
         });
       }
     });

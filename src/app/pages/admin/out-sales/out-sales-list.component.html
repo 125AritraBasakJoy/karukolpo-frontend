@@ -215,7 +215,7 @@
                                 styleClass="text-xs font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
                         <td class="text-center actions-col-cell" style="width: 5.5rem; min-width: 5.5rem">
-                            <div class="actions-cell">
+                            <div class="flex justify-content-center align-items-center">
                                 <button pButton icon="pi pi-ellipsis-v"
                                     class="action-btn menu-trigger-btn"
                                     (click)="openSaleActionMenu($event, sale)"
@@ -745,7 +745,7 @@
 </p-dialog>
 
 <!-- Out Sales Action Menu Popover (Anchored 3-dot) -->
-<p-popover #saleActionsPopover appendTo="body" styleClass="action-menu-popover">
+<p-popover #saleActionsPopover appendTo="body" styleClass="admin-action-menu-popover">
     <div *ngIf="activeActionSale() as actSale" class="action-menu-list">
         <!-- Thermal Receipt (all sales) -->
         <button type="button" class="action-menu-item" (click)="executeSaleAction(openThermalInvoice.bind(this))">

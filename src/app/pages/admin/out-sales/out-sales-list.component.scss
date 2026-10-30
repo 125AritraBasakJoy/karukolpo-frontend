@@ -168,68 +168,6 @@
     padding-right: 0.5rem !important;
 }
 
-/* Actions Menu Popover */
-:host ::ng-deep .action-menu-popover {
-    background: #0F172A !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
-    padding: 0.35rem !important;
-    min-width: 190px;
-
-    .p-popover-content {
-        padding: 0 !important;
-    }
-}
-
-.action-menu-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.action-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 0.55rem 0.85rem;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: #E2E8F0;
-    font-size: 0.85rem;
-    font-weight: 500;
-    text-align: left;
-    cursor: pointer;
-    transition: all 0.15s ease;
-
-    i {
-        font-size: 0.95rem;
-        width: 1rem;
-        text-align: center;
-    }
-
-    &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.08);
-        color: #FFFFFF;
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    &.item-danger {
-        color: #F87171;
-
-        &:hover:not(:disabled) {
-            background: rgba(239, 68, 68, 0.12);
-            color: #EF4444;
-        }
-    }
-}
-
 .menu-trigger-btn {
     color: #CBD5E1 !important;
 

@@ -140,6 +140,33 @@ export class CartComponent implements OnInit, OnDestroy {
         this.changePickerVisible.set(true);
     }
 
+    getComboDisplayItems(c: CartCombo): Array<{ product: any; quantity: number }> {
+        if (!c || !c.combo) return [];
+        if (c.combo.kind === 'mix_and_match') {
+            const picks = c.picks || [];
+            const countMap = new Map<string, number>();
+            for (const pid of picks) {
+                countMap.set(pid, (countMap.get(pid) || 0) + 1);
+            }
+            const result: Array<{ product: any; quantity: number }> = [];
+            for (const [pid, count] of countMap.entries()) {
+                const matchItem = c.combo.items.find(it => it.product?.id === pid);
+                if (matchItem?.product) {
+                    result.push({ product: matchItem.product, quantity: count * c.quantity });
+                }
+            }
+            return result.length > 0 ? result : c.combo.items.map(it => ({
+                product: it.product,
+                quantity: (it.quantity || 1) * c.quantity
+            }));
+        }
+
+        return c.combo.items.map(it => ({
+            product: it.product,
+            quantity: (it.quantity || 1) * c.quantity
+        }));
+    }
+
     getComboLineTotal(c: CartCombo): number {
         const price = typeof c.combo.combo_price === 'string' ? parseFloat(c.combo.combo_price) : Number(c.combo.combo_price || 0);
         return price * c.quantity;
@@ -362,7 +389,41 @@ export class CartComponent implements OnInit, OnDestroy {
     }
 
     private saveCashMemoData(paymentMethod: string) {
-        this.orderedItems = [...this.cartService.cart()];
+        if (this.createdOrderObj && this.createdOrderObj.items && this.createdOrderObj.items.length > 0) {
+            const products = [
+                ...this.cartService.cart().map(item => item.product),
+                ...this.cartService.combos().flatMap(c => c.combo.items.map(item => item.product))
+            ];
+            const namesById = new Map(
+                products.filter(product => product.name?.trim())
+                    .map(product => [String(product.id), product.name] as const)
+            );
+
+            this.orderedItems = this.createdOrderObj.items.map((item: any) => {
+                const id = item.product?.id || item.product_id;
+                if (item.product?.name?.trim() || item.name?.trim() || item.product?.title?.trim()) {
+                    return item;
+                }
+                const name = namesById.get(String(id));
+                return name
+                    ? { ...item, product: { ...item.product, name } }
+                    : item;
+            });
+        } else {
+            const fallbackItems = [...this.cartService.cart()];
+            for (const c of this.cartService.combos()) {
+                for (const it of c.combo.items) {
+                    fallbackItems.push({
+                        product: it.product,
+                        quantity: (it.quantity || 1) * c.quantity,
+                        unit_price: it.product.effective_price ?? it.product.price,
+                        price_at_purchase: it.product.effective_price ?? it.product.price,
+                        order_combo_id: c.combo.id
+                    } as any);
+                }
+            }
+            this.orderedItems = fallbackItems;
+        }
         this.orderCombos = this.createdOrderObj?.combos || this.cartService.combos().map(c => ({ ...c.combo, quantity: c.quantity, picks: c.picks }));
         this.orderComboSavings = this.createdOrderObj?.combo_savings ?? this.comboSavingsAmount;
         this.orderFormSnapshot = { ...this.checkoutForm };

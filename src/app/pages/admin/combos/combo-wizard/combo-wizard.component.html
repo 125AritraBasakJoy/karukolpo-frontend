@@ -134,54 +134,64 @@
 
         <!-- Product Rows -->
         <div class="flex flex-column gap-3">
-          <div *ngFor="let row of productRows; let i = index"
-               class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card flex flex-column sm:flex-row align-items-stretch sm:align-items-center gap-3">
+          <div *ngFor="let row of productRows; let i = index" class="product-config-row">
 
-            <div class="flex-1">
+            <div class="row-product-cell">
               <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
                 Product #{{ i + 1 }}
               </label>
-              <p-dropdown [options]="catalogSearchResults()"
+              <p-dropdown [options]="getRowDropdownOptions(i)"
                           [(ngModel)]="row.product"
                           optionLabel="name"
+                          dataKey="id"
                           [filter]="true"
-                          filterBy="name,code"
                           [showClear]="true"
                           [loading]="searchLoading()"
                           (onFilter)="onProductSearch($event)"
                           placeholder="Search product by name or code..."
+                          appendTo="body"
+                          panelStyleClass="admin-dropdown-panel"
+                          [scrollHeight]="'260px'"
                           styleClass="w-full premium-dropdown">
                 <ng-template let-prod pTemplate="item">
-                  <div class="flex align-items-center gap-2">
-                    <img [src]="prod.imageUrl" [alt]="prod.name" class="w-2rem h-2rem border-round object-cover" />
-                    <div class="flex flex-column">
-                      <span class="text-sm font-semibold text-white">{{ prod.name }}</span>
-                      <span class="text-xs text-blue-400">৳{{ (prod.effective_price || prod.price) | number:'1.0-0' }}</span>
+                  <div class="flex align-items-center justify-content-between w-full gap-2" [class.opacity-40]="prod.disabled">
+                    <div class="flex align-items-center gap-2 overflow-hidden">
+                      <img [src]="prod.imageUrl" [alt]="prod.name" class="w-2rem h-2rem border-round object-cover flex-shrink-0" />
+                      <div class="flex flex-column min-w-0">
+                        <span class="text-sm font-semibold text-white line-clamp-1">{{ prod.name }}</span>
+                        <span class="text-xs text-blue-400">৳{{ (prod.effective_price || prod.price) | number:'1.0-0' }}</span>
+                      </div>
                     </div>
+                    <span *ngIf="prod.disabled" class="text-xs text-orange-400 font-semibold flex-shrink-0">
+                      Already added
+                    </span>
                   </div>
                 </ng-template>
               </p-dropdown>
             </div>
 
             <!-- Quantity Stepper -->
-            <div style="width: 140px;">
+            <div class="row-qty-cell">
               <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
                 Qty (1-50)
               </label>
-              <p-inputNumber [(ngModel)]="row.quantity" [showButtons]="true" [min]="1" [max]="50"
-                             buttonLayout="horizontal"
-                             spinnerMode="horizontal"
-                             decrementButtonClass="p-button-secondary"
-                             incrementButtonClass="p-button-secondary"
-                             incrementButtonIcon="pi pi-plus"
-                             decrementButtonIcon="pi pi-minus"
-                             styleClass="w-full"></p-inputNumber>
+              <div class="admin-stepper-pill">
+                <p-inputNumber [(ngModel)]="row.quantity" [showButtons]="true" [min]="1" [max]="50"
+                               buttonLayout="horizontal"
+                               spinnerMode="horizontal"
+                               decrementButtonClass="p-button-secondary"
+                               incrementButtonClass="p-button-secondary"
+                               incrementButtonIcon="pi pi-plus"
+                               decrementButtonIcon="pi pi-minus"
+                               styleClass="w-full"></p-inputNumber>
+              </div>
             </div>
 
             <!-- Remove Button -->
-            <div class="sm:pt-4">
-              <button pButton icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
-                      (click)="removeProductRow(i)" [disabled]="productRows.length <= 1" pTooltip="Remove">
+            <div class="row-remove-cell">
+              <button type="button" class="row-remove-btn"
+                      (click)="removeProductRow(i)" [disabled]="productRows.length <= 1" title="Remove product" aria-label="Remove product">
+                <i class="pi pi-trash text-sm"></i>
               </button>
             </div>
           </div>
@@ -196,11 +206,13 @@
             <span class="font-bold text-white text-base block">How many slots? (slot_count)</span>
             <span class="text-xs text-slate-400">Customer picks this exact number of items from the pool (2 to 20).</span>
           </div>
-          <p-inputNumber [(ngModel)]="slotCount" [showButtons]="true" [min]="2" [max]="20"
-                         buttonLayout="horizontal" spinnerMode="horizontal"
-                         decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary"
-                         incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus"
-                         styleClass="w-10rem"></p-inputNumber>
+          <div class="admin-stepper-pill w-12rem">
+            <p-inputNumber [(ngModel)]="slotCount" [showButtons]="true" [min]="2" [max]="20"
+                           buttonLayout="horizontal" spinnerMode="horizontal"
+                           decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary"
+                           incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus"
+                           styleClass="w-full"></p-inputNumber>
+          </div>
         </div>
 
         <!-- Category Batch Import -->
@@ -208,7 +220,10 @@
           <span class="font-bold text-white text-sm block mb-2">Import from Category</span>
           <div class="flex flex-column sm:flex-row align-items-center gap-2">
             <p-dropdown [options]="categories()" [(ngModel)]="selectedCategoryForPool" optionLabel="name"
-                        placeholder="Select a category..." styleClass="w-full sm:w-20rem"></p-dropdown>
+                        placeholder="Select a category..."
+                        appendTo="body"
+                        panelStyleClass="admin-dropdown-panel"
+                        styleClass="w-full sm:w-20rem"></p-dropdown>
             <button pButton label="Add All from Category" icon="pi pi-download"
                     class="premium-btn-secondary p-button-sm w-full sm:w-auto"
                     [loading]="categoryImportLoading"
@@ -221,22 +236,30 @@
         <!-- Add Individual Product to Pool -->
         <div class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card">
           <span class="font-bold text-white text-sm block mb-2">Add Product to Pool ({{ poolProducts.length }}/50)</span>
-          <p-dropdown [options]="catalogSearchResults()"
-                      (onChange)="addPoolProduct($event.value)"
+          <p-dropdown [options]="getPoolDropdownOptions()"
+                      (onChange)="onPoolProductSelected($event)"
                       optionLabel="name"
+                      dataKey="id"
                       [filter]="true"
-                      filterBy="name,code"
                       [loading]="searchLoading()"
                       (onFilter)="onProductSearch($event)"
                       placeholder="Search and select product to add to pool..."
+                      appendTo="body"
+                      panelStyleClass="admin-dropdown-panel"
+                      [scrollHeight]="'260px'"
                       styleClass="w-full premium-dropdown">
             <ng-template let-prod pTemplate="item">
-              <div class="flex align-items-center gap-2">
-                <img [src]="prod.imageUrl" [alt]="prod.name" class="w-2rem h-2rem border-round object-cover" />
-                <div class="flex flex-column">
-                  <span class="text-sm font-semibold text-white">{{ prod.name }}</span>
-                  <span class="text-xs text-blue-400">৳{{ (prod.effective_price || prod.price) | number:'1.0-0' }}</span>
+              <div class="flex align-items-center justify-content-between w-full gap-2" [class.opacity-40]="prod.disabled">
+                <div class="flex align-items-center gap-2 overflow-hidden">
+                  <img [src]="prod.imageUrl" [alt]="prod.name" class="w-2rem h-2rem border-round object-cover flex-shrink-0" />
+                  <div class="flex flex-column min-w-0">
+                    <span class="text-sm font-semibold text-white line-clamp-1">{{ prod.name }}</span>
+                    <span class="text-xs text-blue-400">৳{{ (prod.effective_price || prod.price) | number:'1.0-0' }}</span>
+                  </div>
                 </div>
+                <span *ngIf="prod.disabled" class="text-xs text-orange-400 font-semibold flex-shrink-0">
+                  In pool
+                </span>
               </div>
             </ng-template>
           </p-dropdown>
@@ -294,8 +317,13 @@
                          styleClass="w-full"></p-inputNumber>
 
           <div *ngIf="pricingType === 'cheapest_free'">
-            <p-inputNumber [(ngModel)]="pricingValue" [min]="1" [max]="totalUnitsInSet - 1"
-                           [showButtons]="true" styleClass="w-full"></p-inputNumber>
+            <div class="admin-stepper-pill w-full">
+              <p-inputNumber [(ngModel)]="pricingValue" [min]="1" [max]="totalUnitsInSet - 1"
+                             buttonLayout="horizontal" spinnerMode="horizontal"
+                             decrementButtonClass="p-button-secondary" incrementButtonClass="p-button-secondary"
+                             incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus"
+                             [showButtons]="true" styleClass="w-full"></p-inputNumber>
+            </div>
             <span class="text-xs text-blue-400 font-semibold mt-1 block">
               = Buy {{ totalUnitsInSet - pricingValue }} Get {{ pricingValue }} Free
             </span>
@@ -336,17 +364,19 @@
         <div class="grid">
           <div class="col-12 sm:col-6">
             <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Start Date (Optional)
+              Start Date (Optional, 12h AM/PM)
             </label>
-            <p-calendar [(ngModel)]="startsAt" [showTime]="true" [showIcon]="true" appendTo="body"
-                        placeholder="Starts immediately if blank" styleClass="w-full"></p-calendar>
+            <p-calendar [(ngModel)]="startsAt" [showTime]="true" [hourFormat]="'12'" [showIcon]="true" appendTo="body"
+                        panelStyleClass="admin-calendar-panel" placeholder="Starts immediately if blank"
+                        styleClass="w-full admin-calendar"></p-calendar>
           </div>
           <div class="col-12 sm:col-6">
             <label class="block text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              End Date (Optional)
+              End Date (Optional, 12h AM/PM)
             </label>
-            <p-calendar [(ngModel)]="endsAt" [showTime]="true" [showIcon]="true" appendTo="body"
-                        placeholder="Runs indefinitely if blank" styleClass="w-full"></p-calendar>
+            <p-calendar [(ngModel)]="endsAt" [showTime]="true" [hourFormat]="'12'" [showIcon]="true" appendTo="body"
+                        panelStyleClass="admin-calendar-panel" placeholder="Runs indefinitely if blank"
+                        styleClass="w-full admin-calendar"></p-calendar>
           </div>
         </div>
 
@@ -387,6 +417,15 @@
             </div>
             <div *ngIf="kind === 'mix_and_match'" class="text-sm text-slate-300">
               Pool of {{ poolProducts.length }} products · Customer selects {{ slotCount }} items
+            </div>
+          </div>
+
+          <div class="py-2 border-bottom-1 border-white-alpha-10" *ngIf="startsAt || endsAt">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Schedule (12h AM/PM)</span>
+            <div class="text-sm text-slate-200">
+              <span *ngIf="startsAt">Starts: {{ startsAt | date:'mediumDate' }} {{ startsAt | date:'shortTime' }}</span>
+              <span *ngIf="startsAt && endsAt"> &middot; </span>
+              <span *ngIf="endsAt">Ends: {{ endsAt | date:'mediumDate' }} {{ endsAt | date:'shortTime' }}</span>
             </div>
           </div>
 

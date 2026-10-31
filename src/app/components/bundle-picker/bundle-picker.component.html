@@ -95,11 +95,11 @@
         <i *ngIf="quoteLoading" class="pi pi-spin pi-spinner text-primary ml-1"></i>
       </div>
 
-      <div class="flex align-items-center gap-2">
-        <button type="button" class="btn-cancel px-3 py-2 border-round font-semibold text-700 bg-surface-100 border-none cursor-pointer" (click)="close()">
+      <div class="picker-footer-actions flex align-items-center gap-2 w-full sm:w-auto">
+        <button type="button" class="picker-footer-btn btn-picker-cancel" (click)="close()">
           Cancel
         </button>
-        <button type="button" class="btn-confirm px-4 py-2 border-round font-semibold text-white border-none cursor-pointer flex align-items-center justify-content-center gap-2"
+        <button type="button" class="picker-footer-btn btn-picker-confirm"
                 [disabled]="!isAllSlotsFilled || quoteLoading || !!quoteProblem"
                 (click)="confirm()">
           <i class="pi pi-shopping-bag"></i>

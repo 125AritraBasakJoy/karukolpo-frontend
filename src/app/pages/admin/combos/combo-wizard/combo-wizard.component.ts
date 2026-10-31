@@ -130,6 +130,7 @@ export class ComboWizardComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+    this.loadInitialCatalog();
     if (id) {
       this.isEditMode.set(true);
       this.comboId.set(id);
@@ -139,7 +140,6 @@ export class ComboWizardComponent implements OnInit {
       if (prefill) {
         this.prefillFromSuggestion(prefill);
       }
-      this.loadInitialCatalog();
     }
   }
 
@@ -202,6 +202,41 @@ export class ComboWizardComponent implements OnInit {
   }
 
   // Row management for Fixed mode
+  isProductSelectedInAnotherRow(productId: string, rowIndex: number): boolean {
+    return this.productRows.some((r, idx) => idx !== rowIndex && r.product?.id === productId);
+  }
+
+  isProductInPool(productId: string): boolean {
+    return this.poolProducts.some(p => p.id === productId);
+  }
+
+  getRowDropdownOptions(rowIndex: number): (Product & { disabled?: boolean })[] {
+    const list = this.catalogSearchResults();
+    const currentRowProduct = this.productRows[rowIndex]?.product;
+    const combined = [...list];
+    if (currentRowProduct && !combined.some(p => p.id === currentRowProduct.id)) {
+      combined.unshift(currentRowProduct);
+    }
+
+    return combined.map(p => ({
+      ...p,
+      disabled: this.isProductSelectedInAnotherRow(p.id, rowIndex)
+    }));
+  }
+
+  getPoolDropdownOptions(): (Product & { disabled?: boolean })[] {
+    return this.catalogSearchResults().map(p => ({
+      ...p,
+      disabled: this.isProductInPool(p.id)
+    }));
+  }
+
+  onPoolProductSelected(event: any) {
+    const prod = event.value;
+    if (!prod || prod.disabled) return;
+    this.addPoolProduct(prod);
+  }
+
   addProductRow() {
     if (this.productRows.length >= 5) {
       this.messageService.add({ severity: 'warn', summary: 'Limit Reached', detail: 'Maximum 5 products allowed for fixed combo' });
@@ -265,6 +300,34 @@ export class ComboWizardComponent implements OnInit {
     });
   }
 
+  getMixAndMatchCheapestUnits(): number[] {
+    if (!this.poolProducts.length) return [];
+    const sorted = [...this.poolProducts].sort((a, b) => {
+      const pA = a.effective_price ?? a.price ?? 0;
+      const pB = b.effective_price ?? b.price ?? 0;
+      return pA - pB;
+    });
+
+    const units: number[] = [];
+    for (const prod of sorted) {
+      const room = this.slotCount - units.length;
+      if (room <= 0) break;
+      const stock = prod.stock != null ? Math.max(0, parseInt(String(prod.stock), 10)) : 10;
+      const take = Math.min(room, stock > 0 ? stock : 1);
+      const price = prod.effective_price ?? prod.price ?? 0;
+      for (let i = 0; i < take; i++) {
+        units.push(price);
+      }
+    }
+
+    while (units.length < this.slotCount && sorted.length > 0) {
+      const cheapestPrice = sorted[0].effective_price ?? sorted[0].price ?? 0;
+      units.push(cheapestPrice);
+    }
+
+    return units.sort((a, b) => a - b);
+  }
+
   // Computed Pricing Preview
   get previewListTotal(): number {
     if (this.kind === 'fixed') {
@@ -274,12 +337,8 @@ export class ComboWizardComponent implements OnInit {
         return sum + (price * row.quantity);
       }, 0);
     } else {
-      if (!this.poolProducts.length) return 0;
-      const sortedPrices = this.poolProducts
-        .map(p => p.effective_price ?? p.price ?? 0)
-        .sort((a, b) => a - b);
-      const cheapest = sortedPrices[0] || 0;
-      return cheapest * this.slotCount;
+      const units = this.getMixAndMatchCheapestUnits();
+      return units.reduce((a, b) => a + b, 0);
     }
   }
 
@@ -293,23 +352,19 @@ export class ComboWizardComponent implements OnInit {
     }
     if (this.pricingType === 'cheapest_free') {
       const freeCount = Math.floor(this.pricingValue || 1);
+      let units: number[] = [];
       if (this.kind === 'fixed') {
-        const unitPrices: number[] = [];
         for (const r of this.productRows) {
           if (!r.product) continue;
           const price = r.product.effective_price ?? r.product.price ?? 0;
-          for (let q = 0; q < r.quantity; q++) unitPrices.push(price);
+          for (let q = 0; q < r.quantity; q++) units.push(price);
         }
-        unitPrices.sort((a, b) => a - b);
-        const freeSum = unitPrices.slice(0, freeCount).reduce((a, b) => a + b, 0);
-        return Math.max(0, total - freeSum);
       } else {
-        const sortedPrices = this.poolProducts
-          .map(p => p.effective_price ?? p.price ?? 0)
-          .sort((a, b) => a - b);
-        const cheapest = sortedPrices[0] || 0;
-        return Math.max(0, total - (cheapest * freeCount));
+        units = this.getMixAndMatchCheapestUnits();
       }
+      units.sort((a, b) => a - b);
+      const freeSum = units.slice(0, freeCount).reduce((a, b) => a + b, 0);
+      return Math.max(0, Math.round((total - freeSum) * 100) / 100);
     }
     return total;
   }

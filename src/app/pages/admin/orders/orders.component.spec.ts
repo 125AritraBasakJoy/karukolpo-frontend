@@ -101,4 +101,16 @@ describe('OrdersComponent pagination', () => {
     const mobileCards = fixture.debugElement.query(By.css('.mobile-orders-cards'));
     expect(mobileCards).toBeNull();
   });
+
+  it('filters orders by status and resets pagination offset', () => {
+    getOrdersWithCount.and.returnValue(of({ items: orders(5), total: 5 }));
+    component.first = 50;
+    component.setStatusFilter('confirmed');
+    expect(component.selectedStatusFilter()).toBe('confirmed');
+    expect(component.first).toBe(0);
+    expect(getOrdersWithCount).toHaveBeenCalledWith(jasmine.objectContaining({
+      skip: 0,
+      status: 'confirmed'
+    }));
+  });
 });

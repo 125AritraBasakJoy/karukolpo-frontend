@@ -84,6 +84,7 @@ export class OrdersComponent implements OnInit {
   exportLoading = signal<boolean>(false);
   downloadingOrderId = signal<string | null>(null);
   selectedOrder = signal<Order | null>(null);
+  selectedStatusFilter = signal<string>('all');
   displayOrderDialog = signal(false);
   loadingDetails = signal(false);
   lastOpenedOrderId: string | null = null;
@@ -218,6 +219,7 @@ export class OrdersComponent implements OnInit {
     this.rows = getSavedPageSize('karukolpo_orders_rows', 10);
     this.first = getSavedPageOffset('karukolpo_orders_first', 0);
     this.loadOrders();
+    this.loadCatalogProductsIfNeeded();
 
     this.activatedRoute.queryParams.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -260,10 +262,12 @@ export class OrdersComponent implements OnInit {
     savePageOffset('karukolpo_orders_first', first);
 
     const query = this.searchQuery().trim();
+    const statusVal = this.selectedStatusFilter();
     const options: OrderQueryOptions = {
       skip: first,
       limit: rows,
-      q: query || undefined
+      q: query || undefined,
+      status: statusVal !== 'all' ? statusVal : undefined
     };
 
     if (this.orderService.getOrdersWithCount) {
@@ -305,12 +309,23 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  setStatusFilter(status: string) {
+    if (this.selectedStatusFilter() === status) return;
+    this.selectedStatusFilter.set(status);
+    this.first = 0;
+    this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+    savePageOffset('karukolpo_orders_first', 0);
+    this.loadOrders();
+  }
+
   onSearchInput(event: any) {
     const val = typeof event === 'string' ? event : event?.target?.value || '';
     this.searchQuery.set(val);
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.first = 0;
+      this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+      savePageOffset('karukolpo_orders_first', 0);
       this.isSearching.set(!!val.trim());
       this.loadOrders();
     }, 350);
@@ -320,11 +335,16 @@ export class OrdersComponent implements OnInit {
     this.searchQuery.set('');
     this.isSearching.set(false);
     this.first = 0;
+    this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+    savePageOffset('karukolpo_orders_first', 0);
     this.loadOrders();
   }
 
   refreshOrders() {
     this.first = 0;
+    this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+    savePageOffset('karukolpo_orders_first', 0);
+    this.orderService.clearCache();
     this.loadOrders();
   }
 
@@ -407,7 +427,15 @@ export class OrdersComponent implements OnInit {
       validItems.map(item => item.product?.id || item.product_id).filter(Boolean)
     )) as string[];
 
-    const missingIds = uniqueProductIds.filter(id => !this.productDetailCache.has(id));
+    const missingIds = uniqueProductIds.filter(id => {
+      if (this.productDetailCache.has(id)) return false;
+      const cached = this.allCatalogProducts().find(p => p.id === id);
+      if (cached) {
+        this.productDetailCache.set(id, cached);
+        return false;
+      }
+      return true;
+    });
 
     if (missingIds.length === 0) {
       return of(this.applyCachedProducts(order));
@@ -416,7 +444,9 @@ export class OrdersComponent implements OnInit {
     const fetches = missingIds.map(id =>
       this.productService.getProductById(id).pipe(
         tap(prod => {
-          if (prod) this.productDetailCache.set(id, prod);
+          if (prod) {
+            this.productDetailCache.set(id, prod);
+          }
         }),
         catchError(() => of(null))
       )
@@ -430,7 +460,7 @@ export class OrdersComponent implements OnInit {
   private applyCachedProducts(order: Order): Order {
     const updatedItems = (order.items || []).map(item => {
       const pid = item.product?.id || item.product_id;
-      const cached = pid ? this.productDetailCache.get(pid) : null;
+      const cached = pid ? (this.productDetailCache.get(pid) || this.allCatalogProducts().find(p => p.id === pid)) : null;
       if (cached) {
         return {
           ...item,
@@ -1340,7 +1370,26 @@ export class OrdersComponent implements OnInit {
     const orderIdStr = order.id ? order.id.toString() : '';
     this.downloadingOrderId.set(orderIdStr);
 
-    this.ensureProductDetails(order).subscribe({
+    const catalogLoad$ = this.allCatalogProducts().length === 0
+      ? this.productService.getProducts(0, 100, undefined, true).pipe(
+          tap(prods => this.allCatalogProducts.set(prods || [])),
+          catchError(() => of([]))
+        )
+      : of(this.allCatalogProducts());
+
+    const orderFetch$ = order.id
+      ? this.orderService.getOrderById(order.id).pipe(
+          catchError(() => of(order)),
+          map(res => res || order)
+        )
+      : of(order);
+
+    forkJoin({
+      order: orderFetch$,
+      catalog: catalogLoad$
+    }).pipe(
+      switchMap(({ order: fullOrder }) => this.ensureProductDetails(fullOrder))
+    ).subscribe({
       next: (finalOrder: Order) => {
         const invoiceData = {
           items: finalOrder.items || [],
@@ -1389,7 +1438,12 @@ export class OrdersComponent implements OnInit {
       error: (err: any) => {
         console.error('Failed to ensure product details for invoice', err);
         this.downloadingOrderId.set(null);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not resolve product names.' });
+        this.messageService.add({
+          life: 2000,
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to prepare invoice details.'
+        });
       }
     });
   }

@@ -35,6 +35,30 @@
             </div>
         </div>
 
+        <!-- Order Status Filter Chips Bar -->
+        <div class="filter-chips-wrapper flex align-items-center gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar">
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'all'" (click)="setStatusFilter('all')">
+                <span>All</span>
+                <span class="chip-count">{{ totalRecords() }}</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'pending'" (click)="setStatusFilter('pending')">
+                <i class="pi pi-clock text-xs mr-1 text-amber-400"></i>
+                <span>Pending</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'confirmed'" (click)="setStatusFilter('confirmed')">
+                <i class="pi pi-truck text-xs mr-1 text-blue-400"></i>
+                <span>For Delivery</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'completed'" (click)="setStatusFilter('completed')">
+                <i class="pi pi-check text-xs mr-1 text-teal-400"></i>
+                <span>Complete</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'cancelled'" (click)="setStatusFilter('cancelled')">
+                <i class="pi pi-ban text-xs mr-1 text-red-400"></i>
+                <span>Cancelled</span>
+            </button>
+        </div>
+
         <!-- Orders Table View -->
         <div class="border-round-2xl overflow-hidden overflow-x-auto custom-scrollbar">
             <p-table [value]="orders()" [tableStyle]="{'min-width': '64rem'}" [paginator]="true" [(rows)]="rows" [(first)]="first"

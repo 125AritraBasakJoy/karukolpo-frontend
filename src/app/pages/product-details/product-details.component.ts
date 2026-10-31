@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy, computed, HostListener, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, computed, HostListener, inject, DestroyRef, ViewChild, ElementRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, CurrencyPipe, NgOptimizedImage } from '@angular/common';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
@@ -66,6 +66,9 @@ export class ProductDetailsComponent implements OnInit {
   quantity = signal<number>(1);
   activeTab = signal<'about' | 'care' | 'shipping'>('about');
 
+  @ViewChild('pCombosList') pCombosList?: ElementRef<HTMLElement>;
+  @ViewChild('relatedList') relatedList?: ElementRef<HTMLElement>;
+
   fbtTotal = computed(() => {
     let sum = 0;
     const current = this.product();
@@ -83,6 +86,10 @@ export class ProductDetailsComponent implements OnInit {
 
   fbtSelectedCount = computed(() => {
     return (this.product() ? 1 : 0) + this.fbtSelectedIds().size;
+  });
+
+  hasOffersOrFbt = computed(() => {
+    return this.combos().length > 0 || this.fbtProducts().length > 0;
   });
 
   // Hover magnifier state
@@ -329,16 +336,45 @@ export class ProductDetailsComponent implements OnInit {
     this.mixPickerVisible.set(true);
   }
 
+  isMixAndMatch(combo: ComboView): boolean {
+    return combo.kind === 'mix_and_match';
+  }
+
+  getComboSavingsNumber(combo: ComboView): number {
+    const s = Number(combo.savings);
+    return !isNaN(s) && s > 0 ? s : 0;
+  }
+
   onPicksConfirmed(event: { combo: ComboView; picks: string[] }) {
     this.cartService.addComboToCart(event.combo, 1, event.picks);
   }
 
-  scrollLeft(el: HTMLElement) {
-    el.scrollBy({ left: -320, behavior: 'smooth' });
+  scrollLeft(el?: HTMLElement) {
+    if (el) {
+      el.scrollBy({ left: -320, behavior: 'smooth' });
+    }
   }
 
-  scrollRight(el: HTMLElement) {
-    el.scrollBy({ left: 320, behavior: 'smooth' });
+  scrollRight(el?: HTMLElement) {
+    if (el) {
+      el.scrollBy({ left: 320, behavior: 'smooth' });
+    }
+  }
+
+  scrollCombosLeft() {
+    this.pCombosList?.nativeElement?.scrollBy({ left: -360, behavior: 'smooth' });
+  }
+
+  scrollCombosRight() {
+    this.pCombosList?.nativeElement?.scrollBy({ left: 360, behavior: 'smooth' });
+  }
+
+  scrollRelatedLeft() {
+    this.relatedList?.nativeElement?.scrollBy({ left: -300, behavior: 'smooth' });
+  }
+
+  scrollRelatedRight() {
+    this.relatedList?.nativeElement?.scrollBy({ left: 300, behavior: 'smooth' });
   }
 
   loadProduct(id: string | number) {
@@ -405,7 +441,7 @@ export class ProductDetailsComponent implements OnInit {
 
   loadRelatedProducts(id: string | number) {
     this.loadingRelated.set(true);
-    this.productService.getRelatedProducts(id.toString(), 4).subscribe({
+    this.productService.getRelatedProducts(id.toString(), 8).subscribe({
       next: (products) => {
         this.relatedProducts.set(products);
         this.loadingRelated.set(false);

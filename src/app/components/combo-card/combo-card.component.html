@@ -2,58 +2,80 @@
      [class.compact-card]="compact">
 
   <div>
-    <!-- Top kicker and relative deadline badge -->
-    <div class="flex align-items-center justify-content-between gap-2 mb-3">
-      <span class="combo-kicker">{{ kickerText }}</span>
-      <span *ngIf="endsRelativeText" class="combo-deadline-chip">
-        <i class="pi pi-clock text-xs mr-1"></i>
-        <span>{{ endsRelativeText }}</span>
-      </span>
+    <!-- Top Header: Kicker, Title, and Relative Deadline -->
+    <div class="combo-header-wrap mb-3">
+      <div class="flex align-items-center justify-content-between gap-2 mb-1">
+        <span class="combo-kicker">{{ kickerText }}</span>
+        <span *ngIf="endsRelativeText" class="combo-deadline-chip">
+          <i class="pi pi-clock text-xs mr-1"></i>
+          <span>{{ endsRelativeText }}</span>
+        </span>
+      </div>
+      <h3 class="combo-name font-bold text-lg sm:text-xl m-0 text-900">{{ combo.name }}</h3>
+      <p *ngIf="combo.description" class="combo-desc text-xs sm:text-sm text-600 m-0 mt-1 line-clamp-2">
+        {{ combo.description }}
+      </p>
     </div>
 
-    <!-- Multipack Presentation -->
-    <div *ngIf="isMultipack" class="multipack-visual flex align-items-center gap-3 mb-3">
-      <div class="multipack-thumb-wrap relative">
-        <img [src]="multipackItem.product.imageUrl" [alt]="multipackItem.product.name" class="multipack-thumb" loading="lazy" />
-        <span class="multipack-qty-badge">×{{ multipackItem.quantity }}</span>
-      </div>
-      <div class="flex flex-column">
-        <span class="font-bold text-lg text-900">{{ multipackItem.quantity }} × {{ multipackItem.product.name }}</span>
-        <span class="text-sm text-500">৳{{ multipackPerUnitPrice | number:'1.0-2' }} each</span>
-      </div>
-    </div>
-
-    <!-- Fixed Set Product Thumbnails Strip -->
-    <div *ngIf="!isMultipack && !isMixAndMatch" class="combo-thumbnails-row flex align-items-center flex-wrap gap-2 mb-3">
-      <ng-container *ngFor="let it of combo.items; let last = last">
-        <a [routerLink]="['/products', it.product.slug || it.product.id]" class="thumb-link relative" [title]="it.product.name">
-          <img [src]="it.product.imageUrl" [alt]="it.product.name" class="combo-thumb" loading="lazy" />
-          <span *ngIf="(it.quantity || 1) > 1" class="thumb-qty-pill">×{{ it.quantity }}</span>
-        </a>
-        <i *ngIf="!last" class="pi pi-plus text-xs text-400 mx-1"></i>
-      </ng-container>
-    </div>
-
-    <!-- Mix and Match Pool Preview Strip -->
-    <div *ngIf="isMixAndMatch" class="combo-thumbnails-row flex align-items-center flex-wrap gap-2 mb-3">
-      <div class="pool-preview-hint text-xs text-500 mb-1 w-full">
-        Pool of {{ combo.items.length }} products · Pick any {{ combo.slot_count }}
-      </div>
-      <ng-container *ngFor="let it of combo.items.slice(0, 5); let last = last">
-        <div class="thumb-link relative" [title]="it.product.name">
-          <img [src]="it.product.imageUrl" [alt]="it.product.name" class="combo-thumb" loading="lazy" />
+    <!-- Products in this Combo (with product name!) -->
+    <!-- Case A: Multipack -->
+    <div *ngIf="isMultipack" class="combo-products-list mb-3">
+      <div class="combo-item-row flex align-items-center gap-3 p-2 border-round-xl">
+        <div class="combo-thumb-box relative flex-shrink-0">
+          <img [src]="multipackItem.product.imageUrl" [alt]="multipackItem.product.name" class="combo-item-img" loading="lazy" />
+          <span class="combo-item-qty-badge">×{{ multipackItem.quantity }}</span>
         </div>
-      </ng-container>
-      <span *ngIf="combo.items.length > 5" class="pool-more-badge">
-        +{{ combo.items.length - 5 }}
-      </span>
+        <div class="min-w-0 flex-1">
+          <span class="combo-product-title font-semibold text-sm text-900 block text-overflow-ellipsis overflow-hidden white-space-nowrap">
+            {{ multipackItem.product.name }}
+          </span>
+          <span class="text-xs text-500">
+            ৳{{ multipackPerUnitPrice | number:'1.0-0' }} each (set of {{ multipackItem.quantity }})
+          </span>
+        </div>
+      </div>
     </div>
 
-    <!-- Title and Description -->
-    <h3 class="combo-name font-bold text-xl m-0 mb-1 text-900">{{ combo.name }}</h3>
-    <p *ngIf="combo.description" class="combo-desc text-sm text-600 m-0 mb-3 line-clamp-2">
-      {{ combo.description }}
-    </p>
+    <!-- Case B: Fixed Set (Show each product with thumbnail AND name AND quantity!) -->
+    <div *ngIf="!isMultipack && !isMixAndMatch" class="combo-products-list flex flex-column gap-2 mb-3">
+      <div *ngFor="let it of combo.items" class="combo-item-row flex align-items-center gap-2 sm:gap-3 p-2 border-round-xl">
+        <a [routerLink]="['/products', it.product.slug || it.product.id]" class="combo-thumb-box relative flex-shrink-0" (click)="$event.stopPropagation()">
+          <img [src]="it.product.imageUrl" [alt]="it.product.name" class="combo-item-img" loading="lazy" />
+          <span *ngIf="(it.quantity || 1) > 1" class="combo-item-qty-badge">×{{ it.quantity }}</span>
+        </a>
+        <div class="min-w-0 flex-1">
+          <a [routerLink]="['/products', it.product.slug || it.product.id]" class="combo-product-title font-semibold text-xs sm:text-sm text-900 block text-overflow-ellipsis overflow-hidden white-space-nowrap no-underline hover:text-primary" (click)="$event.stopPropagation()">
+            {{ it.product.name }}
+          </a>
+          <span class="text-xs text-500">
+            Qty: {{ it.quantity || 1 }} &middot; ৳{{ (it.product.effective_price || it.product.price) | number:'1.0-0' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case C: Mix and Match Pool -->
+    <div *ngIf="isMixAndMatch" class="combo-products-list mb-3">
+      <div class="pool-header-note text-xs text-600 mb-2 font-medium">
+        Choose any {{ combo.slot_count }} items from {{ combo.items.length }} pool options:
+      </div>
+      <div class="combo-pool-preview-grid flex flex-column gap-2">
+        <div *ngFor="let it of combo.items.slice(0, 3)" class="combo-item-row flex align-items-center gap-2 p-2 border-round-xl">
+          <div class="combo-thumb-box flex-shrink-0">
+            <img [src]="it.product.imageUrl" [alt]="it.product.name" class="combo-item-img" loading="lazy" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <span class="combo-product-title font-semibold text-xs sm:text-sm text-900 block text-overflow-ellipsis overflow-hidden white-space-nowrap">
+              {{ it.product.name }}
+            </span>
+            <span class="text-xs text-500">৳{{ (it.product.effective_price || it.product.price) | number:'1.0-0' }}</span>
+          </div>
+        </div>
+        <div *ngIf="combo.items.length > 3" class="text-xs text-500 pl-2">
+          + {{ combo.items.length - 3 }} more products in pool
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Bottom Pricing and Cart Action -->

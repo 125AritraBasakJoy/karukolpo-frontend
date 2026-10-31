@@ -103,6 +103,13 @@ export class InvoiceComponent {
         return this.paymentStatusInfo.label;
     }
 
+    getComboBadge(item: any): string | null {
+        if (!item || !item.order_combo_id) return null;
+        const match = (this.combos || []).find((c: any) => c.id === item.order_combo_id);
+        const name = match ? match.name : item.combo_name;
+        return name ? `Part of ${name}` : 'Combo Item';
+    }
+
     get subtotal(): number {
         if (!this.orderedItems || this.orderedItems.length === 0) return 0;
         return this.orderedItems.reduce((sum: number, item: any) => {
@@ -262,6 +269,8 @@ export class InvoiceComponent {
             this.orderDeliveryCharge = customData.deliveryCharge || 0;
             this.orderTotal = customData.total || 0;
             this.orderDiscount = customData.discount || 0;
+            this.comboSavings = customData.combo_savings || customData.comboSavings || 0;
+            this.combos = customData.combos || [];
             this.placedOrderId = customData.id || '';
             this.placedOrderNumber = customData.orderNumber || '';
             if (customData.payment_status || customData.paymentStatus) {
@@ -590,7 +599,10 @@ export class InvoiceComponent {
         //  PRODUCTS TABLE (AutoTable)
         // =====================
         const tableBody = (this.orderedItems || []).map((item: any) => {
-            let name = item.product?.name || item.product?.code || `Product ID: ${item.product?.id || 'Unknown'}`;
+            let name = item.product?.name || item.name || item.product?.title || '';
+            if (!name) {
+                name = item.product?.code || item.code || (item.product?.id ? `Product (${item.product.id.substring(0, 8)})` : 'Product');
+            }
             if (item.order_combo_id) {
                 const matchCombo = (this.combos || []).find((c: any) => c.id === item.order_combo_id);
                 const comboName = matchCombo ? matchCombo.name : item.combo_name;

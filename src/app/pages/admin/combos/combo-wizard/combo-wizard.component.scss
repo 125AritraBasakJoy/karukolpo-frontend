@@ -1,6 +1,31 @@
+:host {
+  display: block;
+  background: radial-gradient(circle at 100% 0%, rgba(30, 41, 59, 0.4) 0%, transparent 40%),
+              radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.1) 0%, transparent 40%);
+}
+
 .combo-wizard-container {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.glass-card {
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+
+  @media (max-width: 576px) {
+    border-radius: 18px !important;
+    padding: 0.85rem !important;
+  }
+}
+
+.surface-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 .combo-wizard-card {
@@ -134,4 +159,373 @@
 .wizard-action-btn {
   min-height: 44px;
   border-radius: 12px;
+}
+
+// ── Product Config Row (Fixed Mode Grid) ────────────────────
+.product-config-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px 42px;
+  align-items: flex-end;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1rem;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+
+    .row-remove-cell {
+      justify-self: flex-end;
+    }
+  }
+
+  .row-product-cell {
+    min-width: 0;
+  }
+
+  .row-qty-cell {
+    width: 140px;
+    min-width: 0;
+
+    @media (max-width: 640px) {
+      width: 100%;
+    }
+  }
+
+  .row-remove-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+
+    .row-remove-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #f87171;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not([disabled]) {
+        background: #ef4444;
+        color: #ffffff;
+        border-color: #ef4444;
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// ── Admin Stepper Pill Pattern (Matches Add Product & Admin Controls) ──
+.admin-stepper-pill {
+  width: 100%;
+  display: flex;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  &:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  ::ng-deep {
+    .p-inputnumber,
+    .p-inputnumber-horizontal {
+      display: flex !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      align-items: stretch !important;
+    }
+
+    .p-inputnumber-input {
+      flex: 1 1 0 !important;
+      min-width: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      color: #f8fafc !important;
+      font-size: 1rem !important;
+      font-weight: 700 !important;
+      text-align: center !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 0.55rem 0.4rem !important;
+
+      &:focus {
+        box-shadow: none !important;
+        outline: none !important;
+      }
+    }
+
+    .p-inputnumber-button {
+      width: 38px !important;
+      min-width: 38px !important;
+      height: auto !important;
+      background: rgba(59, 130, 246, 0.1) !important;
+      border: none !important;
+      color: #60a5fa !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      transition: all 0.2s ease !important;
+      box-shadow: none !important;
+
+      &.p-inputnumber-decrement-button {
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+      }
+
+      &.p-inputnumber-increment-button {
+        border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+      }
+
+      &:hover:not(:disabled) {
+        background: rgba(59, 130, 246, 0.25) !important;
+        color: #ffffff !important;
+      }
+
+      &:disabled {
+        opacity: 0.3 !important;
+        cursor: not-allowed !important;
+      }
+
+      .p-button-icon {
+        font-size: 0.85rem !important;
+      }
+    }
+  }
+}
+
+// ── Admin Calendar Component Control (in-place joined pill) ─
+::ng-deep .admin-calendar {
+  display: inline-flex !important;
+  width: 100% !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+  }
+
+  &:focus-within {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  .p-inputtext,
+  .p-datepicker-input {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: #f8fafc !important;
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.9rem !important;
+    min-height: 42px !important;
+    flex: 1 1 auto !important;
+    box-shadow: none !important;
+    outline: none !important;
+
+    &:focus {
+      box-shadow: none !important;
+      border: none !important;
+      outline: none !important;
+    }
+  }
+
+  .p-datepicker-dropdown,
+  .p-datepicker-trigger {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border: none !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 0 !important;
+    color: #60a5fa !important;
+    width: 44px !important;
+    min-height: 42px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.25) !important;
+      color: #ffffff !important;
+    }
+
+    .p-button-icon {
+      font-size: 1rem !important;
+    }
+  }
+}
+
+// ── Dropdown Panel Overlay (appended to body) ───────────────
+::ng-deep .admin-dropdown-panel {
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
+
+  .p-dropdown-header,
+  .p-select-header {
+    background: #0f172a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 8px 12px !important;
+
+    .p-dropdown-filter,
+    .p-select-filter {
+      background: #1e293b !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: #ffffff !important;
+      border-radius: 8px !important;
+      font-size: 0.85rem !important;
+
+      &:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+      }
+    }
+
+    .p-dropdown-filter-icon,
+    .p-select-filter-icon {
+      color: #94a3b8 !important;
+    }
+  }
+
+  .p-dropdown-items,
+  .p-select-list {
+    padding: 6px 0 !important;
+
+    .p-dropdown-item,
+    .p-select-option {
+      color: #cbd5e1 !important;
+      margin: 2px 6px !important;
+      border-radius: 8px !important;
+
+      &:hover:not(.p-disabled) {
+        background: rgba(59, 130, 246, 0.15) !important;
+        color: #60a5fa !important;
+      }
+
+      &.p-highlight,
+      &.p-select-option-selected {
+        background: #2563eb !important;
+        color: #ffffff !important;
+      }
+
+      &.p-disabled {
+        opacity: 0.45 !important;
+        cursor: not-allowed !important;
+      }
+    }
+  }
+}
+
+// ── Datepicker Popup Panel Overlay (appended to body) ───────
+::ng-deep .admin-calendar-panel,
+::ng-deep .p-datepicker-panel {
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+  padding: 0.75rem !important;
+
+  .p-datepicker-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+
+    button {
+      color: #94a3b8 !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  .p-datepicker-calendar {
+    th {
+      color: #94a3b8 !important;
+      font-size: 0.8rem !important;
+      font-weight: 600 !important;
+      padding: 0.35rem !important;
+    }
+
+    td {
+      padding: 0.2rem !important;
+
+      > span {
+        border-radius: 8px !important;
+        color: #e2e8f0 !important;
+        font-weight: 500 !important;
+        transition: all 0.15s ease !important;
+
+        &:hover {
+          background: rgba(59, 130, 246, 0.2) !important;
+          color: #60a5fa !important;
+        }
+
+        &.p-highlight,
+        &.p-datepicker-day-selected {
+          background: #3b82f6 !important;
+          color: #ffffff !important;
+          font-weight: 700 !important;
+        }
+      }
+    }
+  }
+
+  .p-timepicker,
+  .p-datepicker-time-picker {
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-top: 0.5rem !important;
+    margin-top: 0.5rem !important;
+
+    button {
+      color: #94a3b8 !important;
+      border-radius: 6px !important;
+
+      &:hover {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: #38bdf8 !important;
+      }
+    }
+
+    span {
+      color: #f8fafc !important;
+      font-weight: 700 !important;
+      font-size: 1rem !important;
+    }
+  }
 }

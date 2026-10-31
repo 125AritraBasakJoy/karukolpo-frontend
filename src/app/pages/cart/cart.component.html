@@ -74,21 +74,33 @@
                   </div>
                 </div>
 
-                <!-- Combo Composition / Picks Subtitle -->
-                <div class="flex align-items-center justify-content-between flex-wrap gap-2 pt-1 border-top-1 surface-border text-xs text-600">
-                  <div class="flex align-items-center gap-2 flex-wrap">
-                    <span *ngIf="c.combo.kind === 'fixed'">
-                      Includes: {{ c.combo.items.length }} products
-                    </span>
-                    <span *ngIf="c.combo.kind === 'mix_and_match'">
-                      Pick any {{ c.combo.slot_count }} items
+                <!-- Combo Composition / Products List inside Combo -->
+                <div class="cart-combo-products-wrap pt-2 border-top-1 surface-border flex flex-column gap-2">
+                  <div class="flex align-items-center justify-content-between text-xs text-500 font-semibold mb-1">
+                    <span>INCLUDED IN THIS BUNDLE:</span>
+                    <button *ngIf="c.combo.kind === 'mix_and_match'" type="button"
+                            class="p-button-text p-button-sm text-xs font-semibold text-primary border-none bg-transparent cursor-pointer p-0"
+                            (click)="openChangeCombo(c)">
+                      <i class="pi pi-pencil mr-1 text-xs"></i> Change Items
+                    </button>
+                  </div>
+
+                  <div *ngFor="let it of getComboDisplayItems(c)" class="cart-combo-item-row flex align-items-center justify-content-between gap-2 p-2 border-round-lg surface-ground">
+                    <div class="flex align-items-center gap-2 min-w-0">
+                      <img [src]="it.product.imageUrl" [alt]="it.product.name" class="cart-combo-item-thumb flex-shrink-0" />
+                      <div class="min-w-0 flex-1">
+                        <span class="cart-combo-item-name block font-semibold text-xs sm:text-sm text-900 text-overflow-ellipsis overflow-hidden white-space-nowrap">
+                          {{ it.product.name }}
+                        </span>
+                        <span class="text-xs text-500">
+                          Qty: {{ it.quantity }} &middot; ৳{{ (it.product.effective_price || it.product.price) | number:'1.0-0' }}
+                        </span>
+                      </div>
+                    </div>
+                    <span class="font-bold text-xs text-700 flex-shrink-0">
+                      ৳{{ ((it.product.effective_price || it.product.price || 0) * it.quantity) | number:'1.0-0' }}
                     </span>
                   </div>
-                  <button *ngIf="c.combo.kind === 'mix_and_match'" type="button"
-                          class="p-button-text p-button-sm text-xs font-semibold text-primary border-none bg-transparent cursor-pointer p-0"
-                          (click)="openChangeCombo(c)">
-                    <i class="pi pi-pencil mr-1 text-xs"></i> Change Items
-                  </button>
                 </div>
               </div>
             </div>

@@ -153,80 +153,6 @@
     </div>
     }
 
-    <!-- Combo Offers Section -->
-    @defer (on viewport) {
-    @if (combos().length > 0) {
-    <section id="combo-offers" class="product-showcase-section py-5 sm:py-6 px-3 sm:px-4">
-        <div class="container relative">
-            <div class="section-header-row flex align-items-end justify-content-between mb-4">
-                <div>
-                    <span class="section-kicker font-bold uppercase block mb-1">Better Together</span>
-                    <h2 class="section-heading m-0">Combo Offers</h2>
-                </div>
-                <a [routerLink]="['/combos']"
-                   class="view-all-link flex align-items-center gap-1" aria-label="View all combo offers">
-                    <span>View All</span>
-                    <i class="pi pi-arrow-right text-xs" aria-hidden="true"></i>
-                </a>
-            </div>
-
-            <div class="swipe-section-wrapper">
-                @if (combos().length > 2) {
-                <button type="button" pButton icon="pi pi-chevron-left" aria-label="Previous combo offers"
-                    class="swipe-nav-btn prev-btn p-button-rounded" 
-                    (click)="scrollLeft(comboOffersList)"></button>
-                }
-
-                <div class="product-swipe-container" #comboOffersList>
-                    @for (combo of combos(); track combo.id) {
-                    <div class="swipe-card-wrapper combo-card-wrapper px-2">
-                        <app-combo-card
-                            [combo]="combo"
-                            [compact]="true"
-                            (addCombo)="onAddCombo($event)"
-                            (configure)="onConfigureCombo($event)">
-                        </app-combo-card>
-                    </div>
-                    }
-
-                    <!-- View All Card at the end of Combos -->
-                    <div class="swipe-card-wrapper combo-card-wrapper px-2">
-                        <div class="product-card premium-product-card view-all-product-card flex flex-column align-items-center justify-content-center h-full cursor-pointer text-center"
-                            [routerLink]="['/combos']"
-                            role="link" aria-label="View all combo offers">
-                            <div class="view-more-card-content flex flex-column align-items-center justify-content-center py-5 h-full w-full">
-                                <div class="view-more-icon-circle mb-3 flex align-items-center justify-content-center">
-                                    <i class="pi pi-arrow-right text-lg" aria-hidden="true"></i>
-                                </div>
-                                <span class="view-more-card-text">View All Combos</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @if (combos().length > 2) {
-                <button type="button" pButton icon="pi pi-chevron-right" aria-label="Next combo offers"
-                    class="swipe-nav-btn next-btn p-button-rounded"
-                    (click)="scrollRight(comboOffersList)"></button>
-                }
-            </div>
-        </div>
-    </section>
-    }
-    } @placeholder {
-    <div>
-        <div class="container px-3 sm:px-4 py-4" *ngIf="loadingCombos()">
-            <div class="grid">
-                @for (i of [1,2,3]; track i) {
-                <div class="col-12 sm:col-6 md:col-4 px-2">
-                    <div class="skeleton-loader h-16rem w-full border-round-xl"></div>
-                </div>
-                }
-            </div>
-        </div>
-    </div>
-    }
-
     <!-- Best Selling Section (Featured Crafts) -->
     @defer (on viewport) {
     @if (bestSelling().length > 0) {
@@ -460,9 +386,3 @@
 } @placeholder {
     <div></div>
 }
-
-<app-bundle-picker
-    [combo]="selectedMixCombo()"
-    [(visible)]="mixPickerVisible"
-    (picksConfirmed)="onPicksConfirmed($event)">
-</app-bundle-picker>

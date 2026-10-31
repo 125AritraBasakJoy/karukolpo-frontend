@@ -28,13 +28,9 @@ import { SiteConfigService } from '../../core/services/site-config/site-config.s
 import { CategoryService } from '../../core/services/category/category.service';
 import { Category } from '../../models/category.model';
 import { CartService } from '../../core/services/cart/cart.service';
-import { ComboService } from '../../core/services/combo/combo.service';
-import { ComboView } from '../../models/combo.model';
 import { DividerModule } from 'primeng/divider';
 import { HomeCheckoutModalsComponent } from './home-checkout-modals.component';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
-import { ComboCardComponent } from '../../components/combo-card/combo-card.component';
-import { BundlePickerComponent } from '../../components/bundle-picker/bundle-picker.component';
 
 @Component({
     selector: 'app-home',
@@ -49,9 +45,7 @@ import { BundlePickerComponent } from '../../components/bundle-picker/bundle-pic
         NgOptimizedImage,
         RouterModule,
         HomeCheckoutModalsComponent,
-        ProductCardComponent,
-        ComboCardComponent,
-        BundlePickerComponent
+        ProductCardComponent
     ],
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.scss'],
@@ -97,10 +91,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     selectedCategory: Category | null = null;
     hotDeals = signal<Product[]>([]);
     bestSelling = signal<Product[]>([]);
-    combos = signal<ComboView[]>([]);
-    loadingCombos = signal<boolean>(false);
-    selectedMixCombo = signal<ComboView | null>(null);
-    mixPickerVisible = signal<boolean>(false);
     dropdownOpen = false;
     responsiveOptions: any[] = [
         {
@@ -146,7 +136,6 @@ export class HomeComponent implements OnInit, OnDestroy {
         public siteConfigService: SiteConfigService,
         private deliveryService: DeliveryService,
         private categoryService: CategoryService,
-        private comboService: ComboService,
         public cartService: CartService,
         private route: ActivatedRoute,
         private router: Router,
@@ -238,7 +227,6 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.loadSpecialSections();
-        this.loadCombos();
         this.loadLandingPageConfig();
 
         // Check for checkout query param
@@ -330,30 +318,6 @@ export class HomeComponent implements OnInit, OnDestroy {
                 this.loading.set(false);
             }
         });
-    }
-
-    loadCombos() {
-        this.loadingCombos.set(true);
-        this.comboService.getCombos(20).subscribe({
-            next: (list) => {
-                this.combos.set(list || []);
-                this.loadingCombos.set(false);
-            },
-            error: () => this.loadingCombos.set(false)
-        });
-    }
-
-    onAddCombo(event: { combo: ComboView; picks?: string[] }) {
-        this.cartService.addComboToCart(event.combo, 1, event.picks);
-    }
-
-    onConfigureCombo(combo: ComboView) {
-        this.selectedMixCombo.set(combo);
-        this.mixPickerVisible.set(true);
-    }
-
-    onPicksConfirmed(event: { combo: ComboView; picks: string[] }) {
-        this.cartService.addComboToCart(event.combo, 1, event.picks);
     }
 
     loadLandingPageConfig() {

@@ -29,40 +29,49 @@
   align-items: center;
   background: #FFF1EC;
   color: #B84E29;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 0.25rem 0.6rem;
+  padding: 0.2rem 0.55rem;
   border-radius: 999px;
   border: 1px solid rgba(184, 78, 41, 0.2);
 }
 
-.combo-thumbnails-row {
-  min-height: 64px;
+.combo-name {
+  color: var(--text-color, #26221F);
+  line-height: 1.3;
 }
 
-.thumb-link {
-  display: inline-block;
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #F7F3ED;
-  border: 1px solid #E8E2D8;
-  flex-shrink: 0;
+.combo-desc {
+  line-height: 1.4;
+}
+
+.combo-item-row {
+  background: #F8F5F0;
+  border: 1px solid #EAE3D9;
+  transition: background 0.15s ease;
 
   &:hover {
-    border-color: var(--primary-color, #B84E29);
+    background: #F3ECE2;
   }
 }
 
-.combo-thumb {
+.combo-thumb-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ECE6DC;
+  border: 1px solid #DFD7CB;
+}
+
+.combo-item-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.thumb-qty-pill {
+.combo-item-qty-badge {
   position: absolute;
   bottom: 2px;
   right: 2px;
@@ -70,54 +79,12 @@
   color: #ffffff;
   font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.1rem 0.35rem;
-  border-radius: 6px;
+  padding: 0.08rem 0.35rem;
+  border-radius: 5px;
 }
 
-.pool-more-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #F3ECE2;
-  color: #706861;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.multipack-thumb-wrap {
-  width: 72px;
-  height: 72px;
-  border-radius: 14px;
-  overflow: hidden;
-  background: #F7F3ED;
-  border: 1px solid #E8E2D8;
-  flex-shrink: 0;
-}
-
-.multipack-thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.multipack-qty-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: var(--primary-color, #B84E29);
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  border-radius: 8px;
-}
-
-.combo-name {
-  color: var(--text-color, #26221F);
-  line-height: 1.3;
+.combo-product-title {
+  color: #26221F;
 }
 
 .combo-price {

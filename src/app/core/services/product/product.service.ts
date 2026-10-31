@@ -170,9 +170,15 @@ export class ProductService {
       map(p => {
         const product = this.mapBackendToFrontend(p);
         this.productMap.set(id, product);
+        if (product.id) {
+          this.productMap.set(product.id, product);
+        }
         return product;
       }),
-      catchError(() => of(undefined))
+      catchError(err => {
+        console.error(`Failed to fetch product by ID ${id}:`, err);
+        return of(undefined);
+      })
     );
   }
 
@@ -732,10 +738,13 @@ export class ProductService {
     // Map Images
     let mainImageUrl = this.getImageUrl(data.primary_image_url || data.imageUrl);
     let galleryImages: string[] = [];
+    const imageObjects: ProductImage[] = Array.isArray(data.images)
+      ? [...data.images].sort((a, b) => Number(!!b.is_primary) - Number(!!a.is_primary))
+      : [];
 
-    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+    if (imageObjects.length > 0) {
       // 1. Identify the primary image object
-      const primaryImage = data.images.find((img: any) => img.is_primary) || data.images[0];
+      const primaryImage = imageObjects[0];
 
       if (primaryImage) {
         // Enforce image_medium for home/list cards for optimal loading/quality balance
@@ -745,15 +754,10 @@ export class ProductService {
       // 2. Map all image records to their high-quality 'large' variant for the product details carousel,
       //    ensuring the primary image always appears first.
       const galleryUrl = (img: any) => img.image_large || img.image_medium || img.image_thumb || img.image_path;
-      galleryImages = data.images
+      galleryImages = imageObjects
         .map(galleryUrl)
         .filter(Boolean)
-        .map((url: string) => this.getImageUrl(url))
-        .sort((a: string, b: string) => {
-          const aPrimary = data.images.find((img: any) => this.getImageUrl(galleryUrl(img)) === a)?.is_primary;
-          const bPrimary = data.images.find((img: any) => this.getImageUrl(galleryUrl(img)) === b)?.is_primary;
-          return Number(bPrimary) - Number(aPrimary);
-        });
+        .map((url: string) => this.getImageUrl(url));
 
     } else if (data.image) {
       mainImageUrl = this.getImageUrl(data.image);
@@ -827,7 +831,7 @@ export class ProductService {
       cost: cost,
       imageUrl: mainImageUrl,
       images: galleryImages,
-      imageObjects: data.images || [],
+      imageObjects: imageObjects,
       categoryId: data.category_id?.toString() ||
         (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : 'uncategorized'),
       categories: data.categories || [],

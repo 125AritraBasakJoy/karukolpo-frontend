@@ -201,68 +201,51 @@
 
           <!-- Needs Attention / Action Queue (A8) -->
           @if (overviewData()?.action_queue) {
-            <div class="glass-panel p-4 mb-4 border-round-xl border-1 border-blue-900/40 bg-slate-900/60 shadow-2">
-              <div class="flex align-items-center justify-content-between mb-3">
-                <div class="flex align-items-center gap-2">
-                  <i class="pi pi-bell text-yellow-400 text-lg"></i>
-                  <h3 class="m-0 text-base font-bold text-slate-100">Needs Attention</h3>
-                </div>
-                <span class="text-xs text-slate-400">Operational Action Queue</span>
+            <section class="attention-panel" aria-labelledby="attention-title">
+              <div class="attention-header">
+                <h3 id="attention-title" class="attention-title">
+                  <i class="pi pi-bell" aria-hidden="true"></i>
+                  Needs Attention
+                </h3>
+                <span class="attention-context">Operational Action Queue</span>
               </div>
-              <div class="grid">
+              <div class="attention-grid">
                 <!-- Pending Orders -->
-                <div class="col-12 sm:col-6 md:col-3">
-                  <a routerLink="/admin/dashboard/orders" [queryParams]="{status: 'Pending'}" class="no-underline block h-full">
-                    <div class="surface-card hover:surface-hover p-3 border-round border-1 border-slate-700/60 transition-all flex align-items-center justify-content-between">
+                  <a routerLink="/admin/dashboard/orders" [queryParams]="{status: 'Pending'}" class="attention-card">
                       <div>
-                        <div class="text-xs text-slate-400 font-medium mb-1">Pending Orders</div>
-                        <div class="text-xl font-bold text-yellow-400">{{ overviewData()?.action_queue?.pending_orders || 0 }}</div>
+                        <div class="attention-label">Pending Orders</div>
+                        <div class="attention-count">{{ overviewData()?.action_queue?.pending_orders || 0 }}</div>
                       </div>
-                      <i class="pi pi-clock text-xl text-yellow-500/80"></i>
-                    </div>
+                      <span class="attention-icon attention-icon--amber" aria-hidden="true"><i class="pi pi-clock"></i></span>
                   </a>
-                </div>
                 <!-- Payments to Verify -->
-                <div class="col-12 sm:col-6 md:col-3">
-                  <a routerLink="/admin/dashboard/orders" class="no-underline block h-full">
-                    <div class="surface-card hover:surface-hover p-3 border-round border-1 border-slate-700/60 transition-all flex align-items-center justify-content-between">
+                  <a routerLink="/admin/dashboard/orders" class="attention-card">
                       <div>
-                        <div class="text-xs text-slate-400 font-medium mb-1">Payments to Verify</div>
-                        <div class="text-xl font-bold text-blue-400">{{ overviewData()?.action_queue?.payments_to_verify || 0 }}</div>
+                        <div class="attention-label">Payments to Verify</div>
+                        <div class="attention-count">{{ overviewData()?.action_queue?.payments_to_verify || 0 }}</div>
                       </div>
-                      <i class="pi pi-check-circle text-xl text-blue-500/80"></i>
-                    </div>
+                      <span class="attention-icon attention-icon--blue" aria-hidden="true"><i class="pi pi-check-circle"></i></span>
                   </a>
-                </div>
                 <!-- Low Stock Items -->
-                <div class="col-12 sm:col-6 md:col-3">
-                  <a routerLink="/admin/dashboard/inventory" class="no-underline block h-full">
-                    <div class="surface-card hover:surface-hover p-3 border-round border-1 border-slate-700/60 transition-all flex align-items-center justify-content-between">
+                  <a routerLink="/admin/dashboard/inventory" class="attention-card">
                       <div>
-                        <div class="text-xs text-slate-400 font-medium mb-1">Low Stock Items</div>
-                        <div class="text-xl font-bold text-orange-400">{{ overviewData()?.action_queue?.low_stock || 0 }}</div>
+                        <div class="attention-label">Low Stock Items</div>
+                        <div class="attention-count">{{ overviewData()?.action_queue?.low_stock || 0 }}</div>
                       </div>
-                      <i class="pi pi-box text-xl text-orange-500/80"></i>
-                    </div>
+                      <span class="attention-icon attention-icon--orange" aria-hidden="true"><i class="pi pi-box"></i></span>
                   </a>
-                </div>
                 <!-- Refunds Due (A8) -->
-                <div class="col-12 sm:col-6 md:col-3">
-                  <a routerLink="/admin/dashboard/orders" class="no-underline block h-full">
-                    <div class="surface-card hover:surface-hover p-3 border-round border-1 border-slate-700/60 transition-all flex align-items-center justify-content-between"
-                         [class.border-red-600]="(overviewData()?.action_queue?.refunds_due || 0) > 0">
+                  <a routerLink="/admin/dashboard/orders" class="attention-card">
                       <div>
-                        <div class="text-xs text-slate-400 font-medium mb-1">Refunds Due</div>
-                        <div class="text-xl font-bold" [class.text-red-400]="(overviewData()?.action_queue?.refunds_due || 0) > 0" [class.text-slate-300]="(overviewData()?.action_queue?.refunds_due || 0) === 0">
+                        <div class="attention-label">Refunds Due</div>
+                        <div class="attention-count">
                           {{ overviewData()?.action_queue?.refunds_due || 0 }}
                         </div>
                       </div>
-                      <i class="pi pi-wallet text-xl" [class.text-red-400]="(overviewData()?.action_queue?.refunds_due || 0) > 0" [class.text-slate-500]="(overviewData()?.action_queue?.refunds_due || 0) === 0"></i>
-                    </div>
+                      <span class="attention-icon" [class.attention-icon--red]="(overviewData()?.action_queue?.refunds_due || 0) > 0" aria-hidden="true"><i class="pi pi-wallet"></i></span>
                   </a>
-                </div>
               </div>
-            </div>
+            </section>
           }
 
           <!-- Charts Row -->

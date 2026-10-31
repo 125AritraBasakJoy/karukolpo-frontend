@@ -80,6 +80,10 @@ export class OrdersComponent implements OnInit {
 
   orders = signal<Order[]>([]);
   totalRecords = signal<number>(0);
+  allOrdersTotal = signal<number | null>(null);
+  private allCountKey?: string;
+  private allCountRequest = 0;
+  private ordersRequest = 0;
   loading = signal<boolean>(false);
   exportLoading = signal<boolean>(false);
   downloadingOrderId = signal<string | null>(null);
@@ -271,13 +275,38 @@ export class OrdersComponent implements OnInit {
     };
 
     if (this.orderService.getOrdersWithCount) {
-      this.orderService.getOrdersWithCount(options).subscribe({
+      const request = ++this.ordersRequest;
+      const countKey = JSON.stringify([query, statusVal]);
+      const refreshCount = !event || this.allCountKey !== countKey;
+      if (refreshCount) {
+        this.allCountKey = countKey;
+        const countRequest = ++this.allCountRequest;
+        this.allOrdersTotal.set(null);
+        if (statusVal !== 'all') {
+          // All counts every status matching the current search, not just this page.
+          this.orderService.getOrdersWithCount({ q: options.q, skip: 0, limit: 1 })
+            .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+              next: res => {
+                if (countRequest === this.allCountRequest && query === this.searchQuery().trim()) {
+                  this.allOrdersTotal.set(res.total);
+                }
+              },
+              error: () => {
+                if (countRequest === this.allCountRequest) this.allCountKey = undefined;
+              }
+            });
+        }
+      }
+      this.orderService.getOrdersWithCount(options).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (res) => {
+          if (request !== this.ordersRequest || query !== this.searchQuery().trim()) return;
           this.orders.set(res.items);
           this.totalRecords.set(res.total);
+          if (statusVal === 'all') this.allOrdersTotal.set(res.total);
           this.loading.set(false);
         },
         error: (err) => {
+          if (request !== this.ordersRequest) return;
           console.error('Error loading orders in component:', err);
           this.messageService.add({
             life: 2000,

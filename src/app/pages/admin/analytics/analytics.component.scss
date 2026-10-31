@@ -233,6 +233,115 @@
   }
 }
 
+.attention-panel {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.65));
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 20px;
+}
+
+.attention-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.attention-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 700;
+
+  i { color: #fbbf24; }
+}
+
+.attention-context {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.attention-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+
+  @media (max-width: 1199px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 575px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.attention-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem;
+  background: rgba(148, 163, 184, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 14px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  &, &:link, &:visited { color: #f8fafc; }
+
+  &:hover, &:focus-visible {
+    background: rgba(59, 130, 246, 0.07);
+    border-color: rgba(96, 165, 250, 0.35);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 3px;
+  }
+}
+
+.attention-label {
+  margin-bottom: 0.4rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.attention-count {
+  color: #f8fafc;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.attention-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+  font-size: 0.95rem;
+
+  &--amber { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+  &--blue { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+  &--orange { background: rgba(249, 115, 22, 0.12); color: #fb923c; }
+  &--red { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+}
+
 // Glassmorphism panels
 .glass-panel {
   background: rgba(255, 255, 255, 0.03);

@@ -37,9 +37,9 @@
 
         <!-- Order Status Filter Chips Bar -->
         <div class="filter-chips-wrapper flex align-items-center gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar">
-            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'all'" (click)="setStatusFilter('all')">
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'all'" (click)="setStatusFilter('all')" title="All statuses matching the current search">
                 <span>All</span>
-                <span class="chip-count">{{ totalRecords() }}</span>
+                <span class="chip-count">{{ allOrdersTotal() ?? '-' }}</span>
             </button>
             <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'pending'" (click)="setStatusFilter('pending')">
                 <i class="pi pi-clock text-xs mr-1 text-amber-400"></i>

@@ -102,6 +102,40 @@ describe('OrdersComponent pagination', () => {
     expect(mobileCards).toBeNull();
   });
 
+  it('counts all statuses independently while keeping pagination filtered without per-page counts', () => {
+    getOrdersWithCount.and.callFake((options: any) => of({ items: [], total: options.status ? 5 : 42 }));
+    component.setStatusFilter('confirmed');
+    expect(component.allOrdersTotal()).toBe(42);
+    expect(component.totalRecords()).toBe(5);
+    component.loadOrders({ first: 10, rows: 10 });
+    expect(getOrdersWithCount).toHaveBeenCalledTimes(3);
+    component.refreshOrders();
+    expect(getOrdersWithCount).toHaveBeenCalledTimes(5);
+  });
+
+  it('ignores stale counts and refreshes all-status counts for search and clear', () => {
+    const oldCount = new Subject<any>();
+    getOrdersWithCount.and.returnValue(of({ items: [], total: 5 }));
+    getOrdersWithCount.and.callFake((options: any) => {
+      if (!options.status && !options.q) return oldCount;
+      return of({ items: [], total: options.status ? 2 : 9 });
+    });
+    component.setStatusFilter('pending');
+    component.searchQuery.set('  phone  ');
+    component.loadOrders();
+    expect(getOrdersWithCount).toHaveBeenCalledWith({ q: 'phone', skip: 0, limit: 1 });
+    expect(component.allOrdersTotal()).toBe(9);
+    oldCount.next({ items: [], total: 100 });
+    expect(component.allOrdersTotal()).toBe(9);
+    component.clearSearch();
+    expect(component.allOrdersTotal()).toBeNull();
+    oldCount.next({ items: [], total: 42 });
+    expect(component.allOrdersTotal()).toBe(42);
+    component.setStatusFilter('all');
+    oldCount.next({ items: [], total: 50 });
+    expect(component.allOrdersTotal()).toBe(50);
+  });
+
   it('filters orders by status and resets pagination offset', () => {
     getOrdersWithCount.and.returnValue(of({ items: orders(5), total: 5 }));
     component.first = 50;

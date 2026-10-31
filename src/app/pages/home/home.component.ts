@@ -30,6 +30,7 @@ import { Category } from '../../models/category.model';
 import { CartService } from '../../core/services/cart/cart.service';
 import { DividerModule } from 'primeng/divider';
 import { HomeCheckoutModalsComponent } from './home-checkout-modals.component';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
 
 @Component({
     selector: 'app-home',
@@ -43,7 +44,8 @@ import { HomeCheckoutModalsComponent } from './home-checkout-modals.component';
         DividerModule,
         NgOptimizedImage,
         RouterModule,
-        HomeCheckoutModalsComponent
+        HomeCheckoutModalsComponent,
+        ProductCardComponent
     ],
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.scss'],
@@ -144,6 +146,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     quickAddToCart(event: Event, product: Product) {
         event.stopPropagation();
+        if (this.isOutOfStock(product)) return;
+        this.cartService.addToCart(product);
+    }
+
+    onCardAddToCart(product: Product) {
         if (this.isOutOfStock(product)) return;
         this.cartService.addToCart(product);
     }

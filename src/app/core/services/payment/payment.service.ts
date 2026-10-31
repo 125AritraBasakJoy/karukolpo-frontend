@@ -3,7 +3,13 @@ import { isPlatformBrowser } from '@angular/common';
 import { ApiService } from '../api/api.service';
 import { PAYMENTS_API } from './payment.api';
 import { Observable } from 'rxjs';
-import { Payment } from '../../../models/payment.model';
+import {
+  Payment,
+  PaymentVerifyPayload,
+  PaymentRejectPayload,
+  LedgerEntryCreate,
+  LedgerEntryVoid
+} from '../../../models/payment.model';
 
 const API_ENDPOINTS = {
     PAYMENTS: PAYMENTS_API
@@ -78,11 +84,39 @@ export class PaymentService {
     }
 
     /**
-     * Verify a payment (Admin)
+     * Verify a bKash TrxID (Admin)
      * PATCH /orders/{order_id}/payment/verify
+     * Body: { amount?: "570.00", confirm?: true }
      */
-    verifyPayment(orderId: number | string, payload: any = {}): Observable<Payment> {
-        const oId = orderId;
-        return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.VERIFY(oId), payload);
+    verifyPayment(orderId: number | string, payload: PaymentVerifyPayload = {}): Observable<Payment> {
+        return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.VERIFY(orderId), payload);
+    }
+
+    /**
+     * Reject a bKash TrxID (Admin)
+     * PATCH /orders/{order_id}/payment/reject
+     * Body: { reason?: string }
+     */
+    rejectPayment(orderId: number | string, payload: PaymentRejectPayload = {}): Observable<Payment> {
+        return this.apiService.patch<Payment>(API_ENDPOINTS.PAYMENTS.REJECT(orderId), payload);
+    }
+
+    /**
+     * Record a payment or refund by hand (Admin)
+     * POST /admin/orders/{order_id}/payments
+     * Body: LedgerEntryCreate
+     */
+    recordManualPayment(orderId: number | string, payload: LedgerEntryCreate): Observable<any> {
+        return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.RECORD_MANUAL(orderId), payload);
+    }
+
+    /**
+     * Void a manual or delivery ledger entry (Admin)
+     * DELETE /admin/orders/{order_id}/payments/{entry_id}
+     * Body: { reason?: string }
+     */
+    voidPaymentEntry(orderId: number | string, entryId: string, reason?: string): Observable<any> {
+        const body: LedgerEntryVoid = reason ? { reason } : {};
+        return this.apiService.delete<any>(API_ENDPOINTS.PAYMENTS.VOID_ENTRY(orderId, entryId), { body });
     }
 }

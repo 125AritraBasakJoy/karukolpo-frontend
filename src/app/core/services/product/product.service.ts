@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Observable, of, forkJoin, timer, from } from 'rxjs';
 import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
 import { Product, ProductImage } from '../../../models/product.model';
+import { RelatedPinsResponse } from '../../../models/combo.model';
 import { ApiService } from '../api/api.service';
 import { PRODUCTS_API } from './product.api';
 import { buildListQuery } from '../api/helpers';
@@ -169,9 +170,75 @@ export class ProductService {
       map(p => {
         const product = this.mapBackendToFrontend(p);
         this.productMap.set(id, product);
+        if (product.id) {
+          this.productMap.set(product.id, product);
+        }
         return product;
       }),
-      catchError(() => of(undefined))
+      catchError(err => {
+        console.error(`Failed to fetch product by ID ${id}:`, err);
+        return of(undefined);
+      })
+    );
+  }
+
+  /**
+   * Get related products from backend
+   * GET /products/{product_ref}/related?limit={limit}
+   */
+  getRelatedProducts(ref: string, limit: number = 8): Observable<Product[]> {
+    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.RELATED(ref, limit)).pipe(
+      map(items => (items || []).map(p => this.mapBackendToFrontend(p))),
+      catchError(err => {
+        console.error(`Failed to load related products for ${ref}:`, err);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get frequently bought together products
+   * GET /products/{product_ref}/frequently-bought-together?limit={limit}
+   */
+  getFrequentlyBoughtTogether(ref: string, limit: number = 3): Observable<Product[]> {
+    return this.apiService.get<any[]>(API_ENDPOINTS.PRODUCTS.FBT(ref, limit)).pipe(
+      map(items => (items || []).map(p => this.mapBackendToFrontend(p))),
+      catchError(err => {
+        console.error(`Failed to load frequently bought together for ${ref}:`, err);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get pinned related products (Admin)
+   * GET /admin/products/{id}/related-pins
+   */
+  getRelatedPins(productId: string): Observable<RelatedPinsResponse> {
+    return this.apiService.get<any>(API_ENDPOINTS.PRODUCTS.RELATED_PINS(productId)).pipe(
+      map(res => ({
+        product_ids: res?.product_ids || [],
+        products: (res?.products || []).map((p: any) => ({
+          ...this.mapBackendToFrontend(p),
+          is_active: p.is_active !== false
+        }))
+      }))
+    );
+  }
+
+  /**
+   * Update pinned related products (Admin)
+   * PUT /admin/products/{id}/related-pins
+   */
+  updateRelatedPins(productId: string, productIds: string[]): Observable<RelatedPinsResponse> {
+    return this.apiService.put<any>(API_ENDPOINTS.PRODUCTS.RELATED_PINS(productId), { product_ids: productIds }).pipe(
+      map(res => ({
+        product_ids: res?.product_ids || [],
+        products: (res?.products || []).map((p: any) => ({
+          ...this.mapBackendToFrontend(p),
+          is_active: p.is_active !== false
+        }))
+      }))
     );
   }
 
@@ -671,10 +738,13 @@ export class ProductService {
     // Map Images
     let mainImageUrl = this.getImageUrl(data.primary_image_url || data.imageUrl);
     let galleryImages: string[] = [];
+    const imageObjects: ProductImage[] = Array.isArray(data.images)
+      ? [...data.images].sort((a, b) => Number(!!b.is_primary) - Number(!!a.is_primary))
+      : [];
 
-    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+    if (imageObjects.length > 0) {
       // 1. Identify the primary image object
-      const primaryImage = data.images.find((img: any) => img.is_primary) || data.images[0];
+      const primaryImage = imageObjects[0];
 
       if (primaryImage) {
         // Enforce image_medium for home/list cards for optimal loading/quality balance
@@ -684,15 +754,10 @@ export class ProductService {
       // 2. Map all image records to their high-quality 'large' variant for the product details carousel,
       //    ensuring the primary image always appears first.
       const galleryUrl = (img: any) => img.image_large || img.image_medium || img.image_thumb || img.image_path;
-      galleryImages = data.images
+      galleryImages = imageObjects
         .map(galleryUrl)
         .filter(Boolean)
-        .map((url: string) => this.getImageUrl(url))
-        .sort((a: string, b: string) => {
-          const aPrimary = data.images.find((img: any) => this.getImageUrl(galleryUrl(img)) === a)?.is_primary;
-          const bPrimary = data.images.find((img: any) => this.getImageUrl(galleryUrl(img)) === b)?.is_primary;
-          return Number(bPrimary) - Number(aPrimary);
-        });
+        .map((url: string) => this.getImageUrl(url));
 
     } else if (data.image) {
       mainImageUrl = this.getImageUrl(data.image);
@@ -728,8 +793,9 @@ export class ProductService {
       ? parseFloat(String(data.effective_price))
       : rawPrice;
 
+    let isDiscountActive = false;
     if ((data.effective_price === undefined || data.effective_price === null || effectivePrice === rawPrice) && discountVal && discountVal > 0) {
-      let isDiscountActive = true;
+      isDiscountActive = true;
       const now = new Date().getTime();
       if (data.discount_starts_at) {
         const start = new Date(data.discount_starts_at).getTime();
@@ -748,6 +814,10 @@ export class ProductService {
           effectivePrice = Math.max(0, Math.round((rawPrice - discountVal) * 100) / 100);
         }
       }
+    } else if (data.has_active_discount !== undefined) {
+      isDiscountActive = !!data.has_active_discount;
+    } else if (effectivePrice < rawPrice) {
+      isDiscountActive = true;
     }
 
     return {
@@ -761,7 +831,7 @@ export class ProductService {
       cost: cost,
       imageUrl: mainImageUrl,
       images: galleryImages,
-      imageObjects: data.images || [],
+      imageObjects: imageObjects,
       categoryId: data.category_id?.toString() ||
         (data.categories && data.categories.length > 0 ? data.categories[0].id.toString() : 'uncategorized'),
       categories: data.categories || [],
@@ -772,6 +842,9 @@ export class ProductService {
       isBestSeller: !!(data.is_best_seller || data.best_seller),
       discount_type: data.discount_type || null,
       discount_value: discountVal,
+      discount_percent: data.discount_percent != null ? parseFloat(data.discount_percent) : (data.discount_type === 'percentage' ? discountVal : null),
+      savings: data.savings != null ? parseFloat(data.savings) : (effectivePrice !== undefined && rawPrice > effectivePrice ? Math.round(rawPrice - effectivePrice) : null),
+      has_active_discount: !!(data.has_active_discount || isDiscountActive),
       discount_starts_at: data.discount_starts_at || null,
       discount_ends_at: data.discount_ends_at || null,
       effective_price: effectivePrice

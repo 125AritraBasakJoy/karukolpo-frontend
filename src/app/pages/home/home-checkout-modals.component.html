@@ -37,17 +37,86 @@
                         </div>
                     </div>
                     }
+                    @for (c of cartService.combos(); track c.combo.id) {
+                    <div class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                        <div>
+                            <div class="font-bold flex align-items-center gap-1">
+                                <span class="text-xs bg-primary text-white px-2 py-0 border-round font-semibold">COMBO</span>
+                                <span>{{ c.combo.name }}</span>
+                            </div>
+                            <div class="text-xs text-600">৳{{ c.combo.combo_price }} × {{ c.quantity }}</div>
+                        </div>
+                        <div class="flex align-items-center gap-2">
+                            <button pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
+                                (click)="cartService.updateComboQuantity(c, -1)" [disabled]="c.quantity <= 1"></button>
+                            <span class="font-bold w-2rem text-center">{{ c.quantity }}</span>
+                            <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
+                                (click)="cartService.updateComboQuantity(c, 1)"></button>
+                        </div>
+                    </div>
+                    }
+
+                    <!-- Problems Warning -->
+                    @if (quoteProblems.length > 0) {
+                    <div class="p-2 border-round mb-3 bg-red-50 border-1 border-red-200">
+                        @for (p of quoteProblems; track p) {
+                        <div class="text-xs text-red-600 font-semibold">{{ p }}</div>
+                        }
+                    </div>
+                    }
+
+                    <!-- Coupon Code Input -->
+                    <div class="mb-3 p-2 border-round surface-ground border-1 surface-border">
+                        <div class="flex align-items-center justify-content-between mb-1">
+                            <span class="text-xs font-bold text-600 uppercase">Promo Code</span>
+                            <span *ngIf="quote?.coupon?.applied" class="text-xs font-bold text-green-700">Applied</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" [(ngModel)]="couponInput" placeholder="Enter coupon"
+                                   [disabled]="!!quote?.coupon?.applied"
+                                   class="p-inputtext-sm w-full uppercase font-semibold" />
+                            <button *ngIf="!quote?.coupon?.applied" type="button" pButton label="Apply"
+                                    class="p-button-sm" [disabled]="!couponInput.trim() || quoteLoading"
+                                    (click)="applyCoupon()"></button>
+                            <button *ngIf="quote?.coupon?.applied" type="button" pButton label="Remove"
+                                    class="p-button-sm p-button-outlined p-button-danger"
+                                    (click)="removeCoupon()"></button>
+                        </div>
+                        @if (quote?.coupon && !quote?.coupon?.applied && quote?.coupon?.message) {
+                        <p class="text-xs text-red-600 m-0 mt-1">{{ quote?.coupon?.message }}</p>
+                        }
+                    </div>
+
                     <div class="flex justify-content-between mt-3">
                         <span>Subtotal</span>
-                        <span class="font-bold">{{ getSubTotal() | currency:'BDT':'৳' }}</span>
+                        <span class="font-bold">৳{{ subtotalAmount | number:'1.0-0' }}</span>
                     </div>
+                    @if (productDiscountAmount > 0) {
+                    <div class="flex justify-content-between mt-2 text-green-700">
+                        <span>Product Discounts</span>
+                        <span class="font-bold">-৳{{ productDiscountAmount | number:'1.0-0' }}</span>
+                    </div>
+                    }
+                    @if (comboSavingsAmount > 0) {
+                    <div class="flex justify-content-between mt-2 text-green-700">
+                        <span>Combo Savings</span>
+                        <span class="font-bold">-৳{{ comboSavingsAmount | number:'1.0-0' }}</span>
+                    </div>
+                    }
+                    @if (couponDiscountAmount > 0) {
+                    <div class="flex justify-content-between mt-2 text-green-700">
+                        <span>Coupon Discount</span>
+                        <span class="font-bold">-৳{{ couponDiscountAmount | number:'1.0-0' }}</span>
+                    </div>
+                    }
                     <div class="flex justify-content-between mt-2">
                         <span>Delivery Charge</span>
-                        <span class="font-bold">{{ currentDeliveryCharge | currency:'BDT':'৳' }}</span>
+                        <span class="font-bold" *ngIf="checkoutForm.district">৳{{ deliveryAmount | number:'1.0-0' }}</span>
+                        <span class="text-xs text-500" *ngIf="!checkoutForm.district">Calculated at checkout</span>
                     </div>
                     <div class="flex justify-content-between mt-3 pt-3 border-top-1 surface-border text-xl font-bold">
                         <span>Total</span>
-                        <span class="text-primary">{{ getTotalPrice() | currency:'BDT':'৳' }}</span>
+                        <span class="text-primary">৳{{ totalAmount | number:'1.0-0' }}</span>
                     </div>
                 </div>
             </div>
@@ -66,7 +135,8 @@
                     </div>
                     <div class="field">
                         <label for="field_phone">Phone Number <span class="text-red-500">*</span></label>
-                        <input pInputText id="field_phone" name="field_phone" autocomplete="off" [(ngModel)]="checkoutForm.phoneNumber" placeholder="017..."
+                        <input pInputText id="field_phone" name="field_phone" autocomplete="off" [(ngModel)]="checkoutForm.phoneNumber"
+                            (ngModelChange)="onPhoneNumberChange($event)" placeholder="017..."
                             maxlength="11" required #phone="ngModel" pattern="^(?:\+88|88)?(01[3-9]\d{8})$"
                             class="w-full">
                         @if (phone.invalid && (phone.dirty || phone.touched)) {
@@ -173,12 +243,6 @@
                 </div>
                 <div class="flex justify-content-between align-items-center">
                     <span class="font-bold text-primary">{{ order.totalAmount | currency:'BDT':'৳' }}</span>
-
-                    <!-- Payment Button -->
-                    @if (order.status === 'Confirmed' && order.paymentStatus !== 'Paid') {
-                    <button pButton label="Make Payment" icon="pi pi-wallet" class="p-button-sm"
-                        (click)="openPaymentForOrder(order.id)"></button>
-                    }
 
                     @if (order.paymentStatus === 'Paid') {
                     <p-tag value="Paid" severity="success"></p-tag>

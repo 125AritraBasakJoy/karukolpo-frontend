@@ -1,9 +1,9 @@
-<div class="edit-product-container p-4 min-h-screen">
+<div class="edit-product-container p-3 md:p-5 min-h-screen">
     <div class="header-section mb-6">
         <div class="flex align-items-center gap-3 mb-2">
             <button pButton icon="pi pi-arrow-left" class="p-button-rounded p-button-text text-white"
                 (click)="cancel()"></button>
-            <h1 class="text-4xl font-bold m-0 tracking-tight text-white">Edit Product</h1>
+            <h1 class="text-2xl md:text-4xl font-bold m-0 tracking-tight text-white">Edit Product</h1>
         </div>
         <p class="text-slate-400 m-0 text-lg ml-7">Update the details of your masterpiece.</p>
     </div>
@@ -324,7 +324,85 @@
                 </div>
             </div>
 
+            <!-- You May Also Like - Pinned Recommendations -->
+            <div class="glass-card p-4 sm:p-5 mb-5">
+                <div class="flex align-items-center justify-content-between mb-3 border-bottom-1 border-white-alpha-10 pb-2">
+                    <h3 class="text-xl font-bold text-white m-0">You May Also Like — Pinned</h3>
+                    <span class="text-xs text-slate-400 font-semibold">{{ pinnedProducts().length }}/8</span>
+                </div>
+                <p class="text-xs text-slate-400 m-0 mb-3">
+                    Up to 8 pinned items appear first under "You May Also Like". Out-of-stock items are automatically skipped. Remaining slots are filled automatically from shared categories.
+                </p>
 
+                <!-- Search to add pin -->
+                <div class="mb-3">
+                    <p-dropdown [options]="pinSearchResults()"
+                                (onChange)="addPin($event.value)"
+                                optionLabel="name"
+                                [filter]="true"
+                                filterBy="name,code"
+                                [loading]="pinSearchLoading()"
+                                (onFilter)="onPinSearch($event)"
+                                placeholder="Search products to pin..."
+                                styleClass="w-full premium-dropdown"
+                                appendTo="body"
+                                [disabled]="pinnedProducts().length >= 8">
+                        <ng-template let-prod pTemplate="item">
+                            <div class="flex align-items-center gap-2">
+                                <img [src]="prod.imageUrl" [alt]="prod.name" class="w-2rem h-2rem border-round object-cover" />
+                                <div class="flex flex-column">
+                                    <span class="text-sm font-semibold text-white">{{ prod.name }}</span>
+                                    <span class="text-xs text-blue-400">৳{{ (prod.effective_price || prod.price) | number:'1.0-0' }}</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-dropdown>
+                </div>
+
+                <!-- Pinned list -->
+                <div *ngIf="pinnedProducts().length === 0" class="text-slate-500 text-xs italic py-2 text-center">
+                    No pinned products. Auto-recommendations from shared categories will fill the section.
+                </div>
+
+                <div *ngIf="pinnedProducts().length > 0" class="flex flex-column gap-2 mb-3">
+                    <div *ngFor="let pin of pinnedProducts(); let i = index"
+                         class="p-2 border-round-lg border-1 border-white-alpha-10 surface-card flex align-items-center justify-content-between gap-2">
+                        <div class="flex align-items-center gap-2 overflow-hidden flex-1">
+                            <span class="text-xs text-slate-400 font-bold">{{ i + 1 }}.</span>
+                            <img [src]="pin.imageUrl" [alt]="pin.name" class="w-2rem h-2rem border-round object-cover flex-shrink-0" />
+                            <div class="flex flex-column overflow-hidden">
+                                <span class="text-xs text-white line-clamp-1 font-medium">{{ pin.name }}</span>
+                                <div class="flex align-items-center gap-2">
+                                    <span class="text-xs text-blue-400">৳{{ (pin.effective_price || pin.price) | number:'1.0-0' }}</span>
+                                    <span *ngIf="pin.is_active === false" class="text-xs text-orange-400 font-semibold">(hidden: inactive)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reorder & Remove Controls -->
+                        <div class="flex align-items-center gap-1 flex-shrink-0">
+                            <button type="button" class="p-button-text p-button-sm text-slate-400 hover:text-white border-none bg-transparent cursor-pointer p-1"
+                                    [disabled]="i === 0" (click)="movePinUp(i)" pTooltip="Move up">
+                                <i class="pi pi-chevron-up text-xs"></i>
+                            </button>
+                            <button type="button" class="p-button-text p-button-sm text-slate-400 hover:text-white border-none bg-transparent cursor-pointer p-1"
+                                    [disabled]="i === pinnedProducts().length - 1" (click)="movePinDown(i)" pTooltip="Move down">
+                                <i class="pi pi-chevron-down text-xs"></i>
+                            </button>
+                            <button type="button" class="p-button-text p-button-danger border-none bg-transparent cursor-pointer text-red-400 p-1"
+                                    (click)="removePin(i)" pTooltip="Unpin">
+                                <i class="pi pi-times text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button pButton label="Save Pins" icon="pi pi-bookmark"
+                        class="p-button-outlined p-button-sm premium-btn-secondary w-full"
+                        [loading]="savingPins()"
+                        (click)="savePins()">
+                </button>
+            </div>
 
             <div class="sticky-action-bar">
                 <button pButton label="Save Changes" icon="pi pi-check"
@@ -337,7 +415,7 @@
     </div>
 
     <!-- Saving Status Overlay Loader -->
-    <div *ngIf="saving() && savingStatus()" class="fixed inset-0 z-5 bg-black-alpha-70 flex flex-column align-items-center justify-content-center">
+    <div *ngIf="saving() && savingStatus()" class="fixed inset-0 bg-black-alpha-70 flex flex-column align-items-center justify-content-center" style="z-index: 1200;">
         <p-progressSpinner styleClass="w-4rem h-4rem"></p-progressSpinner>
         <p class="text-white mt-4 text-xl font-semibold tracking-wide">{{ savingStatus() }}</p>
     </div>

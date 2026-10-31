@@ -75,6 +75,23 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./products/add-product/add-product.component').then(m => m.AddProductComponent)
       },
       {
+        path: 'combos',
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./combos/combos.component').then(m => m.CombosComponent)
+          },
+          {
+            path: 'add',
+            loadComponent: () => import('./combos/combo-wizard/combo-wizard.component').then(m => m.ComboWizardComponent)
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () => import('./combos/combo-wizard/combo-wizard.component').then(m => m.ComboWizardComponent)
+          }
+        ]
+      },
+      {
         path: 'inventory/edit/:id',
         loadComponent: () => import('./products/edit-product/edit-product.component').then(m => m.EditProductComponent)
       }

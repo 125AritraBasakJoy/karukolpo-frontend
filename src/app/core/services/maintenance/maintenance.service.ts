@@ -90,11 +90,17 @@ export class MaintenanceService {
         if (!isPlatformBrowser(this.platformId) || this.pollTimer) {
             return;
         }
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+            return;
+        }
         this.refreshStatus().subscribe({
             next: (status) => this.applyStatus(status),
             error: () => { /* backend unreachable — keep last known state */ }
         });
         this.pollTimer = setInterval(() => {
+            if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+                return;
+            }
             if (typeof document !== 'undefined' && document.hidden) {
                 return;
             }

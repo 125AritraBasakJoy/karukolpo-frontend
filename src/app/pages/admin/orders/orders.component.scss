@@ -432,9 +432,16 @@
     line-height: 1.3;
     font-size: 0.88rem;
     word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+    .order-item-img-container {
+        display: none !important;
+    }
 }
 
 .order-item-img-container {
@@ -783,6 +790,54 @@
     }
 }
 
+/* =========================================================
+   Online Order Edit & Manual Payment/Refund Modal Styling
+   (Matched to Edit Out Sales design system)
+   ========================================================= */
+
+.sale-item-row {
+    background: rgba(255, 255, 255, 0.02);
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+}
+
+.billing-summary-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(10, 15, 30, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.grand-total-banner {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(30, 58, 138, 0.08) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.premium-input {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #F8FAFC !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 0.85rem !important;
+    font-size: 0.9rem !important;
+
+    &:focus {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    }
+}
+
+.menu-trigger-btn {
+    color: #CBD5E1 !important;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.12) !important;
+        color: #FFFFFF !important;
+    }
+}
+
 :host ::ng-deep {
     .highlighted-order-row {
         background: rgba(245, 158, 11, 0.12) !important;
@@ -804,5 +859,53 @@
     }
     100% {
         background-color: rgba(245, 158, 11, 0.08);
+    }
+}
+
+// ── Status Filter Chips Bar (matches Out Sales aesthetic) ────
+.filter-chips-wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .filter-chip-btn {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #94a3b8;
+        padding: 0.45rem 0.9rem;
+        border-radius: 9999px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        &.active {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #60a5fa;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.12);
+        }
+
+        .chip-count {
+            background: rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 12px;
+            margin-left: 0.25rem;
+            font-family: monospace;
+        }
     }
 }

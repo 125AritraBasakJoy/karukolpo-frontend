@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { THERMAL_LOGO_BASE64 } from '../thermal-invoice/thermal-logo.constant';
+import { formatPaymentStatus, PaymentStatusInfo } from '../../models/payment.model';
 
 @Component({
     selector: 'app-invoice',
@@ -18,22 +19,36 @@ export class InvoiceComponent {
     @Input() orderDeliveryCharge: number = 0;
     @Input() orderTotal: number = 0;
     @Input() orderDiscount: number = 0;
+    @Input() comboSavings: number = 0;
+    @Input() combos: any[] = [];
     @Input() placedOrderId: string = '';
     @Input() placedOrderNumber: string = '';
+    @Input() paymentStatus?: string;
+    @Input() amountDue: number = 0;
+    @Input() createdAt?: string | Date;
 
     @Output() continueShoppingClick = new EventEmitter<void>();
 
     today = new Date();
 
+    get orderDate(): Date {
+        if (this.createdAt) {
+            const d = new Date(this.createdAt);
+            if (!isNaN(d.getTime())) return d;
+        }
+        return this.today;
+    }
+
     get invoiceNumber(): string {
-        const year = this.today.getFullYear();
+        const year = this.orderDate.getFullYear();
         // Use orderNumber if available, otherwise fallback to id
         const idPart = (this.placedOrderNumber || this.placedOrderId || '0').slice(-5);
         return `INV-${year}-${idPart}`;
     }
 
     get formattedDate(): string {
-        return this.today.toLocaleDateString('en-US', {
+        return this.orderDate.toLocaleDateString('en-US', {
+            timeZone: 'Asia/Dhaka',
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -41,7 +56,8 @@ export class InvoiceComponent {
     }
 
     get formattedTime(): string {
-        return this.today.toLocaleTimeString('en-US', {
+        return this.orderDate.toLocaleTimeString('en-US', {
+            timeZone: 'Asia/Dhaka',
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
@@ -51,13 +67,47 @@ export class InvoiceComponent {
     get paymentMethodDisplay(): string {
         const m = (this.orderPaymentMethod || '').toLowerCase();
         if (m.includes('bkash')) return 'bKash';
-        return 'Cash on Delivery';
+        if (m.includes('cod') || m.includes('cash on delivery')) return 'Cash on Delivery';
+        return this.orderPaymentMethod || 'Cash on Delivery';
     }
 
-    get paymentStatus(): string {
+    get paymentStatusInfo(): PaymentStatusInfo {
+        const raw = (this.paymentStatus || '').toLowerCase().trim();
+        if (raw) {
+            switch (raw) {
+                case 'paid':
+                    return { label: 'Paid', severity: 'success', rawStatus: 'paid' };
+                case 'partially_paid':
+                    return { label: 'Partially Paid', severity: 'warn', rawStatus: 'partially_paid' };
+                case 'awaiting_verification':
+                    return { label: 'Awaiting Verification', severity: 'info', rawStatus: 'awaiting_verification' };
+                case 'refund_due':
+                    return { label: 'Refund Pending', severity: 'danger', rawStatus: 'refund_due' };
+                case 'refunded':
+                    return { label: 'Refunded', severity: 'secondary', rawStatus: 'refunded' };
+                case 'void':
+                    return { label: 'Cancelled', severity: 'secondary', rawStatus: 'void' };
+                case 'unpaid':
+                default:
+                    return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+            }
+        }
         const m = (this.orderPaymentMethod || '').toLowerCase();
-        if (m.includes('bkash')) return 'Paid';
-        return 'Unpaid';
+        if (m.includes('bkash')) {
+            return { label: 'Paid', severity: 'success', rawStatus: 'paid' };
+        }
+        return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+    }
+
+    get paymentStatusDisplay(): string {
+        return this.paymentStatusInfo.label;
+    }
+
+    getComboBadge(item: any): string | null {
+        if (!item || !item.order_combo_id) return null;
+        const match = (this.combos || []).find((c: any) => c.id === item.order_combo_id);
+        const name = match ? match.name : item.combo_name;
+        return name ? `Part of ${name}` : 'Combo Item';
     }
 
     get subtotal(): number {
@@ -219,8 +269,19 @@ export class InvoiceComponent {
             this.orderDeliveryCharge = customData.deliveryCharge || 0;
             this.orderTotal = customData.total || 0;
             this.orderDiscount = customData.discount || 0;
+            this.comboSavings = customData.combo_savings || customData.comboSavings || 0;
+            this.combos = customData.combos || [];
             this.placedOrderId = customData.id || '';
             this.placedOrderNumber = customData.orderNumber || '';
+            if (customData.payment_status || customData.paymentStatus) {
+                this.paymentStatus = customData.payment_status || customData.paymentStatus;
+            }
+            if (customData.amount_due !== undefined) {
+                this.amountDue = customData.amount_due;
+            }
+            if (customData.created_at || customData.createdAt) {
+                this.createdAt = customData.created_at || customData.createdAt;
+            }
         }
 
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -310,8 +371,29 @@ export class InvoiceComponent {
         text(this.formattedTime, margin + 24, y, { size: 9, color: textPrimary, bold: true });
 
         text('PAYMENT STATUS:', pageW - margin - 65, y, { size: 7.5, color: textMuted, bold: true });
-        const statusColor = this.paymentStatus === 'Paid' ? green : brandAccent;
-        text(this.paymentStatus, pageW - margin, y, { size: 9, color: statusColor, bold: true, align: 'right' });
+        const rawStatus = this.paymentStatusInfo.rawStatus;
+        const statusColor: [number, number, number] = rawStatus === 'paid'
+            ? green
+            : rawStatus === 'refund_due'
+                ? [220, 38, 38]
+                : rawStatus === 'awaiting_verification'
+                    ? [37, 99, 235]
+                    : brandAccent;
+
+        const maxStatusWidthMm = 45;
+        const statusText = this.paymentStatusDisplay;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8.5);
+        const statusLines = pdf.splitTextToSize(statusText, maxStatusWidthMm);
+        if (statusLines.length > 1) {
+            let statusY = y - 1;
+            statusLines.forEach((sLine: string, idx: number) => {
+                text(sLine, pageW - margin, statusY + (idx * 3.5), { size: 8.5, color: statusColor, bold: true, align: 'right' });
+            });
+            y += (statusLines.length - 1) * 3.5;
+        } else {
+            text(statusText, pageW - margin, y, { size: 8.5, color: statusColor, bold: true, align: 'right' });
+        }
         y += 9.5;
 
         // =====================
@@ -517,7 +599,17 @@ export class InvoiceComponent {
         //  PRODUCTS TABLE (AutoTable)
         // =====================
         const tableBody = (this.orderedItems || []).map((item: any) => {
-            const name = item.product?.name || item.product?.code || `Product ID: ${item.product?.id || 'Unknown'}`;
+            let name = item.product?.name || item.name || item.product?.title || '';
+            if (!name) {
+                name = item.product?.code || item.code || (item.product?.id ? `Product (${item.product.id.substring(0, 8)})` : 'Product');
+            }
+            if (item.order_combo_id) {
+                const matchCombo = (this.combos || []).find((c: any) => c.id === item.order_combo_id);
+                const comboName = matchCombo ? matchCombo.name : item.combo_name;
+                if (comboName) {
+                    name = `${name} (Combo: ${comboName})`;
+                }
+            }
             const isBengali = this.hasBengali(name);
 
             // Available width for product name column is ~66mm
@@ -620,6 +712,10 @@ export class InvoiceComponent {
             currentY += 5.5;
             totRow('Discount Applied:', `- BDT ${this.discount.toLocaleString()}`, currentY, { color: brandAccent, bold: true });
         }
+        if (this.comboSavings > 0) {
+            currentY += 5.5;
+            totRow('Combo Savings:', `- BDT ${this.comboSavings.toLocaleString()}`, currentY, { color: brandAccent, bold: true });
+        }
 
         // Grand Total
         y = currentY + 9;
@@ -656,19 +752,21 @@ export class InvoiceComponent {
         const boxW = totalsW;
         const boxH = 16;
         
-        const isPaid = this.paymentStatus === 'Paid';
+        const isPaid = this.paymentStatusDisplay.toLowerCase() === 'paid';
         const badgeBg: [number, number, number] = isPaid ? [240, 253, 244] : [244, 244, 245];
         const badgeBorder: [number, number, number] = isPaid ? [187, 247, 208] : borderColor;
         const badgeTextColor: [number, number, number] = isPaid ? green : textPrimary;
-        const amountDue = isPaid ? 0 : this.grandTotal;
+        const due = isPaid ? 0 : (this.amountDue !== undefined ? this.amountDue : this.grandTotal);
 
         pdf.setFillColor(...badgeBg);
         pdf.setDrawColor(...badgeBorder);
         pdf.setLineWidth(0.4);
         pdf.roundedRect(boxX, y, boxW, boxH, 1.5, 1.5, 'FD');
 
-        text('AMOUNT DUE', boxX + boxW / 2, y + 5, { size: 7, color: textMuted, bold: true, align: 'center' });
-        text(`BDT ${amountDue.toLocaleString()}`, boxX + boxW / 2, y + 11.5, { size: 12.5, color: badgeTextColor, bold: true, align: 'center' });
+        const badgeLabel = isPaid ? 'AMOUNT PAID' : (due < 0 ? 'REFUND DUE' : 'AMOUNT DUE');
+        const displayAmt = due < 0 ? -due : due;
+        text(badgeLabel, boxX + boxW / 2, y + 5, { size: 7, color: textMuted, bold: true, align: 'center' });
+        text(`BDT ${displayAmt.toLocaleString()}`, boxX + boxW / 2, y + 11.5, { size: 12.5, color: badgeTextColor, bold: true, align: 'center' });
 
         // Page Bottom Clean Minimal Footer
         const footerY = pageH - 12;

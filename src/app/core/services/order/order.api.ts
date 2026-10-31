@@ -14,6 +14,7 @@ export const ORDERS_API = {
     CANCEL: (orderId: number | string) => `${BASE}/${orderId}/cancel`,
     CONFIRM: (orderId: number | string) => `${BASE}/${orderId}/confirm`,
     COMPLETE: (orderId: number | string) => `${BASE}/${orderId}/complete`,
+    EXPORT_CSV: `${BASE}/export.csv`,
     TRACK_BY_PHONE: (phone: string) => `${BASE}/track?phone=${encodeURIComponent(phone)}`,
     TRACK_BY_ORDER_NUMBER: (orderNumber: string) => `${BASE}/track?order_number=${encodeURIComponent(orderNumber)}`,
     TRACK_BY_NUMBER: (orderNumber: string) => `${BASE}/order-number/${encodeURIComponent(orderNumber)}`,
@@ -23,4 +24,5 @@ export const ORDERS_API = {
     ADMIN_CONFIRM: (orderId: number | string) => `${ADMIN_BASE}/${orderId}/confirm`,
     ADMIN_CANCEL: (orderId: number | string) => `${ADMIN_BASE}/${orderId}/cancel`,
     ADMIN_COMPLETE: (orderId: number | string) => `${ADMIN_BASE}/${orderId}/complete`,
+    ADMIN_EDIT: (orderId: number | string, dryRun: boolean = false) => `${ADMIN_BASE}/${orderId}${dryRun ? '?dry_run=true' : ''}`,
 } as const;

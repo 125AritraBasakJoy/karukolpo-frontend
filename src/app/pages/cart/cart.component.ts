@@ -16,8 +16,10 @@ import { CartService } from '../../core/services/cart/cart.service';
 import { OrderService } from '../../core/services/order/order.service';
 import { ProductService } from '../../core/services/product/product.service';
 import { JourneyService } from '../../core/services/tracking/journey.service';
-import { CartItem } from '../../models/cart.model';
+import { CartItem, CartCombo } from '../../models/cart.model';
+import { ComboView } from '../../models/combo.model';
 import { districts, District } from '../../data/bangladesh-data';
+import { BundlePickerComponent } from '../../components/bundle-picker/bundle-picker.component';
 
 @Component({
     selector: 'app-cart',
@@ -33,6 +35,7 @@ import { districts, District } from '../../data/bangladesh-data';
         ToastModule,
         TagModule,
         InvoiceComponent,
+        BundlePickerComponent
     ],
     templateUrl: './cart.component.html',
     styleUrls: ['./cart.component.scss'],
@@ -76,9 +79,105 @@ export class CartComponent implements OnInit, OnDestroy {
     orderDeliveryCharge = 0;
     orderTotal = 0;
     orderDiscount = 0;
+    orderCombos: any[] = [];
+    orderComboSavings = 0;
     private createdOrderObj: any = null;
     private checkoutIdempotencyKey = '';
     private lastCheckoutSignature = '';
+
+    // Coupon and Quote
+    couponInput = '';
+    appliedCouponCode = '';
+    comboToChange = signal<CartCombo | null>(null);
+    changePickerVisible = signal<boolean>(false);
+
+    get quote() {
+        return this.cartService.quote();
+    }
+    get quoteLoading() {
+        return this.cartService.quoteLoading();
+    }
+    get quoteProblems(): string[] {
+        return this.quote?.problems || [];
+    }
+    get subtotalAmount(): number {
+        if (this.quote?.subtotal != null) return Number(this.quote.subtotal);
+        return this.cartService.subTotal();
+    }
+    get productDiscountAmount(): number {
+        return Number(this.quote?.product_discount || 0);
+    }
+    get comboSavingsAmount(): number {
+        return Number(this.quote?.combo_discount || 0);
+    }
+    get couponDiscountAmount(): number {
+        return Number(this.quote?.coupon?.discount || 0);
+    }
+    get deliveryAmount(): number {
+        if (this.quote?.delivery_charge != null) return Number(this.quote.delivery_charge);
+        return this.currentDeliveryCharge;
+    }
+    get totalAmount(): number {
+        if (this.quote?.total != null) return Number(this.quote.total);
+        return this.getTotalPrice();
+    }
+
+    applyCoupon() {
+        const code = this.couponInput.trim();
+        if (!code) return;
+        this.appliedCouponCode = code;
+        this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, this.appliedCouponCode);
+    }
+
+    removeCoupon() {
+        this.appliedCouponCode = '';
+        this.couponInput = '';
+        this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, null);
+    }
+
+    openChangeCombo(combo: CartCombo) {
+        this.comboToChange.set(combo);
+        this.changePickerVisible.set(true);
+    }
+
+    getComboDisplayItems(c: CartCombo): Array<{ product: any; quantity: number }> {
+        if (!c || !c.combo) return [];
+        if (c.combo.kind === 'mix_and_match') {
+            const picks = c.picks || [];
+            const countMap = new Map<string, number>();
+            for (const pid of picks) {
+                countMap.set(pid, (countMap.get(pid) || 0) + 1);
+            }
+            const result: Array<{ product: any; quantity: number }> = [];
+            for (const [pid, count] of countMap.entries()) {
+                const matchItem = c.combo.items.find(it => it.product?.id === pid);
+                if (matchItem?.product) {
+                    result.push({ product: matchItem.product, quantity: count * c.quantity });
+                }
+            }
+            return result.length > 0 ? result : c.combo.items.map(it => ({
+                product: it.product,
+                quantity: (it.quantity || 1) * c.quantity
+            }));
+        }
+
+        return c.combo.items.map(it => ({
+            product: it.product,
+            quantity: (it.quantity || 1) * c.quantity
+        }));
+    }
+
+    getComboLineTotal(c: CartCombo): number {
+        const price = typeof c.combo.combo_price === 'string' ? parseFloat(c.combo.combo_price) : Number(c.combo.combo_price || 0);
+        return price * c.quantity;
+    }
+
+    onComboChanged(event: { combo: ComboView; picks: string[] }) {
+        const current = this.comboToChange();
+        if (current) {
+            this.cartService.changeComboPicks(current, event.picks);
+        }
+    }
 
     // Checkout draft retention in localStorage (10 minutes)
     private readonly CHECKOUT_DRAFT_TTL = 600000;
@@ -105,6 +204,7 @@ export class CartComponent implements OnInit, OnDestroy {
             localStorage.removeItem('karukolpo_checkout_draft');
         }
         this.cartService.handleAbandonedCart();
+        this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, this.appliedCouponCode);
     }
 
     onFullNameChange(val: string) {
@@ -193,6 +293,12 @@ export class CartComponent implements OnInit, OnDestroy {
         this.loadSubDistricts(districtName);
         this.checkoutForm.subDistrict = '';
         this.saveFormState();
+        this.cartService.fetchQuote(districtName, this.checkoutForm.phoneNumber, this.appliedCouponCode);
+    }
+
+    onPhoneNumberChange(val: string) {
+        this.checkoutForm.phoneNumber = val;
+        this.cartService.fetchQuote(this.checkoutForm.district, val, this.appliedCouponCode);
     }
 
     get isCheckoutFormValid(): boolean {
@@ -206,8 +312,17 @@ export class CartComponent implements OnInit, OnDestroy {
     }
 
     proceedToPayment() {
-        if (this.cartService.cart().length === 0) {
+        if (this.cartService.isEmpty()) {
             this.messageService.add({ severity: 'warn', summary: 'Cart Empty', detail: 'Add items to cart first' });
+            return;
+        }
+
+        if (this.quoteProblems.length > 0) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Action Required',
+                detail: this.quoteProblems[0]
+            });
             return;
         }
 
@@ -235,11 +350,12 @@ export class CartComponent implements OnInit, OnDestroy {
     }
 
     private getOrCreateIdempotencyKey(): string {
-        // ponytail: JSON signature tracks phone, address, and cart item/qty changes; upgrade if form structure expands
         const signature = JSON.stringify({
             phone: this.checkoutForm.phoneNumber,
             address: this.checkoutForm.fullAddress,
-            items: this.cartService.cart().map(i => ({ id: i.product?.id, q: i.quantity }))
+            items: this.cartService.cart().map(i => ({ id: i.product?.id, q: i.quantity })),
+            combos: this.cartService.combos().map(c => ({ id: c.combo.id, q: c.quantity, picks: c.picks })),
+            coupon: this.appliedCouponCode
         });
         if (!this.checkoutIdempotencyKey || this.lastCheckoutSignature !== signature) {
             this.checkoutIdempotencyKey = crypto.randomUUID();
@@ -257,23 +373,64 @@ export class CartComponent implements OnInit, OnDestroy {
         return {
             ...this.checkoutForm,
             items: this.cartService.cart(),
-            totalAmount: this.getTotalPrice(),
+            combos: this.cartService.combos().map(c => ({
+                combo_id: c.combo.id,
+                quantity: c.quantity,
+                ...(c.picks && c.picks.length ? { picks: c.picks } : {})
+            })),
+            couponCode: this.appliedCouponCode || undefined,
+            totalAmount: this.totalAmount,
             status: 'Pending' as 'Pending',
             paymentMethod: paymentMethod,
-            paymentStatus: paymentMethod === 'COD' ? 'Confirmed' : 'Pending',
             deliveryLocation: this.deliveryLocation,
-            deliveryCharge: this.currentDeliveryCharge,
+            deliveryCharge: this.deliveryAmount,
             orderDate: new Date()
         };
     }
 
     private saveCashMemoData(paymentMethod: string) {
-        this.orderedItems = [...this.cartService.cart()];
+        if (this.createdOrderObj && this.createdOrderObj.items && this.createdOrderObj.items.length > 0) {
+            const products = [
+                ...this.cartService.cart().map(item => item.product),
+                ...this.cartService.combos().flatMap(c => c.combo.items.map(item => item.product))
+            ];
+            const namesById = new Map(
+                products.filter(product => product.name?.trim())
+                    .map(product => [String(product.id), product.name] as const)
+            );
+
+            this.orderedItems = this.createdOrderObj.items.map((item: any) => {
+                const id = item.product?.id || item.product_id;
+                if (item.product?.name?.trim() || item.name?.trim() || item.product?.title?.trim()) {
+                    return item;
+                }
+                const name = namesById.get(String(id));
+                return name
+                    ? { ...item, product: { ...item.product, name } }
+                    : item;
+            });
+        } else {
+            const fallbackItems = [...this.cartService.cart()];
+            for (const c of this.cartService.combos()) {
+                for (const it of c.combo.items) {
+                    fallbackItems.push({
+                        product: it.product,
+                        quantity: (it.quantity || 1) * c.quantity,
+                        unit_price: it.product.effective_price ?? it.product.price,
+                        price_at_purchase: it.product.effective_price ?? it.product.price,
+                        order_combo_id: c.combo.id
+                    } as any);
+                }
+            }
+            this.orderedItems = fallbackItems;
+        }
+        this.orderCombos = this.createdOrderObj?.combos || this.cartService.combos().map(c => ({ ...c.combo, quantity: c.quantity, picks: c.picks }));
+        this.orderComboSavings = this.createdOrderObj?.combo_savings ?? this.comboSavingsAmount;
         this.orderFormSnapshot = { ...this.checkoutForm };
         this.orderPaymentMethod = paymentMethod;
-        this.orderDeliveryCharge = this.currentDeliveryCharge;
-        this.orderTotal = this.createdOrderObj?.totalAmount ?? this.getTotalPrice();
-        this.orderDiscount = this.createdOrderObj?.discountAmount ?? 0;
+        this.orderDeliveryCharge = this.createdOrderObj?.deliveryCharge ?? this.deliveryAmount;
+        this.orderTotal = this.createdOrderObj?.totalAmount ?? this.totalAmount;
+        this.orderDiscount = this.createdOrderObj?.discountAmount ?? (this.productDiscountAmount + this.couponDiscountAmount);
     }
 
     selectPaymentMethod(method: 'COD' | 'bKash') {
@@ -311,10 +468,8 @@ export class CartComponent implements OnInit, OnDestroy {
                 window.scrollTo(0, 0);
             }
 
-            const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearAbandonClock();
             this.cartService.clearCart();
-            this.productService.reduceStock(cartItemsToReduce);
             this.clearCheckoutDraft();
         } catch (err) {
             console.error('COD Order creation failed', err);
@@ -327,6 +482,16 @@ export class CartComponent implements OnInit, OnDestroy {
     async submitBkashPayment() {
         if (!this.bkashTrxId || !this.bkashPhone) {
             this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Transaction ID and Phone Number are required' });
+            return;
+        }
+
+        const cleanTrx = this.bkashTrxId.toUpperCase().trim();
+        if (!/^[A-Z0-9]{10}$/.test(cleanTrx)) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Invalid TrxID',
+                detail: 'bKash Transaction ID must be exactly 10 alphanumeric characters (e.g. BL99K7M80J)'
+            });
             return;
         }
 
@@ -354,7 +519,7 @@ export class CartComponent implements OnInit, OnDestroy {
         }
 
         const payload = {
-            transaction_id: this.bkashTrxId.trim(),
+            transaction_id: cleanTrx,
             sender_phone: cleanPhone
         };
 
@@ -368,10 +533,8 @@ export class CartComponent implements OnInit, OnDestroy {
                 window.scrollTo(0, 0);
             }
 
-            const cartItemsToReduce = [...this.orderedItems];
             this.cartService.clearAbandonClock();
             this.cartService.clearCart();
-            this.productService.reduceStock(cartItemsToReduce);
             this.clearCheckoutDraft();
         } catch (err: any) {
             console.error('Payment submission failed:', err);

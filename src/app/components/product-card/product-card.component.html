@@ -1,0 +1,53 @@
+<div class="premium-product-card flex flex-column h-full relative cursor-pointer"
+     [class.compact-card]="compact"
+     (click)="onCardClick()"
+     role="button"
+     [attr.aria-label]="product.name">
+  <!-- Badges Stack Top Left -->
+  <div class="product-badges-stack pointer-events-none">
+    <span *ngIf="hasDiscount" class="discount-badge">
+      {{ discountBadgeText }}
+    </span>
+    <span *ngIf="isOutOfStock" class="oos-badge">
+      Sold Out
+    </span>
+  </div>
+
+  <!-- Product Image Wrapper -->
+  <div class="product-img-box relative overflow-hidden">
+    <img [src]="product.imageUrl" [alt]="product.name" class="artisan-product-img" loading="lazy" decoding="async" />
+  </div>
+
+  <!-- Product Meta Info -->
+  <div class="product-info-content p-2 flex flex-column flex-grow-1">
+    <div class="product-header-flex">
+      <div class="flex align-items-start justify-content-between gap-2 mb-1">
+        <h3 class="product-title flex-1">{{ product.name }}</h3>
+        <span *ngIf="!isOutOfStock && !compact" class="in-stock-badge flex-shrink-0 mt-1">
+          <span class="dot"></span> In Stock
+        </span>
+      </div>
+      <div class="price-container">
+        <span class="current-price font-bold">
+          ৳{{ (product.effective_price || product.price) | number:'1.0-0' }}
+        </span>
+        <span *ngIf="hasDiscount" class="old-price text-xs line-through">
+          ৳{{ product.price | number:'1.0-0' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Card Bottom Row: Cart Action -->
+    <div class="card-bottom-actions mt-auto pt-2 border-top-1 surface-border">
+      <button *ngIf="!isOutOfStock" type="button" class="btn-product-add-cart w-full flex align-items-center justify-content-center gap-2"
+              (click)="onQuickAdd($event)" title="Add to Cart" aria-label="Add to cart">
+        <i class="pi pi-shopping-bag"></i>
+        <span>Add to Cart</span>
+      </button>
+      <button *ngIf="isOutOfStock" type="button" class="btn-product-add-cart disabled w-full flex align-items-center justify-content-center gap-2"
+              disabled title="Out of Stock">
+        <span>Out of Stock</span>
+      </button>
+    </div>
+  </div>
+</div>

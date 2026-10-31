@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, HostListener, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, HostListener, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
@@ -46,7 +46,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   expandedSubmenus = signal<Set<string>>(new Set(['Out Sales']));
 
   breadcrumbItems: MenuItem[] = [];
-  homeItem: MenuItem = { icon: 'pi pi-home', routerLink: '/admin/inventory' };
+  homeItem: MenuItem = { icon: 'pi pi-home', routerLink: '/admin/dashboard/inventory' };
 
   private notificationService = inject(NotificationService);
   private messageService = inject(MessageService);
@@ -72,6 +72,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ]
     },
     { label: 'Add Product', icon: 'pi pi-plus-circle', route: 'products/add', section: 'Products' },
+    { label: 'Combo Offers', icon: 'pi pi-th-large', route: 'combos', section: 'Products' },
     { label: 'Control Hot Deals', icon: 'pi pi-bolt', route: 'hot-deals', section: 'Main' },
     { label: 'Best Selling', icon: 'pi pi-star', route: 'best-selling', section: 'Main' },
     { label: 'Publish Notice', icon: 'pi pi-megaphone', route: 'site-notice', section: 'Settings' },
@@ -83,12 +84,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     public themeService: ThemeService
   ) { }
 
-  get unreadOrderCount(): number {
+  private _unreadOrderCount = computed<number>(() => {
     const unreadList = this.notificationService.notificationsSignal().filter(n => !(n.is_read || n.read) && (n.type === 'order' || n.type === 'order_placed'));
     if (unreadList.length === 0 && this.notificationService.unreadCountSignal() > 0) {
       return this.notificationService.unreadCountSignal();
     }
     return unreadList.length;
+  });
+
+  get unreadOrderCount(): number {
+    return this._unreadOrderCount();
   }
 
   ngOnInit() {
@@ -123,7 +128,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private checkScreenSize() {
     const wasMobile = this.isMobile();
-    this.isMobile.set(window.innerWidth < 768);
+    const isNowMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+    this.isMobile.set(isNowMobile);
 
     // Auto-collapse sidebar on mobile
     if (this.isMobile() && !wasMobile) {
@@ -148,13 +154,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Skip 'admin' itself as a clickable breadcrumb if it's the first segment
       if (segment === 'admin' && index === 0) return;
 
-      let menuItem = this.menuItems.find(item => item.route === segment || item.route.includes(segment));
+      const fullChildRoute = segments.slice(index).join('/');
+      let menuItem = this.menuItems.find(item => item.route === segment || item.route === fullChildRoute);
 
       // Also check child menu items
       if (!menuItem) {
         for (const parent of this.menuItems) {
           if (parent.children) {
-            const child = parent.children.find(c => c.route === segment || c.route.includes(segment) || c.route.endsWith('/' + segment));
+            const child = parent.children.find(c => c.route === segment || c.route === fullChildRoute || (index > 0 && c.route === `${segments[index - 1]}/${segment}`));
             if (child) {
               menuItem = { label: child.label, icon: child.icon || parent.icon, route: child.route };
               break;
@@ -247,12 +254,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  private readonly cachedMenuSections: string[] = [...new Set(this.menuItems.map(item => item.section || 'Other'))];
+  private readonly cachedSectionItems = new Map<string, SidebarMenuItem[]>();
+
   getMenuSections(): string[] {
-    return [...new Set(this.menuItems.map(item => item.section || 'Other'))];
+    return this.cachedMenuSections;
   }
 
   getItemsBySection(section: string): SidebarMenuItem[] {
-    return this.menuItems.filter(item => (item.section || 'Other') === section);
+    let items = this.cachedSectionItems.get(section);
+    if (!items) {
+      items = this.menuItems.filter(item => (item.section || 'Other') === section);
+      this.cachedSectionItems.set(section, items);
+    }
+    return items;
   }
 
   isSectionExpanded(section: string): boolean {

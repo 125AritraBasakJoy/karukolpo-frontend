@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, computed, effect, inject, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser, DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -27,6 +28,7 @@ type AnalyticsTab = 'overview' | 'sales' | 'customers' | 'inventory' | 'traffic'
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     FormsModule,
     ChartModule,
     CardModule,
@@ -348,7 +350,13 @@ export class AnalyticsComponent implements OnInit {
         orders_growth_percentage: rawOverview.orders?.booked_change_pct !== undefined ? rawOverview.orders.booked_change_pct : null,
         average_order_value: rawOverview.aov?.realized_total ? parseFloat(rawOverview.aov.realized_total) : (rawOverview.average_order_value || 0),
         conversion_rate: 0,
-        active_customers: rawOverview.customers?.total ?? (rawOverview.active_customers || 0)
+        active_customers: rawOverview.customers?.total ?? (rawOverview.active_customers || 0),
+        action_queue: rawOverview.action_queue ? {
+          pending_orders: typeof rawOverview.action_queue.pending_orders === 'number' ? rawOverview.action_queue.pending_orders : 0,
+          payments_to_verify: typeof rawOverview.action_queue.payments_to_verify === 'number' ? rawOverview.action_queue.payments_to_verify : 0,
+          low_stock: typeof rawOverview.action_queue.low_stock === 'number' ? rawOverview.action_queue.low_stock : 0,
+          refunds_due: typeof rawOverview.action_queue.refunds_due === 'number' ? rawOverview.action_queue.refunds_due : 0
+        } : undefined
       };
 
       // Map traffic overview

@@ -32,6 +32,9 @@ export interface Product {
   isBestSeller?: boolean;
   discount_type?: string | null;
   discount_value?: number | null;
+  discount_percent?: number | null;
+  savings?: number | null;
+  has_active_discount?: boolean;
   discount_starts_at?: Date | string | null;
   discount_ends_at?: Date | string | null;
   effective_price?: number;

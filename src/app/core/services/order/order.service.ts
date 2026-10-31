@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject, forkJoin, of } from 'rxjs';
-import { map, tap, catchError, switchMap, shareReplay, finalize } from 'rxjs/operators';
-import { Order } from '../../../models/order.model';
+import { Observable, Subject, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
+import { Order, OrderAdminUpdate, OrderEditResult } from '../../../models/order.model';
+import { PaymentStatus } from '../../../models/payment.model';
 import { ApiService } from '../api/api.service';
 import { ORDERS_API } from './order.api';
 import { PAYMENTS_API } from '../payment/payment.api';
-import { buildListQuery } from '../api/helpers';
 
 const API_ENDPOINTS = {
   ORDERS: ORDERS_API,
@@ -30,6 +30,22 @@ export interface PaymentConfirm {
   gateway_response?: any;
 }
 
+export interface OrderQueryOptions {
+  skip?: number;
+  limit?: number;
+  status?: string;
+  channel?: 'all' | 'online' | 'offline' | string;
+  paymentMethod?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  q?: string;
+}
+
+export interface OrdersResponse {
+  items: Order[];
+  total: number;
+}
+
 /**
  * OrderService - Backend API Integration
  * URL configured in src/environments/environment.ts
@@ -40,16 +56,44 @@ export interface PaymentConfirm {
 export class OrderService {
   private newOrderSubject = new Subject<OrderNotification>();
   newOrderNotification$ = this.newOrderSubject.asObservable();
-  private ordersCache: Order[] | null = null;
-  private pendingOrdersRequest: Observable<Order[]> | null = null;
 
   constructor(private apiService: ApiService) { }
 
   /**
-   * Clear orders cache
+   * Clear orders cache (kept for backwards-compatibility)
    */
   clearCache() {
-    this.ordersCache = null;
+    // No-op: cache removed to avoid stale limits/queries
+  }
+
+  buildOrderQueryParams(options: OrderQueryOptions = {}): string {
+    const params = new URLSearchParams();
+    if (options.skip !== undefined && options.skip !== null) {
+      params.append('skip', options.skip.toString());
+    }
+    if (options.limit !== undefined && options.limit !== null) {
+      params.append('limit', options.limit.toString());
+    }
+    if (options.status && options.status.trim()) {
+      params.append('status', options.status.trim());
+    }
+    if (options.channel && options.channel.trim()) {
+      params.append('channel', options.channel.trim());
+    }
+    if (options.paymentMethod && options.paymentMethod.trim()) {
+      params.append('payment_method', options.paymentMethod.trim());
+    }
+    if (options.dateFrom && options.dateFrom.trim()) {
+      params.append('date_from', options.dateFrom.trim());
+    }
+    if (options.dateTo && options.dateTo.trim()) {
+      params.append('date_to', options.dateTo.trim());
+    }
+    if (options.q && options.q.trim()) {
+      params.append('q', options.q.trim());
+    }
+    const qs = params.toString();
+    return qs ? `?${qs}` : '';
   }
 
   /**
@@ -61,12 +105,10 @@ export class OrderService {
     const options = idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined;
     return this.apiService.post<any>(API_ENDPOINTS.ORDERS.CREATE, backendOrder, options).pipe(
       tap({
-        next: () => this.clearCache(), // Invalidate cache on new order
         error: (err) => console.error('Order creation failed:', err)
       }),
       map(response => {
         const mappedOrder = this.mapBackendOrder(response);
-        // Notify admin of new order
         this.notifyAdmin(mappedOrder.id || '', 'new');
         return mappedOrder;
       })
@@ -74,66 +116,62 @@ export class OrderService {
   }
 
   /**
-   * Get all orders
-   * GET /orders
-   * Fetches all orders (default limit 100) to allow client-side pagination
-   * since backend does not return total count.
+   * Get orders with total count from X-Total-Count header.
    */
-  getOrders(skip = 0, limit = 100, forceRefresh = false): Observable<Order[]> {
-    if (!forceRefresh && this.ordersCache && skip === 0) {
-      return of(this.ordersCache);
-    }
-
-    if (!forceRefresh && this.pendingOrdersRequest && skip === 0) {
-      return this.pendingOrdersRequest;
-    }
-
-    const query = buildListQuery(skip, limit);
-    const request = this.apiService.get<any>(`${API_ENDPOINTS.ORDERS.LIST}${query}`).pipe(
-      map(response => {
-        // Handle direct array or wrapped object { data: [], orders: [], etc }
-        let rawOrders: any[] = [];
-
-        if (Array.isArray(response)) {
-          rawOrders = response;
-        } else if (response && typeof response === 'object') {
-          rawOrders = response.data || response.orders || response.results || [];
-        }
-
-        if (!rawOrders || rawOrders.length === 0) {
-          return [];
-        }
-        return rawOrders.map(order => this.mapBackendOrder(order));
-      }),
-      tap(orders => {
-        if (skip === 0) {
-          this.ordersCache = orders;
-        }
-      }),
-      shareReplay(1),
-      finalize(() => {
-        if (skip === 0) {
-          this.pendingOrdersRequest = null;
-        }
+  getOrdersWithCount(options: OrderQueryOptions = {}): Observable<OrdersResponse> {
+    const qs = this.buildOrderQueryParams(options);
+    return this.apiService.getResponse<any[]>(`${API_ENDPOINTS.ORDERS.LIST}${qs}`).pipe(
+      map(res => {
+        const rawOrders = Array.isArray(res.body) ? res.body : [];
+        const items = rawOrders.map(order => this.mapBackendOrder(order));
+        const totalHeader = res.headers.get('x-total-count') || res.headers.get('X-Total-Count');
+        const total = totalHeader ? parseInt(totalHeader, 10) : items.length;
+        return { items, total };
       }),
       catchError(err => {
         console.error('Failed to fetch orders:', err);
         throw err;
       })
     );
-
-    if (skip === 0) {
-      this.pendingOrdersRequest = request;
-    }
-
-    return request;
   }
 
   /**
-   * Reload orders (alias for getOrders)
+   * Get all orders
+   * GET /orders
+   */
+  getOrders(
+    optionsOrSkip: OrderQueryOptions | number = 0,
+    limit = 100,
+    forceRefresh = false
+  ): Observable<Order[]> {
+    if (typeof optionsOrSkip === 'object') {
+      return this.getOrdersWithCount(optionsOrSkip).pipe(map(res => res.items));
+    }
+    return this.getOrdersWithCount({ skip: optionsOrSkip, limit }).pipe(map(res => res.items));
+  }
+
+  /**
+   * Reload orders
    */
   reloadOrders(): Observable<Order[]> {
-    return this.getOrders(0, 10000, true);
+    return this.getOrders(0, 100, true);
+  }
+
+  /**
+   * Export all orders matching filters as streaming CSV
+   * GET /orders/export.csv
+   */
+  exportOrdersCsv(filters: OrderQueryOptions = {}): Observable<Blob> {
+    const { skip, limit, ...filterOpts } = filters;
+    const qs = this.buildOrderQueryParams(filterOpts);
+    return this.apiService.getBlob(`${API_ENDPOINTS.ORDERS.EXPORT_CSV}${qs}`).pipe(
+      map(res => {
+        if (!res.body) {
+          throw new Error('Empty CSV response');
+        }
+        return res.body;
+      })
+    );
   }
 
   /**
@@ -141,21 +179,23 @@ export class OrderService {
    * GET /orders/{id}
    */
   getOrderById(id: number | string): Observable<Order | undefined> {
-    // Use ID as is
-    const orderId = id;
-
-    return this.apiService.get<any>(API_ENDPOINTS.ORDERS.GET_BY_ID(orderId)).pipe(
-      map(order => this.mapBackendOrder(order))
+    return this.apiService.get<any>(API_ENDPOINTS.ORDERS.GET_BY_ID(id)).pipe(
+      map(order => this.mapBackendOrder(order)),
+      catchError(err => {
+        console.error(`Failed to load order ${id}`, err);
+        return of(undefined);
+      })
     );
   }
 
+  /**
+   * Find order by phone using server-side query
+   */
   getOrderByPhone(phone: string): Observable<Order | undefined> {
-    // Fetch a larger batch when searching by phone to increase chance of finding it
-    // ideally backend should support phone filter directly
-    return this.getOrders(0, 10000).pipe(
-      map(orders => {
-        const matches = orders.filter((o: Order) => o.phoneNumber === phone);
-        return matches.length > 0 ? matches[matches.length - 1] : undefined;
+    return this.getOrdersWithCount({ q: phone.trim(), limit: 20 }).pipe(
+      map(res => {
+        const matches = res.items.filter(o => o.phoneNumber === phone || o.phoneNumber.includes(phone.trim()));
+        return matches.length > 0 ? matches[0] : res.items[0];
       })
     );
   }
@@ -198,7 +238,7 @@ export class OrderService {
 
   /**
    * Smart order search for Admin:
-   * Handles Phone Number, Order Number, or Order UUID, then enriches with full OrderRead details.
+   * Uses indexed GET /orders?q= to return full admin rows
    */
   searchAdminOrders(query: string): Observable<Order[]> {
     const trimmed = query.trim();
@@ -214,56 +254,10 @@ export class OrderService {
       );
     }
 
-    const cleanDigits = trimmed.replace(/[\s\-\(\)\+]/g, '');
-    const isLikelyPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanDigits) || (/^\d+$/.test(cleanDigits) && cleanDigits.length >= 10);
-
-    const searchReq = isLikelyPhone
-      ? this.trackOrdersByPhone(trimmed)
-      : this.trackOrdersByOrderNumber(trimmed);
-
-    return searchReq.pipe(
-      switchMap(trackedOrders => {
-        if (!trackedOrders || trackedOrders.length === 0) {
-          // Check local cache fallback
-          if (this.ordersCache && this.ordersCache.length > 0) {
-            const qLower = trimmed.toLowerCase();
-            const matched = this.ordersCache.filter(o =>
-              (o.orderNumber && o.orderNumber.toLowerCase().includes(qLower)) ||
-              (o.phoneNumber && o.phoneNumber.includes(cleanDigits)) ||
-              (o.fullName && o.fullName.toLowerCase().includes(qLower)) ||
-              (o.id && o.id.toLowerCase() === qLower)
-            );
-            if (matched.length > 0) {
-              return of(matched);
-            }
-          }
-          return of([]);
-        }
-
-        // For orders returned from /orders/track, enrich with full order details via /orders/{order_id}
-        const enrichObservables = trackedOrders.map(trackedOrder => {
-          if (trackedOrder.id && uuidRegex.test(trackedOrder.id)) {
-            return this.getOrderById(trackedOrder.id).pipe(
-              map(fullOrder => fullOrder || trackedOrder),
-              catchError(() => of(trackedOrder))
-            );
-          }
-          return of(trackedOrder);
-        });
-
-        return forkJoin(enrichObservables);
-      }),
+    return this.getOrdersWithCount({ q: trimmed, limit: 100 }).pipe(
+      map(res => res.items),
       catchError(err => {
-        console.error('searchAdminOrders failed, trying local cache fallback', err);
-        if (this.ordersCache && this.ordersCache.length > 0) {
-          const qLower = trimmed.toLowerCase();
-          const matched = this.ordersCache.filter(o =>
-            (o.orderNumber && o.orderNumber.toLowerCase().includes(qLower)) ||
-            (o.phoneNumber && o.phoneNumber.includes(cleanDigits)) ||
-            (o.fullName && o.fullName.toLowerCase().includes(qLower))
-          );
-          return of(matched);
-        }
+        console.error('searchAdminOrders failed:', err);
         return of([]);
       })
     );
@@ -296,7 +290,6 @@ export class OrderService {
     const body = data || null;
     return this.apiService.patch<any>(url, body).pipe(
       tap(() => {
-        this.clearCache();
         this.notifyAdmin(id.toString(), 'cancel');
       }),
       map(order => this.mapBackendOrder(order))
@@ -307,42 +300,44 @@ export class OrderService {
    * Admin: Confirm Order
    * PATCH /admin/orders/{id}/confirm
    */
-  adminConfirmOrder(id: number | string): Observable<Order> {
-    // Use the specific admin confirm endpoint as requested (takes no body parameters per spec)
+  adminConfirmOrder(id: number | string): Observable<any> {
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CONFIRM(id), {}).pipe(
-      tap(() => this.clearCache()),
-      map(order => this.mapBackendOrder(order)),
-      catchError((err: any) => {
-        console.error('Admin Confirm Order Failed. Status:', err.status);
-        throw err;
-      })
+      tap(() => this.notifyAdmin(id.toString(), 'update'))
     );
   }
 
   /**
    * Admin: Cancel Order
-   * Uses PATCH /admin/orders/{id}/cancel
+   * PATCH /admin/orders/{id}/cancel { "reason": "..." }
    */
   adminCancelOrder(id: number | string, reason?: string): Observable<any> {
     const body = reason ? { reason } : {};
     return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_CANCEL(id), body).pipe(
-      tap(() => this.clearCache())
+      tap(() => this.notifyAdmin(id.toString(), 'cancel'))
     );
   }
 
   /**
-   * Admin: Complete Order
-   * Uses PATCH /admin/orders/{id} with status: 'completed'
-   * Since /confirm endpoint only accepts pending orders
+   * Admin: Complete Order (Mark Delivered)
+   * PATCH /admin/orders/{id}/complete { "collected_via": "..." }
    */
-  adminCompleteOrder(id: number | string): Observable<Order> {
-    // Use the specific admin complete endpoint (takes no body parameters per spec)
-    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_COMPLETE(id), {}).pipe(
-      tap(() => this.clearCache()),
-      map(order => this.mapBackendOrder(order)),
-      catchError((err: any) => {
-        console.error('Admin Complete Order Failed. Status:', err.status);
-        throw err;
+  adminCompleteOrder(id: number | string, collectedVia?: string): Observable<any> {
+    const body = collectedVia ? { collected_via: collectedVia } : {};
+    return this.apiService.patch<any>(API_ENDPOINTS.ORDERS.ADMIN_COMPLETE(id), body).pipe(
+      tap(() => this.notifyAdmin(id.toString(), 'update'))
+    );
+  }
+
+  /**
+   * Admin: Edit an Online Order
+   * PATCH /admin/orders/{id}?dry_run=true|false
+   */
+  editOrder(id: number | string, update: OrderAdminUpdate, dryRun: boolean = false): Observable<OrderEditResult> {
+    return this.apiService.patch<OrderEditResult>(API_ENDPOINTS.ORDERS.ADMIN_EDIT(id, dryRun), update).pipe(
+      tap(() => {
+        if (!dryRun) {
+          this.notifyAdmin(id.toString(), 'update');
+        }
       })
     );
   }
@@ -352,9 +347,7 @@ export class OrderService {
    * POST /orders/{order_id}/payments
    */
   createPayment(orderId: number | string, paymentData: PaymentCreate): Observable<any> {
-    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.CREATE(orderId), paymentData).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.apiService.post<any>(API_ENDPOINTS.PAYMENTS.CREATE(orderId), paymentData);
   }
 
   /**
@@ -362,62 +355,34 @@ export class OrderService {
    * PATCH /orders/{order_id}/payments/{payment_id}/confirm
    */
   confirmPayment(orderId: number | string, paymentId: number | string, confirmData: PaymentConfirm): Observable<any> {
-    return this.apiService.patch<any>(API_ENDPOINTS.PAYMENTS.CONFIRM(orderId, paymentId), confirmData).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.apiService.patch<any>(API_ENDPOINTS.PAYMENTS.CONFIRM(orderId, paymentId), confirmData);
   }
 
   /**
    * Submit Transaction ID (bKash flow)
    * POST /orders/{order_id}/payment/submit
-   * Submit bKash transaction details
    */
   submitTrx(orderId: number | string, data: any, phone: string): Observable<any> {
     const url = `${API_ENDPOINTS.PAYMENTS.SUBMIT_TRX(orderId)}?phone=${encodeURIComponent(phone)}`;
-    return this.apiService.post<any>(url, data).pipe(
-      tap(() => this.clearCache())
-    );
+    return this.apiService.post<any>(url, data);
   }
 
-  updateOrderStatus(id: string, status: 'Confirmed' | 'Cancelled' | 'Completed'): Observable<void> {
-    // Pass ID directly, do not parse
-    let updateObs: Observable<Order>;
+  updateOrderStatus(id: string, status: 'Confirmed' | 'Cancelled' | 'Completed', reason?: string, collectedVia?: string): Observable<void> {
+    let updateObs: Observable<any>;
 
     if (status === 'Confirmed') {
       updateObs = this.adminConfirmOrder(id);
     } else if (status === 'Cancelled') {
-      updateObs = this.adminCancelOrder(id);
+      updateObs = this.adminCancelOrder(id, reason);
     } else if (status === 'Completed') {
-      updateObs = this.adminCompleteOrder(id);
+      updateObs = this.adminCompleteOrder(id, collectedVia);
     } else {
-      // Fallback for unexpected statuses
-      console.warn(`Status update to ${status} not supported by backend yet`);
-      return new Observable<void>(observer => {
-        observer.next();
-        observer.complete();
-      });
+      return of(void 0);
     }
 
     return updateObs.pipe(
-      tap(() => {
-        this.clearCache();
-        // Trigger a notification so components can reload
-        this.notifyAdmin(id, status === 'Cancelled' ? 'cancel' : 'update');
-      }),
       map(() => void 0)
     );
-  }
-
-  /**
-   * Update payment info
-   * Note: Backend has separate payment endpoints
-   */
-  updateOrderPayment(id: string, method: 'COD' | 'bKash', status: 'Pending' | 'Paid'): Observable<void> {
-    console.warn('Payment update should use payment endpoints');
-    return new Observable<void>(observer => {
-      observer.next();
-      observer.complete();
-    });
   }
 
   /**
@@ -432,29 +397,35 @@ export class OrderService {
    */
   private mapFrontendToBackend(order: Omit<Order, 'id'>): any {
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-    const payload = {
+    const standaloneItems = (order.items || []).filter(item => !item.order_combo_id);
+    const combos = (order.combos || []).map(c => ({
+      combo_id: c.combo_id,
+      quantity: c.quantity,
+      ...(c.picks && c.picks.length ? { picks: c.picks } : {})
+    }));
+
+    const payload: any = {
       address: {
         full_name: order.fullName,
         phone: order.phoneNumber,
         district: order.district,
         subdistrict: order.subDistrict || '',
         address_line: order.fullAddress,
-        additional_info: order.additionalInfo || '', // Schema requires string, null causes 422
-        email: order.email ? order.email : null // Send null when email is blank
+        additional_info: order.additionalInfo || '',
+        email: order.email ? order.email : null
       },
-      items: order.items.map(item => ({
+      items: standaloneItems.map(item => ({
         product_id: item.product.id,
         quantity: item.quantity
       })),
-      // strictly use lowercase 'bkash'
+      combos,
       payment_method: order.paymentMethod ? (order.paymentMethod.toLowerCase() === 'bkash' ? 'bkash' : order.paymentMethod) : null,
-      payment_status: order.paymentStatus ? order.paymentStatus : 'Pending',
+      coupon_code: order.couponCode || null,
       utm_source: urlParams ? urlParams.get('utm_source') : null,
       utm_medium: urlParams ? urlParams.get('utm_medium') : null,
       utm_campaign: urlParams ? urlParams.get('utm_campaign') : null,
       referrer: typeof window !== 'undefined' ? (document.referrer || null) : null
     };
-
 
     return payload;
   }
@@ -463,69 +434,41 @@ export class OrderService {
    * Map backend order format to frontend format
    */
   mapBackendOrder(backendOrder: any): Order {
-    // Robust payment method extraction
-    let paymentMethod = null; // Default to null instead of 'COD'
+    let paymentMethod = null;
     if (backendOrder.payment_method) {
       paymentMethod = backendOrder.payment_method;
     } else if (backendOrder.payment && backendOrder.payment.payment_method) {
       paymentMethod = backendOrder.payment.payment_method;
+    } else if (backendOrder.payments && backendOrder.payments.payment_method) {
+      paymentMethod = backendOrder.payments.payment_method;
     } else if (backendOrder.paymentMethod) {
       paymentMethod = backendOrder.paymentMethod;
     }
 
-    // Robust payment status extraction
-    let rawPaymentStatus: string | undefined;
+    // Root payment_status is authoritative from backend
+    const rawPaymentStatus: PaymentStatus = (
+      backendOrder.payment_status ||
+      (backendOrder.payments?.status === 'verified' ? 'paid' : 'unpaid')
+    ).toLowerCase().trim() as PaymentStatus;
 
-    // Check payments (plural) first as it seems to be the new structure
-    if (backendOrder.payments && backendOrder.payments.status) {
-      rawPaymentStatus = backendOrder.payments.status;
-    } else if (backendOrder.payment && backendOrder.payment.status) { // Prioritize nested payment object status
-      rawPaymentStatus = backendOrder.payment.status;
-    } else if (backendOrder.payment_status) {
-      rawPaymentStatus = backendOrder.payment_status;
-    } else if (backendOrder.paymentStatus) {
-      rawPaymentStatus = backendOrder.paymentStatus;
-    }
+    const amountPaid = backendOrder.amount_paid != null ? parseFloat(backendOrder.amount_paid) : 0;
+    const amountRefunded = backendOrder.amount_refunded != null ? parseFloat(backendOrder.amount_refunded) : 0;
+    const amountDue = backendOrder.amount_due != null ? parseFloat(backendOrder.amount_due) : 0;
 
-    let paymentStatus = 'Pending'; // Default
-    if (rawPaymentStatus) {
-      // Do not hardcode "Paid" mapping. Use the backend status directly.
-      // Just capitalize the first letter for display.
-      const statusLower = rawPaymentStatus.toLowerCase().trim();
-      paymentStatus = rawPaymentStatus.charAt(0).toUpperCase() + rawPaymentStatus.slice(1);
-    }
-
-    // Force COD Confirmed if method is COD and status is Pending (Backend doesn't handle COD auto-confirm)
-    if (paymentMethod && paymentMethod.toLowerCase() === 'cod' && paymentStatus === 'Pending') {
-      paymentStatus = 'COD Confirmed';
-    }
-
-    // Map backend status first
     const orderStatus = this.mapBackendStatus(backendOrder.status);
 
-    // Removed hardcoded bKash mapping to allow backend to dictate status text
-    // The backend should return 'Bkash Confirmed' or similar if that's the desired status.
-
-    // Extract transaction ID with robust checks
     let transactionId = undefined;
-
-    // Check nested payment object first (singular or plural)
-    const p = backendOrder.payment || backendOrder.payments;
-
+    const p = backendOrder.payments || backendOrder.payment;
     if (p) {
       transactionId = p.transaction_id || p.trx_id || p.bkash_trx_id || p.transactionId;
     }
-
-    // Fallback to root object if not found in payment object
     if (!transactionId) {
       transactionId = backendOrder.transaction_id || backendOrder.trx_id || backendOrder.bkash_trx_id || backendOrder.transactionId;
     }
 
-    // Handle created_at timestamp
     let orderDate = new Date();
     if (backendOrder.created_at) {
       let dateStr = backendOrder.created_at;
-      // If the string doesn't end with Z and doesn't have an offset, append Z to treat as UTC
       if (typeof dateStr === 'string' && !dateStr.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateStr)) {
         dateStr += 'Z';
       }
@@ -594,10 +537,27 @@ export class OrderService {
           regular_price: catalogPrice,
           price_at_purchase: grossPrice,
           discount_per_unit: unitDiscount,
+          order_combo_id: item.order_combo_id ? item.order_combo_id.toString() : null,
+          combo_discount_per_unit: item.combo_discount_per_unit != null ? parseFloat(item.combo_discount_per_unit) : 0,
           unit_cost: (item.unit_cost !== undefined && item.unit_cost !== null) ? parseFloat(item.unit_cost) : undefined,
           product_id: (item.product_id !== undefined && item.product_id !== null) ? item.product_id.toString() : (rawProduct.id?.toString() || '')
         };
       }),
+      combos: (backendOrder.combos || []).map((c: any) => ({
+        id: c.id ? c.id.toString() : undefined,
+        combo_id: c.combo_id ? c.combo_id.toString() : null,
+        name: c.name || '',
+        kind: c.kind || 'fixed',
+        quantity: c.quantity || 1,
+        list_total: c.list_total != null ? parseFloat(c.list_total) : 0,
+        combo_price: c.combo_price != null ? parseFloat(c.combo_price) : 0,
+        discount_applied: c.discount_applied != null ? parseFloat(c.discount_applied) : 0,
+        picks: c.picks || null
+      })),
+      combo_savings: (backendOrder.combos || []).reduce(
+        (sum: number, c: any) => sum + (c.discount_applied != null ? parseFloat(c.discount_applied) : 0),
+        0
+      ),
       totalAmount: backendOrder.total != null ? parseFloat(backendOrder.total) :
         (backendOrder.total_amount != null ? parseFloat(backendOrder.total_amount) :
           (backendOrder.totalAmount != null ? parseFloat(backendOrder.totalAmount) :
@@ -610,16 +570,23 @@ export class OrderService {
       couponCode: backendOrder.coupon_code || backendOrder.couponCode || undefined,
       status: orderStatus,
       paymentMethod: paymentMethod as 'COD' | 'bKash' | null,
-      paymentStatus: paymentStatus as 'Pending' | 'Paid',
-      paymentId: (backendOrder.payment_id !== undefined && backendOrder.payment_id !== null) ? backendOrder.payment_id :
-        (backendOrder.payment?.id !== undefined && backendOrder.payment?.id !== null) ? backendOrder.payment.id : undefined,
+      paymentStatus: rawPaymentStatus,
+      payment_status: rawPaymentStatus,
+      amount_paid: amountPaid,
+      amount_refunded: amountRefunded,
+      amount_due: amountDue,
+      paymentId: (backendOrder.payments?.id || backendOrder.payment?.id || backendOrder.payment_id || '')?.toString() || undefined,
       transactionId: transactionId,
-      bkashNumber: backendOrder.sender_phone || backendOrder.payment?.sender_phone || backendOrder.bkashNumber,
+      bkashNumber: backendOrder.payments?.sender_phone || backendOrder.payment?.sender_phone || backendOrder.sender_phone || backendOrder.bkashNumber,
       orderDate: orderDate,
 
       // Pass through raw objects for detailed display
       address: backendOrder.address,
-      payments: backendOrder.payments || backendOrder.payment,
+      payments: backendOrder.payments || backendOrder.payment || null,
+      payment_transactions: backendOrder.payment_transactions || [],
+      revisions: backendOrder.revisions || [],
+      edited_at: backendOrder.edited_at || null,
+      edited_by: backendOrder.edited_by || null,
       created_at: backendOrder.created_at,
       channel: backendOrder.channel || 'online',
       note: backendOrder.note || undefined,
@@ -631,9 +598,6 @@ export class OrderService {
     };
   }
 
-  /**
-   * Calculate total from order items
-   */
   private calculateTotal(items: any[]): number {
     if (!items || !Array.isArray(items)) return 0;
     return items.reduce((sum, item) => {
@@ -653,16 +617,13 @@ export class OrderService {
     }, 0);
   }
 
-  /**
-   * Map backend status to frontend status
-   */
   private mapBackendStatus(status: string): 'Pending' | 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed' {
     const statusMap: Record<string, any> = {
       'pending': 'Pending',
       'confirmed': 'Confirmed',
-      'cod_confirmed': 'Confirmed', // Map cod_confirmed to Confirmed
-      'cod_processing': 'Confirmed', // Map cod_processing to Confirmed
-      'paid': 'Confirmed', // Map paid to Confirmed (if order status is paid, it's confirmed)
+      'cod_confirmed': 'Confirmed',
+      'cod_processing': 'Confirmed',
+      'paid': 'Confirmed',
       'shipping': 'Shipping',
       'delivered': 'Delivered',
       'cancelled': 'Cancelled',

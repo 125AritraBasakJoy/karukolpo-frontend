@@ -1,34 +1,33 @@
 <div class="premium-table-v2 fade-in">
-    <div class="glass-card p-4">
+    <div class="glass-card p-3 sm:p-4">
         <!-- Header Section -->
-        <div
-            class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center mb-5 gap-4">
+        <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center mb-5 gap-4">
             <div class="header-title">
                 <h1 class="text-3xl font-bold m-0 text-white flex align-items-center gap-2">
                     <i class="pi pi-shopping-bag text-primary text-2xl"></i>
                     Orders
                 </h1>
-                <p class="text-gray-400 mt-2 mb-0">Manage customer orders and track status</p>
+                <p class="text-gray-400 mt-2 mb-0">Manage customer orders, track payments, and edit live orders</p>
             </div>
 
             <!-- Search Bar -->
-            <div class="search-container">
-                <div class="search-wrapper">
+            <div class="search-container flex-grow-1 lg:flex-grow-0" style="min-width: 280px; max-width: 480px;">
+                <div class="search-wrapper w-full">
                     <i class="pi pi-search search-icon"></i>
-                    <input type="text" pInputText placeholder="Search by Order Number, Phone, or ID..." [(ngModel)]="searchQuery"
-                        (ngModelChange)="onSearch()" (keyup.enter)="onSearch(true)" class="search-input" />
+                    <input type="text" pInputText placeholder="Search by phone, order number, or UUID..."
+                        [ngModel]="searchQuery()" (input)="onSearchInput($event)" (keyup.enter)="loadOrders()"
+                        class="search-input w-full" />
                     @if (searchQuery()) {
                     <i class="pi pi-times clear-icon" (click)="clearSearch()"></i>
                     }
                 </div>
-                <button pButton label="Search" (click)="onSearch(true)" class="premium-btn-primary search-btn"></button>
             </div>
 
             <div class="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
-                <p-button icon="pi pi-file-excel" label="Export" (onClick)="downloadOrders()"
+                <p-button icon="pi pi-file-excel" label="Export CSV" (onClick)="downloadOrders()"
                     [loading]="exportLoading()"
                     styleClass="premium-btn-secondary surface-card border-none flex-grow-1 sm:flex-grow-0"
-                    pTooltip="Download Excel" tooltipPosition="bottom"></p-button>
+                    pTooltip="Stream entire orders dataset as CSV" tooltipPosition="bottom"></p-button>
 
                 <p-button icon="pi pi-refresh" (onClick)="refreshOrders()"
                     styleClass="premium-btn-primary flex-grow-1 sm:flex-grow-0" pTooltip="Refresh Orders"
@@ -36,6 +35,31 @@
             </div>
         </div>
 
+        <!-- Order Status Filter Chips Bar -->
+        <div class="filter-chips-wrapper flex align-items-center gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar">
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'all'" (click)="setStatusFilter('all')">
+                <span>All</span>
+                <span class="chip-count">{{ totalRecords() }}</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'pending'" (click)="setStatusFilter('pending')">
+                <i class="pi pi-clock text-xs mr-1 text-amber-400"></i>
+                <span>Pending</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'confirmed'" (click)="setStatusFilter('confirmed')">
+                <i class="pi pi-truck text-xs mr-1 text-blue-400"></i>
+                <span>For Delivery</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'completed'" (click)="setStatusFilter('completed')">
+                <i class="pi pi-check text-xs mr-1 text-teal-400"></i>
+                <span>Complete</span>
+            </button>
+            <button type="button" class="filter-chip-btn" [class.active]="selectedStatusFilter() === 'cancelled'" (click)="setStatusFilter('cancelled')">
+                <i class="pi pi-ban text-xs mr-1 text-red-400"></i>
+                <span>Cancelled</span>
+            </button>
+        </div>
+
+        <!-- Orders Table View -->
         <div class="border-round-2xl overflow-hidden overflow-x-auto custom-scrollbar">
             <p-table [value]="orders()" [tableStyle]="{'min-width': '64rem'}" [paginator]="true" [(rows)]="rows" [(first)]="first"
                 [rowsPerPageOptions]="[10, 25, 50, 100]" [lazy]="true" (onLazyLoad)="loadOrders($event)"
@@ -49,9 +73,9 @@
                         <th>Customer</th>
                         <th>Date & Time</th>
                         <th>Total</th>
-                        <th>Payment</th>
-                        <th>Status</th>
-                        <th class="text-center actions-col-header" style="width: 11.5rem; min-width: 11.5rem">Actions</th>
+                        <th>Payment Status</th>
+                        <th>Fulfillment</th>
+                        <th class="text-center actions-col-header" style="width: 5.5rem; min-width: 5.5rem">Actions</th>
                     </tr>
                 </ng-template>
 
@@ -62,58 +86,31 @@
                         </td>
                         <td>
                             <div class="font-medium text-white">{{ order.fullName }}</div>
-                            <div class="text-sm text-gray-400 mt-1">{{ order.phoneNumber }}</div>
+                            <div class="text-sm text-gray-400 mt-1 font-mono">{{ order.phoneNumber }}</div>
                         </td>
                         <td>
                             <div class="text-gray-200">{{ order.orderDate | date:'mediumDate':'+0600' }}</div>
-                            <div class="text-sm text-gray-500 mt-1">{{ order.orderDate | date:'shortTime':'+0600' }}
-                            </div>
+                            <div class="text-sm text-gray-500 mt-1">{{ order.orderDate | date:'shortTime':'+0600' }}</div>
                         </td>
                         <td>
                             <div class="price-value">{{ order.totalAmount | currency:'BDT':'৳' }}</div>
                         </td>
                         <td>
-                            <p-tag [value]="order.paymentStatus || 'Pending'"
-                                [severity]="getPaymentSeverity(order.paymentStatus)" [rounded]="true"
+                            <p-tag [value]="getPaymentStatusInfo(order).label"
+                                [severity]="getPaymentStatusInfo(order).severity" [rounded]="true"
                                 styleClass="text-sm font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
                         <td>
                             <p-tag [value]="order.status" [severity]="getSeverity(order.status)"
                                 styleClass="text-sm font-bold uppercase tracking-wider px-3"></p-tag>
                         </td>
-                        <td class="text-center actions-col-cell">
-                            <div class="actions-cell">
-                                <button pButton icon="pi pi-eye"
-                                    class="action-btn view-btn"
-                                    (click)="viewOrder(order)" pTooltip="View Details" tooltipPosition="top"></button>
-
-                                <button pButton type="button" icon="pi pi-download"
-                                    [loading]="downloadingOrderId() === (order.id || '').toString()"
-                                    class="action-btn download-btn"
-                                    (click)="$event.preventDefault(); $event.stopPropagation(); downloadAdminInvoice(order)"
-                                    pTooltip="Download Invoice" tooltipPosition="top"></button>
-
-                                <!-- Status Actions -->
-                                @if (order.status === 'Pending' && order.paymentMethod?.toLowerCase() !== 'bkash') {
-                                <button pButton icon="pi pi-check"
-                                    class="action-btn deliver-btn"
-                                    (click)="updateStatus(order, 'Confirmed')" pTooltip="Confirm Order"
-                                    tooltipPosition="top"></button>
-                                }
-
-                                @if (order.status === 'Confirmed') {
-                                <button pButton icon="pi pi-check-circle"
-                                    class="action-btn deliver-btn"
-                                    (click)="updateStatus(order, 'Completed')" pTooltip="Mark Complete"
-                                    tooltipPosition="top"></button>
-                                }
-
-                                @if (order.status === 'Pending') {
-                                <button pButton icon="pi pi-times"
-                                    class="action-btn cancel-btn"
-                                    (click)="updateStatus(order, 'Cancelled')" pTooltip="Cancel Order"
-                                    tooltipPosition="top"></button>
-                                }
+                        <td class="text-center actions-col-cell" style="width: 5.5rem; min-width: 5.5rem">
+                            <div class="flex justify-content-center align-items-center">
+                                <button pButton icon="pi pi-ellipsis-v"
+                                    class="action-btn menu-trigger-btn"
+                                    (click)="openOrderActionMenu($event, order)"
+                                    pTooltip="Actions" tooltipPosition="top"
+                                    aria-label="Open actions menu"></button>
                             </div>
                         </td>
                     </tr>
@@ -134,6 +131,7 @@
     </div>
 </div>
 
+<!-- Order Detail Dialog -->
 <p-dialog [(visible)]="displayOrderDialog" [modal]="true" [style]="{width: '95vw', maxWidth: '1120px'}"
     [draggable]="false" [resizable]="false" styleClass="premium-dialog responsive-order-dialog"
     (onHide)="itemSearchQuery.set('')">
@@ -164,8 +162,7 @@
             [ngClass]="getSeverity(selectedOrder()!.status)"
             style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);">
             <div class="flex align-items-center gap-3">
-                <i
-                    [class]="'pi text-2xl ' + (selectedOrder()!.status === 'Completed' ? 'pi-check-circle text-green-400' : 'pi-clock text-blue-400')"></i>
+                <i [class]="'pi text-2xl ' + (selectedOrder()!.status === 'Completed' ? 'pi-check-circle text-green-400' : 'pi-clock text-blue-400')"></i>
                 <div class="flex flex-column">
                     <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-0.5">Current Status</span>
                     <div class="flex align-items-center gap-2 flex-wrap">
@@ -180,35 +177,29 @@
             </div>
             <div class="text-left md:text-right">
                 <span class="text-xs text-gray-400 block mb-0.5">Ordered On</span>
-                <span class="text-sm md:text-base font-medium text-gray-200">{{ (selectedOrder()!.created_at || selectedOrder()!.orderDate) |
-                    date:'medium' }}</span>
+                <span class="text-sm md:text-base font-medium text-gray-200">{{ (selectedOrder()!.created_at || selectedOrder()!.orderDate) | date:'medium' }}</span>
             </div>
         </div>
 
         <div class="grid">
-            <!-- Left / Main Column: Order Items (Product Details Section) -->
+            <!-- Left Column: Items (Products) -->
             <div class="col-12 lg:col-7 xl:col-8 order-items-column">
                 <div class="glass-card p-3 md:p-4 flex flex-column order-items-card"
                     style="border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(15, 23, 42, 0.65);">
-                    
-                    <!-- Items Section Header with Metrics & Search -->
                     <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-3 pb-3 border-bottom-1 border-white-alpha-10">
                         <div class="flex align-items-center gap-2">
                             <div class="flex align-items-center justify-content-center border-round-lg"
                                 style="width: 36px; height: 36px; background: rgba(59, 130, 246, 0.15);">
                                 <i class="pi pi-box text-blue-400 text-lg"></i>
                             </div>
-                            <div>
-                                <h4 class="m-0 text-white font-semibold text-base md:text-lg flex align-items-center gap-2 flex-wrap">
-                                    Product Details
-                                    <span class="items-metric-badge text-xs font-semibold px-3 py-1 border-round-pill">
-                                        {{ selectedOrder()!.items.length }} {{ selectedOrder()!.items.length === 1 ? 'item' : 'items' }} · {{ getTotalItemUnits(selectedOrder()) }} units
-                                    </span>
-                                </h4>
-                            </div>
+                            <h4 class="m-0 text-white font-semibold text-base md:text-lg flex align-items-center gap-2 flex-wrap">
+                                Product Details
+                                <span class="items-metric-badge text-xs font-semibold px-3 py-1 border-round-pill">
+                                    {{ selectedOrder()!.items.length }} {{ selectedOrder()!.items.length === 1 ? 'item' : 'items' }} · {{ getTotalItemUnits(selectedOrder()) }} units
+                                </span>
+                            </h4>
                         </div>
 
-                        <!-- Instant filter when order has many items -->
                         @if (selectedOrder()!.items.length > 3) {
                         <div class="w-full sm:w-auto">
                             <div class="order-items-search-wrapper">
@@ -226,9 +217,9 @@
                         }
                     </div>
 
-                    <!-- Items Scrollable List (Dynamic height adapting to item count) -->
-                    <div class="overflow-y-auto overflow-x-hidden mb-2 custom-scrollbar pr-1 items-scroll-area" 
-                        style="max-height: min(60vh, 520px);">
+                    <!-- Items Scrollable List -->
+                    <div class="overflow-y-auto overflow-x-hidden mb-2 custom-scrollbar pr-1 items-scroll-area"
+                        style="max-height: min(50vh, 480px);">
                         @if (filteredOrderItems().length === 0) {
                         <div class="p-5 text-center flex flex-column align-items-center justify-content-center text-gray-400">
                             <i class="pi pi-filter-slash text-4xl mb-2 text-gray-500"></i>
@@ -237,9 +228,39 @@
                         }
 
                         <div class="order-items-list">
-                            @for (item of filteredOrderItems(); track item.product.id || $index) {
+                            @if (getOrderCombos(selectedOrder()).length > 0) {
+                            <div class="mb-3">
+                                <span class="text-xs font-bold text-blue-400 uppercase tracking-wider block mb-2">Combos & Bundles</span>
+                                @for (combo of getOrderCombos(selectedOrder()); track combo.id || $index) {
+                                <div class="p-3 border-round-xl border-1 border-blue-500-alpha-30 mb-2" style="background: rgba(30, 41, 59, 0.7);">
+                                    <div class="flex align-items-center justify-content-between mb-2">
+                                        <div class="flex align-items-center gap-2">
+                                            <span class="text-xs font-bold bg-blue-500 text-white px-2 py-1 border-round">COMBO</span>
+                                            <span class="font-bold text-white text-sm">{{ combo.name }} × {{ combo.quantity }}</span>
+                                        </div>
+                                        <span class="text-xs text-green-400 font-semibold" *ngIf="combo.discount_applied">
+                                            Saved ৳{{ combo.discount_applied | number:'1.0-0' }}
+                                        </span>
+                                    </div>
+                                    <div class="pl-3 border-left-2 border-blue-400 flex flex-column gap-2">
+                                        @for (line of getOrderComboLines(selectedOrder(), combo.id); track line.product_id || $index) {
+                                        <div class="flex align-items-center justify-content-between text-xs text-slate-300">
+                                            <span>{{ line.quantity }} × {{ line.product.name }}</span>
+                                            <span class="font-mono text-slate-400">৳{{ getItemFinalUnitPrice(line) | number:'1.0-2' }}</span>
+                                        </div>
+                                        }
+                                    </div>
+                                </div>
+                                }
+                            </div>
+                            }
+
+                            @if (getStandaloneLines(selectedOrder()).length > 0) {
+                            <div *ngIf="getOrderCombos(selectedOrder()).length > 0" class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                Standalone Products
+                            </div>
+                            @for (item of (getOrderCombos(selectedOrder()).length > 0 ? getStandaloneLines(selectedOrder()) : filteredOrderItems()); track item.product.id || $index) {
                             <div class="order-item-tile flex align-items-center justify-content-between gap-3">
-                                <!-- Left: Thumbnail + Info Stack -->
                                 <div class="order-item-left flex align-items-center min-w-0 flex-grow-1">
                                     <div class="order-item-img-container overflow-hidden flex-shrink-0">
                                         @if (item.product.imageUrl) {
@@ -252,12 +273,12 @@
                                     </div>
 
                                     <div class="order-item-info min-w-0 flex-grow-1">
-                                        <div class="order-item-title font-semibold text-white text-sm line-clamp-1" 
+                                        <div class="order-item-title font-semibold text-white text-sm"
+                                            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
                                             [pTooltip]="item.product.name" tooltipPosition="top">
                                             {{ item.product.name }}
                                         </div>
 
-                                        <!-- Meta Details: Qty x Price, Original Price, Discount Pill -->
                                         <div class="order-item-meta flex flex-wrap align-items-center gap-2 mt-1">
                                             <span class="order-item-qty-pill font-mono">
                                                 {{ item.quantity }} × {{ getItemFinalUnitPrice(item) | currency:'BDT':'৳' }}
@@ -275,81 +296,88 @@
                                     </div>
                                 </div>
 
-                                <!-- Right: Line Total & Savings Badge -->
                                 <div class="order-item-total-col flex flex-column align-items-end justify-content-center flex-shrink-0 text-right">
                                     <span class="order-item-total-heading">Total</span>
                                     <span class="order-item-total-val font-bold text-base sm:text-lg font-mono">
                                         {{ getItemFinalTotal(item) | currency:'BDT':'৳' }}
                                     </span>
-                                    @if (isItemDiscounted(item) && getItemSavings(item) > 0) {
-                                    <span class="order-item-savings-pill font-mono">
-                                        Saved {{ getItemSavings(item) | currency:'BDT':'৳' }}
-                                    </span>
-                                    }
                                 </div>
                             </div>
                             }
+                            }
                         </div>
                     </div>
-
-                    <!-- Items Summary Footer Bar -->
-                    @if (selectedOrder()!.items.length > 4) {
-                    <div class="pt-3 border-top-1 border-white-alpha-10 flex justify-content-between align-items-center text-xs text-gray-400 mt-2">
-                        <span>Showing {{ filteredOrderItems().length }} of {{ selectedOrder()!.items.length }} products</span>
-                        @if (selectedOrder()!.items.length > 6) {
-                        <span class="text-gray-500 flex align-items-center gap-1">
-                            <i class="pi pi-arrows-v text-xs"></i> Scrollable list
-                        </span>
-                        }
-                    </div>
-                    }
                 </div>
             </div>
 
-            <!-- Right / Sidebar Column: Summary, Customer & Payment Details -->
+            <!-- Right Column: Summary & Payment Balances & Customer Details -->
             <div class="col-12 lg:col-5 xl:col-4">
                 <div class="flex flex-column gap-3 h-full">
-
-                    <!-- Totals Summary Card -->
+                    <!-- Totals & Balances Summary -->
                     <div class="glass-card p-3 md:p-4 border-round-2xl surface-ground border-1 surface-border"
                         style="background: rgba(2, 6, 23, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.08);">
                         <div class="flex align-items-center gap-2 mb-3">
                             <i class="pi pi-receipt text-blue-400 text-lg"></i>
                             <h4 class="m-0 text-white font-semibold text-base">Payment Summary</h4>
                         </div>
-                        
+
                         <div class="flex flex-column gap-2 mb-3">
                             <div class="flex justify-content-between align-items-center text-sm">
                                 <span class="text-gray-400">Subtotal</span>
-                                <span class="text-white font-medium">{{ (selectedOrder()!.subtotal ||
-                                    selectedOrder()!.totalAmount - (selectedOrder()!.deliveryCharge || 0)) |
-                                    currency:'BDT':'৳' }}</span>
+                                <span class="text-white font-medium">{{ (selectedOrder()!.subtotal || selectedOrder()!.totalAmount - (selectedOrder()!.deliveryCharge || 0)) | currency:'BDT':'৳' }}</span>
                             </div>
                             @if (selectedOrder()!.deliveryCharge) {
                             <div class="flex justify-content-between align-items-center text-sm">
                                 <span class="text-gray-400">Delivery Charge</span>
-                                <span class="text-white font-medium">+{{ selectedOrder()!.deliveryCharge |
-                                    currency:'BDT':'৳' }}</span>
+                                <span class="text-white font-medium">+{{ selectedOrder()!.deliveryCharge | currency:'BDT':'৳' }}</span>
                             </div>
                             }
                             @if (selectedOrder()!.discountAmount) {
                             <div class="flex justify-content-between align-items-center text-sm text-green-400">
                                 <span>Discount</span>
-                                <span class="font-medium">-{{ selectedOrder()!.discountAmount |
-                                    currency:'BDT':'৳' }}</span>
+                                <span class="font-medium">-{{ selectedOrder()!.discountAmount | currency:'BDT':'৳' }}</span>
+                            </div>
+                            }
+                            @if (selectedOrder()!.combo_savings) {
+                            <div class="flex justify-content-between align-items-center text-sm text-green-400">
+                                <span>Combo Savings</span>
+                                <span class="font-medium">-{{ selectedOrder()!.combo_savings | currency:'BDT':'৳' }}</span>
                             </div>
                             }
                         </div>
 
-                        <div class="pt-3 border-top-1 border-white-alpha-10 flex justify-content-between align-items-center">
-                            <span class="text-base font-bold text-white">Total Amount</span>
-                            <span class="text-2xl font-extrabold text-blue-400 tracking-tight">{{ selectedOrder()!.totalAmount |
-                                currency:'BDT':'৳' }}</span>
+                        <div class="pt-3 border-top-1 border-white-alpha-10 flex justify-content-between align-items-center mb-3">
+                            <span class="text-base font-bold text-white">Order Total</span>
+                            <span class="text-2xl font-extrabold text-blue-400 tracking-tight">{{ selectedOrder()!.totalAmount | currency:'BDT':'৳' }}</span>
+                        </div>
+
+                        <!-- Balances Position (A2) -->
+                        <div class="p-3 border-round-xl" style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);">
+                            <div class="flex justify-content-between align-items-center text-xs mb-2">
+                                <span class="text-gray-400">Net Money Paid:</span>
+                                <span class="font-mono text-green-400 font-bold">৳{{ (selectedOrder()!.amount_paid ?? 0) | number:'1.2-2' }}</span>
+                            </div>
+
+                            @if ((selectedOrder()!.amount_refunded || 0) > 0) {
+                            <div class="flex justify-content-between align-items-center text-xs mb-2">
+                                <span class="text-gray-400">Refunded:</span>
+                                <span class="font-mono text-gray-300">৳{{ selectedOrder()!.amount_refunded | number:'1.2-2' }}</span>
+                            </div>
+                            }
+
+                            <div class="flex justify-content-between align-items-center pt-2 border-top-1 border-white-alpha-10">
+                                <span class="text-xs font-semibold" [class.text-red-400]="(selectedOrder()!.amount_due || 0) < 0" [class.text-amber-400]="(selectedOrder()!.amount_due || 0) > 0">
+                                    {{ (selectedOrder()!.amount_due || 0) < 0 ? 'Refund Due:' : 'Balance Due:' }}
+                                </span>
+                                <span class="font-mono font-bold text-sm" [class.text-red-400]="(selectedOrder()!.amount_due || 0) < 0" [class.text-amber-400]="(selectedOrder()!.amount_due || 0) > 0" [class.text-green-400]="(selectedOrder()!.amount_due || 0) === 0">
+                                    ৳{{ ((selectedOrder()!.amount_due || 0) < 0 ? -(selectedOrder()!.amount_due || 0) : (selectedOrder()!.amount_due || 0)) | number:'1.2-2' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Customer Info Card (Clean & Unified Premium) -->
-                    <div class="glass-card p-3 md:p-4 overflow-hidden border-round-2xl customer-details-card" 
+                    <!-- Customer Info Card -->
+                    <div class="glass-card p-3 md:p-4 overflow-hidden border-round-2xl customer-details-card"
                         style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08);">
                         <div class="flex align-items-center justify-content-between gap-2 mb-3 pb-3 border-bottom-1 border-white-alpha-10">
                             <div class="flex align-items-center gap-2">
@@ -360,12 +388,10 @@
                                 <h4 class="m-0 text-white font-semibold text-base">Customer Details</h4>
                             </div>
                             <span class="channel-pill">
-                                <span class="channel-dot"></span>
                                 {{ (selectedOrder()!.channel || 'ONLINE') | uppercase }}
                             </span>
                         </div>
 
-                        <!-- Customer Identity -->
                         <div class="flex align-items-center gap-3 mb-3 pb-3 border-bottom-1 border-white-alpha-10">
                             <div class="customer-avatar flex align-items-center justify-content-center flex-shrink-0">
                                 <span>{{ getCustomerInitial(selectedOrder()) }}</span>
@@ -375,79 +401,50 @@
                                     {{ getCustomerName(selectedOrder()) }}
                                 </div>
                                 <div class="text-xs text-gray-400 mt-0.5">
-                                    {{ selectedOrder()!.email || 'Direct Customer' }}
+                                    {{ selectedOrder()!.email || 'No email given' }}
                                 </div>
                             </div>
                         </div>
 
                         <div class="flex flex-column gap-3 text-sm">
-                            <!-- Phone -->
                             <div>
                                 <span class="text-xs text-gray-400 font-medium block mb-1">Phone Number</span>
                                 <div class="flex align-items-center justify-content-between gap-2">
-                                    <a [href]="'tel:' + getCustomerPhone(selectedOrder())" 
+                                    <a [href]="'tel:' + getCustomerPhone(selectedOrder())"
                                        class="font-mono text-sm text-white hover:text-blue-400 transition-colors font-medium no-underline">
                                         {{ getCustomerPhone(selectedOrder()) || 'N/A' }}
                                     </a>
                                     @if (getCustomerPhone(selectedOrder())) {
                                     <div class="flex align-items-center gap-1">
-                                        <button type="button" pButton icon="pi pi-copy" 
+                                        <button type="button" pButton icon="pi pi-copy"
                                             class="p-button-rounded p-button-text p-button-secondary p-button-sm action-icon-btn"
-                                            (click)="copyToClipboard(getCustomerPhone(selectedOrder()), 'Phone number')" 
+                                            (click)="copyToClipboard(getCustomerPhone(selectedOrder()), 'Phone number')"
                                             pTooltip="Copy phone" tooltipPosition="top"></button>
-                                        <a [href]="'tel:' + getCustomerPhone(selectedOrder())"
-                                            class="p-button p-button-rounded p-button-text p-button-secondary p-button-sm action-icon-btn flex align-items-center justify-content-center no-underline"
-                                            pTooltip="Call customer" tooltipPosition="top">
-                                            <i class="pi pi-phone text-xs text-blue-400"></i>
-                                        </a>
                                     </div>
                                     }
                                 </div>
                             </div>
 
-                            <!-- Divider -->
                             <div class="border-top-1 border-white-alpha-10"></div>
 
-                            <!-- Address -->
                             <div>
-                                <div class="flex align-items-center justify-content-between mb-1">
-                                    <span class="text-xs text-gray-400 font-medium">Shipping Address</span>
-                                    @if (getCustomerFullAddress(selectedOrder())) {
-                                    <button type="button" pButton icon="pi pi-copy" 
-                                        class="p-button-rounded p-button-text p-button-secondary p-button-sm action-icon-btn"
-                                        (click)="copyToClipboard(getCustomerFullAddress(selectedOrder()), 'Full address')" 
-                                        pTooltip="Copy address" tooltipPosition="top"></button>
-                                    }
-                                </div>
-
-                                <div class="text-gray-200 text-sm line-height-2 break-word">
-                                    @if (selectedOrder()!.address) {
-                                        <div class="font-medium text-white mb-0.5">{{ selectedOrder()!.address!.address_line }}</div>
-                                        <div class="text-gray-400 text-xs">
-                                            {{ selectedOrder()!.address!.subdistrict }}, {{ selectedOrder()!.address!.district }}
-                                        </div>
-                                    } @else {
-                                        <div class="font-medium text-white mb-0.5">{{ selectedOrder()!.fullAddress || 'No address provided' }}</div>
-                                        @if (selectedOrder()!.district || selectedOrder()!.subDistrict) {
-                                        <div class="text-gray-400 text-xs">
-                                            {{ selectedOrder()!.subDistrict }} {{ selectedOrder()!.district }}
-                                        </div>
-                                        }
-                                    }
+                                <span class="text-xs text-gray-400 font-medium block mb-1">Delivery Address</span>
+                                <div class="text-gray-200 text-sm break-word">
+                                    {{ getCustomerFullAddress(selectedOrder()) || 'No address provided' }}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Payment Details Card -->
-                    <div class="glass-card p-3 md:p-4 overflow-hidden border-round-2xl" 
+                    <!-- Payment Position & bKash Claim Card -->
+                    <div class="glass-card p-3 md:p-4 overflow-hidden border-round-2xl"
                         style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08);">
                         <div class="flex align-items-center gap-2 mb-3 pb-3 border-bottom-1 border-white-alpha-10">
                             <div class="flex align-items-center justify-content-center border-round-lg"
                                 style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.15);">
                                 <i class="pi pi-credit-card text-blue-400 text-sm"></i>
                             </div>
-                            <h4 class="m-0 text-white font-semibold text-base">Payment Details</h4>
+                            <h4 class="m-0 text-white font-semibold text-base">Payment Status</h4>
                         </div>
 
                         <div class="flex flex-column gap-2 text-sm">
@@ -458,9 +455,9 @@
                                 </span>
                             </div>
                             <div class="flex justify-content-between align-items-center">
-                                <span class="text-gray-400 text-xs font-medium">Payment Status</span>
-                                <p-tag [value]="selectedOrder()!.paymentStatus || 'Pending'"
-                                    [severity]="getPaymentSeverity(selectedOrder()!.paymentStatus)"
+                                <span class="text-gray-400 text-xs font-medium">Position</span>
+                                <p-tag [value]="getPaymentStatusInfo(selectedOrder()).label"
+                                    [severity]="getPaymentStatusInfo(selectedOrder()).severity"
                                     [rounded]="true"
                                     styleClass="uppercase font-bold text-xs px-3 py-1 border-round-pill"></p-tag>
                             </div>
@@ -478,7 +475,7 @@
 
                             @if (selectedOrder()!.transactionId) {
                             <div class="flex justify-content-between align-items-center pt-2 border-top-1 border-white-alpha-10">
-                                <span class="text-gray-400 text-xs font-medium">Transaction ID</span>
+                                <span class="text-gray-400 text-xs font-medium">TrxID</span>
                                 <div class="flex align-items-center gap-2">
                                     <span class="font-mono text-blue-300 text-xs font-bold">{{ selectedOrder()!.transactionId }}</span>
                                     <button type="button" pButton icon="pi pi-copy" class="p-button-rounded p-button-text p-button-secondary p-button-sm action-icon-btn"
@@ -486,53 +483,750 @@
                                 </div>
                             </div>
                             }
+
+                            @if (selectedOrder()!.payments?.reject_reason) {
+                            <div class="p-2 border-round bg-red-900 text-red-200 text-xs mt-2">
+                                <strong>Rejection Reason:</strong> {{ selectedOrder()!.payments!.reject_reason }}
+                            </div>
+                            }
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        <!-- Admin Actions Footer -->
-        @if (!isPaymentConfirmed(selectedOrder()!.paymentStatus) || (selectedOrder()!.status === 'Pending')) {
-        <div class="admin-actions mt-5 pt-4 border-top-1 border-white-alpha-10 flex justify-content-end gap-3">
-            <button pButton label="Close" icon="pi pi-times"
-                class="premium-btn-secondary p-button-outlined p-button-secondary border-gray-700 text-gray-300 hover:text-white"
-                (click)="displayOrderDialog.set(false)"></button>
+        <!-- Ledger History Section (A6) -->
+        <div class="glass-card p-3 md:p-4 mt-4 border-round-2xl" style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08);">
+            <div class="flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-2 mb-3 pb-3 border-bottom-1 border-white-alpha-10">
+                <div class="flex align-items-center gap-2">
+                    <i class="pi pi-history text-blue-400 text-lg"></i>
+                    <h4 class="m-0 text-white font-semibold text-base">Payment Ledger</h4>
+                </div>
+                <div class="flex gap-2">
+                    <button pButton label="Record Payment" icon="pi pi-plus" class="p-button-sm bg-blue-600 border-none"
+                        (click)="openManualPaymentDialog('payment')"></button>
+                    <button pButton label="Record Refund" icon="pi pi-minus" class="p-button-sm p-button-outlined p-button-danger"
+                        (click)="openManualPaymentDialog('refund')"></button>
+                </div>
+            </div>
 
-            @if (selectedOrder()!.paymentMethod?.toLowerCase() === 'bkash' &&
-            !isPaymentConfirmed(selectedOrder()!.paymentStatus) &&
-            selectedOrder()!.channel !== 'offline') {
-            <button pButton label="Verify Payment" icon="pi pi-check-circle"
-                class="premium-btn-primary bg-blue-500 border-none hover:bg-blue-600"
-                (click)="adminConfirmPayment(selectedOrder()!)"></button>
-            }
-
-            @if (selectedOrder()!.status === 'Pending' && selectedOrder()!.paymentMethod?.toLowerCase() !== 'bkash') {
-            <button pButton label="Confirm Order" icon="pi pi-check"
-                class="premium-btn-primary bg-blue-500 border-none hover:bg-blue-600"
-                (click)="updateStatus(selectedOrder()!, 'Confirmed')"></button>
-            }
-
-            @if (selectedOrder()!.status === 'Confirmed') {
-            <button pButton label="Complete Order" icon="pi pi-check-circle"
-                class="premium-btn-primary bg-green-600 border-none hover:bg-green-700"
-                (click)="updateStatus(selectedOrder()!, 'Completed')"></button>
+            @if (!selectedOrder()!.payment_transactions || selectedOrder()!.payment_transactions!.length === 0) {
+            <div class="text-gray-400 text-sm py-3 text-center">No transactions recorded on this order yet.</div>
+            } @else {
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm" style="border-collapse: collapse;">
+                    <thead>
+                        <tr class="text-gray-400 border-bottom-1 border-white-alpha-10 text-xs">
+                            <th class="py-2">Date</th>
+                            <th class="py-2">Kind</th>
+                            <th class="py-2">Method</th>
+                            <th class="py-2">Amount</th>
+                            <th class="py-2">Source</th>
+                            <th class="py-2">Reference / Note</th>
+                            <th class="py-2 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (tx of selectedOrder()!.payment_transactions; track tx.id) {
+                        <tr class="border-bottom-1 border-white-alpha-05" [style.text-decoration]="tx.voided_at ? 'line-through' : 'none'" [style.opacity]="tx.voided_at ? '0.55' : '1'">
+                            <td class="py-2 text-xs text-gray-300 font-mono">{{ tx.created_at | date:'short' }}</td>
+                            <td class="py-2">
+                                <span class="px-2 py-0.5 border-round text-xs font-bold uppercase" [class.bg-green-900]="tx.kind === 'payment'" [class.text-green-300]="tx.kind === 'payment'" [class.bg-red-900]="tx.kind === 'refund'" [class.text-red-300]="tx.kind === 'refund'">
+                                    {{ tx.kind }}
+                                </span>
+                            </td>
+                            <td class="py-2 uppercase text-xs font-mono">{{ tx.method }}</td>
+                            <td class="py-2 font-mono font-bold" [class.text-green-400]="tx.kind === 'payment'" [class.text-red-400]="tx.kind === 'refund'">
+                                ৳{{ tx.amount | number:'1.2-2' }}
+                            </td>
+                            <td class="py-2 text-xs text-gray-400 font-mono">{{ tx.source }}</td>
+                            <td class="py-2 text-xs text-gray-300">
+                                <div>{{ tx.reference || '-' }}</div>
+                                @if (tx.note) { <div class="text-gray-500 italic">{{ tx.note }}</div> }
+                                @if (tx.voided_at) { <div class="text-red-400 text-xs">Voided: {{ tx.void_reason || 'mistake' }}</div> }
+                            </td>
+                            <td class="py-2 text-right">
+                                @if (canVoidTransaction(tx)) {
+                                <button pButton label="Void" icon="pi pi-ban" class="p-button-xs p-button-text p-button-danger"
+                                    (click)="openVoidDialog(tx)"></button>
+                                }
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
             }
         </div>
+
+        <!-- Revisions History Section (A6) -->
+        @if (selectedOrder()!.revisions && selectedOrder()!.revisions!.length > 0) {
+        <div class="glass-card p-3 md:p-4 mt-3 border-round-2xl" style="background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.08);">
+            <div class="flex align-items-center gap-2 mb-3 pb-3 border-bottom-1 border-white-alpha-10">
+                <i class="pi pi-file-edit text-blue-400 text-lg"></i>
+                <h4 class="m-0 text-white font-semibold text-base">Edit History</h4>
+            </div>
+
+            <div class="flex flex-column gap-3">
+                @for (rev of selectedOrder()!.revisions; track rev.id) {
+                <div class="p-3 border-round-xl border-1 surface-border" style="background: rgba(255, 255, 255, 0.02);">
+                    <div class="flex justify-content-between align-items-center text-xs text-gray-400 mb-2">
+                        <span>Edited on <strong class="text-gray-200">{{ rev.created_at | date:'medium' }}</strong></span>
+                        @if (rev.reason) {
+                        <span class="text-blue-300 italic">"{{ rev.reason }}"</span>
+                        }
+                    </div>
+                    <pre class="m-0 text-xs font-mono text-gray-300 overflow-x-auto p-2 border-round bg-black-alpha-40">{{ rev.changes | json }}</pre>
+                </div>
+                }
+            </div>
+        </div>
         }
+
+        <!-- Admin Actions Footer (ALWAYS RENDERED, B4) -->
+        <div class="admin-actions mt-5 pt-4 border-top-1 border-white-alpha-10 flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <button pButton label="Close" icon="pi pi-times"
+                    class="premium-btn-secondary p-button-outlined p-button-secondary border-gray-700 text-gray-300 hover:text-white"
+                    (click)="displayOrderDialog.set(false)"></button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 justify-content-end">
+                <!-- Edit Order Button (A5) -->
+                @if (canEditOrder(selectedOrder())) {
+                <button pButton label="Edit Order" icon="pi pi-pencil"
+                    class="p-button-outlined p-button-info"
+                    (click)="openEditOrderModal()"></button>
+                }
+
+                <!-- bKash Claim Actions (A3) -->
+                @if (selectedOrder()!.payments?.status === 'submitted') {
+                <button pButton [label]="selectedOrder()!.status === 'Cancelled' ? 'Record payment received' : 'Verify Payment'"
+                    icon="pi pi-check-circle" class="bg-blue-600 border-none hover:bg-blue-700"
+                    (click)="openVerifyDialog(selectedOrder()!)"></button>
+
+                <button pButton label="Reject Claim" icon="pi pi-times-circle"
+                    class="p-button-outlined p-button-danger"
+                    (click)="openRejectDialog()"></button>
+                }
+
+                <!-- Confirm Order Button -->
+                @if (selectedOrder()!.status === 'Pending' && selectedOrder()!.paymentMethod?.toLowerCase() !== 'bkash') {
+                <button pButton label="Confirm Order" icon="pi pi-check"
+                    class="bg-blue-500 border-none hover:bg-blue-600"
+                    (click)="updateStatus(selectedOrder()!, 'Confirmed')"></button>
+                }
+
+                <!-- Complete / Mark Delivered Button -->
+                @if (selectedOrder()!.status === 'Confirmed') {
+                <button pButton label="Mark Delivered" icon="pi pi-check-circle"
+                    class="bg-green-600 border-none hover:bg-green-700"
+                    (click)="updateStatus(selectedOrder()!, 'Completed')"></button>
+                }
+
+                <!-- Cancel Order Button (A4) -->
+                @if (selectedOrder()!.status === 'Pending' || selectedOrder()!.status === 'Confirmed') {
+                <button pButton label="Cancel Order" icon="pi pi-times"
+                    class="p-button-outlined p-button-danger"
+                    (click)="updateStatus(selectedOrder()!, 'Cancelled')"></button>
+                }
+            </div>
+        </div>
     </div>
     }
 </p-dialog>
+
+<!-- Cancel Order Confirmation Modal (A4) -->
+<p-dialog [(visible)]="displayCancelDialog" [modal]="true" header="Cancel Order" [style]="{width: '95vw', maxWidth: '480px'}"
+    [draggable]="false" [resizable]="false" styleClass="premium-dialog">
+    <div class="flex flex-column gap-3 p-2">
+        <p class="m-0 text-gray-300">
+            Are you sure you want to cancel order <strong>{{ orderToCancel()?.orderNumber || orderToCancel()?.id }}</strong>?
+            Stock will be restored and coupons released.
+        </p>
+        @if ((orderToCancel()?.amount_paid || 0) > 0) {
+        <div class="p-3 border-round bg-amber-900 text-amber-200 text-xs">
+            <strong>Warning:</strong> Money has been received for this order. It will become <strong>Refund Due</strong> after cancellation.
+        </div>
+        }
+        <div>
+            <label class="text-xs text-gray-400 font-medium block mb-1">Cancellation Reason (optional):</label>
+            <input type="text" pInputText [ngModel]="cancelReason()" (ngModelChange)="cancelReason.set($event)"
+                placeholder="e.g. Customer requested, out of area..." class="w-full p-inputtext-sm" maxlength="255" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Keep Order" class="p-button-text p-button-secondary" (click)="displayCancelDialog.set(false)"></button>
+            <button pButton label="Confirm Cancellation" icon="pi pi-times" class="p-button-danger" (click)="confirmCancelOrder()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Mark Complete / Deliver Modal (A3) -->
+<p-dialog [(visible)]="displayCompleteDialog" [modal]="true" header="Mark Order Delivered" [style]="{width: '95vw', maxWidth: '480px'}"
+    [draggable]="false" [resizable]="false" styleClass="premium-dialog">
+    <div class="flex flex-column gap-3 p-2">
+        <p class="m-0 text-gray-300">
+            Confirm delivery for order <strong>{{ orderToComplete()?.orderNumber || orderToComplete()?.id }}</strong>.
+        </p>
+
+        @if ((orderToComplete()?.amount_due || 0) > 0) {
+        <div class="p-3 border-round bg-blue-900 text-blue-200 text-sm">
+            <strong>৳{{ orderToComplete()?.amount_due | number:'1.2-2' }}</strong> will be recorded as collected at delivery.
+        </div>
+        }
+
+        <div>
+            <label class="text-xs text-gray-400 font-medium block mb-1">Collection Method:</label>
+            <p-dropdown [options]="paymentMethodOptions" [ngModel]="completeCollectedVia()" (ngModelChange)="completeCollectedVia.set($event)"
+                styleClass="w-full"></p-dropdown>
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="displayCompleteDialog.set(false)"></button>
+            <button pButton label="Mark Delivered" icon="pi pi-check-circle" class="bg-green-600 border-none" (click)="confirmCompleteOrder()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Verify bKash Claim Modal (A3) -->
+<p-dialog [(visible)]="displayVerifyDialog" [modal]="true" header="Verify bKash Payment" [style]="{width: '95vw', maxWidth: '480px'}"
+    [draggable]="false" [resizable]="false" styleClass="premium-dialog">
+    <div class="flex flex-column gap-3 p-2">
+        <div class="text-sm text-gray-300">
+            <div>Customer TrxID: <strong class="text-blue-300 font-mono">{{ selectedOrder()?.transactionId }}</strong></div>
+            <div>Sender Phone: <strong class="text-white font-mono">{{ selectedOrder()?.bkashNumber }}</strong></div>
+        </div>
+
+        <div>
+            <label class="text-xs text-gray-400 font-medium block mb-1">Statement Amount (leave empty to use requested amount):</label>
+            <input type="text" pInputText [ngModel]="verifyAmount()" (ngModelChange)="verifyAmount.set($event)"
+                placeholder="e.g. 570.00" class="w-full font-mono p-inputtext-sm" />
+        </div>
+
+        @if (selectedOrder()?.status === 'Pending') {
+        <div class="flex align-items-center gap-2">
+            <input type="checkbox" id="verifyConfirmCheck" [checked]="verifyConfirmPending()" (change)="verifyConfirmPending.set($any($event.target).checked)" />
+            <label for="verifyConfirmCheck" class="text-xs text-gray-300 cursor-pointer">Also confirm pending order in the same transaction</label>
+        </div>
+        }
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="displayVerifyDialog.set(false)"></button>
+            <button pButton label="Verify" icon="pi pi-check" class="bg-blue-600 border-none" (click)="confirmVerifyPayment()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Reject bKash Claim Modal (A3) -->
+<p-dialog [(visible)]="displayRejectDialog" [modal]="true" header="Reject bKash Claim" [style]="{width: '95vw', maxWidth: '480px'}"
+    [draggable]="false" [resizable]="false" styleClass="premium-dialog">
+    <div class="flex flex-column gap-3 p-2">
+        <p class="m-0 text-sm text-gray-300">
+            The customer will be notified and given the opportunity to resubmit a corrected TrxID.
+        </p>
+        <div>
+            <label class="text-xs text-gray-400 font-medium block mb-1">Reason for rejection:</label>
+            <input type="text" pInputText [ngModel]="rejectReason()" (ngModelChange)="rejectReason.set($event)"
+                placeholder="e.g. TrxID not found in statement, incorrect amount..." class="w-full p-inputtext-sm" maxlength="255" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="displayRejectDialog.set(false)"></button>
+            <button pButton label="Reject Claim" icon="pi pi-times" class="p-button-danger" (click)="confirmRejectPayment()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Action Menu Popover (Anchored 3-dot) -->
+<p-popover #orderActionsPopover appendTo="body" styleClass="admin-action-menu-popover">
+    @if (activeActionOrder(); as actOrder) {
+    <div class="action-menu-list">
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(viewOrder.bind(this))">
+            <i class="pi pi-eye text-blue-400"></i>
+            <span>View Details</span>
+        </button>
+
+        <button type="button" class="action-menu-item"
+            [disabled]="downloadingOrderId() === (actOrder.id || '').toString()"
+            (click)="executeOrderAction(downloadAdminInvoice.bind(this))">
+            <i class="pi" [ngClass]="downloadingOrderId() === (actOrder.id || '').toString() ? 'pi-spin pi-spinner text-amber-400' : 'pi-download text-amber-400'"></i>
+            <span>{{ downloadingOrderId() === (actOrder.id || '').toString() ? 'Downloading...' : 'Download Invoice' }}</span>
+        </button>
+
+        @if (canEditOrder(actOrder)) {
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(openEditOrderModalDirect.bind(this))">
+            <i class="pi pi-pencil text-teal-400"></i>
+            <span>Edit Order</span>
+        </button>
+        }
+
+        @if (actOrder.status === 'Pending' && actOrder.paymentMethod?.toLowerCase() !== 'bkash') {
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(confirmDirectOrder.bind(this))">
+            <i class="pi pi-check text-green-400"></i>
+            <span>Confirm Order</span>
+        </button>
+        }
+
+        @if (actOrder.status === 'Confirmed') {
+        <button type="button" class="action-menu-item" (click)="executeOrderAction(completeDirectOrder.bind(this))">
+            <i class="pi pi-check-circle text-green-400"></i>
+            <span>Mark Delivered</span>
+        </button>
+        }
+
+        @if (actOrder.status === 'Pending' || actOrder.status === 'Confirmed') {
+        <button type="button" class="action-menu-item item-danger" (click)="executeOrderAction(cancelDirectOrder.bind(this))">
+            <i class="pi pi-times text-red-400"></i>
+            <span>Cancel Order</span>
+        </button>
+        }
+    </div>
+    }
+</p-popover>
+
+<!-- Record Manual Payment / Refund Modal (A3) -->
+<p-dialog [(visible)]="displayManualPaymentDialog" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(95vw, 560px)' }" [draggable]="false" [resizable]="false"
+    styleClass="premium-dialog financial-entry-dialog">
+
+    <ng-template pTemplate="header">
+        <div class="flex flex-column">
+            <h2 class="text-xl font-bold m-0 text-white flex align-items-center gap-2">
+                <i class="pi" [ngClass]="manualPaymentKind() === 'payment' ? 'pi-wallet text-primary' : 'pi-replay text-orange-400'"></i>
+                {{ manualPaymentKind() === 'payment' ? 'Record Payment by Hand' : 'Record Refund by Hand' }}
+            </h2>
+            <p class="text-slate-400 m-0 text-xs mt-1">Direct ledger entry recorded for order #{{ selectedOrder()?.orderNumber || selectedOrder()?.id }}</p>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2 flex flex-column gap-3">
+        <!-- Entry Type Switcher -->
+        <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Entry Type</label>
+            <div class="grid p-fluid">
+                <div class="col-6">
+                    <button type="button" pButton icon="pi pi-arrow-down-left" label="Receive Payment"
+                        class="p-button-sm w-full"
+                        [class.p-button-outlined]="manualPaymentKind() !== 'payment'"
+                        [class.p-button-primary]="manualPaymentKind() === 'payment'"
+                        (click)="manualPaymentKind.set('payment')"></button>
+                </div>
+                <div class="col-6">
+                    <button type="button" pButton icon="pi pi-arrow-up-right" label="Issue Refund"
+                        class="p-button-sm w-full p-button-danger"
+                        [class.p-button-outlined]="manualPaymentKind() !== 'refund'"
+                        (click)="manualPaymentKind.set('refund')"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Method & Amount Grid -->
+        <div class="grid">
+            <div class="field col-12 sm:col-6 mb-2 sm:mb-0">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Payment Method</label>
+                <p-dropdown [options]="paymentMethodOptions" [ngModel]="manualPaymentMethod()"
+                    (ngModelChange)="manualPaymentMethod.set($event)"
+                    appendTo="body" styleClass="w-full" inputStyleClass="premium-input"></p-dropdown>
+            </div>
+            <div class="field col-12 sm:col-6 mb-2 sm:mb-0">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Amount (৳)</label>
+                <input type="text" pInputText [ngModel]="manualPaymentAmount()"
+                    (ngModelChange)="manualPaymentAmount.set($event)"
+                    placeholder="0.00" class="w-full font-mono premium-input" />
+            </div>
+        </div>
+
+        <!-- Reference -->
+        <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                Reference / TrxID <span class="text-slate-500 font-normal lowercase">(optional)</span>
+            </label>
+            <input type="text" pInputText [ngModel]="manualPaymentReference()"
+                (ngModelChange)="manualPaymentReference.set($event)"
+                placeholder="e.g. bKash TrxID, Bank slip number" class="w-full premium-input" maxlength="100" />
+        </div>
+
+        <!-- Note -->
+        <div>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+                Note <span class="text-slate-500 font-normal lowercase">(optional)</span>
+            </label>
+            <textarea pInputTextarea [ngModel]="manualPaymentNote()"
+                (ngModelChange)="manualPaymentNote.set($event)"
+                rows="2" placeholder="Audit note explaining this adjustment"
+                class="w-full premium-input" maxlength="255"></textarea>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text p-button-secondary"
+                [disabled]="manualPaymentSaving()"
+                (click)="displayManualPaymentDialog.set(false)"></button>
+            <button pButton [label]="manualPaymentKind() === 'payment' ? 'Record Payment' : 'Record Refund'"
+                icon="pi pi-check" class="bg-blue-600 border-none"
+                [loading]="manualPaymentSaving()"
+                (click)="confirmManualPayment()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Void Ledger Entry Modal (A3) -->
+<p-dialog [(visible)]="displayVoidDialog" [modal]="true" header="Void Payment Entry" [style]="{width: '95vw', maxWidth: '440px'}"
+    [draggable]="false" [resizable]="false" styleClass="premium-dialog">
+    <div class="flex flex-column gap-3 p-2">
+        <p class="m-0 text-sm text-gray-300">
+            Voiding removes this entry from the order's financial ledger balance. It remains in audit history.
+        </p>
+        <div>
+            <label class="text-xs text-gray-400 font-medium block mb-1">Reason for voiding:</label>
+            <input type="text" pInputText [ngModel]="voidReason()" (ngModelChange)="voidReason.set($event)"
+                placeholder="e.g. entered twice, customer card refunded" class="w-full p-inputtext-sm" maxlength="255" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text p-button-secondary" (click)="displayVoidDialog.set(false)"></button>
+            <button pButton label="Void Entry" icon="pi pi-ban" class="p-button-danger" (click)="confirmVoidEntry()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Online Order Edit Modal (A5) -->
+<p-dialog [(visible)]="displayEditOrderDialog" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: 'min(95vw, 950px)', maxHeight: '90vh' }"
+    [draggable]="false" [resizable]="false" styleClass="premium-dialog edit-online-order-dialog">
+
+    <ng-template pTemplate="header">
+        <div class="flex flex-column">
+            <h2 class="text-xl font-bold m-0 text-white flex align-items-center gap-2">
+                <i class="pi pi-pencil text-primary"></i>
+                Edit Online Order #{{ selectedOrder()?.orderNumber || selectedOrder()?.id }}
+            </h2>
+            <p class="text-slate-400 m-0 text-xs mt-1">Update basket items and recipient address details.</p>
+        </div>
+    </ng-template>
+
+    <div class="p-fluid py-2">
+        <!-- Combo Items Section in Edit Modal -->
+        <div class="mb-4">
+            <div class="flex align-items-center justify-content-between mb-3">
+                <div class="flex align-items-center gap-2">
+                    <label class="text-xs font-semibold text-blue-400 uppercase tracking-wider m-0">Combos & Bundles</label>
+                    <span class="text-xs text-slate-400 font-mono">({{ editOrderCombos().length }} combos)</span>
+                </div>
+                <button type="button" pButton icon="pi pi-plus" label="Add Combo"
+                    class="p-button-sm p-button-outlined p-button-info"
+                    [disabled]="showAddComboPicker()"
+                    (click)="showAddComboPicker.set(true)"></button>
+            </div>
+
+            <!-- Add Combo Dropdown -->
+            @if (showAddComboPicker()) {
+            <div class="mb-3 p-3 border-round-xl border-1 border-blue-500 bg-slate-900 border-opacity-40 shadow-2">
+                <div class="flex align-items-center justify-content-between mb-2">
+                    <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+                        Select Active Combo Offer
+                    </span>
+                    <button type="button" pButton icon="pi pi-times"
+                        class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                        (click)="showAddComboPicker.set(false)"></button>
+                </div>
+                <p-dropdown [options]="availableCatalogCombos()" optionLabel="name"
+                            [(ngModel)]="selectedAddCombo"
+                            (onChange)="addComboToEdit($event.value)"
+                            placeholder="Choose a combo offer to add..."
+                            appendTo="body" styleClass="w-full">
+                    <ng-template let-c pTemplate="item">
+                        <div class="flex align-items-center justify-content-between w-full py-1">
+                            <span class="text-sm font-semibold text-white">{{ c.name }}</span>
+                            <span class="text-xs font-bold text-blue-400">৳{{ c.combo_price }}</span>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+            </div>
+            }
+
+            <!-- Combo Items List -->
+            @if (editOrderCombos().length > 0) {
+            <div class="flex flex-column gap-2 mb-3">
+                @for (c of editOrderCombos(); track c.order_combo_id || c.combo_id || $index; let cIdx = $index) {
+                <div class="p-3 border-round-xl border-1 border-white-alpha-10 surface-card flex align-items-center justify-content-between gap-3">
+                    <div class="flex flex-column">
+                        <span class="font-bold text-white text-sm">{{ c.name }}</span>
+                        <span class="text-xs text-slate-400">৳{{ c.combo_price }} per set</span>
+                    </div>
+                    <div class="flex align-items-center gap-3">
+                        <div class="flex align-items-center gap-1">
+                            <button pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                                    (click)="updateEditComboQuantity(cIdx, -1)"></button>
+                            <span class="font-mono font-bold text-white px-2">{{ c.quantity }}</span>
+                            <button pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                                    (click)="updateEditComboQuantity(cIdx, 1)"></button>
+                        </div>
+                        <span class="font-mono font-bold text-blue-400 text-sm">৳{{ ((c.combo_price || 0) * c.quantity) | number:'1.0-0' }}</span>
+                        <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                                (click)="removeEditCombo(cIdx)"></button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- Basket Items Table -->
+        <div class="mb-4">
+            <div class="flex align-items-center justify-content-between mb-3">
+                <div class="flex align-items-center gap-2">
+                    <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider m-0">Line Items (Full Basket)</label>
+                    <span class="text-xs text-slate-400 font-mono">({{ editBasketItems().length }} items)</span>
+                </div>
+                <button type="button" pButton icon="pi pi-plus" label="Add New"
+                    class="p-button-sm p-button-outlined p-button-primary"
+                    [disabled]="showAddProductPicker()"
+                    (click)="openAddProductPicker()"></button>
+            </div>
+
+            <!-- Add Product to Basket (revealed on "Add New" button click at the top) -->
+            @if (showAddProductPicker()) {
+            <div class="mb-3 p-3 border-round-xl border-1 border-primary-500 bg-slate-900 border-opacity-40 shadow-2">
+                <div class="flex align-items-center justify-content-between mb-2">
+                    <span class="text-xs font-semibold text-primary uppercase tracking-wider flex align-items-center gap-1">
+                        <i class="pi pi-search text-xs"></i> Select Product to Add
+                    </span>
+                    <button type="button" pButton icon="pi pi-times"
+                        class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                        (click)="closeAddProductPicker()"></button>
+                </div>
+                <div class="grid align-items-center">
+                    <div class="col-12 sm:col-10">
+                        <p-dropdown [options]="allCatalogProducts()" optionLabel="name" optionValue="id"
+                            [(ngModel)]="selectedAddProductId"
+                            (onChange)="onAddProductDropdownChange($event.value)"
+                            (onFilter)="onAddProductFilter($event)"
+                            [filter]="true" filterBy="name,code" placeholder="Search catalog by product name or code..."
+                            appendTo="body" styleClass="w-full" [disabled]="catalogProductsLoading()"
+                            [autofocusFilter]="true">
+                            <ng-template pTemplate="selectedItem" let-selected>
+                                <div *ngIf="selected" class="flex align-items-center justify-content-between w-full">
+                                    <span class="font-medium text-white truncate">{{ selected.name }}</span>
+                                </div>
+                            </ng-template>
+                            <ng-template pTemplate="item" let-prod>
+                                <div class="flex align-items-center justify-content-between w-full py-1">
+                                    <div class="flex flex-column min-w-0 pr-2">
+                                        <span class="font-medium text-white text-sm truncate">{{ prod.name }}</span>
+                                        <span *ngIf="prod.code" class="text-xs text-slate-400 font-mono">{{ prod.code }}</span>
+                                    </div>
+                                    <div class="flex flex-column align-items-end flex-shrink-0">
+                                        <span class="text-primary font-bold text-xs">৳{{ (prod.effective_price || prod.price) | number:'1.2-2' }}</span>
+                                        <span *ngIf="prod.effective_price && prod.effective_price < prod.price" class="text-xs line-through text-slate-500">
+                                            ৳{{ prod.price | number:'1.2-2' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </ng-template>
+                        </p-dropdown>
+                    </div>
+                    <div class="col-12 sm:col-2 flex justify-content-end">
+                        <button type="button" pButton label="Cancel" class="p-button-text p-button-secondary w-full"
+                            (click)="closeAddProductPicker()"></button>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <div class="flex flex-column gap-2">
+                @for (item of editBasketItems(); track item.product_id; let idx = $index) {
+                <div class="sale-item-row p-3 border-round-xl border-1 border-slate-800">
+                    <div class="grid align-items-center">
+                        <div class="field col-12 lg:col-5 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Product</label>
+                            <div class="flex align-items-center gap-2 min-w-0">
+                                @if (item.imageUrl) {
+                                <img [src]="item.imageUrl" class="w-2rem h-2rem object-cover border-round flex-shrink-0" />
+                                }
+                                <div class="min-w-0">
+                                    <div class="text-white text-sm font-medium truncate">{{ item.name }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field col-6 sm:col-3 lg:col-2 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Qty</label>
+                            <div class="flex align-items-center gap-1">
+                                <button type="button" pButton icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm"
+                                    (click)="updateEditItemQuantity(idx, -1)"></button>
+                                <span class="font-mono font-bold text-white text-sm w-2rem text-center">{{ item.quantity }}</span>
+                                <button type="button" pButton icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm"
+                                    (click)="updateEditItemQuantity(idx, 1)"></button>
+                            </div>
+                        </div>
+
+                        <div class="field col-6 sm:col-3 lg:col-2 m-0 mb-2 lg:mb-0">
+                            <label class="text-xs text-slate-400 block mb-1">Unit Price</label>
+                            <div class="font-mono text-sm text-slate-200 pt-1">৳{{ item.price | number:'1.2-2' }}</div>
+                        </div>
+
+                        <div class="field col-8 sm:col-4 lg:col-2 m-0">
+                            <label class="text-xs text-slate-400 block mb-1">Line Total</label>
+                            <div class="font-mono font-bold text-white text-base pt-1">
+                                ৳{{ ((item.price || 0) * (item.quantity || 0)) | number:'1.2-2' }}
+                            </div>
+                        </div>
+
+                        <div class="col-4 sm:col-2 lg:col-1 text-right m-0">
+                            <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger"
+                                (click)="removeEditItem(idx)" [disabled]="editBasketItems().length === 1 && editOrderCombos().length === 0"></button>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Address Edit Section -->
+        <div class="field mb-4">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Recipient Delivery Details
+            </label>
+            <div class="grid">
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">Full Name</label>
+                    <input pInputText [ngModel]="editAddress().full_name"
+                        (ngModelChange)="editAddress().full_name = $event; fetchEditPreview()"
+                        placeholder="Full name" class="w-full premium-input" />
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">Phone Number</label>
+                    <input pInputText [ngModel]="editAddress().phone"
+                        (ngModelChange)="editAddress().phone = $event; fetchEditPreview()"
+                        placeholder="Phone" class="w-full premium-input" />
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">District</label>
+                    <p-dropdown [options]="districts" optionLabel="name" optionValue="name"
+                        [ngModel]="editAddress().district"
+                        (onChange)="onEditDistrictChange($event.value)"
+                        placeholder="Select District" appendTo="body"
+                        styleClass="w-full" [filter]="true" filterBy="name" [showClear]="true"></p-dropdown>
+                </div>
+                <div class="field col-12 sm:col-6 lg:col-3">
+                    <label class="text-xs text-slate-400 block mb-1">Subdistrict</label>
+                    <p-dropdown [options]="editSubDistricts()"
+                        [ngModel]="editAddress().subdistrict"
+                        (onChange)="onEditSubDistrictChange($event.value)"
+                        placeholder="Select Subdistrict"
+                        [disabled]="!editSubDistricts().length" appendTo="body"
+                        styleClass="w-full" [filter]="true" [showClear]="true"></p-dropdown>
+                </div>
+                <div class="field col-12">
+                    <label class="text-xs text-slate-400 block mb-1">Address Line</label>
+                    <textarea pInputTextarea [ngModel]="editAddress().address_line"
+                        (ngModelChange)="editAddress().address_line = $event; fetchEditPreview()"
+                        rows="2" placeholder="Full street / house / delivery address"
+                        class="w-full premium-input" maxlength="300"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="field mb-4">
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Reason for edit <span class="text-slate-500 font-normal lowercase">(stored in audit log)</span>
+            </label>
+            <input pInputText [ngModel]="editReason()" (ngModelChange)="editReason.set($event)"
+                placeholder="e.g. customer requested color change, corrected phone"
+                class="w-full premium-input" maxlength="255" />
+        </div>
+
+        <!-- Dry Run Preview Summary Card -->
+        <div class="billing-summary-card p-4 border-round-2xl mt-4">
+            <div class="flex align-items-center justify-content-between pb-3 mb-3 border-bottom-1 border-slate-800">
+                <div class="flex align-items-center gap-2 text-slate-200 font-semibold text-sm">
+                    <i class="pi pi-receipt text-primary"></i>
+                    <span>Order Preview</span>
+                </div>
+                @if (editPreviewLoading()) {
+                <span class="text-xs text-amber-400 flex align-items-center gap-1">
+                    <i class="pi pi-spin pi-spinner text-xs"></i> Calculating...
+                </span>
+                } @else {
+                <span class="text-xs text-slate-400 font-medium">Server dry-run calculation</span>
+                }
+            </div>
+
+            @if (editPreviewResult(); as res) {
+            <div class="flex flex-column gap-2 mb-3">
+                <div class="flex align-items-center justify-content-between text-sm py-1">
+                    <span class="text-slate-400">Delivery Charge</span>
+                    <span class="font-medium text-slate-200 font-mono">৳{{ res.order.delivery_charge | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex align-items-center justify-content-between text-sm py-1">
+                    <span class="text-slate-400">Payment Status after save</span>
+                    <span class="font-medium text-blue-300 uppercase">{{ res.order.payment_status }} (৳{{ res.order.amount_due | number:'1.2-2' }} due)</span>
+                </div>
+
+                @if (res.coupon_removed) {
+                <div class="p-2 border-round bg-amber-500 bg-opacity-10 border-1 border-amber-500 border-opacity-30 text-amber-300 text-xs">
+                    <i class="pi pi-exclamation-triangle mr-1"></i> Coupon removed: {{ res.coupon_removed_reason || 'Order total fell below voucher minimum spend.' }}
+                </div>
+                }
+            </div>
+
+            <div class="grand-total-banner p-3 border-round-xl flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider block font-semibold">New Total</span>
+                    <span class="text-xs text-slate-400">All line items + delivery</span>
+                </div>
+                <div class="text-right">
+                    <span class="font-mono font-bold text-2xl text-white">৳{{ res.order.total | number:'1.2-2' }}</span>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text p-button-secondary"
+                [disabled]="editSaving()"
+                (click)="displayEditOrderDialog.set(false)"></button>
+            <button pButton label="Refresh Preview" icon="pi pi-sync" class="p-button-outlined p-button-info"
+                [disabled]="editSaving() || editPreviewLoading()"
+                (click)="fetchEditPreview()"></button>
+            <button pButton label="Save Changes" icon="pi pi-check" class="bg-blue-600 border-none"
+                [loading]="editSaving()"
+                (click)="confirmSaveEditOrder()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
 <p-confirmDialog appendTo="body" styleClass="premium-confirm-dialog"></p-confirmDialog>
 
 <!-- Hidden Invoice for PDF Generation -->
-<!-- Note: We avoid visibility:hidden as it can cause blank captures in html2canvas -->
-<!-- We use a fixed width and remove height/overflow constraints to optimize rendering speed -->
 <div style="position: fixed; left: -9999px; top: 0; width: 800px; pointer-events: none; opacity: 0;">
     <app-invoice #adminInvoice [orderedItems]="invoiceOrderData().items"
         [orderFormSnapshot]="invoiceOrderData().snapshot" [orderPaymentMethod]="invoiceOrderData().method"
         [orderDeliveryCharge]="invoiceOrderData().deliveryCharge" [orderTotal]="invoiceOrderData().total"
-        [orderDiscount]="invoiceOrderData().discount" [placedOrderId]="invoiceOrderData().id"
-        [placedOrderNumber]="invoiceOrderData().orderNumber"></app-invoice>
+        [orderDiscount]="invoiceOrderData().discount"
+        [comboSavings]="invoiceOrderData().combo_savings"
+        [combos]="invoiceOrderData().combos"
+        [placedOrderId]="invoiceOrderData().id"
+        [placedOrderNumber]="invoiceOrderData().orderNumber"
+        [paymentStatus]="invoiceOrderData().payment_status"
+        [amountDue]="invoiceOrderData().amount_due"
+        [createdAt]="invoiceOrderData().created_at"></app-invoice>
 </div>
+
+<app-bundle-picker
+    [combo]="editMixComboToConfigure()"
+    [(visible)]="editMixPickerVisible"
+    actionLabel="Add Combo to Order"
+    (picksConfirmed)="onEditPicksConfirmed($event)">
+</app-bundle-picker>

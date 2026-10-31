@@ -20,8 +20,10 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { OutSalesService, ProductService, OrderService } from '../../../core/services';
 import { Product } from '../../../models/product.model';
 import { Order } from '../../../models/order.model';
+import { formatPaymentStatus } from '../../../models/payment.model';
 import { District, districts } from '../../../data/bangladesh-data';
 import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/thermal-invoice.component';
+import { Popover, PopoverModule } from 'primeng/popover';
 import { finalize, catchError, tap } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 
@@ -70,7 +72,8 @@ export type OutSalesFilterType = 'all' | 'awaiting' | 'review' | 'delivered' | '
     ProgressSpinnerModule,
     SkeletonModule,
     CurrencyPipe,
-    ThermalInvoiceComponent
+    ThermalInvoiceComponent,
+    PopoverModule
   ],
   providers: [ConfirmationService],
   templateUrl: './out-sales-list.component.html',
@@ -80,6 +83,9 @@ export class OutSalesListComponent implements OnInit {
   @ViewChildren(Calendar) calendars!: QueryList<Calendar>;
   @ViewChild('classifyCalendar') classifyCalendar?: Calendar;
   @ViewChild('thermalInvoice') thermalInvoice?: ThermalInvoiceComponent;
+  @ViewChild('saleActionsPopover') saleActionsPopover?: Popover;
+
+  activeActionSale = signal<Order | null>(null);
 
   // Sales Table State
   sales = signal<Order[]>([]);
@@ -406,6 +412,16 @@ export class OutSalesListComponent implements OnInit {
     return sale.totalAmount != null ? sale.totalAmount : 0;
   }
 
+  getPaymentStatusInfo(sale: Order) {
+    const status = sale.payment_status || sale.paymentStatus;
+    return formatPaymentStatus(status, sale.amount_due || 0, sale.paymentMethod);
+  }
+
+  isDeliveryInProgress(sale: Order): boolean {
+    const raw = (sale.rawStatus || sale.status || '').toLowerCase().trim();
+    return raw === 'cod_processing' || raw === 'paid';
+  }
+
   // ===== ROW ACTION & BULK ACTION: MARK DELIVERED =====
   confirmMarkDelivered(sale: Order) {
     if (!sale || !sale.id) return;
@@ -417,10 +433,18 @@ export class OutSalesListComponent implements OnInit {
   }
 
   confirmBulkMarkDelivered() {
-    if (!this.selectedSales.length) return;
+    const eligible = this.selectedSales.filter(s => this.isDeliveryInProgress(s));
+    if (!eligible.length) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'No Eligible Sales',
+        detail: 'Only sales awaiting delivery (COD or Prepaid) can be marked as delivered.'
+      });
+      return;
+    }
     this.closeAllCalendarOverlays();
     this.maxDate = new Date();
-    this.targetDeliverySales.set([...this.selectedSales]);
+    this.targetDeliverySales.set([...eligible]);
     this.markDeliveredAt = null;
     this.markDeliveredModalVisible.set(true);
   }
@@ -1212,6 +1236,20 @@ export class OutSalesListComponent implements OnInit {
         });
       }
     });
+  }
+
+  openSaleActionMenu(event: Event, sale: Order) {
+    event.stopPropagation();
+    this.activeActionSale.set(sale);
+    this.saleActionsPopover?.toggle(event);
+  }
+
+  executeSaleAction(action: (sale: Order) => void) {
+    const sale = this.activeActionSale();
+    this.saleActionsPopover?.hide();
+    if (sale) {
+      action(sale);
+    }
   }
 
   openThermalInvoice(sale: Order) {

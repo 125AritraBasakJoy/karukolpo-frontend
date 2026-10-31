@@ -57,7 +57,14 @@
             </thead>
             <tbody>
                 <tr *ngFor="let item of orderedItems">
-                    <td class="od-col-name">{{ item.product?.name || 'Product' }}</td>
+                    <td class="od-col-name">
+                        <div class="od-item-info">
+                            <span class="od-item-title">{{ item.product?.name || item.name || 'Product' }}</span>
+                            <span *ngIf="getComboBadge(item)" class="od-combo-tag">
+                                {{ getComboBadge(item) }}
+                            </span>
+                        </div>
+                    </td>
                     <td class="od-col-qty">{{ item.quantity }}</td>
                     <td class="od-col-price">৳ {{ (item.price_at_purchase ?? item.price ?? item.product?.effective_price ?? item.product?.price ?? 0) | number:'1.2-2' }}</td>
                     <td class="od-col-total">৳ {{ ((item.price_at_purchase ?? item.price ?? item.product?.effective_price ?? item.product?.price ?? 0) * (item.quantity || 0)) | number:'1.2-2' }}
@@ -80,16 +87,37 @@
                 <span>DISCOUNT</span>
                 <span>- ৳ {{ discount | number:'1.2-2' }}</span>
             </div>
+            <div class="od-total-row od-discount-row" *ngIf="comboSavings > 0">
+                <span>COMBO SAVINGS</span>
+                <span>- ৳ {{ comboSavings | number:'1.2-2' }}</span>
+            </div>
             <div class="od-grand-total-row">
                 <span>GRAND TOTAL</span>
                 <span class="od-grand-total-value">৳ {{ grandTotal | number:'1.2-2' }}</span>
             </div>
         </div>
 
-        <!-- Payment Method -->
-        <div class="od-payment-row">
-            <span class="od-label">PAYMENT METHOD</span>
-            <span class="od-payment-value">{{ paymentMethodDisplay }}</span>
+        <!-- Payment Method & Status -->
+        <div class="od-payment-meta">
+            <div class="od-payment-row">
+                <span class="od-label">PAYMENT METHOD</span>
+                <span class="od-payment-value">{{ paymentMethodDisplay }}</span>
+            </div>
+            <div class="od-payment-row" *ngIf="paymentStatusDisplay">
+                <span class="od-label">PAYMENT STATUS</span>
+                <span class="od-status-pill" [attr.data-status]="paymentStatusInfo.rawStatus">
+                    <span class="od-status-dot"></span>
+                    <span class="od-status-text">{{ paymentStatusDisplay }}</span>
+                </span>
+            </div>
+            <div class="od-payment-row od-due-row" *ngIf="amountDue > 0 && paymentStatusInfo.rawStatus !== 'paid'">
+                <span class="od-label">AMOUNT DUE ON DELIVERY</span>
+                <span class="od-payment-value font-bold text-red-600">৳ {{ amountDue | number:'1.2-2' }}</span>
+            </div>
+            <div class="od-payment-row od-refund-row" *ngIf="amountDue < 0 || paymentStatusInfo.rawStatus === 'refund_due'">
+                <span class="od-label">REFUND BALANCE</span>
+                <span class="od-payment-value font-bold text-orange-600">৳ {{ (amountDue < 0 ? -amountDue : 0) | number:'1.2-2' }}</span>
+            </div>
         </div>
 
     </div>

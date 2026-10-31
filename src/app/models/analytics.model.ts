@@ -1,3 +1,10 @@
+export interface ActionQueue {
+  pending_orders: number;
+  payments_to_verify: number;
+  low_stock: number;
+  refunds_due: number;
+}
+
 export interface OverviewResponse {
   total_revenue: number;
   revenue_growth_percentage: number | null;
@@ -6,6 +13,7 @@ export interface OverviewResponse {
   average_order_value: number;
   conversion_rate: number;
   active_customers: number;
+  action_queue?: ActionQueue;
 }
 
 export interface RevenueTimeseriesPoint {

@@ -14,6 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { DropdownModule } from 'primeng/dropdown';
 import { DrawerModule } from 'primeng/drawer';
 import { PaginatorModule } from 'primeng/paginator';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
 
 @Component({
     selector: 'app-category-products',
@@ -27,7 +28,8 @@ import { PaginatorModule } from 'primeng/paginator';
         DropdownModule,
         DrawerModule,
         PaginatorModule,
-        RouterLink
+        RouterLink,
+        ProductCardComponent
     ],
     templateUrl: './category-products.component.html',
     styleUrls: ['./category-products.component.scss'],
@@ -326,6 +328,11 @@ export class CategoryProductsComponent implements OnInit {
 
     quickAddToCart(event: Event, product: Product) {
         event.stopPropagation();
+        if (this.isOutOfStock(product)) return;
+        this.cartService.addToCart(product);
+    }
+
+    onCardAddToCart(product: Product) {
         if (this.isOutOfStock(product)) return;
         this.cartService.addToCart(product);
     }

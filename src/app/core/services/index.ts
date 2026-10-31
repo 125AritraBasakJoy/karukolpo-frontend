@@ -23,6 +23,7 @@ export * from './tracking/tracking.service';
 export * from './pwa/pwa-install.service';
 export * from './gtag/gtag.service';
 export * from './offers/offers.service';
+export * from './combo/combo.service';
 export * from './site-notice/site-notice.service';
 export * from './site-notice/site-notice.api';
 
@@ -36,6 +37,7 @@ export * from './payment/payment.api';
 export * from './auth/admin.api';
 export * from './notification/notification.api';
 export * from './analytics/analytics.api';
+export * from './combo/combo.api';
 
 // Aggregate Endpoint Mapping (for compatibility/convenience)
 import { PRODUCTS_API } from './product/product.api';
@@ -48,6 +50,7 @@ import { ANALYTICS_API } from './analytics/analytics.api';
 import { MAINTENANCE_API } from './maintenance/maintenance.api';
 import { OUT_SALES_API } from './out-sales/out-sales.api';
 import { SITE_NOTICE_API } from './site-notice/site-notice.api';
+import { COMBOS_API } from './combo/combo.api';
 
 export const API_ENDPOINTS = {
     PRODUCTS: PRODUCTS_API,
@@ -60,4 +63,5 @@ export const API_ENDPOINTS = {
     MAINTENANCE: MAINTENANCE_API,
     OUT_SALES: OUT_SALES_API,
     SITE_NOTICE: SITE_NOTICE_API,
+    COMBOS: COMBOS_API,
 } as const;

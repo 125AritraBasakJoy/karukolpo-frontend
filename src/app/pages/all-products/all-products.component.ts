@@ -20,6 +20,7 @@ import { DividerModule } from 'primeng/divider';
 import { DrawerModule } from 'primeng/drawer';
 import { PaginatorModule } from 'primeng/paginator';
 import { SharedModule } from 'primeng/api';
+import { ProductCardComponent } from '../../components/product-card/product-card.component';
 
 @Component({
     selector: 'app-all-products',
@@ -37,7 +38,8 @@ import { SharedModule } from 'primeng/api';
         DividerModule,
         DrawerModule,
         PaginatorModule,
-        SharedModule
+        SharedModule,
+        ProductCardComponent
     ],
     templateUrl: './all-products.component.html',
     styleUrls: ['./all-products.component.scss'],
@@ -346,9 +348,9 @@ export class AllProductsComponent implements OnInit, OnDestroy {
         });
     }
 
-    quickAddToCart(product: Product, event: Event) {
-        event.stopPropagation();
-        event.preventDefault();
+    quickAddToCart(product: Product, event?: Event) {
+        if (event) event.stopPropagation();
+        if (this.isOutOfStock(product)) return;
         this.cartService.addToCart(product);
     }
 

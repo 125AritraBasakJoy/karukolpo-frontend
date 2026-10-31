@@ -47,6 +47,11 @@ export const routes: Routes = [
     canActivate: [maintenanceGuard]
   },
   {
+    path: 'combos',
+    loadComponent: () => import('./pages/combos/combos.component').then(m => m.CombosListingComponent),
+    canActivate: [maintenanceGuard]
+  },
+  {
     path: '**',
     loadComponent: () => import('./pages/not-found/not-found.component').then(m => m.NotFoundComponent),
     canActivate: [maintenanceGuard]

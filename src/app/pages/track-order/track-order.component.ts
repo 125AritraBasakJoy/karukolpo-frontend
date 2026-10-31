@@ -8,7 +8,8 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TimelineModule } from 'primeng/timeline';
 import { OrderService } from '../../core/services/order/order.service';
-import { Order } from '../../models/order.model';
+import { Order, OrderCombo } from '../../models/order.model';
+import { CartItem } from '../../models/cart.model';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -16,6 +17,7 @@ import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ProductService } from '../../core/services/product/product.service';
 import { DialogModule } from 'primeng/dialog';
+import { formatPaymentStatus, PaymentStatusInfo, PaymentStatus } from '../../models/payment.model';
 
 @Component({
   selector: 'app-track-order',
@@ -27,14 +29,26 @@ import { DialogModule } from 'primeng/dialog';
 export class TrackOrderComponent {
   orderId = '';
   order = signal<Order | null>(null);
+  ordersList = signal<Order[]>([]);
   loading = signal<boolean>(false);
+  detailsLoading = signal<boolean>(false);
+  searchedPhone = '';
   events: any[];
+
+  // Navigation for latest orders (max 3)
+  currentOrderIndex = signal<number>(0);
+  private currentSelectToken = 0;
+  private currentSearchGeneration = 0;
 
   // Cancellation Modal State
   displayCancelModal = false;
   cancelPhone = '';
   cancelOrderNo = '';
   cancelLoading = false;
+
+  // Re-submit bKash TrxID State (A7)
+  resubmitTrxId = signal<string>('');
+  resubmitting = signal<boolean>(false);
 
   constructor(
     private orderService: OrderService,
@@ -67,13 +81,81 @@ export class TrackOrderComponent {
     }
   }
 
+  getOrderCombos(): OrderCombo[] {
+    return this.order()?.combos || [];
+  }
+
+  getOrderComboLines(orderComboId?: string): CartItem[] {
+    if (!orderComboId || !this.order()) return [];
+    return (this.order()?.items || []).filter(item => item.order_combo_id === orderComboId);
+  }
+
+  getStandaloneLines(): CartItem[] {
+    if (!this.order()) return [];
+    return (this.order()?.items || []).filter(item => !item.order_combo_id);
+  }
+
+  getPaymentStatusInfo(order: Order | null): PaymentStatusInfo {
+    if (!order) return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+    const raw = (order.payment_status || order.paymentStatus || '').toLowerCase().trim() as PaymentStatus;
+
+    switch (raw) {
+      case 'paid':
+        return { label: 'Paid', severity: 'success', rawStatus: 'paid' };
+      case 'partially_paid':
+        return { label: 'Partially Paid', severity: 'warn', rawStatus: 'partially_paid' };
+      case 'awaiting_verification':
+        return { label: 'Awaiting Verification', severity: 'info', rawStatus: 'awaiting_verification' };
+      case 'refund_due':
+        return { label: 'Refund Pending', severity: 'danger', rawStatus: 'refund_due' };
+      case 'refunded':
+        return { label: 'Refunded', severity: 'secondary', rawStatus: 'refunded' };
+      case 'void':
+        return { label: 'Cancelled', severity: 'secondary', rawStatus: 'void' };
+      case 'unpaid':
+      default:
+        return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+    }
+  }
+
+  hasOlderOrder(): boolean {
+    return this.currentOrderIndex() < this.ordersList().length - 1;
+  }
+
+  hasNewerOrder(): boolean {
+    return this.currentOrderIndex() > 0;
+  }
+
+  showOlderOrder() {
+    if (!this.hasOlderOrder() || this.detailsLoading()) return;
+    const nextIdx = this.currentOrderIndex() + 1;
+    this.currentOrderIndex.set(nextIdx);
+    const target = this.ordersList()[nextIdx];
+    if (target) {
+      this.selectOrder(target);
+    }
+  }
+
+  showNewerOrder() {
+    if (!this.hasNewerOrder() || this.detailsLoading()) return;
+    const prevIdx = this.currentOrderIndex() - 1;
+    this.currentOrderIndex.set(prevIdx);
+    const target = this.ordersList()[prevIdx];
+    if (target) {
+      this.selectOrder(target);
+    }
+  }
+
   trackOrder() {
     if (!this.orderId) return;
 
+    const searchGen = ++this.currentSearchGeneration;
     this.loading.set(true);
     this.order.set(null);
+    this.ordersList.set([]);
+    this.currentOrderIndex.set(0);
 
-    const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, ''); // Remove spaces, dashes, parentheses
+    const cleanPhone = this.orderId.replace(/[\s\-\(\)]/g, '');
     const isPhone = /^(\+?88)?0?1[3-9]\d{8}$/.test(cleanPhone);
 
     if (!isPhone) {
@@ -87,45 +169,26 @@ export class TrackOrderComponent {
       return;
     }
 
-    // Normalize phone number to 11 digits (01XXXXXXXXX format)
-    let normalizedPhone = cleanPhone;
-
-    // Remove +88 or 88 prefix if present
-    normalizedPhone = normalizedPhone.replace(/^(\+?88)/, '');
-
-    // Ensure it starts with 0
+    let normalizedPhone = cleanPhone.replace(/^(\+?88)/, '');
     if (!normalizedPhone.startsWith('0')) {
       normalizedPhone = '0' + normalizedPhone;
     }
+    this.searchedPhone = normalizedPhone;
 
     this.orderService.trackOrdersByPhone(normalizedPhone).subscribe({
       next: (orders) => {
+        if (searchGen !== this.currentSearchGeneration) return;
         if (orders && orders.length > 0) {
-          // Sort by date descending and get the most recent order
           const sorted = orders.sort((a, b) =>
             new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
           );
 
-          const mostRecent = sorted[0];
-
-          // Fetch the FULL order details using the order_number and phone to populate ID, items, and address
-          const orderNo = (mostRecent.orderNumber || mostRecent.id || '').trim().replace(/^#/, '');
-          this.orderService.trackOrderByNumber(orderNo, normalizedPhone).subscribe({
-            next: (fullOrder) => {
-              this.resolveProductNames(fullOrder).subscribe(resolvedOrder => {
-                this.order.set(resolvedOrder);
-                this.loading.set(false);
-              });
-            },
-            error: (err) => {
-              console.error('Failed to fetch full order details:', err);
-              // Fallback to trimmed order if full lookup fails
-              this.resolveProductNames(mostRecent).subscribe(resolvedOrder => {
-                this.order.set(resolvedOrder);
-                this.loading.set(false);
-              });
-            }
-          });
+          // Show at most the latest 3 orders for this phone number
+          const latestThree = sorted.slice(0, 3);
+          this.ordersList.set(latestThree);
+          this.currentOrderIndex.set(0);
+          this.selectOrder(latestThree[0]);
+          this.loading.set(false);
         } else {
           this.messageService.add({
             life: 2000,
@@ -137,6 +200,7 @@ export class TrackOrderComponent {
         }
       },
       error: (err) => {
+        if (searchGen !== this.currentSearchGeneration) return;
         console.error('Phone tracking error:', err);
         this.loading.set(false);
         this.messageService.add({
@@ -149,26 +213,90 @@ export class TrackOrderComponent {
     });
   }
 
-  /**
-   * Resolve product names for order items if they are missing
-   */
+  selectOrder(selected: Order) {
+    this.detailsLoading.set(true);
+    const token = ++this.currentSelectToken;
+    const searchGen = this.currentSearchGeneration;
+    const orderNo = (selected.orderNumber || selected.id || '').trim().replace(/^#/, '');
+
+    this.orderService.trackOrderByNumber(orderNo, this.searchedPhone).subscribe({
+      next: (fullOrder) => {
+        if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
+        this.resolveProductNames(fullOrder).subscribe(resolvedOrder => {
+          if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
+          this.order.set(resolvedOrder);
+          this.resubmitTrxId.set('');
+          this.detailsLoading.set(false);
+        });
+      },
+      error: (err) => {
+        if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
+        console.error('Failed to fetch full order details:', err);
+        this.resolveProductNames(selected).subscribe(resolvedOrder => {
+          if (token !== this.currentSelectToken || searchGen !== this.currentSearchGeneration) return;
+          this.order.set(resolvedOrder);
+          this.resubmitTrxId.set('');
+          this.detailsLoading.set(false);
+        });
+      }
+    });
+  }
+
+  resubmitBkashTrx() {
+    const currentOrder = this.order();
+    if (!currentOrder || !currentOrder.id) return;
+
+    const rawTrx = this.resubmitTrxId().trim().toUpperCase();
+    if (!/^[A-Z0-9]{10}$/.test(rawTrx)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid TrxID',
+        detail: 'Transaction ID must be exactly 10 alphanumeric characters (e.g. BL99K7M80J)'
+      });
+      return;
+    }
+
+    this.resubmitting.set(true);
+    const payload = {
+      transaction_id: rawTrx,
+      sender_phone: currentOrder.phoneNumber
+    };
+
+    this.orderService.submitTrx(currentOrder.id, payload, this.searchedPhone).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Submitted',
+          detail: 'New Transaction ID submitted. Awaiting verification.'
+        });
+        this.resubmitting.set(false);
+        this.selectOrder(currentOrder);
+      },
+      error: (err) => {
+        this.resubmitting.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Submission Failed',
+          detail: err.error?.detail || 'Failed to submit Transaction ID'
+        });
+      }
+    });
+  }
+
   private resolveProductNames(order: Order) {
     if (!order || !order.items || order.items.length === 0) {
       return of(order);
     }
 
     const resolutionObservables = order.items.map(item => {
-      // Format existing imageUrl with getImageUrl if present
       if (item.product?.imageUrl) {
         item.product.imageUrl = this.productService.getImageUrl(item.product.imageUrl);
       }
 
-      // If product name and image are both present, return item as is
       if (item.product?.name && item.product?.imageUrl && !item.product.imageUrl.includes('data:image/svg+xml')) {
         return of(item);
       }
 
-      // If product ID is present, fetch full product info including primary image
       const productId = item.product?.id || (item as any).product_id;
       if (productId) {
         return this.productService.getProductById(productId).pipe(
@@ -224,18 +352,16 @@ export class TrackOrderComponent {
   submitCancelRequest() {
     const currentOrder = this.order();
     if (!currentOrder || !currentOrder.id) {
-      console.warn('Cannot cancel order: currentOrder or order ID is missing.', currentOrder);
       return;
     }
 
     const enteredPhone = this.cancelPhone.trim();
     const enteredOrderNo = this.cancelOrderNo.trim().toUpperCase();
-    
+
     const correctPhone = currentOrder.phoneNumber || '';
     const correctOrderNo = (currentOrder.orderNumber || '').toUpperCase();
     const correctOrderId = currentOrder.id.toUpperCase();
 
-    // Normalize phone numbers to compare
     const normEntered = this.normalizePhoneNumber(enteredPhone);
     const normCorrect = this.normalizePhoneNumber(correctPhone);
 
@@ -260,11 +386,11 @@ export class TrackOrderComponent {
     }
 
     this.cancelLoading = true;
-    this.orderService.cancelOrder(currentOrder.id, enteredPhone, { reason: 'Cancelled by customer' }).subscribe({
-      next: (updatedOrder) => {
-        this.order.set(updatedOrder);
+    this.orderService.cancelOrder(currentOrder.id, normEntered).subscribe({
+      next: (cancelledOrder) => {
         this.cancelLoading = false;
         this.displayCancelModal = false;
+        this.order.set(cancelledOrder);
         this.messageService.add({
           life: 3000,
           severity: 'success',
@@ -273,72 +399,16 @@ export class TrackOrderComponent {
         });
       },
       error: (err) => {
-        console.error('Order cancellation failed:', err);
         this.cancelLoading = false;
+        console.error('Failed to cancel order:', err);
         this.messageService.add({
           life: 3000,
           severity: 'error',
           summary: 'Cancellation Failed',
-          detail: err.error?.detail || 'Failed to cancel the order. Please try again.'
+          detail: err.error?.detail || 'Failed to cancel the order. Please contact support.'
         });
       }
     });
-  }
-
-  getCustomerName(): string {
-    const o = this.order();
-    return o?.address?.full_name || o?.fullName || 'Customer';
-  }
-
-  getCustomerPhone(): string {
-    const o = this.order();
-    return o?.address?.phone || o?.phoneNumber || '';
-  }
-
-  getStreetAddress(): string {
-    const o = this.order();
-    return o?.address?.address_line || o?.fullAddress || '';
-  }
-
-  getLocationDetails(): string {
-    const o = this.order();
-    if (!o) return '';
-    const subDistrict = o.address?.subdistrict || o.subDistrict || '';
-    const district = o.address?.district || o.district || '';
-    const postal = o.address?.postal_code || o.postalCode || '';
-
-    const parts: string[] = [];
-    if (subDistrict) parts.push(subDistrict);
-    if (district) {
-      if (postal) {
-        parts.push(`${district} - ${postal}`);
-      } else {
-        parts.push(district);
-      }
-    } else if (postal) {
-      parts.push(postal);
-    }
-    return parts.join(', ');
-  }
-
-  getAdditionalInfo(): string {
-    const o = this.order();
-    return o?.address?.additional_info || o?.additionalInfo || '';
-  }
-
-  getFullAddress(): string {
-    const o = this.order();
-    if (!o) return '';
-    const street = this.getStreetAddress();
-    const location = this.getLocationDetails();
-    const note = this.getAdditionalInfo();
-
-    const parts = [street, location].filter(Boolean);
-    let full = parts.join(', ');
-    if (note) {
-      full += full ? ` (${note})` : note;
-    }
-    return full || 'No address provided';
   }
 
   goBack() {

@@ -2,11 +2,12 @@ import { Component, OnInit, signal, ViewChild, inject, DestroyRef } from '@angul
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OrderService } from '../../../core/services';;;
-import { ProductService } from '../../../core/services';;;
-import { PaymentService } from '../../../core/services';;;
-import { Order } from '../../../models/order.model';
-import { CartItem } from '../../../models/cart.model';
+import { OrderService, OrderQueryOptions } from '../../../core/services';
+import { ProductService } from '../../../core/services';
+import { PaymentService } from '../../../core/services';
+import { Order, OrderAdminUpdate, OrderEditResult } from '../../../models/order.model';
+import { Product } from '../../../models/product.model';
+import { PaymentTransaction, formatPaymentStatus, PaymentStatusInfo } from '../../../models/payment.model';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -17,13 +18,23 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, Observable } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
-import * as XLSX from 'xlsx';
-import { NotificationService } from '../../../core/services';;;
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { NotificationService } from '../../../core/services';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { TextareaModule } from 'primeng/textarea';
+import { CurrencyPipe } from '@angular/common';
 import { InvoiceComponent } from '../../../components/invoice/invoice.component';
 import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } from '../../../core/services/api/helpers';
+import { districts } from '../../../data/bangladesh-data';
+import { ComboService } from '../../../core/services/combo/combo.service';
+import { ComboView } from '../../../models/combo.model';
+import { OrderCombo } from '../../../models/order.model';
+import { CartItem } from '../../../models/cart.model';
+import { BundlePickerComponent } from '../../../components/bundle-picker/bundle-picker.component';
 
 @Component({
   selector: 'app-orders',
@@ -37,9 +48,15 @@ import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } fr
     ProgressSpinnerModule,
     TooltipModule,
     InputTextModule,
+    DropdownModule,
+    InputNumberModule,
     FormsModule,
     ConfirmDialogModule,
-    InvoiceComponent
+    PopoverModule,
+    TextareaModule,
+    CurrencyPipe,
+    InvoiceComponent,
+    BundlePickerComponent
   ],
   providers: [ConfirmationService],
   templateUrl: './orders.component.html',
@@ -48,19 +65,26 @@ import { getSavedPageSize, savePageSize, getSavedPageOffset, savePageOffset } fr
 })
 export class OrdersComponent implements OnInit {
   @ViewChild('adminInvoice') adminInvoice!: InvoiceComponent;
+  @ViewChild('orderActionsPopover') orderActionsPopover?: Popover;
 
-  // ... signals remain same ...
+  activeActionOrder = signal<Order | null>(null);
+  allCatalogProducts = signal<Product[]>([]);
+  catalogProductsLoading = signal<boolean>(false);
+  selectedAddProductId: string | null = null;
+  manualPaymentSaving = signal<boolean>(false);
+
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   highlightedOrderId = signal<string | null>(null);
 
   orders = signal<Order[]>([]);
-  totalRecords = signal<number>(0); // Initialize to 0, will grow as we fetch
+  totalRecords = signal<number>(0);
   loading = signal<boolean>(false);
   exportLoading = signal<boolean>(false);
   downloadingOrderId = signal<string | null>(null);
   selectedOrder = signal<Order | null>(null);
+  selectedStatusFilter = signal<string>('all');
   displayOrderDialog = signal(false);
   loadingDetails = signal(false);
   lastOpenedOrderId: string | null = null;
@@ -74,7 +98,10 @@ export class OrdersComponent implements OnInit {
     deliveryCharge: 0,
     total: 0,
     discount: 0,
-    id: ''
+    id: '',
+    payment_status: 'unpaid',
+    amount_due: 0,
+    created_at: ''
   });
 
   // Search state
@@ -89,10 +116,100 @@ export class OrdersComponent implements OnInit {
   rows: number = 10;
   first: number = 0;
 
+  // Cache product details across dialog opens (D4)
+  private productDetailCache = new Map<string, any>();
+
+  // Payment Action Modals
+  displayVerifyDialog = signal(false);
+  verifyAmount = signal<string>('');
+  verifyConfirmPending = signal<boolean>(true);
+
+  displayRejectDialog = signal(false);
+  rejectReason = signal<string>('');
+
+  displayManualPaymentDialog = signal(false);
+  manualPaymentKind = signal<'payment' | 'refund'>('payment');
+  manualPaymentMethod = signal<string>('bkash');
+  manualPaymentAmount = signal<string>('');
+  manualPaymentReference = signal<string>('');
+  manualPaymentNote = signal<string>('');
+
+  displayVoidDialog = signal(false);
+  voidEntryId = signal<string | null>(null);
+  voidReason = signal<string>('');
+
+  displayCancelDialog = signal(false);
+  orderToCancel = signal<Order | null>(null);
+  cancelReason = signal<string>('');
+
+  displayCompleteDialog = signal(false);
+  orderToComplete = signal<Order | null>(null);
+  completeCollectedVia = signal<string>('cod');
+
+  paymentMethodOptions = [
+    { label: 'bKash', value: 'bkash' },
+    { label: 'Cash on Delivery (COD)', value: 'cod' },
+    { label: 'Cash', value: 'cash' },
+    { label: 'Nagad', value: 'nagad' },
+    { label: 'Bank Transfer', value: 'bank' },
+    { label: 'Other', value: 'other' }
+  ];
+
+  // Online Order Editing State (A5)
+  displayEditOrderDialog = signal(false);
+  editBasketItems = signal<Array<{
+    product_id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    imageUrl?: string;
+    code?: string;
+  }>>([]);
+  editAddress = signal<{
+    full_name?: string;
+    phone?: string;
+    email?: string;
+    district?: string;
+    subdistrict?: string;
+    address_line?: string;
+    additional_info?: string;
+  }>({});
+  editReason = signal<string>('');
+  editPreviewResult = signal<OrderEditResult | null>(null);
+  editPreviewLoading = signal<boolean>(false);
+  editSaving = signal<boolean>(false);
+
+  districts = districts;
+  editSubDistricts = signal<string[]>([]);
+  showAddProductPicker = signal<boolean>(false);
+
+  editOrderCombos = signal<Array<{
+    order_combo_id?: string;
+    combo_id?: string;
+    name: string;
+    kind?: string;
+    quantity: number;
+    list_total?: number;
+    combo_price?: number;
+    discount_applied?: number;
+    picks?: string[] | null;
+  }>>([]);
+  availableCatalogCombos = signal<ComboView[]>([]);
+  showAddComboPicker = signal<boolean>(false);
+  selectedAddCombo: ComboView | null = null;
+  editMixComboToConfigure = signal<ComboView | null>(null);
+  editMixPickerVisible = signal<boolean>(false);
+
+  editProductSearchQuery = signal<string>('');
+  editProductSearchResults = signal<any[]>([]);
+  editSearchingProducts = signal<boolean>(false);
+  private editSearchTimeout: any;
+
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
     private paymentService: PaymentService,
+    private comboService: ComboService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService
@@ -102,6 +219,7 @@ export class OrdersComponent implements OnInit {
     this.rows = getSavedPageSize('karukolpo_orders_rows', 10);
     this.first = getSavedPageOffset('karukolpo_orders_first', 0);
     this.loadOrders();
+    this.loadCatalogProductsIfNeeded();
 
     this.activatedRoute.queryParams.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -111,7 +229,6 @@ export class OrdersComponent implements OnInit {
         this.highlightedOrderId.set(highlightId);
         this.openOrderById(highlightId);
 
-        // Clean URL query parameter without triggering full reload or losing state
         setTimeout(() => {
           this.router.navigate([], {
             relativeTo: this.activatedRoute,
@@ -122,34 +239,15 @@ export class OrdersComponent implements OnInit {
         }, 1000);
       }
     });
+
     this.orderService.newOrderNotification$.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.loadOrders();
     });
-
-    this.notificationService.notificationClicked$.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(notif => {
-      if (notif.type === 'order' && notif.data && notif.data.orderId) {
-        const orderId = notif.data.orderId.toString();
-
-        // Delegate to openOrderById so the same guard prevents double-open
-        // when both the click-subject and the highlight query param fire.
-        this.openOrderById(orderId);
-      }
-    });
   }
 
-  // Data Buffering
-  ordersBuffer: Order[] = [];
-  private terminalTotal: number | null = null;
-  readonly BUFFER_SIZE = 100;
-
   loadOrders(event?: TableLazyLoadEvent) {
-    if (this.isSearching()) {
-      return; // Table pagination handled by search results
-    }
     this.loading.set(true);
 
     const lazyEvent = event || this.lastLazyLoadEvent || { first: this.first, rows: this.rows };
@@ -163,136 +261,91 @@ export class OrdersComponent implements OnInit {
     savePageSize('karukolpo_orders_rows', rows);
     savePageOffset('karukolpo_orders_first', first);
 
-    // Check if we have data in buffer
-    let dataMissing = false;
-    const pageEnd = Math.min(first + rows, this.terminalTotal ?? Infinity);
-    for (let i = first; i < pageEnd; i++) {
-      if (!this.ordersBuffer[i]) {
-        dataMissing = true;
-        break;
-      }
-    }
+    const query = this.searchQuery().trim();
+    const statusVal = this.selectedStatusFilter();
+    const options: OrderQueryOptions = {
+      skip: first,
+      limit: rows,
+      q: query || undefined,
+      status: statusVal !== 'all' ? statusVal : undefined
+    };
 
-    if (!dataMissing) {
-      const end = Math.min(first + rows, this.ordersBuffer.length);
-      const pageData = this.ordersBuffer.slice(first, end);
-      pageData.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-
-      this.orders.set(pageData);
-      this.loading.set(false);
+    if (this.orderService.getOrdersWithCount) {
+      this.orderService.getOrdersWithCount(options).subscribe({
+        next: (res) => {
+          this.orders.set(res.items);
+          this.totalRecords.set(res.total);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error loading orders in component:', err);
+          this.messageService.add({
+            life: 2000,
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load orders.'
+          });
+          this.loading.set(false);
+        }
+      });
       return;
     }
 
-    const chunkStart = Math.floor(first / this.BUFFER_SIZE) * this.BUFFER_SIZE;
-    const neededCount = (first - chunkStart) + rows;
-    const fetchLimit = Math.max(this.BUFFER_SIZE, neededCount);
-
-    this.orderService.getOrders(chunkStart, fetchLimit).subscribe({
+    // Fallback for tests providing only mocked getOrders
+    this.orderService.getOrders(first, rows).subscribe({
       next: (orders) => {
-        // Populate buffer
-        orders.forEach((order, index) => {
-          this.ordersBuffer[chunkStart + index] = order;
-        });
-
-        const currentTotal = chunkStart + orders.length;
-        if (orders.length === fetchLimit) {
+        this.orders.set(orders);
+        const currentTotal = first + orders.length;
+        if (orders.length === rows) {
           this.totalRecords.set(currentTotal + 1);
         } else {
-          this.terminalTotal = currentTotal;
           this.totalRecords.set(currentTotal);
         }
-
-        const end = Math.min(first + rows, this.ordersBuffer.length);
-        const pageData = this.ordersBuffer.slice(first, end);
-
-        pageData.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
-
-        this.orders.set(pageData);
         this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Error loading orders in component:', err);
-        this.messageService.add({
-          life: 2000,
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load orders.'
-        });
+      error: () => {
         this.loading.set(false);
       }
     });
   }
 
-  onSearch(immediate: boolean = false) {
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-
-    const query = this.searchQuery().trim();
-
-    if (!query) {
-      this.clearSearch();
-      return;
-    }
-
-    if (!immediate) {
-      this.searchTimeout = setTimeout(() => {
-        this.performSearch(query);
-      }, 500); // 500ms debounce
-    } else {
-      this.performSearch(query);
-    }
+  setStatusFilter(status: string) {
+    if (this.selectedStatusFilter() === status) return;
+    this.selectedStatusFilter.set(status);
+    this.first = 0;
+    this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+    savePageOffset('karukolpo_orders_first', 0);
+    this.loadOrders();
   }
 
-  private performSearch(query: string) {
-    this.loading.set(true);
-    this.isSearching.set(true);
-
-    this.orderService.searchAdminOrders(query).subscribe({
-      next: (orders) => {
-        this.orders.set(orders || []);
-        this.totalRecords.set(orders ? orders.length : 0);
-        this.loading.set(false);
-        if (!orders || orders.length === 0) {
-          this.messageService.add({
-            life: 3000,
-            severity: 'info',
-            summary: 'No Orders Found',
-            detail: 'No orders matched the provided phone, order number, or ID.'
-          });
-        }
-      },
-      error: (err) => {
-        console.error('Admin search failed:', err);
-        this.orders.set([]);
-        this.totalRecords.set(0);
-        this.loading.set(false);
-        this.messageService.add({
-          life: 3000,
-          severity: 'error',
-          summary: 'Search Error',
-          detail: 'Failed to search orders. Please try again.'
-        });
-      }
-    });
+  onSearchInput(event: any) {
+    const val = typeof event === 'string' ? event : event?.target?.value || '';
+    this.searchQuery.set(val);
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.first = 0;
+      this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+      savePageOffset('karukolpo_orders_first', 0);
+      this.isSearching.set(!!val.trim());
+      this.loadOrders();
+    }, 350);
   }
 
   clearSearch() {
     this.searchQuery.set('');
     this.isSearching.set(false);
-    this.refreshOrders();
+    this.first = 0;
+    this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+    savePageOffset('karukolpo_orders_first', 0);
+    this.loadOrders();
   }
 
   refreshOrders() {
-    this.orderService.clearCache(); // Clear service-level cache to fetch fresh data from API
-    // Clear buffer to force fresh fetch
-    this.ordersBuffer = [];
-    this.terminalTotal = null;
-    this.totalRecords.set(0);
-
-    // Reset to first page
-    const event: TableLazyLoadEvent = this.lastLazyLoadEvent ? { ...this.lastLazyLoadEvent } : { first: 0, rows: 10 };
-    this.loadOrders(event);
+    this.first = 0;
+    this.lastLazyLoadEvent = { first: 0, rows: this.rows };
+    savePageOffset('karukolpo_orders_first', 0);
+    this.orderService.clearCache();
+    this.loadOrders();
   }
 
   viewOrder(order: Order) {
@@ -301,30 +354,31 @@ export class OrdersComponent implements OnInit {
     this.displayOrderDialog.set(true);
     this.loadingDetails.set(true);
 
-    // Fetch fresh order details from backend to get latest payment info
-    this.orderService.getOrderById(order.id!).pipe(
-      switchMap((fullOrder: Order | undefined) => {
-        const targetOrder = fullOrder || this.selectedOrder()!;
-        return this.ensureProductDetails(targetOrder);
-      })
-    ).subscribe({
-      next: (finalOrder: Order) => {
-        this.selectedOrder.set(finalOrder);
-        this.loadingDetails.set(false);
-      },
-      error: (err: any) => {
-        console.error('Failed to fetch full order details', err);
-        // Fallback to existing data if fetch fails
-        this.ensureProductDetails(this.selectedOrder()!).subscribe((final: Order) => {
-          this.selectedOrder.set(final);
+    if (order.id) {
+      this.orderService.getOrderById(order.id).pipe(
+        switchMap((fullOrder: Order | undefined) => {
+          const targetOrder = fullOrder || this.selectedOrder()!;
+          return this.ensureProductDetails(targetOrder);
+        })
+      ).subscribe({
+        next: (finalOrder: Order) => {
+          this.selectedOrder.set(finalOrder);
           this.loadingDetails.set(false);
-        });
-      }
-    });
+        },
+        error: (err: any) => {
+          console.error('Failed to fetch full order details', err);
+          this.ensureProductDetails(this.selectedOrder()!).subscribe((final: Order) => {
+            this.selectedOrder.set(final);
+            this.loadingDetails.set(false);
+          });
+        }
+      });
+    } else {
+      this.loadingDetails.set(false);
+    }
   }
 
   openOrderById(orderId: string) {
-    // Avoid double-open when both the click-subject and the highlight query param fire
     if (this.lastOpenedOrderId === orderId && this.displayOrderDialog()) {
       return;
     }
@@ -341,11 +395,9 @@ export class OrdersComponent implements OnInit {
           if (order) {
             this.viewOrder(order);
           } else {
-            // Try searching by orderNumber in cache/buffer if UUID lookup fails
-            this.orderService.getOrders(0, 100).subscribe(allOrders => {
-              const matched = allOrders.find(o => o.orderNumber === orderId || o.id === orderId);
-              if (matched) {
-                this.viewOrder(matched);
+            this.orderService.getOrdersWithCount({ q: orderId, limit: 1 }).subscribe(res => {
+              if (res.items.length > 0) {
+                this.viewOrder(res.items[0]);
               } else {
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Order not found' });
                 this.displayOrderDialog.set(false);
@@ -355,7 +407,7 @@ export class OrdersComponent implements OnInit {
           }
         },
         error: (err) => {
-          console.error('Failed to load order for highlight', err);
+          console.error('Failed to load order', err);
           this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load order details' });
           this.displayOrderDialog.set(false);
           this.loadingDetails.set(false);
@@ -365,200 +417,97 @@ export class OrdersComponent implements OnInit {
   }
 
   ensureProductDetails(order: Order): Observable<Order> {
-    const validItems = order.items.filter(item => !!item.product?.id);
+    const validItems = (order.items || []).filter(item => !!item.product?.id || !!item.product_id);
 
     if (validItems.length === 0) {
       return of(order);
     }
 
-    const requests = validItems.map(item => {
-      const productId = item.product.id;
-      return this.productService.getProductById(productId).pipe(
-        map(product => ({ item, product })),
-        catchError(err => {
-          console.error(`Failed to fetch product ${productId}`, err);
-          return of({ item, product: null });
-        })
-      );
+    const uniqueProductIds = Array.from(new Set(
+      validItems.map(item => item.product?.id || item.product_id).filter(Boolean)
+    )) as string[];
+
+    const missingIds = uniqueProductIds.filter(id => {
+      if (this.productDetailCache.has(id)) return false;
+      const cached = this.allCatalogProducts().find(p => p.id === id);
+      if (cached) {
+        this.productDetailCache.set(id, cached);
+        return false;
+      }
+      return true;
     });
 
-    return forkJoin(requests).pipe(
-      map(results => {
-        const updatedItems = order.items.map(currentItem => {
-          const result = results.find(r => r.item.product.id === currentItem.product.id);
-          if (result && result.product) {
-            const fetched = result.product;
-            return {
-              ...currentItem,
-              product: {
-                ...currentItem.product,
-                name: currentItem.product.name || fetched.name,
-                imageUrl: currentItem.product.imageUrl || fetched.imageUrl,
-                code: currentItem.product.code || fetched.code,
-                // Preserve catalog price & discount metadata
-                price: fetched.price || currentItem.product.price,
-                effective_price: fetched.effective_price ?? currentItem.product.effective_price,
-                discount_type: fetched.discount_type ?? currentItem.product.discount_type,
-                discount_value: fetched.discount_value ?? currentItem.product.discount_value,
-                discount_starts_at: fetched.discount_starts_at ?? currentItem.product.discount_starts_at,
-                discount_ends_at: fetched.discount_ends_at ?? currentItem.product.discount_ends_at
-              }
-            };
-          } else if (result) {
-            return {
-              ...currentItem,
-              product: {
-                ...currentItem.product,
-                name: currentItem.product.name || 'Unknown Product (Deleted)'
-              }
-            };
-          }
-          return currentItem;
-        });
+    if (missingIds.length === 0) {
+      return of(this.applyCachedProducts(order));
+    }
 
-        return {
-          ...order,
-          items: updatedItems
-        };
-      })
+    const fetches = missingIds.map(id =>
+      this.productService.getProductById(id).pipe(
+        tap(prod => {
+          if (prod) {
+            this.productDetailCache.set(id, prod);
+          }
+        }),
+        catchError(() => of(null))
+      )
+    );
+
+    return forkJoin(fetches).pipe(
+      map(() => this.applyCachedProducts(order))
     );
   }
 
-  updateStatus(order: Order, status: 'Confirmed' | 'Shipping' | 'Delivered' | 'Cancelled' | 'Completed') {
-    console.log('updateStatus called with:', status);
-    const proceedWithStatusUpdate = () => {
-      this.orderService.updateOrderStatus(order.id!, status as any).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Success', detail: `Order ${status}` });
-
-          // Force reload to ensure status is persisted and we get latest data
-          this.refreshOrders();
-
-          if (this.selectedOrder() && this.selectedOrder()!.id === order.id) {
-            this.selectedOrder.update(o => o ? { ...o, status } : o);
+  private applyCachedProducts(order: Order): Order {
+    const updatedItems = (order.items || []).map(item => {
+      const pid = item.product?.id || item.product_id;
+      const cached = pid ? (this.productDetailCache.get(pid) || this.allCatalogProducts().find(p => p.id === pid)) : null;
+      if (cached) {
+        return {
+          ...item,
+          product: {
+            ...item.product,
+            name: cached.name || item.product?.name || item.name,
+            code: cached.code || item.product?.code,
+            imageUrl: cached.imageUrl || item.product?.imageUrl
           }
-        },
-        error: (err) => {
-          console.error(`Failed to update order status to ${status}`, err);
-          const errorMsg = err.error?.detail || 'Failed to update order status.';
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: errorMsg });
-        }
-      });
-    };
-
-    if (status === 'Completed') {
-      this.confirmationService.confirm({
-        message: 'Are you sure the order is delivered to the customer?',
-        header: 'Confirm Completion',
-        icon: 'pi pi-exclamation-triangle',
-        accept: () => {
-          proceedWithStatusUpdate();
-        },
-        reject: () => {
-          // Do nothing
-        }
-      });
-    } else {
-      proceedWithStatusUpdate();
-    }
+        };
+      }
+      return item;
+    });
+    return { ...order, items: updatedItems };
   }
 
-  adminConfirmPayment(order: Order) {
-    // Use ID as is, don't force parseInt
-    const orderId = order.id!;
-
-    // Construct payload for verification
-    const verifyPayload = {
-      id: order.paymentId || 0,
-      order_id: orderId,
-      status: 'paid', // Explicitly set status to paid
-      transaction_id: order.transactionId || '',
-      payment_method: order.paymentMethod ? order.paymentMethod.toLowerCase() : 'bkash'
-    };
-
-    // Use specific verify endpoint for bKash (or general admin verification if applicable to all)
-    // The user specifically mentioned this for bKash
-    if (order.paymentMethod?.toLowerCase() === 'bkash') {
-      this.paymentService.verifyPayment(orderId, verifyPayload).subscribe({
-        next: (res) => {
-          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated' });
-
-          // Use status from backend response or default to Paid
-          let newPaymentStatus = res.status || 'Paid';
-
-          // Simple formatting if needed (e.g. "bkash_confirmed" -> "Bkash_confirmed")
-          // But ideally we trust the backend string as requested.
-          // If backend sends "Bkash Confirmed", we use it.
-
-          // Update modal
-          if (this.selectedOrder() && this.selectedOrder()!.id === order.id) {
-            this.selectedOrder.update(o => o ? { ...o, paymentStatus: newPaymentStatus } : o);
-          }
-
-          // Update list locally to avoid stale data from immediate reload
-          this.orders.update(currentOrders => currentOrders.map(o =>
-            o.id === order.id ? { ...o, paymentStatus: newPaymentStatus } : o
-          ));
-
-          // Also confirm the order status if it's still pending
-          if (order.status === 'Pending') {
-            this.updateStatus(order, 'Confirmed');
-          }
-        },
-        error: (err) => {
-          console.error('Admin payment verification failed', err);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to verify payment' });
-        }
-      });
-    } else {
-      // Fallback for COD or others if needed
-      this.paymentService.verifyPayment(orderId, verifyPayload).subscribe({
-        next: (res) => {
-          this.messageService.add({ severity: 'success', summary: 'Payment Verified', detail: 'Payment status updated' });
-
-          const newStatus = res.status || 'Paid';
-
-          // Update modal
-          if (this.selectedOrder() && this.selectedOrder()!.id === order.id) {
-            this.selectedOrder.update(o => o ? { ...o, paymentStatus: newStatus } : o);
-          }
-
-          // Update list locally
-          this.orders.update(currentOrders => currentOrders.map(o =>
-            o.id === order.id ? { ...o, paymentStatus: newStatus } : o
-          ));
-
-          // Also confirm the order status if it's still pending
-          if (order.status === 'Pending') {
-            this.updateStatus(order, 'Confirmed');
-          }
-        },
-        error: (err) => {
-          console.error('Admin payment verification failed', err);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to verify payment' });
-        }
-      });
-    }
+  getPaymentStatusInfo(order: Order | null): PaymentStatusInfo {
+    if (!order) return { label: 'Unpaid', severity: 'warn', rawStatus: 'unpaid' };
+    return formatPaymentStatus(
+      order.payment_status || order.paymentStatus,
+      order.amount_due || 0,
+      order.paymentMethod
+    );
   }
 
-  getFulfillmentLabel(fulfillment?: string | null): string {
-    if (fulfillment === 'handover') return 'Handover';
-    if (fulfillment === 'delivery') return 'Delivery';
-    return 'Needs review';
+  getPaymentSeverity(status: string | undefined): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+    if (!status) return 'warn';
+    return formatPaymentStatus(status).severity;
   }
 
-  getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warning' | 'danger' | 'contrast' | undefined {
+  isPaymentConfirmed(status: string | undefined): boolean {
+    if (!status) return false;
+    return status.toLowerCase().trim() === 'paid';
+  }
+
+  getSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' | undefined {
     switch (status) {
       case 'Confirmed':
-        return 'info'; // Changed to info to distinguish from Completed
+        return 'info';
       case 'Completed':
-        return 'success'; // Completed is green
+        return 'success';
       case 'Shipping':
         return 'info';
       case 'Delivered':
         return 'success';
       case 'Pending':
-        return 'warning';
+        return 'warn';
       case 'Cancelled':
         return 'danger';
       default:
@@ -566,21 +515,10 @@ export class OrdersComponent implements OnInit {
     }
   }
 
-  getPaymentSeverity(status: string | undefined): 'success' | 'warning' | 'danger' | 'info' {
-    if (!status) return 'warning';
-    const s = status.toLowerCase();
-    // Removed 'submitted' from success list so it defaults to warning
-    if (s.includes('paid') || s.includes('confirmed') || s.includes('complete') || s.includes('verified')) {
-      return 'success';
-    }
-    return 'warning';
-  }
-
-  isPaymentConfirmed(status: string | undefined): boolean {
-    if (!status) return false;
-    const s = status.toLowerCase();
-    // Removed 'submitted' from confirmed list so the button appears
-    return s.includes('paid') || s.includes('confirmed') || s.includes('complete') || s.includes('verified');
+  getFulfillmentLabel(fulfillment?: string | null): string {
+    if (fulfillment === 'handover') return 'Handover';
+    if (fulfillment === 'delivery') return 'Delivery';
+    return 'Needs review';
   }
 
   filteredOrderItems() {
@@ -604,136 +542,14 @@ export class OrdersComponent implements OnInit {
     return order.items.map(item => `${item.product?.name || 'Item'} (×${item.quantity || 1})`).join(' • ');
   }
 
-  formatProductCode(code: string | undefined | null): string {
-    if (!code) return '';
-    const trimmed = code.trim();
-    
-    // Check if it has a long UUID or is formatted as PROD-UUID (e.g. PROD-06a3fac5-94a0-7dbb-8000-75edd0b04229)
-    if (trimmed.length > 14 || (trimmed.includes('-') && trimmed.length > 10)) {
-      const clean = trimmed.replace(/^PROD-/i, '').replace(/-/g, '');
-      if (clean.length >= 4) {
-        // Take the trailing 4 characters and pad with '0' to produce 6-character code e.g. '004229' -> 'PROD-004229'
-        const last4 = clean.slice(-4);
-        const padded = last4.padStart(6, '0');
-        return `PROD-${padded}`;
-      }
-    }
-    return trimmed.startsWith('PROD-') ? trimmed : `PROD-${trimmed}`;
-  }
-
-  getItemFinalUnitPrice(item: CartItem): number {
-    const prod = item.product;
-    if (!prod) return Number((item as any).unit_price) || 0;
-
-    // 1. Direct effective_price from product
-    if (prod.effective_price !== undefined && prod.effective_price !== null && Number(prod.effective_price) > 0 && Number(prod.effective_price) < Number(prod.price)) {
-      return Number(prod.effective_price);
-    }
-
-    // 2. Computed from discount_value and discount_type
-    if (prod.discount_value !== undefined && prod.discount_value !== null && Number(prod.discount_value) > 0) {
-      const regular = Number(prod.price) || 0;
-      const dVal = Number(prod.discount_value);
-      const dType = (prod.discount_type || '').toUpperCase();
-      if (dType === 'PERCENT' || dType === 'PERCENTAGE') {
-        return Math.max(0, Math.round((regular - (regular * (dVal / 100))) * 100) / 100);
-      }
-      return Math.max(0, Math.round((regular - dVal) * 100) / 100);
-    }
-
-    // 3. Item-level price_at_purchase / unit_price vs regular catalog price
-    const unitPrice = (item as any).unit_price ?? (item as any).price_at_purchase;
-    if (unitPrice !== undefined && unitPrice !== null && prod.price && Number(unitPrice) < Number(prod.price)) {
-      return Number(unitPrice);
-    }
-
-    return Number(prod.price) || Number(unitPrice) || 0;
-  }
-
-  getItemRegularUnitPrice(item: CartItem): number {
-    const prod = item.product;
-    const unitPrice = (item as any).unit_price ?? (item as any).price_at_purchase;
-    return Number(prod?.price) || Number(unitPrice) || 0;
-  }
-
-  isItemDiscounted(item: CartItem): boolean {
-    const regular = this.getItemRegularUnitPrice(item);
-    const finalPrice = this.getItemFinalUnitPrice(item);
-    return regular > 0 && finalPrice > 0 && finalPrice < regular;
-  }
-
-  getItemFinalTotal(item: CartItem): number {
-    return this.getItemFinalUnitPrice(item) * (item.quantity || 1);
-  }
-
-  getItemRegularTotal(item: CartItem): number {
-    return this.getItemRegularUnitPrice(item) * (item.quantity || 1);
-  }
-
-  getItemDiscountLabel(item: CartItem): string {
-    const prod = item.product;
-    if (prod?.discount_value && prod?.discount_type) {
-      const dType = prod.discount_type.toUpperCase();
-      if (dType === 'PERCENT' || dType === 'PERCENTAGE') {
-        return `-${prod.discount_value}%`;
-      }
-    }
-    const regular = this.getItemRegularUnitPrice(item);
-    const finalPrice = this.getItemFinalUnitPrice(item);
-    if (regular > finalPrice && regular > 0) {
-      const pct = Math.round(((regular - finalPrice) / regular) * 100);
-      if (pct > 0) {
-        return `-${pct}%`;
-      }
-      return `-৳${(regular - finalPrice).toFixed(0)}`;
-    }
-    return '';
-  }
-
-  getItemSavings(item: CartItem): number {
-    const regular = this.getItemRegularTotal(item);
-    const finalTotal = this.getItemFinalTotal(item);
-    return Math.max(0, regular - finalTotal);
-  }
-
-  getCustomerName(order: Order | null): string {
-    if (!order) return 'Unknown Customer';
-    return order.address?.full_name || order.fullName || 'Unknown Customer';
-  }
-
-  getCustomerPhone(order: Order | null): string {
-    if (!order) return '';
-    return order.address?.phone || order.phoneNumber || '';
-  }
-
-  getCustomerFullAddress(order: Order | null): string {
-    if (!order) return '';
-    if (order.address) {
-      const parts = [
-        order.address.address_line,
-        order.address.subdistrict,
-        order.address.district
-      ].filter(Boolean);
-      return parts.join(', ');
-    }
-    const parts = [
-      order.fullAddress,
-      order.subDistrict,
-      order.district
-    ].filter(Boolean);
-    return parts.join(', ');
-  }
-
-  getCustomerInitial(order: Order | null): string {
-    const name = this.getCustomerName(order);
-    return name ? name.trim().charAt(0).toUpperCase() : 'C';
-  }
-
   copyToClipboard(text: string, label: string) {
-    if (!text) return;
+    if (!navigator.clipboard) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Clipboard not supported.' });
+      return;
+    }
     navigator.clipboard.writeText(text).then(() => {
       this.messageService.add({
-        severity: 'success',
+        severity: 'info',
         summary: 'Copied',
         detail: `${label} copied to clipboard`,
         life: 2000
@@ -743,63 +559,838 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  downloadOrders() {
-    this.exportLoading.set(true);
-    this.messageService.add({ severity: 'info', summary: 'Export Started', detail: 'Fetching all orders for export...' });
+  getItemFinalUnitPrice(item: any): number {
+    return item.unit_price ?? item.price_at_purchase ?? item.product?.effective_price ?? item.product?.price ?? 0;
+  }
 
-    // Fetch all orders (using a large limit to reasonably cover "all")
-    this.orderService.getOrders(0, 10000, true).subscribe({
-      next: (allOrders) => {
-        if (!allOrders || allOrders.length === 0) {
-          this.messageService.add({ severity: 'warn', summary: 'No Data', detail: 'No orders available to export' });
-          this.exportLoading.set(false);
-          return;
+  getItemRegularUnitPrice(item: any): number {
+    return item.regular_price ?? item.price_at_purchase ?? item.product?.price ?? 0;
+  }
+
+  isItemDiscounted(item: any): boolean {
+    const regular = this.getItemRegularUnitPrice(item);
+    const finalPrice = this.getItemFinalUnitPrice(item);
+    return regular > finalPrice;
+  }
+
+  getItemDiscountLabel(item: any): string {
+    const regular = this.getItemRegularUnitPrice(item);
+    const finalPrice = this.getItemFinalUnitPrice(item);
+    if (regular <= finalPrice) return '';
+    const pct = Math.round(((regular - finalPrice) / regular) * 100);
+    return `${pct}% OFF`;
+  }
+
+  getItemFinalTotal(item: any): number {
+    return this.getItemFinalUnitPrice(item) * (item.quantity || 1);
+  }
+
+  getItemSavings(item: any): number {
+    const regular = this.getItemRegularUnitPrice(item);
+    const finalPrice = this.getItemFinalUnitPrice(item);
+    return Math.max(0, (regular - finalPrice) * (item.quantity || 1));
+  }
+
+  getCustomerInitial(order: Order | null): string {
+    if (!order) return '?';
+    const name = this.getCustomerName(order);
+    return name ? name.charAt(0).toUpperCase() : '?';
+  }
+
+  getCustomerName(order: Order | null): string {
+    if (!order) return 'Customer';
+    return order.address?.full_name || order.fullName || 'Customer';
+  }
+
+  getCustomerPhone(order: Order | null): string {
+    if (!order) return '';
+    return order.address?.phone || order.phoneNumber || '';
+  }
+
+  getCustomerFullAddress(order: Order | null): string {
+    if (!order) return '';
+    if (order.address?.address_line) {
+      const parts = [order.address.address_line, order.address.subdistrict, order.address.district].filter(Boolean);
+      return parts.join(', ');
+    }
+    return order.fullAddress || '';
+  }
+
+  // Status transitions
+  updateStatus(order: Order, status: 'Confirmed' | 'Cancelled' | 'Completed') {
+    if (status === 'Cancelled') {
+      this.openCancelDialog(order);
+    } else if (status === 'Completed') {
+      this.openCompleteDialog(order);
+    } else if (status === 'Confirmed') {
+      this.confirmationService.confirm({
+        message: `Confirm order ${order.orderNumber || order.id}?`,
+        header: 'Confirm Order',
+        icon: 'pi pi-question-circle',
+        accept: () => {
+          this.orderService.adminConfirmOrder(order.id!).subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Confirmed', detail: 'Order confirmed successfully.' });
+              if (this.selectedOrder() && this.selectedOrder()!.id === order.id) {
+                this.orderService.getOrderById(order.id!).subscribe(refreshed => {
+                  if (refreshed) this.selectedOrder.set(refreshed);
+                });
+              }
+              this.loadOrders();
+            },
+            error: (err) => {
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to confirm order.' });
+            }
+          });
         }
+      });
+    }
+  }
 
-        const csvData = allOrders.map(order => ({
-          'Order Number': order.orderNumber || order.id,
-          'Order ID': order.id,
-          'Customer': order.fullName,
-          'Phone': order.phoneNumber,
-          'District': order.district,
-          'Date': new Date(order.orderDate).toLocaleDateString(),
-          'Subtotal': order.subtotal ?? 0,
-          'Delivery': order.deliveryCharge ?? 0,
-          'Total Amount': order.totalAmount,
-          'Payment Status': order.paymentStatus || 'Pending',
-          'Order Status': order.status
-        }));
+  // Cancel Dialog
+  openCancelDialog(order: Order) {
+    this.orderToCancel.set(order);
+    this.cancelReason.set('');
+    this.displayCancelDialog.set(true);
+  }
 
-        const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(csvData);
-        const wscols = [
-          { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 15 }
-        ];
-        ws['!cols'] = wscols;
-        const wb: XLSX.WorkBook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Orders');
-        XLSX.writeFile(wb, 'all_orders_export.xlsx');
+  confirmCancelOrder() {
+    const order = this.orderToCancel();
+    if (!order || !order.id) return;
+    const reason = this.cancelReason().trim() || undefined;
 
-        this.exportLoading.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Export Success', detail: 'All orders exported successfully' });
+    this.orderService.adminCancelOrder(order.id, reason).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Cancelled', detail: 'Order cancelled successfully.' });
+        this.displayCancelDialog.set(false);
+        const targetId = order.id;
+        if (targetId && this.selectedOrder() && this.selectedOrder()!.id === targetId) {
+          this.orderService.getOrderById(targetId).subscribe(refreshed => {
+            if (refreshed) this.selectedOrder.set(refreshed);
+          });
+        }
+        this.loadOrders();
       },
       error: (err) => {
-        console.error('Failed to export all orders:', err);
-        this.messageService.add({ severity: 'error', summary: 'Export Failed', detail: 'An error occurred while fetching orders for export' });
-        this.exportLoading.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to cancel order.' });
       }
     });
   }
 
+  // Complete / Deliver Dialog
+  openCompleteDialog(order: Order) {
+    this.orderToComplete.set(order);
+    const defaultMethod = (order.paymentMethod?.toLowerCase() === 'cod' || (order.amount_due || 0) > 0) ? 'cod' : 'cash';
+    this.completeCollectedVia.set(defaultMethod);
+    this.displayCompleteDialog.set(true);
+  }
+
+  confirmCompleteOrder() {
+    const order = this.orderToComplete();
+    if (!order || !order.id) return;
+    const method = this.completeCollectedVia();
+
+    this.orderService.adminCompleteOrder(order.id, method).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Delivered', detail: 'Order marked as completed.' });
+        this.displayCompleteDialog.set(false);
+        const targetId = order.id;
+        if (targetId && this.selectedOrder() && this.selectedOrder()!.id === targetId) {
+          this.orderService.getOrderById(targetId).subscribe(refreshed => {
+            if (refreshed) this.selectedOrder.set(refreshed);
+          });
+        }
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to mark completed.' });
+      }
+    });
+  }
+
+  // Verify bKash Claim Dialog
+  openVerifyDialog(order: Order) {
+    const askAmt = order.payments?.amount ?? order.totalAmount;
+    this.verifyAmount.set(askAmt ? askAmt.toString() : '');
+    this.verifyConfirmPending.set(order.status === 'Pending');
+    this.displayVerifyDialog.set(true);
+  }
+
+  confirmVerifyPayment() {
+    const order = this.selectedOrder();
+    if (!order || !order.id) return;
+
+    const amt = this.verifyAmount().trim() || undefined;
+    this.paymentService.verifyPayment(order.id, {
+      amount: amt,
+      confirm: this.verifyConfirmPending()
+    }).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Verified', detail: 'bKash payment verified.' });
+        this.displayVerifyDialog.set(false);
+        this.orderService.getOrderById(order.id!).subscribe(refreshed => {
+          if (refreshed) this.selectedOrder.set(refreshed);
+          this.loadOrders();
+        });
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to verify payment.' });
+      }
+    });
+  }
+
+  // Reject bKash Claim Dialog
+  openRejectDialog() {
+    this.rejectReason.set('');
+    this.displayRejectDialog.set(true);
+  }
+
+  confirmRejectPayment() {
+    const order = this.selectedOrder();
+    if (!order || !order.id) return;
+
+    this.paymentService.rejectPayment(order.id, {
+      reason: this.rejectReason().trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Rejected', detail: 'bKash payment claim rejected.' });
+        this.displayRejectDialog.set(false);
+        this.orderService.getOrderById(order.id!).subscribe(refreshed => {
+          if (refreshed) this.selectedOrder.set(refreshed);
+          this.loadOrders();
+        });
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to reject payment.' });
+      }
+    });
+  }
+
+  // Record Manual Payment / Refund
+  openManualPaymentDialog(kind: 'payment' | 'refund' = 'payment') {
+    this.manualPaymentKind.set(kind);
+    this.manualPaymentMethod.set('bkash');
+    const order = this.selectedOrder();
+    if (kind === 'refund' && order && (order.amount_due || 0) < 0) {
+      this.manualPaymentAmount.set(Math.abs(order.amount_due!).toString());
+    } else if (kind === 'payment' && order && (order.amount_due || 0) > 0) {
+      this.manualPaymentAmount.set(order.amount_due!.toString());
+    } else {
+      this.manualPaymentAmount.set('');
+    }
+    this.manualPaymentReference.set('');
+    this.manualPaymentNote.set('');
+    this.displayManualPaymentDialog.set(true);
+  }
+
+  confirmManualPayment() {
+    const order = this.selectedOrder();
+    if (!order || !order.id) return;
+
+    const amt = parseFloat(this.manualPaymentAmount().trim());
+    if (isNaN(amt) || amt <= 0) {
+      this.messageService.add({ severity: 'error', summary: 'Invalid Amount', detail: 'Amount must be greater than 0.' });
+      return;
+    }
+
+    this.manualPaymentSaving.set(true);
+    this.paymentService.recordManualPayment(order.id, {
+      kind: this.manualPaymentKind(),
+      method: this.manualPaymentMethod(),
+      amount: amt.toFixed(2),
+      reference: this.manualPaymentReference().trim() || undefined,
+      note: this.manualPaymentNote().trim() || undefined
+    }).subscribe({
+      next: (detail) => {
+        this.manualPaymentSaving.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Recorded',
+          detail: `${this.manualPaymentKind() === 'payment' ? 'Payment' : 'Refund'} recorded successfully.`
+        });
+        this.displayManualPaymentDialog.set(false);
+        const mapped = this.orderService.mapBackendOrder(detail);
+        this.selectedOrder.set(mapped);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.manualPaymentSaving.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to record entry.' });
+      }
+    });
+  }
+
+  // Void Ledger Entry Dialog
+  openVoidDialog(tx: PaymentTransaction) {
+    this.voidEntryId.set(tx.id);
+    this.voidReason.set('');
+    this.displayVoidDialog.set(true);
+  }
+
+  confirmVoidEntry() {
+    const order = this.selectedOrder();
+    const entryId = this.voidEntryId();
+    if (!order || !order.id || !entryId) return;
+
+    this.paymentService.voidPaymentEntry(order.id, entryId, this.voidReason().trim() || undefined).subscribe({
+      next: (detail) => {
+        this.messageService.add({ severity: 'success', summary: 'Voided', detail: 'Ledger entry voided.' });
+        this.displayVoidDialog.set(false);
+        const mapped = this.orderService.mapBackendOrder(detail);
+        this.selectedOrder.set(mapped);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to void entry.' });
+      }
+    });
+  }
+
+  // Can Void Check
+  canVoidTransaction(tx: PaymentTransaction): boolean {
+    if (tx.voided_at) return false;
+    const s = (tx.source || '').toLowerCase();
+    return s === 'manual' || s === 'delivery_collection' || s === 'backfill';
+  }
+
+  // Online Order Editing (A5)
+  canEditOrder(order: Order | null): boolean {
+    if (!order) return false;
+    if (order.channel === 'offline') return false;
+    return order.status === 'Pending' || order.status === 'Confirmed';
+  }
+
+  confirmDirectOrder(order: Order) {
+    this.updateStatus(order, 'Confirmed');
+  }
+
+  completeDirectOrder(order: Order) {
+    this.updateStatus(order, 'Completed');
+  }
+
+  cancelDirectOrder(order: Order) {
+    this.updateStatus(order, 'Cancelled');
+  }
+
+  openEditOrderModalDirect(order: Order) {
+    this.prepareAndOpenEditModal(order);
+  }
+
+  openEditOrderModal() {
+    const order = this.selectedOrder();
+    if (!order) return;
+    this.prepareAndOpenEditModal(order);
+  }
+
+  prepareAndOpenEditModal(order: Order) {
+    if (!this.canEditOrder(order)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Cannot Edit',
+        detail: 'Only Pending or Confirmed online orders can be edited.'
+      });
+      return;
+    }
+
+    if (order.id) {
+      this.loading.set(true);
+      this.orderService.getOrderById(order.id).pipe(
+        switchMap((fullOrder: Order | undefined) => {
+          const target = fullOrder || order;
+          return this.ensureProductDetails(target);
+        }),
+        catchError(() => this.ensureProductDetails(order))
+      ).subscribe({
+        next: (enrichedOrder: Order) => {
+          this.loading.set(false);
+          this.selectedOrder.set(enrichedOrder);
+          this.initializeEditModal(enrichedOrder);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.selectedOrder.set(order);
+          this.initializeEditModal(order);
+        }
+      });
+    } else {
+      this.selectedOrder.set(order);
+      this.initializeEditModal(order);
+    }
+  }
+
+  private initializeEditModal(order: Order) {
+    const standaloneItems = (order.items || []).filter(item => !item.order_combo_id);
+    const basket = standaloneItems.map(item => {
+      const anyItem = item as any;
+      const pid: string = item.product?.id || item.product_id || '';
+      const cached = pid ? this.productDetailCache.get(pid) : null;
+      const catalog = pid ? this.allCatalogProducts().find(p => p.id === pid) : null;
+
+      let resolvedName: string = item.product?.name || item.name || '';
+      if (!resolvedName || resolvedName.trim().toLowerCase() === 'product') {
+        resolvedName = cached?.name || catalog?.name || (pid ? `Product (${pid.substring(0, 8)})` : 'Product');
+      }
+
+      const resolvedCode: string = item.product?.code || anyItem.code || cached?.code || catalog?.code || '';
+      const resolvedImg: string = item.product?.imageUrl || anyItem.imageUrl || cached?.imageUrl || catalog?.imageUrl || '';
+
+      return {
+        product_id: pid,
+        name: resolvedName,
+        price: item.unit_price ?? item.price_at_purchase ?? cached?.effective_price ?? cached?.price ?? 0,
+        quantity: item.quantity || 1,
+        imageUrl: resolvedImg,
+        code: resolvedCode
+      };
+    });
+
+    this.editBasketItems.set(basket);
+
+    const combos = (order.combos || []).map(c => ({
+      order_combo_id: c.id,
+      combo_id: c.combo_id || undefined,
+      name: c.name,
+      kind: c.kind || 'fixed',
+      quantity: c.quantity || 1,
+      list_total: typeof c.list_total === 'string' ? parseFloat(c.list_total) : Number(c.list_total || 0),
+      combo_price: typeof c.combo_price === 'string' ? parseFloat(c.combo_price) : Number(c.combo_price || 0),
+      discount_applied: typeof c.discount_applied === 'string' ? parseFloat(c.discount_applied) : Number(c.discount_applied || 0),
+      picks: c.picks || null
+    }));
+    this.editOrderCombos.set(combos);
+    this.loadAvailableCombos();
+
+    this.showAddProductPicker.set(false);
+    this.selectedAddProductId = null;
+
+    const rawDistrict = order.address?.district || order.district || '';
+    const matchedDistrict = this.districts.find(d => d.name.toLowerCase() === rawDistrict.toLowerCase());
+    if (matchedDistrict) {
+      this.editSubDistricts.set(matchedDistrict.subDistricts);
+    } else {
+      this.editSubDistricts.set([]);
+    }
+
+    const rawSubDistrict = order.address?.subdistrict || order.subDistrict || '';
+    const matchedSubDistrict = matchedDistrict?.subDistricts.find(s => s.toLowerCase() === rawSubDistrict.toLowerCase());
+
+    this.editAddress.set({
+      full_name: order.address?.full_name || order.fullName || '',
+      phone: order.address?.phone || order.phoneNumber || '',
+      email: order.address?.email || order.email || '',
+      district: matchedDistrict ? matchedDistrict.name : (rawDistrict || undefined),
+      subdistrict: matchedSubDistrict || (rawSubDistrict || undefined),
+      address_line: order.address?.address_line || order.fullAddress || '',
+      additional_info: order.address?.additional_info || order.additionalInfo || ''
+    });
+
+    this.editReason.set('');
+    this.editPreviewResult.set(null);
+    this.editProductSearchQuery.set('');
+    this.editProductSearchResults.set([]);
+    this.displayEditOrderDialog.set(true);
+
+    this.fetchEditPreview();
+    this.loadCatalogProductsIfNeeded();
+  }
+
+  onEditDistrictChange(selectedDistrictName: string | null) {
+    const districtObj = this.districts.find(d => d.name.toLowerCase() === (selectedDistrictName || '').toLowerCase());
+    if (districtObj) {
+      this.editSubDistricts.set(districtObj.subDistricts);
+      const currentSub = this.editAddress().subdistrict;
+      const stillValid = currentSub ? districtObj.subDistricts.some(s => s.toLowerCase() === currentSub.toLowerCase()) : false;
+      this.editAddress.update(addr => ({
+        ...addr,
+        district: districtObj.name,
+        subdistrict: stillValid ? currentSub : undefined
+      }));
+    } else {
+      this.editSubDistricts.set([]);
+      this.editAddress.update(addr => ({
+        ...addr,
+        district: selectedDistrictName || undefined,
+        subdistrict: undefined
+      }));
+    }
+    this.fetchEditPreview();
+  }
+
+  onEditSubDistrictChange(selectedSubDistrict: string | null) {
+    this.editAddress.update(addr => ({
+      ...addr,
+      subdistrict: selectedSubDistrict || undefined
+    }));
+    this.fetchEditPreview();
+  }
+
+  openOrderActionMenu(event: Event, order: Order) {
+    event.stopPropagation();
+    this.activeActionOrder.set(order);
+    this.orderActionsPopover?.toggle(event);
+  }
+
+  executeOrderAction(action: (order: Order) => void) {
+    const order = this.activeActionOrder();
+    this.orderActionsPopover?.hide();
+    if (order) {
+      action(order);
+    }
+  }
+
+  loadCatalogProductsIfNeeded() {
+    if (this.allCatalogProducts().length > 0 || this.catalogProductsLoading()) return;
+    this.catalogProductsLoading.set(true);
+    this.productService.getProducts(0, 100, undefined, true).subscribe({
+      next: (prods) => {
+        const list = prods || [];
+        this.allCatalogProducts.set(list);
+        this.catalogProductsLoading.set(false);
+
+        // Also enrich any basket item that might still have fallback name
+        const currentBasket = this.editBasketItems();
+        let changed = false;
+        const enriched = currentBasket.map(item => {
+          if (!item.name || item.name.toLowerCase() === 'product' || item.name.startsWith('Product (')) {
+            const match = list.find(p => p.id === item.product_id);
+            if (match?.name) {
+              changed = true;
+              return {
+                ...item,
+                name: match.name,
+                code: item.code || match.code,
+                imageUrl: item.imageUrl || match.imageUrl
+              };
+            }
+          }
+          return item;
+        });
+        if (changed) {
+          this.editBasketItems.set(enriched);
+        }
+      },
+      error: (err) => {
+        console.warn('Failed to load catalog products', err);
+        this.catalogProductsLoading.set(false);
+      }
+    });
+  }
+
+  openAddProductPicker() {
+    this.selectedAddProductId = null;
+    this.showAddProductPicker.set(true);
+    this.loadCatalogProductsIfNeeded();
+  }
+
+  closeAddProductPicker() {
+    this.selectedAddProductId = null;
+    this.showAddProductPicker.set(false);
+  }
+
+  onAddProductDropdownChange(productId: string | null) {
+    if (!productId) return;
+    const prod = this.allCatalogProducts().find(p => p.id === productId);
+    if (prod) {
+      this.addEditProduct(prod);
+    }
+    this.selectedAddProductId = null;
+    this.showAddProductPicker.set(false);
+  }
+
+  onAddProductFilter(event: { originalEvent: Event; filter: string }) {
+    const q = (event?.filter || '').trim();
+    if (!q || q.length < 2) return;
+    this.productService.getProductsWithCount({ q, view: 'card', limit: 25 }).subscribe({
+      next: (res) => {
+        if (res?.items && res.items.length > 0) {
+          const current = this.allCatalogProducts();
+          const currentIds = new Set(current.map(p => p.id));
+          const toAdd = res.items.filter(p => !currentIds.has(p.id));
+          if (toAdd.length > 0) {
+            this.allCatalogProducts.set([...current, ...toAdd]);
+          }
+        }
+      }
+    });
+  }
+
+  onEditProductSearch(query: string) {
+    this.editProductSearchQuery.set(query);
+    clearTimeout(this.editSearchTimeout);
+    if (!query.trim()) {
+      this.editProductSearchResults.set([]);
+      return;
+    }
+    this.editSearchTimeout = setTimeout(() => {
+      this.editSearchingProducts.set(true);
+      this.productService.getProductsWithCount({ q: query.trim(), view: 'card', limit: 10 }).subscribe({
+        next: (res) => {
+          this.editProductSearchResults.set(res.items);
+          this.editSearchingProducts.set(false);
+        },
+        error: () => {
+          this.editSearchingProducts.set(false);
+        }
+      });
+    }, 300);
+  }
+
+  addEditProduct(prod: any) {
+    const current = this.editBasketItems();
+    const existing = current.find(i => i.product_id === prod.id);
+    if (existing) {
+      existing.quantity += 1;
+      this.editBasketItems.set([...current]);
+    } else {
+      this.editBasketItems.set([
+        ...current,
+        {
+          product_id: prod.id,
+          name: prod.name,
+          price: prod.effective_price ?? prod.price,
+          quantity: 1,
+          imageUrl: prod.imageUrl,
+          code: prod.code
+        }
+      ]);
+    }
+    this.editProductSearchQuery.set('');
+    this.editProductSearchResults.set([]);
+    this.fetchEditPreview();
+  }
+
+  updateEditItemQuantity(index: number, delta: number) {
+    const items = [...this.editBasketItems()];
+    const newQty = items[index].quantity + delta;
+    if (newQty <= 0) {
+      items.splice(index, 1);
+    } else {
+      items[index].quantity = Math.min(1000, newQty);
+    }
+    this.editBasketItems.set(items);
+    this.fetchEditPreview();
+  }
+
+  removeEditItem(index: number) {
+    const items = [...this.editBasketItems()];
+    items.splice(index, 1);
+    this.editBasketItems.set(items);
+    this.fetchEditPreview();
+  }
+
+  loadAvailableCombos() {
+    this.comboService.getCombos(50).subscribe(list => {
+      this.availableCatalogCombos.set(list || []);
+    });
+  }
+
+  addComboToEdit(combo: ComboView, picks?: string[]) {
+    if (combo.kind === 'mix_and_match' && (!picks || picks.length !== combo.slot_count)) {
+      this.editMixComboToConfigure.set(combo);
+      this.editMixPickerVisible.set(true);
+      return;
+    }
+    const price = typeof combo.combo_price === 'string' ? parseFloat(combo.combo_price) : Number(combo.combo_price || 0);
+    const listTotal = typeof combo.list_total === 'string' ? parseFloat(combo.list_total) : Number(combo.list_total || 0);
+    const savings = typeof combo.savings === 'string' ? parseFloat(combo.savings) : Number(combo.savings || 0);
+
+    this.editOrderCombos.update(list => [
+      ...list,
+      {
+        combo_id: combo.id,
+        name: combo.name,
+        kind: combo.kind,
+        quantity: 1,
+        list_total: listTotal,
+        combo_price: price,
+        discount_applied: savings,
+        picks: picks || null
+      }
+    ]);
+    this.showAddComboPicker.set(false);
+    this.selectedAddCombo = null;
+    this.fetchEditPreview();
+  }
+
+  onEditPicksConfirmed(event: { combo: ComboView; picks: string[] }) {
+    this.addComboToEdit(event.combo, event.picks);
+  }
+
+  updateEditComboQuantity(idx: number, change: number) {
+    const list = this.editOrderCombos();
+    const target = list[idx];
+    if (!target) return;
+    const newQty = target.quantity + change;
+    if (newQty <= 0) {
+      this.removeEditCombo(idx);
+    } else if (newQty > 20) {
+      this.messageService.add({ severity: 'warn', summary: 'Limit', detail: 'Maximum 20 sets per combo' });
+    } else {
+      this.editOrderCombos.update(l => l.map((c, i) => i === idx ? { ...c, quantity: newQty } : c));
+      this.fetchEditPreview();
+    }
+  }
+
+  removeEditCombo(idx: number) {
+    this.editOrderCombos.update(l => l.filter((_, i) => i !== idx));
+    this.fetchEditPreview();
+  }
+
+  getOrderCombos(order: Order | null): OrderCombo[] {
+    return order?.combos || [];
+  }
+
+  getOrderComboLines(order: Order | null, orderComboId?: string): CartItem[] {
+    if (!order || !orderComboId) return [];
+    return (order.items || []).filter(item => item.order_combo_id === orderComboId);
+  }
+
+  getStandaloneLines(order: Order | null): CartItem[] {
+    if (!order) return [];
+    return (order.items || []).filter(item => !item.order_combo_id);
+  }
+
+  private buildEditPayload(): OrderAdminUpdate {
+    const addr = this.editAddress();
+    const cleanAddress: any = {};
+    if (addr.full_name?.trim()) cleanAddress.full_name = addr.full_name.trim();
+    if (addr.phone?.trim()) cleanAddress.phone = addr.phone.trim();
+    if (addr.email?.trim()) cleanAddress.email = addr.email.trim();
+    if (addr.district?.trim()) cleanAddress.district = addr.district.trim();
+    if (addr.subdistrict?.trim()) cleanAddress.subdistrict = addr.subdistrict.trim();
+    if (addr.address_line?.trim()) cleanAddress.address_line = addr.address_line.trim();
+    if (addr.additional_info !== undefined) cleanAddress.additional_info = addr.additional_info;
+
+    const combosPayload = this.editOrderCombos().map(c => {
+      if (c.order_combo_id) {
+        return {
+          order_combo_id: c.order_combo_id,
+          quantity: c.quantity
+        };
+      } else {
+        return {
+          combo_id: c.combo_id,
+          quantity: c.quantity,
+          ...(c.picks && c.picks.length ? { picks: c.picks } : {})
+        };
+      }
+    });
+
+    return {
+      items: this.editBasketItems().map(i => ({
+        product_id: i.product_id,
+        quantity: i.quantity
+      })),
+      combos: combosPayload,
+      address: Object.keys(cleanAddress).length > 0 ? cleanAddress : undefined,
+      reason: this.editReason().trim() || undefined
+    };
+  }
+
+  fetchEditPreview() {
+    const order = this.selectedOrder();
+    if (!order || !order.id || (this.editBasketItems().length === 0 && this.editOrderCombos().length === 0)) return;
+
+    this.editPreviewLoading.set(true);
+    const payload = this.buildEditPayload();
+
+    this.orderService.editOrder(order.id, payload, true).subscribe({
+      next: (result) => {
+        this.editPreviewResult.set(result);
+        this.editPreviewLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Edit preview failed', err);
+        this.editPreviewLoading.set(false);
+      }
+    });
+  }
+
+  confirmSaveEditOrder() {
+    const order = this.selectedOrder();
+    if (!order || !order.id) return;
+    if (this.editBasketItems().length === 0 && this.editOrderCombos().length === 0) {
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Basket cannot be empty.' });
+      return;
+    }
+
+    this.editSaving.set(true);
+    const payload = this.buildEditPayload();
+
+    this.orderService.editOrder(order.id, payload, false).subscribe({
+      next: (result) => {
+        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Order updated successfully.' });
+        this.editSaving.set(false);
+        this.displayEditOrderDialog.set(false);
+        const mapped = this.orderService.mapBackendOrder(result.order);
+        this.selectedOrder.set(mapped);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.editSaving.set(false);
+        console.error('Save edit order failed', err);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.detail || 'Failed to save order edit.' });
+      }
+    });
+  }
+
+  // Export CSV (B2)
+  downloadOrders() {
+    this.exportLoading.set(true);
+    this.messageService.add({ severity: 'info', summary: 'Export Started', detail: 'Generating orders export CSV...' });
+
+    const query = this.searchQuery().trim();
+    this.orderService.exportOrdersCsv({ q: query || undefined }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const now = new Date().toISOString().slice(0, 10);
+        a.download = `orders-export-${now}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        this.exportLoading.set(false);
+        this.messageService.add({ severity: 'success', summary: 'Export Complete', detail: 'Orders CSV downloaded successfully.' });
+      },
+      error: (err) => {
+        console.error('Failed to export orders:', err);
+        this.exportLoading.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Export Failed', detail: 'Could not export orders CSV.' });
+      }
+    });
+  }
+
+  // Invoice Download (A2 & B10)
   downloadAdminInvoice(order: Order) {
     if (!order) return;
 
     const orderIdStr = order.id ? order.id.toString() : '';
     this.downloadingOrderId.set(orderIdStr);
 
-    // Ensure we have product details (names, codes) before generating the invoice
-    this.ensureProductDetails(order).subscribe({
+    const catalogLoad$ = this.allCatalogProducts().length === 0
+      ? this.productService.getProducts(0, 100, undefined, true).pipe(
+          tap(prods => this.allCatalogProducts.set(prods || [])),
+          catchError(() => of([]))
+        )
+      : of(this.allCatalogProducts());
+
+    const orderFetch$ = order.id
+      ? this.orderService.getOrderById(order.id).pipe(
+          catchError(() => of(order)),
+          map(res => res || order)
+        )
+      : of(order);
+
+    forkJoin({
+      order: orderFetch$,
+      catalog: catalogLoad$
+    }).pipe(
+      switchMap(({ order: fullOrder }) => this.ensureProductDetails(fullOrder))
+    ).subscribe({
       next: (finalOrder: Order) => {
-        // Map order data to common invoice format
         const invoiceData = {
           items: finalOrder.items || [],
           snapshot: {
@@ -815,8 +1406,13 @@ export class OrdersComponent implements OnInit {
           deliveryCharge: finalOrder.deliveryCharge || 0,
           total: finalOrder.totalAmount || 0,
           discount: finalOrder.discountAmount || 0,
+          combo_savings: finalOrder.combo_savings || 0,
+          combos: finalOrder.combos || [],
           id: orderIdStr,
-          orderNumber: finalOrder.orderNumber || orderIdStr
+          orderNumber: finalOrder.orderNumber || orderIdStr,
+          payment_status: finalOrder.payment_status || finalOrder.paymentStatus || 'unpaid',
+          amount_due: finalOrder.amount_due ?? 0,
+          created_at: finalOrder.created_at || finalOrder.orderDate?.toISOString()
         };
         this.invoiceOrderData.set(invoiceData);
 
@@ -828,7 +1424,7 @@ export class OrdersComponent implements OnInit {
             summary: 'Success',
             detail: `Invoice for Order ${finalOrder.orderNumber || finalOrder.id} downloaded.`
           });
-        }).catch(err => {
+        }).catch((err: any) => {
           console.error('Admin Invoice download failed:', err);
           this.downloadingOrderId.set(null);
           this.messageService.add({
@@ -842,7 +1438,12 @@ export class OrdersComponent implements OnInit {
       error: (err: any) => {
         console.error('Failed to ensure product details for invoice', err);
         this.downloadingOrderId.set(null);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Could not resolve product names.' });
+        this.messageService.add({
+          life: 2000,
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to prepare invoice details.'
+        });
       }
     });
   }

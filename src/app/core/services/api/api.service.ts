@@ -12,8 +12,16 @@ export class ApiService {
     return this.http.get<T>(endpoint, options);
   }
 
-  getResponse<T>(endpoint: string): Observable<HttpResponse<T>> {
-    return this.http.get<T>(endpoint, { observe: 'response' });
+  getResponse<T>(endpoint: string, options?: { context?: any; params?: any; headers?: any }): Observable<HttpResponse<T>> {
+    return this.http.get<T>(endpoint, { ...options, observe: 'response' });
+  }
+
+  getBlob(endpoint: string, options?: { context?: any; params?: any; headers?: any }): Observable<HttpResponse<Blob>> {
+    return this.http.get(endpoint, {
+      ...options,
+      observe: 'response',
+      responseType: 'blob'
+    });
   }
 
   post<T>(endpoint: string, body: any, options?: { context?: any; params?: any; headers?: any }): Observable<T> {
@@ -28,7 +36,7 @@ export class ApiService {
     return this.http.patch<T>(endpoint, body);
   }
 
-  delete<T>(endpoint: string, options: { body?: any } = {}): Observable<T> {
-    return this.http.delete<T>(endpoint, { body: options.body });
+  delete<T>(endpoint: string, options: { body?: any; params?: any; headers?: any } = {}): Observable<T> {
+    return this.http.delete<T>(endpoint, { body: options.body, params: options.params, headers: options.headers });
   }
 }

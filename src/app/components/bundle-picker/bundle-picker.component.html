@@ -1,0 +1,111 @@
+<p-dialog [(visible)]="visible"
+          [modal]="true"
+          [dismissableMask]="true"
+          [draggable]="false"
+          [resizable]="false"
+          styleClass="bundle-picker-dialog"
+          (onHide)="close()">
+
+  <ng-template pTemplate="header">
+    <div class="bundle-picker-header flex flex-column gap-1">
+      <span class="text-xs font-bold text-primary uppercase tracking-wider">
+        {{ combo?.pricing_type === 'cheapest_free' ? 'Buy ' + ((combo?.slot_count || 4) - +(combo?.pricing_value || 1)) + ' Get ' + (combo?.pricing_value || 1) + ' Free' : 'Bundle Builder' }}
+      </span>
+      <h2 class="text-xl sm:text-2xl font-bold m-0 text-900">{{ combo?.name }}</h2>
+    </div>
+  </ng-template>
+
+  <div class="bundle-picker-body">
+    <!-- Slots Section -->
+    <div class="slots-container mb-4">
+      <div class="flex align-items-center justify-content-between mb-2">
+        <span class="text-sm font-semibold text-700">
+          Picked {{ pickedCount }} of {{ totalSlots }} items
+        </span>
+        <span *ngIf="isAllSlotsFilled" class="text-xs text-green-600 font-semibold flex align-items-center gap-1">
+          <i class="pi pi-check-circle"></i> Ready
+        </span>
+      </div>
+
+      <div class="slots-grid">
+        <div *ngFor="let item of slots; let i = index"
+             class="bundle-slot flex flex-column align-items-center justify-content-center relative cursor-pointer"
+             [class.filled]="item !== null"
+             [class.active]="activeSlotIndex === i"
+             (click)="selectSlot(i)"
+             [attr.aria-label]="item ? item.product.name : 'Empty slot ' + (i + 1)">
+
+          <!-- Filled Slot -->
+          <ng-container *ngIf="item">
+            <img [src]="item.product.imageUrl" [alt]="item.product.name" class="slot-img" />
+            <button type="button" class="slot-clear-btn" (click)="clearSlot($event, i)" title="Remove item" aria-label="Remove item">
+              <i class="pi pi-times"></i>
+            </button>
+            <span class="slot-label text-xs font-semibold line-clamp-1">{{ item.product.name }}</span>
+          </ng-container>
+
+          <!-- Empty Slot -->
+          <ng-container *ngIf="!item">
+            <i class="pi pi-plus text-base mb-1 text-500"></i>
+            <span class="text-xs font-semibold text-500">Slot {{ i + 1 }}</span>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Problem warning if quote returned error -->
+      <div *ngIf="quoteProblem" class="quote-problem-banner mt-3 p-2 border-round text-sm flex align-items-center gap-2">
+        <i class="pi pi-exclamation-triangle text-orange-600"></i>
+        <span>{{ quoteProblem }}</span>
+      </div>
+    </div>
+
+    <!-- Pool Catalog Section -->
+    <div class="pool-section">
+      <div class="pool-header mb-2 flex align-items-center justify-content-between">
+        <span class="text-xs font-bold text-500 uppercase tracking-wider">Select from the pool</span>
+        <span class="text-xs text-500">Tap to add to active slot</span>
+      </div>
+
+      <div class="pool-grid">
+        <div *ngFor="let it of combo?.items"
+             class="pool-card flex flex-column p-2 cursor-pointer relative"
+             [class.disabled]="!it.product.isInStock"
+             (click)="pickProduct(it)">
+          <div class="pool-img-wrap mb-2 relative">
+            <img [src]="it.product.imageUrl" [alt]="it.product.name" class="pool-img" loading="lazy" />
+            <span *ngIf="!it.product.isInStock" class="pool-oos-tag">Out of stock</span>
+          </div>
+          <span class="pool-name text-xs font-semibold line-clamp-2 mb-1">{{ it.product.name }}</span>
+          <span class="pool-price text-xs font-bold text-primary mt-auto">
+            ৳{{ (it.product.effective_price || it.product.price) | number:'1.0-0' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="bundle-picker-footer flex flex-column sm:flex-row align-items-stretch sm:align-items-center justify-content-between gap-3 w-full">
+      <div class="footer-price-block flex align-items-baseline gap-2">
+        <span *ngIf="!isAllSlotsFilled" class="text-xs text-500 font-semibold uppercase">From</span>
+        <span class="footer-price font-bold text-2xl text-primary">৳{{ displayPrice | number:'1.0-0' }}</span>
+        <span *ngIf="displaySavings > 0" class="savings-tag text-xs font-bold text-green-700 bg-green-50 px-2 py-1 border-round">
+          Save ৳{{ displaySavings | number:'1.0-0' }}
+        </span>
+        <i *ngIf="quoteLoading" class="pi pi-spin pi-spinner text-primary ml-1"></i>
+      </div>
+
+      <div class="picker-footer-actions flex align-items-center gap-2 w-full sm:w-auto">
+        <button type="button" class="picker-footer-btn btn-picker-cancel" (click)="close()">
+          Cancel
+        </button>
+        <button type="button" class="picker-footer-btn btn-picker-confirm"
+                [disabled]="!isAllSlotsFilled || quoteLoading || !!quoteProblem"
+                (click)="confirm()">
+          <i class="pi pi-shopping-bag"></i>
+          <span>{{ actionLabel }}</span>
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

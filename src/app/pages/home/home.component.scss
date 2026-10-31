@@ -542,6 +542,14 @@
   }
 }
 
+.combo-card-wrapper {
+  width: 360px !important;
+
+  @media (max-width: 640px) {
+    width: 86% !important;
+  }
+}
+
 // ── View All Card at End of Swipe ─────────────────────────────────
 .view-all-product-card {
   background: #FFFFFF !important;

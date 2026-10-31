@@ -35,7 +35,7 @@
     </div>
 
     <!-- Loading Skeleton -->
-    <div *ngIf="loading()" class="order-details-card p-4 border-round-2xl surface-card shadow-1">
+    <div *ngIf="loading() || detailsLoading()" class="order-details-card p-4 border-round-2xl surface-card shadow-1">
       <div class="grid">
         <div class="col-12 md:col-6">
           <p-skeleton width="12rem" height="1.8rem" styleClass="mb-3"></p-skeleton>
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Order Details Display -->
-    <div *ngIf="order() && !loading()" class="order-details-card p-4 md:p-5 border-round-2xl mb-4">
+    <div *ngIf="order() && !loading() && !detailsLoading()" class="order-details-card p-4 md:p-5 border-round-2xl mb-4">
 
       <!-- Card Header: Status & Order Number -->
       <div class="order-card-header flex flex-column sm:flex-row justify-content-between align-items-start sm:align-items-center gap-3 mb-4 pb-3 border-bottom-1 border-200">
@@ -61,11 +61,36 @@
             <span class="status-badge" [ngClass]="'status-' + (order()?.status || 'pending').toLowerCase()">
               {{ order()?.status }}
             </span>
+            <p-tag [value]="getPaymentStatusInfo(order()).label"
+                   [severity]="getPaymentStatusInfo(order()).severity" [rounded]="true"
+                   styleClass="text-xs font-bold uppercase"></p-tag>
           </div>
         </div>
         <div class="text-left sm:text-right">
           <span class="text-xs text-600 block mb-1">Order Ref: <strong class="text-800">{{ order()?.orderNumber || order()?.id }}</strong></span>
           <span class="text-sm font-semibold text-700">{{ order()?.orderDate | date:'medium' }}</span>
+        </div>
+      </div>
+
+      <!-- Rejected bKash Claim Recovery Form (A7) -->
+      <div *ngIf="order()?.payments?.status === 'rejected'"
+           class="mb-4 p-3 border-round-xl border-1 bg-red-50 border-red-200">
+        <div class="flex align-items-start gap-2 mb-2 text-red-700">
+          <i class="pi pi-exclamation-circle text-lg mt-0.5"></i>
+          <div>
+            <div class="font-bold text-sm">Payment Verification Rejected</div>
+            <div class="text-xs mt-0.5">{{ order()?.payments?.reject_reason || 'The transaction ID you submitted could not be verified by our accounts team.' }}</div>
+          </div>
+        </div>
+
+        <div class="flex flex-column sm:flex-row gap-2 mt-3">
+          <input type="text" [(ngModel)]="resubmitTrxId" placeholder="Enter corrected 10-char TrxID" maxlength="10"
+                 class="artisan-track-input uppercase font-mono text-sm flex-1" />
+          <button type="button" class="btn-track-submit text-sm font-bold px-4"
+                  [disabled]="!resubmitTrxId || resubmitting()" (click)="resubmitBkashTrx()">
+            <span *ngIf="!resubmitting()">Resubmit TrxID</span>
+            <span *ngIf="resubmitting()"><i class="pi pi-spin pi-spinner mr-1"></i> Submitting...</span>
+          </button>
         </div>
       </div>
 
@@ -106,8 +131,14 @@
                 <span class="font-semibold text-800">{{ order()?.items?.length || 0 }}</span>
               </div>
               <div class="flex justify-content-between align-items-center">
-                <span class="text-600">Payment:</span>
-                <span class="payment-method-pill font-medium">{{ order()?.paymentMethod || 'Cash on Delivery' }}</span>
+                <span class="text-600">Payment Method:</span>
+                <span class="payment-method-pill font-medium uppercase">{{ order()?.paymentMethod || 'Cash on Delivery' }}</span>
+              </div>
+              <div class="flex justify-content-between align-items-center">
+                <span class="text-600">Payment Status:</span>
+                <p-tag [value]="getPaymentStatusInfo(order()).label"
+                       [severity]="getPaymentStatusInfo(order()).severity" [rounded]="true"
+                       styleClass="text-xs font-bold uppercase"></p-tag>
               </div>
               <div class="flex justify-content-between">
                 <span class="text-600">Subtotal:</span>
@@ -115,13 +146,39 @@
                   ৳{{ (order()?.subtotal || order()?.totalAmount || 0) | number:'1.0-0' }}
                 </span>
               </div>
+              <!-- Discount Row (A2) -->
+              <div *ngIf="order()?.discountAmount" class="flex justify-content-between text-green-600">
+                <span>Discount:</span>
+                <span class="font-semibold">-৳{{ order()?.discountAmount | number:'1.0-0' }}</span>
+              </div>
+              <div *ngIf="order()?.combo_savings" class="flex justify-content-between text-green-600">
+                <span>Combo Savings:</span>
+                <span class="font-semibold">-৳{{ order()?.combo_savings | number:'1.0-0' }}</span>
+              </div>
               <div *ngIf="order()?.deliveryCharge" class="flex justify-content-between">
                 <span class="text-600">Delivery Charge:</span>
-                <span class="font-semibold text-800">৳{{ order()?.deliveryCharge | number:'1.0-0' }}</span>
+                <span class="font-semibold text-800">+৳{{ order()?.deliveryCharge | number:'1.0-0' }}</span>
               </div>
               <div class="flex justify-content-between align-items-center pt-2 border-top-1 border-200 mt-1">
                 <span class="font-bold text-base text-900">Total Amount:</span>
                 <span class="font-bold text-xl text-primary">৳{{ order()?.totalAmount | number:'1.0-0' }}</span>
+              </div>
+
+              <!-- Payment Breakdown: Paid Amount & Due Amount -->
+              <div *ngIf="order()?.amount_paid != null || order()?.amount_due != null" class="pt-2 border-top-1 border-100 flex flex-column gap-1 text-sm mt-1">
+                <div *ngIf="order()?.amount_paid != null" class="flex justify-content-between align-items-center text-green-700">
+                  <span class="font-medium">Paid Amount:</span>
+                  <span class="font-bold font-mono">৳{{ (order()?.amount_paid || 0) | number:'1.2-2' }}</span>
+                </div>
+                <div *ngIf="(order()?.amount_due ?? 0) >= 0" class="flex justify-content-between align-items-center"
+                     [ngClass]="(order()?.amount_due ?? 0) > 0 ? 'text-red-600' : 'text-600'">
+                  <span class="font-medium">Due Amount:</span>
+                  <span class="font-bold font-mono">৳{{ (order()?.amount_due || 0) | number:'1.2-2' }}</span>
+                </div>
+                <div *ngIf="(order()?.amount_due ?? 0) < 0" class="flex justify-content-between align-items-center text-orange-600">
+                  <span class="font-medium">Refund Due:</span>
+                  <span class="font-bold font-mono">৳{{ (-(order()?.amount_due || 0)) | number:'1.2-2' }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -135,7 +192,26 @@
               <span>Items ({{ order()?.items?.length || 0 }})</span>
             </h4>
             <div class="track-items-list overflow-y-auto pr-1" style="max-height: 230px;">
-              <div *ngFor="let item of order()?.items" class="track-item-row flex align-items-center justify-content-between py-2 border-bottom-1 border-100 last:border-none">
+              <!-- Grouped Combos -->
+              <ng-container *ngIf="getOrderCombos().length > 0">
+                <div *ngFor="let combo of getOrderCombos()" class="mb-2 p-2 border-round bg-blue-50 border-1 border-blue-200">
+                  <div class="flex align-items-center justify-content-between mb-1">
+                    <span class="text-xs font-bold text-blue-800">Combo: {{ combo.name }} × {{ combo.quantity }}</span>
+                    <span *ngIf="combo.discount_applied" class="text-xs text-green-700 font-semibold">
+                      Save ৳{{ combo.discount_applied | number:'1.0-0' }}
+                    </span>
+                  </div>
+                  <div class="pl-2 border-left-2 border-blue-300">
+                    <div *ngFor="let item of getOrderComboLines(combo.id)" class="text-xs text-700 py-1 flex justify-content-between">
+                      <span>{{ item.quantity }}x {{ item.product.name }}</span>
+                      <span class="font-mono">৳{{ ((item.unit_price || item.product.price) * item.quantity) | number:'1.0-0' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- Standalone items -->
+              <div *ngFor="let item of (getOrderCombos().length > 0 ? getStandaloneLines() : order()?.items)" class="track-item-row flex align-items-center justify-content-between py-2 border-bottom-1 border-100 last:border-none">
                 <div class="flex align-items-center gap-2 min-w-0 mr-2">
                   <img [src]="item.product.imageUrl || productService.getImageUrl(null)"
                        [alt]="item.product.name"
@@ -145,16 +221,38 @@
                     <span class="item-product-name block text-sm font-medium text-800 text-overflow-ellipsis overflow-hidden white-space-nowrap">
                       {{ item.product.name }}
                     </span>
-                    <span class="text-xs text-500">Unit: ৳{{ item.product.price | number:'1.0-0' }}</span>
+                    <span class="text-xs text-500">Unit: ৳{{ (item.unit_price || item.product.price) | number:'1.0-0' }}</span>
                   </div>
                 </div>
                 <span class="item-line-total text-sm font-bold text-800 flex-shrink-0">
-                  ৳{{ (item.product.price * item.quantity) | number:'1.0-0' }}
+                  ৳{{ ((item.unit_price || item.product.price) * item.quantity) | number:'1.0-0' }}
                 </span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Older / Newer Orders Navigation (when user has multiple orders, max 3) -->
+      <div *ngIf="ordersList().length > 1" class="orders-nav-bar flex flex-column sm:flex-row justify-content-between align-items-center gap-2 mt-4 pt-3 border-top-1 border-200">
+        <button type="button" class="btn-order-nav flex align-items-center gap-2"
+                [disabled]="!hasNewerOrder() || detailsLoading()"
+                (click)="showNewerOrder()">
+          <i class="pi pi-arrow-left text-xs"></i>
+          <span>Newer Order</span>
+        </button>
+
+        <div class="text-xs text-700 font-medium text-center">
+          Order <span class="font-bold text-900">{{ currentOrderIndex() + 1 }}</span> of <span class="font-bold text-900">{{ ordersList().length }}</span>
+          <span class="text-500 ml-1">({{ currentOrderIndex() === 0 ? 'Latest' : 'Older' }})</span>
+        </div>
+
+        <button type="button" class="btn-order-nav flex align-items-center gap-2"
+                [disabled]="!hasOlderOrder() || detailsLoading()"
+                (click)="showOlderOrder()">
+          <span>Older Order</span>
+          <i class="pi pi-arrow-right text-xs"></i>
+        </button>
       </div>
 
       <!-- Action Buttons Row -->

@@ -1,0 +1,131 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.combo-offer-card {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid #ECE7E0;
+  border-radius: 18px;
+  box-shadow: var(--card-shadow, 0 2px 10px rgba(42, 37, 33, 0.05));
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover, 0 12px 24px rgba(42, 37, 33, 0.09));
+  }
+}
+
+.combo-kicker {
+  color: var(--primary-color, #B84E29);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.combo-deadline-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #FFF1EC;
+  color: #B84E29;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(184, 78, 41, 0.2);
+}
+
+.combo-name {
+  color: var(--text-color, #26221F);
+  line-height: 1.3;
+}
+
+.combo-desc {
+  line-height: 1.4;
+}
+
+.combo-item-row {
+  background: #F8F5F0;
+  border: 1px solid #EAE3D9;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #F3ECE2;
+  }
+}
+
+.combo-thumb-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ECE6DC;
+  border: 1px solid #DFD7CB;
+}
+
+.combo-item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.combo-item-qty-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: rgba(38, 34, 31, 0.85);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.08rem 0.35rem;
+  border-radius: 5px;
+}
+
+.combo-product-title {
+  color: #26221F;
+}
+
+.combo-price {
+  color: var(--primary-color, #B84E29);
+}
+
+.savings-pill {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #B84E29, #D9653B);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.btn-combo-action {
+  background: #1A3B2B;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.65rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+
+  &:hover {
+    background: #25523C;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}

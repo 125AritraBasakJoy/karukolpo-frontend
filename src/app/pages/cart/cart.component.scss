@@ -132,6 +132,30 @@
   }
 }
 
+/* Cart Combo Products Inside Card */
+.cart-combo-item-row {
+  background: #F8F5F0;
+  border: 1px solid #ECE7E0;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #F2ECE2;
+  }
+}
+
+.cart-combo-item-thumb {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #ECE6DC;
+  border: 1px solid #DFD7CB;
+}
+
+.cart-combo-item-name {
+  color: #26221F;
+}
+
 /* Order Note */
 .order-note-input {
   background: #FAF7F2;

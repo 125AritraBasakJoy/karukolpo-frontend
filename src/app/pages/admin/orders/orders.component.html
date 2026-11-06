@@ -280,6 +280,14 @@
                                         </div>
 
                                         <div class="order-item-meta flex flex-wrap align-items-center gap-2 mt-1">
+                                            @if (item.is_gift) {
+                                            <span class="order-item-qty-pill font-mono">
+                                                {{ item.quantity }} × ৳0
+                                            </span>
+                                            <span class="text-xs font-semibold px-2 py-0 border-round-md bg-pink-900/50 text-pink-300 border-1 border-pink-700/50 flex align-items-center gap-1">
+                                                <i class="pi pi-gift text-xs"></i> GIFT
+                                            </span>
+                                            } @else {
                                             <span class="order-item-qty-pill font-mono">
                                                 {{ item.quantity }} × {{ getItemFinalUnitPrice(item) | currency:'BDT':'৳' }}
                                             </span>
@@ -292,6 +300,7 @@
                                                 {{ getItemDiscountLabel(item) }}
                                             </span>
                                             }
+                                            }
                                         </div>
                                     </div>
                                 </div>
@@ -299,7 +308,11 @@
                                 <div class="order-item-total-col flex flex-column align-items-end justify-content-center flex-shrink-0 text-right">
                                     <span class="order-item-total-heading">Total</span>
                                     <span class="order-item-total-val font-bold text-base sm:text-lg font-mono">
+                                        @if (item.is_gift) {
+                                        Gift
+                                        } @else {
                                         {{ getItemFinalTotal(item) | currency:'BDT':'৳' }}
+                                        }
                                     </span>
                                 </div>
                             </div>

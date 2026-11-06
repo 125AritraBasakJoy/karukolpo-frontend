@@ -1,90 +1,39 @@
-import { HttpInterceptorFn, HttpErrorResponse, HttpEvent, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { BehaviorSubject, throwError, Observable } from 'rxjs';
-import { catchError, switchMap, filter, take } from 'rxjs/operators';
-import { AuthService } from '../services/auth/auth.service';
+import { from, throwError } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+import { AuthService, SessionExpiredError } from '../services/auth/auth.service';
 import { environment } from '../../../environments/environment';
 import { SKIP_AUTH_BEARER } from './http-context-tokens';
 
-let isRefreshing = false;
-const REFRESH_FAILED = '__REFRESH_FAILED__';
-const refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+// No module-level state: the single in-flight refresh lives in AuthService as a Promise.
 
-export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
-    if (req.context.get(SKIP_AUTH_BEARER)) {
-        return next(req);
-    }
+const AUTH_ENDPOINT = /\/admin\/(login|refresh|logout)(\?|$)/;
 
-    const authService = inject(AuthService);
-    const baseUrl = environment.baseUrl;
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  if (req.context.get(SKIP_AUTH_BEARER)) return next(req);
+  if (!req.url.startsWith(environment.baseUrl) && !req.url.startsWith('/api')) return next(req);
 
-    // Only intercept requests to our API
-    if (!req.url.startsWith(baseUrl) && !req.url.startsWith('/api')) {
-        return next(req);
-    }
+  const auth = inject(AuthService);
+  const sentWith = auth.getAccessToken();
+  const withToken = (token: string | null): HttpRequest<unknown> =>
+    token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
-    const token = authService.getAccessToken();
-    let authReq = req;
-
-    // 1. Add Token to Headers
-    if (token) {
-        authReq = req.clone({
-            setHeaders: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-    }
-
-    // 2. Handle Response and Errors
-    return next(authReq).pipe(
-        catchError((error: HttpErrorResponse) => {
-            if (error.status === 401 && !authReq.url.includes('/admin/login') && !authReq.url.includes('/admin/refresh')) {
-                return handle401Error(authReq, next, authService);
-            }
-            return throwError(() => error);
-        })
-    );
+  return next(withToken(sentWith)).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // Only a request that carried a token can be fixed by refreshing it.
+      if (error.status !== 401 || !sentWith || AUTH_ENDPOINT.test(req.url)) {
+        return throwError(() => error);
+      }
+      return from(auth.ensureFreshAccessToken(sentWith)).pipe(
+        // This catchError sits BEFORE switchMap on purpose: it handles a failed
+        // refresh only, never an error from the retried request.
+        catchError(refreshError => {
+          if (refreshError instanceof SessionExpiredError) auth.logout();
+          return throwError(() => error);   // the caller sees the original 401
+        }),
+        switchMap(token => next(withToken(token)))
+      );
+    })
+  );
 };
-
-function handle401Error(req: HttpRequest<any>, next: HttpHandlerFn, authService: AuthService): Observable<HttpEvent<any>> {
-    if (!isRefreshing) {
-        isRefreshing = true;
-        refreshTokenSubject.next(null);
-
-        return authService.refreshAccessToken().pipe(
-            switchMap((response: any) => {
-                isRefreshing = false;
-                const newToken = response.access_token;
-                refreshTokenSubject.next(newToken);
-
-                return next(req.clone({
-                    setHeaders: {
-                        Authorization: `Bearer ${newToken}`
-                    }
-                }));
-            }),
-            catchError((err) => {
-                isRefreshing = false;
-                refreshTokenSubject.next(REFRESH_FAILED);
-                setTimeout(() => refreshTokenSubject.next(null), 0);
-                authService.logout();
-                return throwError(() => err);
-            })
-        );
-    } else {
-        return refreshTokenSubject.pipe(
-            filter(token => token != null),
-            take(1),
-            switchMap((token) => {
-                if (token === REFRESH_FAILED) {
-                    return throwError(() => new Error('Session expired: token refresh failed'));
-                }
-                return next(req.clone({
-                    setHeaders: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }));
-            })
-        );
-    }
-}

@@ -402,6 +402,11 @@
                   <span class="text-xs text-color-secondary">Total Given (incl. delivery):</span>
                   <span class="font-bold text-white text-sm">{{ discountsData()?.total_discount_amount | number:'1.0-0' }} BDT</span>
                 </div>
+                <div class="flex justify-content-between align-items-baseline mb-3 p-2 border-round bg-white-alpha-5"
+                     *ngIf="discountsData()?.gift_units">
+                  <span class="text-xs text-color-secondary"><i class="pi pi-gift text-pink-300 mr-1"></i>Gifts given:</span>
+                  <span class="font-bold text-white text-sm">{{ discountsData()?.gift_units }} units · {{ discountsData()?.gift_cost | number:'1.0-0' }} BDT at cost</span>
+                </div>
                 <div class="promo-codes-list flex flex-column gap-2" *ngIf="discountsData()?.promo_code_usage && discountsData()!.promo_code_usage.length > 0">
                   <div class="text-3xs text-color-secondary uppercase font-semibold">Promo Codes Used</div>
                   <div class="flex justify-content-between align-items-center p-2 border-round bg-white-alpha-5 text-xs" *ngFor="let promo of discountsData()!.promo_code_usage">

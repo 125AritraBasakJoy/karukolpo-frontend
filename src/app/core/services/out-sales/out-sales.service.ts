@@ -9,8 +9,9 @@ import { Order } from '../../../models/order.model';
 export interface OfflineSaleItem {
     product_id: string;
     quantity: number;
-    unit_price: number;
+    unit_price?: number | null;
     unit_cost?: number | null;
+    is_gift?: boolean;
 }
 
 export interface OfflineSaleUpdateItem {
@@ -18,6 +19,7 @@ export interface OfflineSaleUpdateItem {
     quantity: number;
     unit_price?: number | null;
     unit_cost?: number | null;
+    is_gift?: boolean;
 }
 
 export interface OfflineSaleCustomer {

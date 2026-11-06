@@ -18,6 +18,7 @@ import { Order } from '../../../models/order.model';
 import { District, districts } from '../../../data/bangladesh-data';
 import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/thermal-invoice.component';
 import { finalize } from 'rxjs/operators';
+import { CheckboxModule } from 'primeng/checkbox';
 
 interface SaleItemRow {
   product_id: string | null;
@@ -26,6 +27,7 @@ interface SaleItemRow {
   discount: number;
   unit_cost: number | null;
   regular_price?: number | null;
+  is_gift?: boolean;
 }
 
 const PAYMENT_METHODS = [
@@ -51,6 +53,7 @@ const PAYMENT_METHODS = [
     CurrencyPipe,
     RippleModule,
     DialogModule,
+    CheckboxModule,
     ThermalInvoiceComponent
   ],
   templateUrl: './out-sales.component.html',
@@ -214,7 +217,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   private newRow(): SaleItemRow {
-    return { product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null };
+    return { product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null, is_gift: false };
   }
 
   addItem() {
@@ -260,14 +263,22 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       const catalogDiscount = this.getProductCatalogDiscount(product);
       row.regular_price = catalogPrice;
       row.discount = catalogDiscount;
-      // Unit Price in the input box is the discounted price if on discount, or catalog price
-      row.unit_price = catalogDiscount > 0 ? Math.max(0, catalogPrice - catalogDiscount) : catalogPrice;
+      row.unit_price = row.is_gift ? 0 : (catalogDiscount > 0 ? Math.max(0, catalogPrice - catalogDiscount) : catalogPrice);
       row.unit_cost = product.cost ?? null;
     } else {
       row.unit_price = null;
       row.discount = 0;
       row.regular_price = null;
       row.unit_cost = null;
+    }
+  }
+
+  onGiftToggle(item: SaleItemRow) {
+    if (item.is_gift) {
+      item.unit_price = 0;
+      item.discount = 0;
+    } else {
+      item.unit_price = this.getItemRegularPrice(item) || null;
     }
   }
 
@@ -287,6 +298,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   getItemDiscount(item: SaleItemRow): number {
+    if (item.is_gift) return 0;
     const regular = this.getItemRegularPrice(item);
     const unitPrice = item.unit_price || 0;
     if (regular > unitPrice) {
@@ -296,7 +308,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   getItemEffectivePrice(item: SaleItemRow): number {
-    return item.unit_price || 0;
+    return item.is_gift ? 0 : (item.unit_price || 0);
   }
 
   get regularTotal(): number {
@@ -304,11 +316,15 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   }
 
   get subtotal(): number {
-    return this.items.reduce((sum, item) => sum + ((item.unit_price || 0) * (item.quantity || 0)), 0);
+    return this.items.reduce((sum, item) => sum + ((item.is_gift ? 0 : (item.unit_price || 0)) * (item.quantity || 0)), 0);
   }
 
   get totalDiscount(): number {
     return this.items.reduce((sum, item) => sum + (this.getItemDiscount(item) * (item.quantity || 0)), 0);
+  }
+
+  get giftItemCount(): number {
+    return this.items.reduce((sum, item) => sum + (item.is_gift ? (item.quantity || 0) : 0), 0);
   }
 
   get grandTotal(): number {
@@ -319,7 +335,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
   isFormValid(): boolean {
     if (!this.fulfillment) return false;
     if (!this.items.length) return false;
-    const itemsValid = this.items.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0);
+    const itemsValid = this.items.every(item => !!item.product_id && (item.quantity || 0) > 0 && (item.is_gift || (item.unit_price != null && item.unit_price > 0)));
     if (!itemsValid) return false;
 
     if (this.fulfillment === 'delivery') {
@@ -365,8 +381,8 @@ export class OutSalesComponent implements OnInit, OnDestroy {
       this.messageService.add({ severity: 'warn', summary: 'Missing fulfillment', detail: 'Please choose whether the sale was handed over now or needs delivery.' });
       return;
     }
-    if (!this.items.length || !this.items.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0)) {
-      this.messageService.add({ severity: 'warn', summary: 'Incomplete', detail: 'Each line needs a product, quantity and unit price.' });
+    if (!this.items.length || !this.items.every(item => !!item.product_id && (item.quantity || 0) > 0 && (item.is_gift || (item.unit_price != null && item.unit_price > 0)))) {
+      this.messageService.add({ severity: 'warn', summary: 'Incomplete', detail: 'Each line needs a product, quantity and a price (or tick Gift).' });
       return;
     }
     if (this.fulfillment === 'delivery') {
@@ -383,7 +399,8 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     const snapshotItems = this.items.map(item => {
       const prod = this.findProduct(item.product_id);
       const regPrice = this.getItemRegularPrice(item);
-      const disc = this.getItemDiscount(item);
+      const disc = item.is_gift ? 0 : this.getItemDiscount(item);
+      const finalPrice = item.is_gift ? 0 : (item.unit_price ?? 0);
       return {
         product_id: item.product_id!,
         product: prod ? {
@@ -391,16 +408,17 @@ export class OutSalesComponent implements OnInit, OnDestroy {
           name: prod.name,
           code: prod.code,
           price: regPrice,
-          effective_price: item.unit_price
+          effective_price: finalPrice
         } : { name: 'Item', code: '' },
         quantity: item.quantity,
-        unit_price: item.unit_price || 0,
+        unit_price: finalPrice,
         regular_price: regPrice,
         discount: disc,
         discount_per_unit: disc,
-        price: item.unit_price || 0,
+        price: finalPrice,
         price_at_purchase: regPrice,
-        name: prod?.name || 'Item'
+        name: prod?.name || 'Item',
+        is_gift: !!item.is_gift
       };
     });
 
@@ -423,12 +441,9 @@ export class OutSalesComponent implements OnInit, OnDestroy {
     };
 
     const payload = {
-      items: this.items.map(item => ({
-        product_id: item.product_id!,
-        quantity: item.quantity,
-        unit_price: item.unit_price || 0,
-        unit_cost: item.unit_cost ?? null
-      })),
+      items: this.items.map(item => item.is_gift
+        ? { product_id: item.product_id!, quantity: item.quantity, is_gift: true, unit_cost: item.unit_cost ?? null }
+        : { product_id: item.product_id!, quantity: item.quantity, unit_price: item.unit_price, unit_cost: item.unit_cost ?? null }),
       fulfillment: this.fulfillment,
       payment_method: this.paymentMethod,
       sold_at: this.soldAt ? new Date(this.soldAt).toISOString() : null,

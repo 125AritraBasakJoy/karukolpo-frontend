@@ -76,8 +76,9 @@
         <!-- Line 2: Qty x Unit Price with discount info -->
         <div class="item-calc-row">
           <div class="item-calc-details">
-            <span>{{ item.quantity }} x Tk. {{ item.unitPrice | number:'1.0-2' }}</span>
-            <div *ngIf="item.discount && item.discount > 0" class="item-discount-pill">
+            <span *ngIf="item.is_gift">{{ item.quantity }} x GIFT</span>
+            <span *ngIf="!item.is_gift">{{ item.quantity }} x Tk. {{ item.unitPrice | number:'1.0-2' }}</span>
+            <div *ngIf="!item.is_gift && item.discount && item.discount > 0" class="item-discount-pill">
               Reg: Tk. {{ item.regularPrice | number:'1.0-2' }} (Save: -Tk. {{ item.discount | number:'1.0-2' }})
             </div>
           </div>

@@ -25,6 +25,7 @@ export interface ThermalReceiptItem {
   regularPrice?: number | null;
   discount?: number | null;
   lineTotal: number;
+  is_gift?: boolean;
 }
 
 @Component({
@@ -203,31 +204,36 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       const rawName = item.product?.name || item.name;
       const name = this.cleanProductName(rawName);
       const quantity = Number(item.quantity) || 1;
+      const isGift = !!item.is_gift;
 
       // Effective unit price
-      const unitPrice = item.unit_price != null ? Number(item.unit_price) :
+      const unitPrice = isGift ? 0 : (item.unit_price != null ? Number(item.unit_price) :
         (item.price_at_purchase != null ? Number(item.price_at_purchase) :
           (item.price != null ? Number(item.price) :
             (item.product?.effective_price != null ? Number(item.product.effective_price) :
-              (item.product?.price != null ? Number(item.product.price) : 0))));
+              (item.product?.price != null ? Number(item.product.price) : 0)))));
 
       // Regular catalog price
       let regularPrice: number | null = null;
-      if (item.regular_price != null && Number(item.regular_price) > 0) {
-        regularPrice = Number(item.regular_price);
-      } else if (item.product?.price != null && Number(item.product.price) > 0) {
-        regularPrice = Number(item.product.price);
+      if (!isGift) {
+        if (item.regular_price != null && Number(item.regular_price) > 0) {
+          regularPrice = Number(item.regular_price);
+        } else if (item.product?.price != null && Number(item.product.price) > 0) {
+          regularPrice = Number(item.product.price);
+        }
       }
 
       // Unit discount
       let unitDiscount = 0;
-      if (item.discount != null && Number(item.discount) > 0) {
-        unitDiscount = Number(item.discount);
-      } else if (regularPrice && regularPrice > unitPrice) {
-        unitDiscount = regularPrice - unitPrice;
+      if (!isGift) {
+        if (item.discount != null && Number(item.discount) > 0) {
+          unitDiscount = Number(item.discount);
+        } else if (regularPrice && regularPrice > unitPrice) {
+          unitDiscount = regularPrice - unitPrice;
+        }
       }
 
-      const lineTotal = unitPrice * quantity;
+      const lineTotal = isGift ? 0 : unitPrice * quantity;
 
       return {
         name,
@@ -235,7 +241,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
         unitPrice,
         regularPrice: unitDiscount > 0 ? (regularPrice || unitPrice + unitDiscount) : null,
         discount: unitDiscount > 0 ? unitDiscount : null,
-        lineTotal
+        lineTotal,
+        is_gift: isGift
       };
     });
   }
@@ -445,12 +452,12 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       // Qty x Price (left) and Line Total (right)
       ctx.font = `14px ${fontMono}`;
       ctx.textAlign = 'left';
-      const qtyText = `${item.quantity} x Tk. ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      const qtyText = item.is_gift ? `${item.quantity} x GIFT` : `${item.quantity} x Tk. ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
       ctx.fillText(qtyText, leftX, y);
 
       ctx.textAlign = 'right';
       ctx.font = `bold 14.5px ${fontMono}`;
-      const totalText = `Tk. ${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      const totalText = item.is_gift ? `Tk. 0.00` : `Tk. ${item.lineTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
       ctx.fillText(totalText, rightX, y);
       y += 19;
 
@@ -1307,8 +1314,8 @@ export class ThermalInvoiceComponent implements AfterViewInit, OnChanges {
       } else {
         addLine(name.length > 32 ? name.substring(0, 32) : name);
       }
-      const leftCol = `  ${item.quantity} x Tk.${item.unitPrice.toFixed(0)}`;
-      const rightCol = `Tk.${item.lineTotal.toFixed(0)}`;
+      const leftCol = item.is_gift ? `  ${item.quantity} x GIFT` : `  ${item.quantity} x Tk.${item.unitPrice.toFixed(0)}`;
+      const rightCol = item.is_gift ? `0.00` : `Tk.${item.lineTotal.toFixed(0)}`;
       addLine(format2Col(leftCol, rightCol, 32));
     }
 

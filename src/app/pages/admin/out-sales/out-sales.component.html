@@ -58,12 +58,17 @@
                             <div class="col-7 md:col-4">
                                 <div class="field-label-wrapper flex align-items-center justify-content-between">
                                     <label class="field-label">Unit Price</label>
-                                    <span *ngIf="getItemDiscount(item) > 0" class="discount-label-pill">
+                                    <span *ngIf="!item.is_gift && getItemDiscount(item) > 0" class="discount-label-pill">
                                         <i class="pi pi-tag text-xs"></i> ON SALE
                                     </span>
                                 </div>
-                                <p-inputNumber [(ngModel)]="item.unit_price" [min]="0" mode="decimal"
+                                <p-inputNumber [(ngModel)]="item.unit_price" [min]="0.01" [disabled]="!!item.is_gift" mode="decimal"
                                     styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                                <button type="button" class="gift-toggle" [class.gift-toggle-active]="item.is_gift"
+                                    [attr.aria-pressed]="!!item.is_gift" (click)="item.is_gift = !item.is_gift; onGiftToggle(item)">
+                                    <i class="pi" [class.pi-check-square]="item.is_gift" [class.pi-stop]="!item.is_gift" aria-hidden="true"></i>
+                                    <i class="pi pi-gift" aria-hidden="true"></i><span>Gift</span>
+                                </button>
                             </div>
                             <div class="col-2 md:col-1 flex flex-column align-items-end">
                                 <div class="field-label-wrapper select-none opacity-0" aria-hidden="true">
@@ -313,7 +318,7 @@
                             <div class="my-3 border-top-1 border-dashed border-slate-800"></div>
 
                             <!-- Grand Total Box -->
-                            <div class="grand-total-banner p-3 border-round-xl flex align-items-center justify-content-between mb-4">
+                            <div class="grand-total-banner p-3 border-round-xl flex align-items-center justify-content-between mb-2">
                                 <div class="flex flex-column">
                                     <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Total Payable</span>
                                     <span class="text-2xl font-black text-white tracking-tight">{{ grandTotal | currency:'BDT':'৳' }}</span>
@@ -323,6 +328,10 @@
                                         <i class="pi pi-sparkles text-xs mr-1"></i>Saved {{ totalDiscount | currency:'BDT':'৳' }}
                                     </span>
                                 </div>
+                            </div>
+                            <div *ngIf="giftItemCount > 0" class="text-xs text-pink-300 mb-3 flex align-items-center gap-1">
+                                <i class="pi pi-gift"></i>
+                                <span>Includes {{ giftItemCount }} gift {{ giftItemCount === 1 ? 'item' : 'items' }} (not charged)</span>
                             </div>
 
                             <!-- Record Sale Button -->

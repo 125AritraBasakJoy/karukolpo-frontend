@@ -22,7 +22,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, Observable } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { NotificationService } from '../../../core/services';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { TextareaModule } from 'primeng/textarea';
@@ -297,13 +297,15 @@ export class OrdersComponent implements OnInit {
             });
         }
       }
-      this.orderService.getOrdersWithCount(options).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      this.orderService.getOrdersWithCount(options).pipe(
+        finalize(() => { if (request === this.ordersRequest) this.loading.set(false); }),
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: (res) => {
           if (request !== this.ordersRequest || query !== this.searchQuery().trim()) return;
           this.orders.set(res.items);
           this.totalRecords.set(res.total);
           if (statusVal === 'all') this.allOrdersTotal.set(res.total);
-          this.loading.set(false);
         },
         error: (err) => {
           if (request !== this.ordersRequest) return;
@@ -314,7 +316,6 @@ export class OrdersComponent implements OnInit {
             summary: 'Error',
             detail: 'Failed to load orders.'
           });
-          this.loading.set(false);
         }
       });
       return;
@@ -589,6 +590,7 @@ export class OrdersComponent implements OnInit {
   }
 
   getItemFinalUnitPrice(item: any): number {
+    if (item.is_gift) return 0;
     return item.unit_price ?? item.price_at_purchase ?? item.product?.effective_price ?? item.product?.price ?? 0;
   }
 
@@ -597,12 +599,14 @@ export class OrdersComponent implements OnInit {
   }
 
   isItemDiscounted(item: any): boolean {
+    if (item.is_gift) return false;
     const regular = this.getItemRegularUnitPrice(item);
     const finalPrice = this.getItemFinalUnitPrice(item);
     return regular > finalPrice;
   }
 
   getItemDiscountLabel(item: any): string {
+    if (item.is_gift) return '';
     const regular = this.getItemRegularUnitPrice(item);
     const finalPrice = this.getItemFinalUnitPrice(item);
     if (regular <= finalPrice) return '';
@@ -611,10 +615,12 @@ export class OrdersComponent implements OnInit {
   }
 
   getItemFinalTotal(item: any): number {
+    if (item.is_gift) return 0;
     return this.getItemFinalUnitPrice(item) * (item.quantity || 1);
   }
 
   getItemSavings(item: any): number {
+    if (item.is_gift) return 0;
     const regular = this.getItemRegularUnitPrice(item);
     const finalPrice = this.getItemFinalUnitPrice(item);
     return Math.max(0, (regular - finalPrice) * (item.quantity || 1));

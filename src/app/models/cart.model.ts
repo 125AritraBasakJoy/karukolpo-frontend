@@ -12,6 +12,7 @@ export interface CartItem {
   price?: number;
   order_combo_id?: string | null;
   combo_discount_per_unit?: string | number;
+  is_gift?: boolean;
 }
 
 export interface CartCombo {

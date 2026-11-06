@@ -114,6 +114,8 @@ export interface DiscountsResponse {
   total_discount_amount: number;
   promo_code_usage: PromoCodeUsage[];
   discount_impact: number;
+  gift_units?: number;
+  gift_cost?: number;
 }
 
 export interface CustomerSegment {

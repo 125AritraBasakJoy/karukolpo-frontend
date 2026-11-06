@@ -26,6 +26,7 @@ import { ThermalInvoiceComponent } from '../../../components/thermal-invoice/the
 import { Popover, PopoverModule } from 'primeng/popover';
 import { finalize, catchError, tap } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
+import { CheckboxModule } from 'primeng/checkbox';
 
 interface SaleItemRow {
   product_id: string | null;
@@ -37,6 +38,8 @@ interface SaleItemRow {
   initial_product_id?: string | null;
   initial_unit_price?: number | null;
   initial_unit_cost?: number | null;
+  is_gift?: boolean;
+  initial_is_gift?: boolean;
 }
 
 const HANDOVER_PAYMENT_METHODS = [
@@ -72,6 +75,7 @@ export type OutSalesFilterType = 'all' | 'awaiting' | 'review' | 'delivered' | '
     ProgressSpinnerModule,
     SkeletonModule,
     CurrencyPipe,
+    CheckboxModule,
     ThermalInvoiceComponent,
     PopoverModule
   ],
@@ -413,8 +417,15 @@ export class OutSalesListComponent implements OnInit {
   }
 
   getPaymentStatusInfo(sale: Order) {
+    if (this.getSaleTotal(sale) === 0) {
+      return { label: 'No charge', severity: 'info' as const };
+    }
     const status = sale.payment_status || sale.paymentStatus;
     return formatPaymentStatus(status, sale.amount_due || 0, sale.paymentMethod);
+  }
+
+  hasGift(sale: Order): boolean {
+    return !!sale.items?.some((i: any) => i.is_gift);
   }
 
   isDeliveryInProgress(sale: Order): boolean {
@@ -911,14 +922,14 @@ export class OutSalesListComponent implements OnInit {
   }
 
   addItem() {
-    this.editItems.push({ product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null });
+    this.editItems.push({ product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null, is_gift: false, initial_is_gift: false });
   }
 
   removeItem(index: number) {
     if (this.editItems.length > 1) {
       this.editItems.splice(index, 1);
     } else {
-      this.editItems[0] = { product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null };
+      this.editItems[0] = { product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null, is_gift: false, initial_is_gift: false };
     }
   }
 
@@ -957,17 +968,18 @@ export class OutSalesListComponent implements OnInit {
     if (product) {
       row.product_id = product.id;
       if (row.initial_product_id && row.initial_product_id === product.id) {
+        row.is_gift = !!row.initial_is_gift;
         row.unit_price = row.initial_unit_price ?? null;
         row.unit_cost = row.initial_unit_cost ?? null;
         const regular = row.regular_price || Number(product.price) || 0;
         row.regular_price = regular;
-        row.discount = (row.unit_price != null && regular > row.unit_price) ? Math.round((regular - row.unit_price) * 100) / 100 : 0;
+        row.discount = (!row.is_gift && row.unit_price != null && regular > row.unit_price) ? Math.round((regular - row.unit_price) * 100) / 100 : 0;
       } else {
         const catalogPrice = Number(product.price) || 0;
         const catalogDiscount = this.getProductCatalogDiscount(product);
         row.regular_price = catalogPrice;
         row.discount = catalogDiscount;
-        row.unit_price = catalogDiscount > 0 ? Math.max(0, catalogPrice - catalogDiscount) : catalogPrice;
+        row.unit_price = row.is_gift ? 0 : (catalogDiscount > 0 ? Math.max(0, catalogPrice - catalogDiscount) : catalogPrice);
         row.unit_cost = product.cost ?? null;
       }
     } else {
@@ -978,6 +990,15 @@ export class OutSalesListComponent implements OnInit {
     }
   }
 
+  onGiftToggle(item: SaleItemRow) {
+    if (item.is_gift) {
+      item.unit_price = 0;
+      item.discount = 0;
+    } else {
+      item.unit_price = this.getItemRegularPrice(item) || null;
+    }
+  }
+
   private syncEditItems(sale: Order) {
     if (sale.items && sale.items.length > 0) {
       this.editItems = sale.items.map(item => {
@@ -985,14 +1006,15 @@ export class OutSalesListComponent implements OnInit {
         const prod = this.findProduct(pid, item.product?.name);
         const resolvedId = prod?.id || pid;
         const anyItem = item as any;
+        const isGift = !!anyItem.is_gift;
         const catalogPrice = anyItem.regular_price != null && Number(anyItem.regular_price) > 0
           ? Number(anyItem.regular_price)
           : (anyItem.price_at_purchase != null && Number(anyItem.price_at_purchase) > 0
             ? Number(anyItem.price_at_purchase)
             : (prod ? (Number(prod.price) || 0) : (item.product?.price != null ? Number(item.product.price) : 0)));
-        const unitP = anyItem.unit_price != null ? Number(anyItem.unit_price) : (item.product?.price != null ? Number(item.product.price) : 0);
+        const unitP = isGift ? 0 : (anyItem.unit_price != null ? Number(anyItem.unit_price) : (item.product?.price != null ? Number(item.product.price) : 0));
         let disc = 0;
-        if (catalogPrice > unitP) {
+        if (!isGift && catalogPrice > unitP) {
           disc = Math.round((catalogPrice - unitP) * 100) / 100;
         }
 
@@ -1007,11 +1029,13 @@ export class OutSalesListComponent implements OnInit {
           regular_price: catalogPrice,
           initial_product_id: resolvedId,
           initial_unit_price: unitP,
-          initial_unit_cost: unitCost
+          initial_unit_cost: unitCost,
+          is_gift: isGift,
+          initial_is_gift: isGift
         };
       });
     } else {
-      this.editItems = [{ product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null }];
+      this.editItems = [{ product_id: null, quantity: 1, unit_price: null, discount: 0, unit_cost: null, is_gift: false, initial_is_gift: false }];
     }
   }
 
@@ -1031,6 +1055,7 @@ export class OutSalesListComponent implements OnInit {
   }
 
   getItemDiscount(item: SaleItemRow): number {
+    if (item.is_gift) return 0;
     const regular = this.getItemRegularPrice(item);
     const unitPrice = item.unit_price || 0;
     if (regular > unitPrice) {
@@ -1044,11 +1069,15 @@ export class OutSalesListComponent implements OnInit {
   }
 
   get subtotal(): number {
-    return this.editItems.reduce((sum, item) => sum + ((item.unit_price || 0) * (item.quantity || 0)), 0);
+    return this.editItems.reduce((sum, item) => sum + ((item.is_gift ? 0 : (item.unit_price || 0)) * (item.quantity || 0)), 0);
   }
 
   get totalDiscount(): number {
     return this.editItems.reduce((sum, item) => sum + (this.getItemDiscount(item) * (item.quantity || 0)), 0);
+  }
+
+  get editGiftItemCount(): number {
+    return this.editItems.reduce((sum, item) => sum + (item.is_gift ? (item.quantity || 0) : 0), 0);
   }
 
   get grandTotal(): number {
@@ -1058,7 +1087,7 @@ export class OutSalesListComponent implements OnInit {
 
   isFormValid(): boolean {
     if (!this.editItems.length) return false;
-    const itemsValid = this.editItems.every(item => item.product_id && (item.quantity || 0) > 0 && (item.unit_price || 0) > 0);
+    const itemsValid = this.editItems.every(item => !!item.product_id && (item.quantity || 0) > 0 && (item.is_gift || (item.unit_price != null && item.unit_price > 0)));
     if (!itemsValid) return false;
 
     const currentSale = this.editingSale();
@@ -1082,7 +1111,7 @@ export class OutSalesListComponent implements OnInit {
       const isAwaiting = this.isAwaitingDelivery(currentSale);
       const detail = (isAwaiting && (!this.editCustomer.name?.trim() || !this.editCustomer.phone?.trim() || !this.editCustomer.address_line?.trim()))
         ? 'A sale awaiting delivery requires customer name, phone, and address line.'
-        : 'Each item must have a product, quantity, and positive unit price.';
+        : 'Each line needs a product, quantity and a price (or tick Gift).';
       this.messageService.add({
         severity: 'warn',
         summary: 'Incomplete Form',
@@ -1109,7 +1138,7 @@ export class OutSalesListComponent implements OnInit {
 
     const hasCustomerInfo = this.editCustomer.name || this.editCustomer.phone || this.editCustomer.district || this.editCustomer.subdistrict || this.editCustomer.address_line;
 
-    const originalItemsMap = new Map<string, { unit_price: number | null, unit_cost: number | null }>();
+    const originalItemsMap = new Map<string, { unit_price: number | null, unit_cost: number | null, is_gift: boolean }>();
     if (currentSale.items) {
       for (const orig of currentSale.items) {
         const anyOrig = orig as any;
@@ -1117,7 +1146,8 @@ export class OutSalesListComponent implements OnInit {
         if (pid) {
           originalItemsMap.set(pid, {
             unit_price: anyOrig.unit_price != null ? Number(anyOrig.unit_price) : null,
-            unit_cost: anyOrig.unit_cost != null ? Number(anyOrig.unit_cost) : null
+            unit_cost: anyOrig.unit_cost != null ? Number(anyOrig.unit_cost) : null,
+            is_gift: !!anyOrig.is_gift
           });
         }
       }
@@ -1134,13 +1164,21 @@ export class OutSalesListComponent implements OnInit {
       };
 
       if (isNewProduct) {
-        itemPayload.unit_price = item.unit_price != null ? item.unit_price : 0;
+        if (item.is_gift) {
+          itemPayload.is_gift = true;
+        } else {
+          itemPayload.unit_price = item.unit_price;
+        }
         if (item.unit_cost != null) {
           itemPayload.unit_cost = item.unit_cost;
         }
       } else {
-        const priceChanged = item.unit_price !== orig.unit_price;
-        if (priceChanged && item.unit_price != null) {
+        if (item.is_gift && !item.initial_is_gift) {
+          itemPayload.is_gift = true;
+        } else if (!item.is_gift && item.initial_is_gift) {
+          itemPayload.is_gift = false;
+          itemPayload.unit_price = item.unit_price;
+        } else if (!item.is_gift && item.unit_price !== orig.unit_price && item.unit_price != null) {
           itemPayload.unit_price = item.unit_price;
         }
         const costChanged = item.unit_cost !== orig.unit_cost;

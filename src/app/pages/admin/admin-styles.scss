@@ -3,6 +3,35 @@
    Extracted from global styles.scss for performance.
    ───────────────────────────────────────────────────────────────── */
 
+.gift-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2rem;
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.5);
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+
+    &:hover { border-color: #f9a8d4; }
+    &:focus-visible { outline: 2px solid #f9a8d4; outline-offset: 3px; }
+    &.gift-toggle-active {
+        background: rgba(190, 24, 93, 0.18);
+        border-color: rgba(244, 114, 182, 0.65);
+        color: #f9a8d4;
+    }
+}
+
 /* Aggressive Cursor Reset for Admin End */
 .admin-layout {
     &, & * {
@@ -799,4 +828,3 @@
         }
     }
 }
-

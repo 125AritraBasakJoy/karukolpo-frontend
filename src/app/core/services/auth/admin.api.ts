@@ -7,6 +7,7 @@ export const ADMIN_API = {
     BASE,
     LOGIN: `${BASE}/login`,
     REFRESH: `${BASE}/refresh`,
+    LOGOUT: `${BASE}/logout`,
     FORGOT_PASSWORD: `${BASE}/forgot-password`,
     RESET_PASSWORD: `${BASE}/reset-password`,
 } as const;

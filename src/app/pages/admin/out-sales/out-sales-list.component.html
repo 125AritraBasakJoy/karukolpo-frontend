@@ -188,6 +188,9 @@
                             <div class="text-slate-300 text-sm">
                                 <span class="font-semibold text-white">{{ sale.items?.length || 0 }}</span> item(s)
                             </div>
+                            <div *ngIf="hasGift(sale)" class="mt-1">
+                                <p-tag [rounded]="true" severity="secondary"><i class="pi pi-gift mr-1"></i>Gift</p-tag>
+                            </div>
                         </td>
                         <td>
                             <div class="total-price-cell flex flex-column gap-1 align-items-start">
@@ -501,7 +504,7 @@
             <div class="flex flex-column gap-2">
                 <div *ngFor="let item of editItems; let i = index"
                     class="sale-item-row p-3 border-round-xl border-1 border-slate-800">
-                    <div class="grid align-items-center">
+                    <div class="grid align-items-start">
                         <!-- Product Selection -->
                         <div class="field col-12 lg:col-5 m-0 mb-2 lg:mb-0">
                             <label class="text-xs text-slate-400 block mb-1">Product</label>
@@ -540,16 +543,24 @@
 
                         <!-- Unit Price -->
                         <div class="field col-6 sm:col-4 lg:col-2 m-0 mb-2 lg:mb-0">
-                            <label class="text-xs text-slate-400 block mb-1">Unit Price</label>
-                            <p-inputNumber [(ngModel)]="item.unit_price" [min]="0.01" mode="decimal"
+                            <div class="flex align-items-center justify-content-between mb-1">
+                                <label class="text-xs text-slate-400 block">Unit Price</label>
+                            </div>
+                            <p-inputNumber [(ngModel)]="item.unit_price" [min]="0.01" [disabled]="!!item.is_gift" mode="decimal"
                                 styleClass="w-full" inputStyleClass="w-full premium-input"></p-inputNumber>
+                            <button type="button" class="gift-toggle" [class.gift-toggle-active]="item.is_gift"
+                                [attr.aria-pressed]="!!item.is_gift" (click)="item.is_gift = !item.is_gift; onGiftToggle(item)">
+                                <i class="pi" [class.pi-check-square]="item.is_gift" [class.pi-stop]="!item.is_gift" aria-hidden="true"></i>
+                                <i class="pi pi-gift" aria-hidden="true"></i><span>Gift</span>
+                            </button>
                         </div>
 
                         <!-- Line Total -->
                         <div class="field col-8 sm:col-3 lg:col-2 m-0">
                             <label class="text-xs text-slate-400 block mb-1">Line Total</label>
                             <div class="font-mono font-bold text-white text-base pt-2">
-                                {{ ((item.unit_price || 0) * (item.quantity || 0)) | currency:'BDT':'৳' }}
+                                <ng-container *ngIf="item.is_gift; else editLineTotal">Gift</ng-container>
+                                <ng-template #editLineTotal>{{ ((item.unit_price || 0) * (item.quantity || 0)) | currency:'BDT':'৳' }}</ng-template>
                             </div>
                         </div>
 
@@ -699,6 +710,10 @@
                 <div class="text-xl font-bold font-mono text-white">
                     {{ grandTotal | currency:'BDT':'৳' }}
                 </div>
+            </div>
+            <div *ngIf="editGiftItemCount > 0" class="text-xs text-pink-300 mt-2 flex align-items-center gap-1">
+                <i class="pi pi-gift"></i>
+                <span>Includes {{ editGiftItemCount }} gift {{ editGiftItemCount === 1 ? 'item' : 'items' }} (not charged)</span>
             </div>
         </div>
     </div>

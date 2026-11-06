@@ -522,7 +522,9 @@ export class AnalyticsComponent implements OnInit {
       this.discountsData.set({
         total_discount_amount: rawDiscounts?.total_discount_given ? parseFloat(rawDiscounts.total_discount_given) : (rawDiscounts.total_discount_amount || 0),
         promo_code_usage: rawDiscounts.promo_code_usage || [],
-        discount_impact: rawDiscounts?.discounted_order_pct || (rawDiscounts.discount_impact || 0)
+        discount_impact: rawDiscounts?.discounted_order_pct || (rawDiscounts.discount_impact || 0),
+        gift_units: rawDiscounts?.gift_units ?? 0,
+        gift_cost: parseFloat(rawDiscounts?.gift_cost ?? '0')
       });
 
       // Map risk

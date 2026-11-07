@@ -122,10 +122,19 @@ export class OrderService {
     const qs = this.buildOrderQueryParams(options);
     return this.apiService.getResponse<any[]>(`${API_ENDPOINTS.ORDERS.LIST}${qs}`).pipe(
       map(res => {
-        const rawOrders = Array.isArray(res.body) ? res.body : [];
-        const items = rawOrders.map(order => this.mapBackendOrder(order));
+        if (!Array.isArray(res.body)) {
+          throw new Error('Malformed orders response: expected array');
+        }
+        const items = res.body.map(order => this.mapBackendOrder(order));
         const totalHeader = res.headers.get('x-total-count') || res.headers.get('X-Total-Count');
-        const total = totalHeader ? parseInt(totalHeader, 10) : items.length;
+        let total = items.length;
+        if (totalHeader !== null && totalHeader !== undefined) {
+          const parsed = parseInt(totalHeader, 10);
+          if (isNaN(parsed) || parsed < 0) {
+            throw new Error(`Invalid X-Total-Count header: ${totalHeader}`);
+          }
+          total = parsed;
+        }
         return { items, total };
       }),
       catchError(err => {

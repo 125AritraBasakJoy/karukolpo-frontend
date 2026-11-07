@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { OrdersComponent } from './orders.component';
 import { OrderService, ProductService, PaymentService, NotificationService, ComboService } from '../../../core/services';
 import { Order } from '../../../models/order.model';
@@ -146,5 +146,17 @@ describe('OrdersComponent pagination', () => {
       skip: 0,
       status: 'confirmed'
     }));
+  });
+
+  it('sets loadFailed, empties orders, and resets totalRecords on error', () => {
+    component.orders.set(orders(2));
+    component.totalRecords.set(2);
+    getOrdersWithCount.and.returnValue(throwError(() => new Error('Network error')));
+
+    component.loadOrders();
+
+    expect(component.loadFailed()).toBeTrue();
+    expect(component.orders()).toEqual([]);
+    expect(component.totalRecords()).toBe(0);
   });
 });

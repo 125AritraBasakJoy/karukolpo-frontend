@@ -119,10 +119,18 @@
                 <ng-template pTemplate="emptymessage">
                     <tr>
                         <td colspan="7" class="text-center p-5">
-                            <div class="flex flex-column align-items-center gap-3">
-                                <i class="pi pi-inbox text-5xl text-gray-500"></i>
-                                <span class="text-gray-400 font-medium text-lg">No orders found</span>
-                            </div>
+                            @if (loadFailed()) {
+                                <div class="flex flex-column align-items-center gap-3">
+                                    <i class="pi pi-exclamation-triangle text-5xl text-red-400"></i>
+                                    <span class="text-gray-300 font-medium text-lg">Failed to load orders</span>
+                                    <button pButton label="Retry" icon="pi pi-refresh" class="p-button-outlined p-button-sm" (click)="loadOrders()"></button>
+                                </div>
+                            } @else {
+                                <div class="flex flex-column align-items-center gap-3">
+                                    <i class="pi pi-inbox text-5xl text-gray-500"></i>
+                                    <span class="text-gray-400 font-medium text-lg">No orders found</span>
+                                </div>
+                            }
                         </td>
                     </tr>
                 </ng-template>

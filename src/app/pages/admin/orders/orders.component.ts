@@ -81,6 +81,7 @@ export class OrdersComponent implements OnInit {
   orders = signal<Order[]>([]);
   totalRecords = signal<number>(0);
   allOrdersTotal = signal<number | null>(null);
+  loadFailed = signal<boolean>(false);
   private allCountKey?: string;
   private allCountRequest = 0;
   private ordersRequest = 0;
@@ -303,6 +304,7 @@ export class OrdersComponent implements OnInit {
       ).subscribe({
         next: (res) => {
           if (request !== this.ordersRequest || query !== this.searchQuery().trim()) return;
+          this.loadFailed.set(false);
           this.orders.set(res.items);
           this.totalRecords.set(res.total);
           if (statusVal === 'all') this.allOrdersTotal.set(res.total);
@@ -310,6 +312,9 @@ export class OrdersComponent implements OnInit {
         error: (err) => {
           if (request !== this.ordersRequest) return;
           console.error('Error loading orders in component:', err);
+          this.loadFailed.set(true);
+          this.orders.set([]);
+          this.totalRecords.set(0);
           this.messageService.add({
             life: 2000,
             severity: 'error',
@@ -324,6 +329,7 @@ export class OrdersComponent implements OnInit {
     // Fallback for tests providing only mocked getOrders
     this.orderService.getOrders(first, rows).subscribe({
       next: (orders) => {
+        this.loadFailed.set(false);
         this.orders.set(orders);
         const currentTotal = first + orders.length;
         if (orders.length === rows) {
@@ -334,6 +340,9 @@ export class OrdersComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
+        this.loadFailed.set(true);
+        this.orders.set([]);
+        this.totalRecords.set(0);
         this.loading.set(false);
       }
     });

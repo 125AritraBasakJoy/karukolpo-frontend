@@ -257,7 +257,9 @@ export class HomeComponent implements OnInit, OnDestroy {
         const imageUrl = isPlatformBrowser(this.platformId)
             ? `${window.location.origin}/assets/hero-banner.webp`
             : 'https://karukolpo.com/assets/hero-banner.webp';
-        const siteUrl = 'https://karukolpo.com/';
+        const siteUrl = isPlatformBrowser(this.platformId)
+            ? `${window.location.origin}/`
+            : 'https://karukolpocrafts.com/';
 
         this.titleService.setTitle(title);
 

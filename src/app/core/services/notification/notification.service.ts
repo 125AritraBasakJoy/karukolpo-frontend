@@ -119,6 +119,7 @@ export class NotificationService {
                     return res;
                 }
                 if (res && typeof res === 'object') {
+                    if (typeof res.unread === 'number') return res.unread;
                     if (typeof res.unread_count === 'number') return res.unread_count;
                     if (typeof res.count === 'number') return res.count;
                 }
@@ -274,12 +275,11 @@ export class NotificationService {
     private startPolling() {
         if (!isPlatformBrowser(this.platformId) || this.pollingSub) return;
 
-        // Poll unread count & notifications every 30 seconds when authenticated and tab is active
+        // Poll unread count every 30 seconds (and list only when bell is open) when authenticated and tab is active
         this.pollingSub = interval(30000).pipe(
             filter(() => this.authService.isAuthenticated() && (typeof document === 'undefined' || !document.hidden))
         ).subscribe(() => {
             this.fetchUnreadCount().subscribe();
-            this.fetchNotifications().subscribe();
         });
     }
 

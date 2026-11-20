@@ -164,7 +164,7 @@ export class OutSalesComponent implements OnInit, OnDestroy {
 
   private loadProducts() {
     this.productsLoading.set(true);
-    this.productService.getProducts(0, 500, undefined, true).subscribe({
+    this.productService.getAllProducts('card').subscribe({
       next: (products) => this.products.set(products),
       error: (err) => {
         console.error('Failed to load products', err);

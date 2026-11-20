@@ -924,4 +924,29 @@ export class ProductService {
     const date = value instanceof Date ? value : new Date(value);
     return isNaN(date.getTime()) ? null : date.toISOString();
   }
+
+  /** Every active product, 100 at a time (the API's page size), using X-Total-Count. */
+  getAllProducts(view: 'full' | 'card' = 'card'): Observable<Product[]> {
+    const PAGE = 100;
+    return this.getProductsWithCount({ skip: 0, limit: PAGE }, view).pipe(
+      switchMap(res => {
+        if (res.total <= PAGE || res.items.length >= res.total) {
+          return of(res.items);
+        }
+        const pages: Observable<ProductsResponse>[] = [];
+        for (let skip = PAGE; skip < res.total; skip += PAGE) {
+          pages.push(this.getProductsWithCount({ skip, limit: PAGE }, view));
+        }
+        return forkJoin(pages).pipe(
+          map(pageResponses => {
+            let all = [...res.items];
+            for (const p of pageResponses) {
+              all = all.concat(p.items);
+            }
+            return all;
+          })
+        );
+      })
+    );
+  }
 }

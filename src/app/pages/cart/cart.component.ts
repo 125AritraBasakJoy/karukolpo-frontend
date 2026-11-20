@@ -203,8 +203,18 @@ export class CartComponent implements OnInit, OnDestroy {
             window.scrollTo(0, 0);
             localStorage.removeItem('karukolpo_checkout_draft');
         }
+        this.cartService.setQuoteWanted(true);
         this.cartService.handleAbandonedCart();
         this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, this.appliedCouponCode);
+    }
+
+    ngOnDestroy() {
+        if (this.draftClearTimer) {
+            clearTimeout(this.draftClearTimer);
+            this.draftClearTimer = null;
+        }
+        this.armAbandonClockIfActive();
+        this.cartService.setQuoteWanted(false);
     }
 
     onFullNameChange(val: string) {
@@ -252,13 +262,7 @@ export class CartComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnDestroy() {
-        if (this.draftClearTimer) {
-            clearTimeout(this.draftClearTimer);
-            this.draftClearTimer = null;
-        }
-        this.armAbandonClockIfActive();
-    }
+    // consolidated ngOnDestroy below
 
     @HostListener('window:beforeunload', ['$event'])
     onBeforeUnload() {

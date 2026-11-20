@@ -27,11 +27,17 @@ export class CartService {
   quoteLoading = signal<boolean>(false);
   quoteError = signal<string | null>(null);
 
-  private quoteSubject = new Subject<{
-    district?: string | null;
-    phone?: string | null;
-    couponCode?: string | null;
-  }>();
+  private quoteWanted = false;
+  private lastQuotedKey: string | null = null;
+  private quoteSubject = new Subject<void>();
+  private quoteContext: { district?: string | null; phone?: string | null; couponCode?: string | null } = {};
+
+  setQuoteWanted(wanted: boolean) {
+    this.quoteWanted = wanted;
+    if (wanted) {
+      this.quoteSubject.next();
+    }
+  }
 
   getItemPrice(product: Product): number {
     return product.effective_price !== undefined && product.effective_price !== null
@@ -123,27 +129,35 @@ export class CartService {
   private initQuotePipeline() {
     this.quoteSubject.pipe(
       debounceTime(300),
-      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
-      switchMap(params => {
+      switchMap(() => {
         if (this.isEmpty()) {
           this.quote.set(null);
           this.quoteLoading.set(false);
           this.quoteError.set(null);
+          this.lastQuotedKey = null;
           return of(null);
         }
 
-        const req = this.buildQuoteRequest(params.district, params.phone, params.couponCode);
+        const { district, phone, couponCode } = this.quoteContext;
+        const req = this.buildQuoteRequest(district, phone, couponCode);
+        const key = JSON.stringify(req);
+        if (key === this.lastQuotedKey) {
+          return of(null);
+        }
+
         this.quoteLoading.set(true);
         this.quoteError.set(null);
 
         return this.comboService.quoteCart(req, true).pipe(
           tap({
             next: (res) => {
+              this.lastQuotedKey = key;
               this.quote.set(res);
               this.quoteLoading.set(false);
               this.quoteError.set(null);
             },
             error: (err) => {
+              this.lastQuotedKey = null;
               this.quoteLoading.set(false);
               const detail = err?.error?.detail || err?.message || 'Failed to price cart';
               this.quoteError.set(detail);
@@ -181,7 +195,12 @@ export class CartService {
   }
 
   fetchQuote(district?: string | null, phone?: string | null, couponCode?: string | null) {
-    this.quoteSubject.next({ district, phone, couponCode });
+    if (arguments.length > 0) {
+      this.quoteContext = { district, phone, couponCode };
+    }
+    if (this.quoteWanted) {
+      this.quoteSubject.next();
+    }
   }
 
   private saveCombos() {
@@ -526,6 +545,8 @@ export class CartService {
     this.cart.set([]);
     this.combos.set([]);
     this.quote.set(null);
+    this.lastQuotedKey = null;
+    this.quoteContext = {};
     this.saveCart();
     this.saveCombos();
     if (isPlatformBrowser(this.platformId)) {

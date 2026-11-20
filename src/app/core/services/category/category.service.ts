@@ -194,7 +194,7 @@ export class CategoryService {
                 }),
                 catchError(err => {
                     console.warn(`GET /categories/${categoryId} failed, falling back to products query:`, err);
-                    return this.productService.getProducts(0, 1000, categoryId, true);
+                    return this.productService.getAllProducts('full');
                 })
             );
         }
@@ -204,7 +204,7 @@ export class CategoryService {
         // A product is categorized if it appears in any category's products list.
         return forkJoin({
             categories: this.getCategories(0, 100),
-            allProducts: this.productService.getProducts(0, 1000, undefined, true)
+            allProducts: this.productService.getAllProducts('full')
         }).pipe(
             switchMap(({ categories, allProducts }) => {
                 // Ensure every category's products list is populated
@@ -250,7 +250,7 @@ export class CategoryService {
             }),
             catchError(err => {
                 console.error('Failed to load uncategorized products via category mapping:', err);
-                return this.productService.getProducts(0, 1000, undefined, true).pipe(
+                return this.productService.getAllProducts('full').pipe(
                     map(products => products.filter(p => !p.categoryId || p.categoryId === 'uncategorized' || p.categoryId === '0'))
                 );
             })
@@ -263,7 +263,7 @@ export class CategoryService {
      * Use this for the public-facing category products page only.
      */
     getProductsByCategory(categoryId: string): Observable<Product[]> {
-        return this.productService.getProducts(0, 1000, categoryId);
+        return this.productService.getAllProducts('card');
     }
 
     /**

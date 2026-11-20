@@ -50,7 +50,7 @@ export class BestSellerManagerComponent implements OnInit {
 
     loadProducts() {
         this.loading.set(true);
-        this.productService.getProducts(0, 1000, undefined, false)
+        this.productService.getAllProducts('card')
             .pipe(finalize(() => this.loading.set(false)))
             .subscribe({
                 next: (products) => {

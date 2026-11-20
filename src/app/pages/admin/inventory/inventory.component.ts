@@ -176,7 +176,7 @@ export class InventoryComponent implements OnInit {
     if (this.allProductsCache.length > 0) {
       this.applySearchFilter(query);
     } else {
-      this.productService.getProducts(0, 1000, undefined, true).subscribe({
+      this.productService.getAllProducts('full').subscribe({
         next: (all) => {
           this.allProductsCache = all;
           this.applySearchFilter(query);

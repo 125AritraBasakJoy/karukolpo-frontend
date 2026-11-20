@@ -40,7 +40,6 @@ import { BundlePickerComponent } from '../../components/bundle-picker/bundle-pic
     SafeHtmlPipe,
     ImageModule,
     GalleriaModule,
-    ComboCardComponent,
     ProductCardComponent,
     BundlePickerComponent
   ],

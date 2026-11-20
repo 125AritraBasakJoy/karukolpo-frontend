@@ -52,7 +52,7 @@ export class HotDealsManagerComponent implements OnInit {
     loadProducts() {
         this.loading.set(true);
         // Fetch a large enough limit to show all products for selection
-        this.productService.getProducts(0, 1000, undefined, false)
+        this.productService.getAllProducts('card')
             .pipe(finalize(() => this.loading.set(false)))
             .subscribe({
                 next: (products) => {

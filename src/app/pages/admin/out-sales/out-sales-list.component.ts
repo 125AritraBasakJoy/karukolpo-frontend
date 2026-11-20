@@ -251,7 +251,7 @@ export class OutSalesListComponent implements OnInit {
 
   private loadProducts() {
     this.productsLoading.set(true);
-    this.productService.getProducts(0, 500, undefined, true).pipe(
+    this.productService.getAllProducts('card').pipe(
       finalize(() => this.productsLoading.set(false))
     ).subscribe({
       next: (prods) => {
@@ -1190,10 +1190,9 @@ export class OutSalesListComponent implements OnInit {
       return itemPayload;
     });
 
-    const payload = {
+    const payload: any = {
       items: payloadItems,
       payment_method: this.editPaymentMethod,
-      sold_at: soldAtIso,
       delivery_charge: this.editDeliveryCharge || 0,
       customer: hasCustomerInfo ? {
         name: this.editCustomer.name || null,
@@ -1205,6 +1204,9 @@ export class OutSalesListComponent implements OnInit {
       note: this.editNote.trim() ? this.editNote.trim() : null,
       source: this.editSource.trim() ? this.editSource.trim() : null
     };
+    if (soldAtIso) {
+      payload.sold_at = soldAtIso;
+    }
 
     this.outSalesService.updateSale(currentSale.id, payload).pipe(
       finalize(() => this.saving.set(false))

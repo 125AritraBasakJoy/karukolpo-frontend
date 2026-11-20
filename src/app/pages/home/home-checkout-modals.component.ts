@@ -205,6 +205,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
             this.messageService.add({ severity: 'warn', summary: 'Cart is Empty', detail: 'Add items to cart first' });
             return;
         }
+        this.cartService.setQuoteWanted(true);
         // Refresh cart products before showing checkout to ensure latest price/stock
         this.cartService.refreshCartProducts();
         this.cartService.fetchQuote(this.checkoutForm.district, this.checkoutForm.phoneNumber, this.appliedCouponCode);
@@ -278,6 +279,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
 
         // Close the checkout modal and open the payment selection modal
         this.displayCheckoutModal = false;
+        this.cartService.setQuoteWanted(false);
         this.displayOrderSuccessModal = true;
         this.journeyService.track('begin_checkout');
         this.selectedPaymentMethod = null;

@@ -13,6 +13,7 @@ export interface NotificationRead {
 }
 
 export interface UnreadCountResponse {
+    unread?: number;
     unread_count?: number;
     count?: number;
     [key: string]: any;

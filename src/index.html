@@ -21,20 +21,20 @@
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://karukolpo.com/">
+  <meta property="og:url" content="https://karukolpocrafts.com/">
   <meta property="og:title" content="Karukolpo | Authentic Bangladeshi Handcrafts">
   <meta property="og:description" content="Premium Bangladeshi handcrafted products and heritage-inspired home decor.">
-  <meta property="og:image" content="https://karukolpo.com/assets/hero-banner.webp">
+  <meta property="og:image" content="https://karukolpocrafts.com/assets/hero-banner.webp">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://karukolpo.com/">
+  <meta property="twitter:url" content="https://karukolpocrafts.com/">
   <meta property="twitter:title" content="Karukolpo | Authentic Bangladeshi Handcrafts">
   <meta property="twitter:description" content="Premium Bangladeshi handcrafted products and heritage-inspired home decor.">
-  <meta property="twitter:image" content="https://karukolpo.com/assets/hero-banner.webp">
+  <meta property="twitter:image" content="https://karukolpocrafts.com/assets/hero-banner.webp">
 
   <!-- Canonical URL -->
-  <link rel="canonical" href="https://karukolpo.com/"/>
+  <link rel="canonical" href="https://karukolpocrafts.com/"/>
 
   <!-- Preconnect -->
   <link rel="preconnect" href="https://api.karukolpocrafts.com" crossorigin="">
@@ -60,8 +60,18 @@
 
   <!-- Preload Critical Above-The-Fold Assets -->
   <link rel="preload" as="image" href="assets/header-logo.webp" type="image/webp" fetchpriority="high">
-  <link rel="preload" as="image" href="assets/hero-banner.webp" type="image/webp" media="(min-width: 769px)" fetchpriority="high">
-  <link rel="preload" as="image" href="assets/hero-banner-mobile.webp" type="image/webp" media="(max-width: 768px)" fetchpriority="high">
+  <script>
+    if (location.pathname === '/') {
+      var l1 = document.createElement('link');
+      l1.rel = 'preload'; l1.as = 'image'; l1.type = 'image/webp'; l1.fetchpriority = 'high';
+      l1.media = '(min-width: 769px)'; l1.href = 'assets/hero-banner.webp';
+      document.head.appendChild(l1);
+      var l2 = document.createElement('link');
+      l2.rel = 'preload'; l2.as = 'image'; l2.type = 'image/webp'; l2.fetchpriority = 'high';
+      l2.media = '(max-width: 768px)'; l2.href = 'assets/hero-banner-mobile.webp';
+      document.head.appendChild(l2);
+    }
+  </script>
 
   <!-- Inline Critical CSS: Zero-flicker shell -->
   <style>
@@ -97,10 +107,10 @@
     "@context": "https://schema.org",
     "@type": "Store",
     "name": "Karukolpo",
-    "image": "https://karukolpo.com/assets/logo.webp",
-    "@id": "https://karukolpo.com",
-    "url": "https://karukolpo.com",
-    "telephone": "+880XXXXXXXXXX",
+    "image": "https://karukolpocrafts.com/assets/logo.webp",
+    "@id": "https://karukolpocrafts.com",
+    "url": "https://karukolpocrafts.com",
+    "telephone": "+8801700000000",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Tangail, Bangladesh",

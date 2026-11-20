@@ -231,7 +231,7 @@ export class AdminChatbotComponent implements OnInit, OnDestroy {
   private refreshAllData(callback?: () => void): void {
     forkJoin({
       orders: this.orderService.getOrders(0, 200, true).pipe(catchError(() => of([]))),
-      products: this.productService.getProducts(0, 500, undefined, true).pipe(catchError(() => of([]))),
+      products: this.productService.getAllProducts('card').pipe(catchError(() => of([]))),
       categories: this.categoryService.getCategories(0, 100).pipe(catchError(() => of([]))),
       outSales: this.outSalesService.listSales(0, 100).pipe(catchError(() => of([])))
     }).subscribe({

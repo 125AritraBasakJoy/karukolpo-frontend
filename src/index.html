@@ -61,17 +61,19 @@
   <!-- Preload Critical Above-The-Fold Assets -->
   <link rel="preload" as="image" href="assets/header-logo.webp" type="image/webp" fetchpriority="high">
   <script>
-    if (location.pathname === '/') {
-      var l1 = document.createElement('link');
-      l1.rel = 'preload'; l1.as = 'image'; l1.type = 'image/webp'; l1.fetchpriority = 'high';
-      l1.media = '(min-width: 769px)'; l1.href = 'assets/hero-banner.webp';
-      document.head.appendChild(l1);
-      var l2 = document.createElement('link');
-      l2.rel = 'preload'; l2.as = 'image'; l2.type = 'image/webp'; l2.fetchpriority = 'high';
-      l2.media = '(max-width: 768px)'; l2.href = 'assets/hero-banner-mobile.webp';
-      document.head.appendChild(l2);
-    }
+    (function () {
+      var home = location.pathname === '/';
+      document.documentElement.classList.toggle('is-home', home);
+      if (!home) return;
+      var mobile = matchMedia('(max-width: 768px)').matches;
+      var link = document.createElement('link');
+      link.rel = 'preload'; link.as = 'image'; link.type = 'image/webp';
+      link.setAttribute('fetchpriority', 'high');
+      link.href = mobile ? 'assets/hero-banner-mobile.webp' : 'assets/hero-banner.webp';
+      document.head.appendChild(link);
+    })();
   </script>
+  <style>html:not(.is-home) .hero-shell { display: none; }</style>
 
   <!-- Inline Critical CSS: Zero-flicker shell -->
   <style>
@@ -110,7 +112,6 @@
     "image": "https://karukolpocrafts.com/assets/logo.webp",
     "@id": "https://karukolpocrafts.com",
     "url": "https://karukolpocrafts.com",
-    "telephone": "+8801700000000",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Tangail, Bangladesh",
@@ -166,9 +167,15 @@
     <!-- Hero Shell matching real hero layout & typography -->
     <div class="hero-shell">
       <picture class="hero-picture">
-        <source media="(max-width: 768px)" srcset="assets/hero-banner-mobile.webp" type="image/webp">
-        <img src="assets/hero-banner.webp" class="hero-image" alt="Karukolpo Official Hero Banner" fetchpriority="high" decoding="sync" loading="eager">
+        <source media="(max-width: 768px)" data-srcset="assets/hero-banner-mobile.webp" type="image/webp">
+        <img data-src="assets/hero-banner.webp" class="hero-image" alt="Karukolpo Official Hero Banner" fetchpriority="high" decoding="sync" loading="eager">
       </picture>
+      <script>
+        if (location.pathname === '/') {
+          document.querySelectorAll('.hero-picture [data-srcset]').forEach(function (s) { s.srcset = s.dataset.srcset; });
+          document.querySelectorAll('.hero-picture [data-src]').forEach(function (i) { i.src = i.dataset.src; });
+        }
+      </script>
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <h1 class="hero-title">Made by Hand.<br>Rooted in Bangladesh.</h1>

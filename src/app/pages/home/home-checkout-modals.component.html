@@ -1,7 +1,7 @@
 <!-- Checkout Modal (Step 1: Shipping) -->
 @if (displayCheckoutModal) {
 <p-dialog [(visible)]="displayCheckoutModal" [modal]="true" [style]="{width: '90vw', maxWidth: '600px'}"
-    header="Checkout" [dismissableMask]="false">
+    header="Checkout" [dismissableMask]="false" (onHide)="onCheckoutModalHide()">
     <ng-template pTemplate="content">
         <div class="grid">
             <!-- Cart Summary -->

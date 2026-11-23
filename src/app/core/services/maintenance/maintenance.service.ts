@@ -104,6 +104,11 @@ export class MaintenanceService {
             if (typeof document !== 'undefined' && document.hidden) {
                 return;
             }
+            // Only poll while maintenance mode is active (to detect when it ends).
+            // Normal operations are checked once at start; interceptor catches 503 responses on API calls.
+            if (!this.status().enabled) {
+                return;
+            }
             this.refreshStatus().subscribe({
                 next: (status) => this.applyStatus(status),
                 error: () => { /* keep last known state */ }

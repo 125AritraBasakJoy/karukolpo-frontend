@@ -251,7 +251,6 @@ export class ProductDetailsComponent implements OnInit {
       switchMap(params => {
         const id = params.get('id');
         if (id) {
-          this.cartService.refreshCartProducts();
           this.product.set(null);
           this.combos.set([]);
           this.fbtProducts.set([]);

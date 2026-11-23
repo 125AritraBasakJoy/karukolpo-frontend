@@ -126,7 +126,9 @@ export class NotificationService {
                 return 0;
             }),
             tap(count => {
+                const before = this.unreadCountSignal();
                 this.unreadCountSignal.set(count);
+                if (count > before) this.fetchNotifications().subscribe();
             }),
             catchError(err => {
                 console.warn('Failed to fetch unread count from backend, computing locally:', err);

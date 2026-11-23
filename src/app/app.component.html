@@ -3,7 +3,9 @@
   <app-site-notice *ngIf="!isAdminRoute"></app-site-notice>
   <app-site-notice-modal *ngIf="!isAdminRoute && showSiteNoticeModal"></app-site-notice-modal>
   <app-header *ngIf="!isAdminRoute"></app-header>
-  <app-targeted-offer *ngIf="!isAdminRoute"></app-targeted-offer>
+  @defer (on idle) {
+    <app-targeted-offer *ngIf="!isAdminRoute"></app-targeted-offer>
+  }
   <div class="main-content">
     <router-outlet></router-outlet>
   </div>

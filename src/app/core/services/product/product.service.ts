@@ -926,16 +926,17 @@ export class ProductService {
   }
 
   /** Every active product, 100 at a time (the API's page size), using X-Total-Count. */
-  getAllProducts(view: 'full' | 'card' = 'card'): Observable<Product[]> {
+  getAllProducts(view: 'full' | 'card' = 'card', categoryId?: string): Observable<Product[]> {
     const PAGE = 100;
-    return this.getProductsWithCount({ skip: 0, limit: PAGE }, view).pipe(
+    const page = (skip: number) => this.getProductsWithCount({ skip, limit: PAGE, categoryId }, view);
+    return page(0).pipe(
       switchMap(res => {
         if (res.total <= PAGE || res.items.length >= res.total) {
           return of(res.items);
         }
         const pages: Observable<ProductsResponse>[] = [];
         for (let skip = PAGE; skip < res.total; skip += PAGE) {
-          pages.push(this.getProductsWithCount({ skip, limit: PAGE }, view));
+          pages.push(page(skip));
         }
         return forkJoin(pages).pipe(
           map(pageResponses => {

@@ -244,7 +244,7 @@ export class CartComponent implements OnInit, OnDestroy {
         this.showPaymentSection = false;
         this.selectedPaymentMethod = null;
 
-        if (clearCart && this.cartService.cart().length > 0) {
+        if (clearCart && !this.cartService.isEmpty()) {
             this.cartService.clearAbandonClock();
             this.cartService.clearCart();
         }
@@ -262,15 +262,13 @@ export class CartComponent implements OnInit, OnDestroy {
         }
     }
 
-    // consolidated ngOnDestroy below
-
     @HostListener('window:beforeunload', ['$event'])
     onBeforeUnload() {
         this.armAbandonClockIfActive();
     }
 
     private armAbandonClockIfActive() {
-        if (!this.showPaymentSection || this.orderConfirmed || this.cartService.cart().length === 0) {
+        if (!this.showPaymentSection || this.orderConfirmed || this.cartService.isEmpty()) {
             return;
         }
         this.cartService.markCheckoutLeft();

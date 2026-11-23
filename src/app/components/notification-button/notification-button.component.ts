@@ -61,10 +61,10 @@ export class NotificationButtonComponent implements OnInit {
     }
 
     togglePanel(event: Event, overlay: any) {
-        overlay.toggle(event);
-        if (overlay.overlayVisible) {
-            this.refreshData();
+        if (!overlay.overlayVisible) {
+            this.notificationService.fetchNotifications().subscribe();
         }
+        overlay.toggle(event);
     }
 
     refreshData() {

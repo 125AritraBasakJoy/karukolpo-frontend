@@ -160,8 +160,6 @@ export class AllProductsComponent implements OnInit, OnDestroy {
             this.updateSeo();
             this.fetchProducts();
         });
-
-        this.cartService.refreshCartProducts();
     }
 
     ngOnDestroy() {

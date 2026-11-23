@@ -194,7 +194,7 @@ export class CategoryService {
                 }),
                 catchError(err => {
                     console.warn(`GET /categories/${categoryId} failed, falling back to products query:`, err);
-                    return this.productService.getAllProducts('full');
+                    return this.productService.getAllProducts('full', categoryId);
                 })
             );
         }
@@ -263,7 +263,7 @@ export class CategoryService {
      * Use this for the public-facing category products page only.
      */
     getProductsByCategory(categoryId: string): Observable<Product[]> {
-        return this.productService.getAllProducts('card');
+        return this.productService.getAllProducts('card', categoryId);
     }
 
     /**

@@ -161,6 +161,12 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
 
     ngOnDestroy() {
         this.armAbandonClockIfActive();
+        this.cartService.setQuoteWanted(false);
+    }
+
+    onCheckoutModalHide() {
+        this.displayCheckoutModal = false;
+        this.cartService.setQuoteWanted(false);
     }
 
     @HostListener('window:beforeunload', ['$event'])
@@ -169,7 +175,7 @@ export class HomeCheckoutModalsComponent implements OnDestroy {
     }
 
     private armAbandonClockIfActive() {
-        if (!this.displayOrderSuccessModal || this.cartService.cart().length === 0) {
+        if (!this.displayOrderSuccessModal || this.cartService.isEmpty()) {
             return;
         }
         this.cartService.markCheckoutLeft();

@@ -373,7 +373,7 @@ export class CategoryManagerComponent implements OnInit {
     }
 
     fetchProductsFallback(categoryId: string) {
-        this.productService.getAllProducts('card').subscribe({
+        this.productService.getAllProducts('card', categoryId).subscribe({
             next: (allProducts) => {
                 this.categoryProducts = allProducts || [];
                 if (this.viewingCategory) {
